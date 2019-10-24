@@ -1,4 +1,4 @@
-package .kiarahmani.atropos;
+package kiarahmani.atropos;
 
 import static org.junit.Assert.assertTrue;
 
