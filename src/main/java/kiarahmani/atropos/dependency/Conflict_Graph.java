@@ -1,5 +1,5 @@
 package kiarahmani.atropos.dependency;
 
-class Conflict_Graph {
+public class Conflict_Graph {
   
 }

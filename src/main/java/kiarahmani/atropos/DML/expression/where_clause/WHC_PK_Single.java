@@ -1,7 +1,7 @@
 package kiarahmani.atropos.DML.expression.where_clause;
 
-import kiarahmani.atropos.DML.expression.Expression;
+import kiarahmani.atropos.DML.expression.E_WHC;
 
-public class WHC_PK_Single extends Expression {
+public class WHC_PK_Single extends E_WHC {
 
 }

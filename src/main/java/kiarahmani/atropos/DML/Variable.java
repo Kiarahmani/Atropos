@@ -1,4 +1,4 @@
-package kiarahmani.atropos.DML.expression;
+package kiarahmani.atropos.DML;
 
 public class Variable {
 
