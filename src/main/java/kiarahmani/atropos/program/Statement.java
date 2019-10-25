@@ -1,12 +1,8 @@
 package kiarahmani.atropos.program;
 
-public class Statement {
-	
-	
-	
-	
-	public void printStatemenet() {
-		System.out.println("TEMP: I am a statement");
-	}
+public abstract class Statement {
+	public abstract void printStatemenet(String indent);
+
+	public abstract void printStatemenet();
 
 }

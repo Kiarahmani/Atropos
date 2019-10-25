@@ -1,5 +1,5 @@
 package kiarahmani.atropos.DML.expression;
 
-public class E_Const extends Expression {
+public abstract class E_Const extends Expression {
 
 }
