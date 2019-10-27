@@ -34,7 +34,7 @@ public class Transaction {
 		System.out.println("){");
 		for (Statement stmt : this.statements)
 			stmt.printStatemenet("  ");
-		System.out.println("}\n\n");
+		System.out.println("}");
 	}
 
 }

@@ -59,17 +59,17 @@ public class InputProgramGenerator {
 		Variable v2 = new Variable("v2");
 
 		WHC whc_S1 = new WHC(new WHC_Constraint(acc_id, BinOp.EQ, id1));
-		WHC whc_U1 = new WHC();
+		WHC whc_U1 = new WHC(new WHC_Constraint(acc_id, BinOp.EQ, id1));
 
 		WHC whc_S2 = new WHC(new WHC_Constraint(acc_id, BinOp.EQ, id2));
-		WHC whc_U2 = new WHC();
+		WHC whc_U2 = new WHC(new WHC_Constraint(acc_id, BinOp.EQ, id2));
 		E_BinUp cond1 = new E_BinUp(BinOp.GT, new E_Proj(v2, acc_bal, new E_Const_Num(1)), amount2);
 
-		Select_Query S1 = new Select_Query(false, acc, field_names1, v1, whc_S1);
-		Update_Query U1 = new Update_Query(false, acc, whc_U1);
+		Select_Query S1 = new Select_Query(1, false, acc, field_names1, v1, whc_S1);
+		Update_Query U1 = new Update_Query(1, false, acc, whc_U1);
 
-		Select_Query S2 = new Select_Query(false, acc, field_names2, v2, whc_S2);
-		Update_Query U2 = new Update_Query(false, acc, whc_U2);
+		Select_Query S2 = new Select_Query(2, false, acc, field_names2, v2, whc_S2);
+		Update_Query U2 = new Update_Query(2, false, acc, whc_U2);
 
 		U1.add_update_expressions(acc_bal,
 				new E_BinUp(BinOp.PLUS, new E_Proj(v1, acc_bal, new E_Const_Num(1)), new E_Const_Num(1)));

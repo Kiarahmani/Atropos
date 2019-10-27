@@ -31,7 +31,7 @@ public class If_Statement extends Statement {
 
 	@Override
 	public void printStatemenet(String indent) {
-		System.out.println(indent + "if(" + this.condition.toString() + ")");
+		System.out.println(indent + "if(" + this.condition.toString() + "){");
 		for (Statement stmt : if_statements)
 			stmt.printStatemenet(indent + "   ");
 		System.out.println(indent + "}");

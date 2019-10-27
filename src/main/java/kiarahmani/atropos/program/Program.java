@@ -22,6 +22,14 @@ public class Program {
 		this.tables = new ArrayList<>();
 	}
 
+	public void setConflictGraph(Conflict_Graph cg) {
+		this.conflict_graph = cg;
+	}
+
+	public boolean isConflictGraphInitialized() {
+		return (this.conflict_graph != null);
+	}
+
 	public void addTable(Table t) {
 		this.tables.add(t);
 	}
@@ -31,11 +39,18 @@ public class Program {
 	}
 
 	public void printProgram() {
-		System.out.println("\n\n*********** Program " + programName + " ***********");
+		System.out.println(conflict_graph);
+		System.out.println("\n\n### PROGRAM " + programName.toUpperCase() + "\n");
+		System.out.println("## SCHEMA:");
 		for (Table t : tables)
 			System.out.println(t.toString());
-		System.out.println("\n");
+		System.out.println("\n\n## TRANSACTIONS:");
 		for (Transaction txn : this.transactions)
 			txn.printTransaction();
+		System.out.println("\n");
+		// if (conflict_graph == null)
+		// System.out.println("conflict graph not set yet....");
+		// else
+		this.conflict_graph.printGraph();
 	}
 }

@@ -10,6 +10,9 @@ public abstract class Query {
 	protected Kind kind;
 	protected WHC where_clause;
 	protected boolean isAtomic;
+	protected int id;
 
 	public abstract String toString();
+
+	public abstract String getId();
 }

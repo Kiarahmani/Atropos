@@ -12,16 +12,21 @@ public class Select_Query extends Query {
 	private Variable variable;
 	private ArrayList<FieldName> fieldNames;
 
-	public Select_Query(boolean isAtomic, TableName tableName, ArrayList<FieldName> fieldNames, Variable variable,
-			WHC whc) {
+	public Select_Query(int id, boolean isAtomic, TableName tableName, ArrayList<FieldName> fieldNames,
+			Variable variable, WHC whc) {
 		assert (!(tableName == null));
 		assert (!(fieldNames == null));
+		this.id = id;
 		this.kind = Kind.SELECT;
 		this.tableName = tableName;
 		this.fieldNames = fieldNames;
 		this.variable = variable;
 		this.isAtomic = isAtomic;
 		this.where_clause = whc;
+	}
+
+	public String getId() {
+		return this.kind.toString() + this.id;
 	}
 
 	@Override
