@@ -17,6 +17,10 @@ public class FieldName {
 		this.isSK = isSK;
 		this.f_type = f_type;
 	}
+	
+	public String getName() {
+		return this.name;
+	}
 
 	@Override
 	public String toString() {

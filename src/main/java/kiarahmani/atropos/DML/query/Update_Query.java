@@ -42,4 +42,21 @@ public class Update_Query extends Query {
 		return isAtomicString + "UPDATE " + this.tableName + " SET " + updateTuplesList + " WHERE " + this.where_clause;
 	}
 
+	@Override
+	public TableName getTableName() {
+		return this.tableName;
+	}
+
+	@Override
+	public boolean isWrite() {
+		return this.kind != kind.SELECT;
+	}
+
+	@Override
+	public ArrayList<FieldName> getAccessedFieldNames() {
+		ArrayList<FieldName> result = new ArrayList<>();
+		for (Tuple<FieldName, Expression> tuple : update_expressions)
+			result.add(tuple.x);
+		return result;
+	}
 }

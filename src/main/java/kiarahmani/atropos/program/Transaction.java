@@ -9,10 +9,18 @@ public class Transaction {
 	private ArrayList<Statement> statements;
 	private ArrayList<E_Arg> args;
 
+	public String getName() {
+		return this.TransactionName;
+	}
+
 	public Transaction(String name) {
 		this.TransactionName = name;
 		this.statements = new ArrayList<>();
 		this.args = new ArrayList<>();
+	}
+
+	public ArrayList<Statement> getStatements() {
+		return this.statements;
 	}
 
 	public void addStatement(Statement statement) {

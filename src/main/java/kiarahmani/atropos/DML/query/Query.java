@@ -1,5 +1,9 @@
 package kiarahmani.atropos.DML.query;
 
+import java.util.ArrayList;
+
+import kiarahmani.atropos.DDL.FieldName;
+import kiarahmani.atropos.DDL.TableName;
 import kiarahmani.atropos.DML.where_clause.WHC;
 
 public abstract class Query {
@@ -15,4 +19,11 @@ public abstract class Query {
 	public abstract String toString();
 
 	public abstract String getId();
+
+	public abstract TableName getTableName();
+
+	public abstract boolean isWrite();
+
+	public abstract ArrayList<FieldName> getAccessedFieldNames();
+
 }

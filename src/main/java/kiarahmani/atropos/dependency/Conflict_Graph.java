@@ -10,11 +10,12 @@ public class Conflict_Graph {
 	}
 
 	public void addConflict(Conflict c) {
+		assert (c != null) : "Must NOT add a null conflict";
 		this.conflicts.add(c);
 	}
 
 	public void printGraph() {
-		System.out.println("## CONFLICT GRAPH:\n");
+		System.out.println("\n## CONFLICT GRAPH:\n");
 		for (Conflict c : conflicts)
 			System.out.println(c.toString());
 	}

@@ -5,9 +5,11 @@ import kiarahmani.atropos.program.Statement;
 
 public class Query_Statement extends Statement {
 	private Query query;
+	private int id;
 
-	public Query_Statement(Query q) {
+	public Query_Statement(int id, Query q) {
 		this.query = q;
+		this.id = id;
 	}
 
 	@Override
@@ -19,4 +21,14 @@ public class Query_Statement extends Statement {
 	public void printStatemenet() {
 		System.out.println(this.query.toString());
 	}
+
+	@Override
+	public String getId() {
+		return "#" + this.id;
+	}
+
+	public Query getQuery() {
+		return this.query;
+	}
+
 }

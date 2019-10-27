@@ -16,6 +16,13 @@ public class Table {
 			this.fieldNames.add(fn);
 	}
 
+	public Table(TableName tn, ArrayList<FieldName> fns) {
+		fieldNames = new ArrayList<>();
+		name = tn;
+		for (FieldName fn : fns)
+			this.fieldNames.add(fn);
+	}
+
 	@Override
 	public String toString() {
 		String result = "", delim = "";

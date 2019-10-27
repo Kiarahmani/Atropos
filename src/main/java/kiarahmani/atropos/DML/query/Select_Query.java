@@ -41,4 +41,19 @@ public class Select_Query extends Query {
 		return isAtomicString + "SELECT (" + fieldNamesString + ") FROM " + this.tableName + " AS " + this.variable
 				+ " WHERE " + this.where_clause;
 	}
+
+	@Override
+	public TableName getTableName() {
+		return this.tableName;
+	}
+
+	@Override
+	public boolean isWrite() {
+		return this.kind != kind.SELECT;
+	}
+
+	@Override
+	public ArrayList<FieldName> getAccessedFieldNames() {
+		return this.fieldNames;
+	}
 }

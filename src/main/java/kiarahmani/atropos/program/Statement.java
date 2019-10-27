@@ -5,4 +5,6 @@ public abstract class Statement {
 
 	public abstract void printStatemenet();
 
+	public abstract String getId();
+
 }
