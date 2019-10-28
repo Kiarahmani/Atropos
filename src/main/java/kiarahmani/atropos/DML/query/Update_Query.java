@@ -22,10 +22,10 @@ public class Update_Query extends Query {
 	}
 
 	public String getId() {
-		return this.kind.toString() + this.id;
+		return this.kind.toString() +"#"+ this.id;
 	}
 
-	public void add_update_expressions(FieldName fn, Expression exp) {
+	public void addUpdateExp(FieldName fn, Expression exp) {
 		this.update_expressions.add(new Tuple<FieldName, Expression>(fn, exp));
 	}
 
@@ -39,7 +39,8 @@ public class Update_Query extends Query {
 			updateTuplesList += delim + tuple.x + "=" + tuple.y;
 			delim = ",";
 		}
-		return isAtomicString + "UPDATE " + this.tableName + " SET " + updateTuplesList + " WHERE " + this.where_clause;
+		return isAtomicString + "UPDATE" + this.id + " " + this.tableName + " SET " + updateTuplesList + " WHERE "
+				+ this.where_clause;
 	}
 
 	@Override

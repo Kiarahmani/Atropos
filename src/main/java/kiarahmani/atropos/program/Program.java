@@ -42,7 +42,7 @@ public class Program {
 	}
 
 	public void printProgram() {
-		System.out.println("\n\n### PROGRAM " + programName.toUpperCase() + "\n");
+		System.out.println("\n\n### PROGRAM: " + programName.toUpperCase() + "\n");
 		System.out.println("## SCHEMA:");
 		for (Table t : tables)
 			System.out.println(t.toString());

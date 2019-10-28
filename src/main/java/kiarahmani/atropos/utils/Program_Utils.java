@@ -17,8 +17,10 @@ import kiarahmani.atropos.DML.query.Select_Query;
 import kiarahmani.atropos.DML.query.Update_Query;
 import kiarahmani.atropos.DML.where_clause.WHC;
 import kiarahmani.atropos.program.Program;
+import kiarahmani.atropos.program.Statement;
 import kiarahmani.atropos.program.Table;
 import kiarahmani.atropos.program.Transaction;
+import kiarahmani.atropos.program.statements.If_Statement;
 import kiarahmani.atropos.program.statements.Query_Statement;
 
 public class Program_Utils {
@@ -34,6 +36,9 @@ public class Program_Utils {
 	private HashMap<String, Integer> transactionToSelectCount;
 	private HashMap<String, Integer> transactionToUpdateCount;
 	private HashMap<String, Integer> transactionToStatement;
+	private HashMap<String, Integer> transactionToIf;
+	private HashMap<String, If_Statement> ifStatementMap;
+	private HashMap<String, Variable> variableMap;
 
 	public Program getProgram() {
 		if (this.program == null) {
@@ -58,16 +63,25 @@ public class Program_Utils {
 		transactionToSelectCount = new HashMap<>();
 		transactionToStatement = new HashMap<>();
 		transactionToUpdateCount = new HashMap<>();
+		transactionToIf = new HashMap<>();
+		ifStatementMap = new HashMap<>();
+		variableMap = new HashMap<>();
 	}
 
 	public Variable getVariable(String txn, int id) {
-		Optional<Variable> ov = this.transactionToVariableSetMap.get(txn).stream()
-				.filter(v -> v.toString().contains(String.valueOf(id))).findFirst();
-		return ov.get();
+		return variableMap.get(txn + "_v" + id);
+	}
+
+	public Variable getFreshVariable(String txn) {
+		String fresh_variable_name = txn + "_v" + transactionToVariableSetMap.get(txn).size();
+		Variable fresh_variable = new Variable(fresh_variable_name);
+		transactionToVariableSetMap.get(txn).add(fresh_variable);
+		variableMap.put(fresh_variable_name, fresh_variable);
+		return fresh_variable;
 	}
 
 	public E_Proj getProjExpr(String txn, int id, String fn, int order) {
-		return new E_Proj(getVariable("txn1", 0), getFieldName("t1f1"), new E_Const_Num(order));
+		return new E_Proj(getVariable(txn, id), getFieldName(fn), new E_Const_Num(order));
 	}
 
 	public FieldName getFieldName(String fn) {
@@ -82,6 +96,51 @@ public class Program_Utils {
 		int stmt_counts = (transactionToStatement.containsKey(txn)) ? transactionToStatement.get(txn) : 0;
 		transactionToStatement.put(txn, stmt_counts + 1);
 		Query_Statement result = new Query_Statement(stmt_counts, q);
+		trasnsactionMap.get(txn).addStatement(result);
+		return result;
+	}
+
+	public Query_Statement addQueryStatementInIf(String txn, int if_id, Query q) {
+		int stmt_counts = (transactionToStatement.containsKey(txn)) ? transactionToStatement.get(txn) : 0;
+		transactionToStatement.put(txn, stmt_counts + 1);
+		Query_Statement result = new Query_Statement(stmt_counts, q);
+		ifStatementMap.get(txn + "-if-" + if_id).addStatementInIf(result);
+		return result;
+	}
+
+	public Query_Statement addQueryStatementInElse(String txn, int if_id, Query q) {
+		int stmt_counts = (transactionToStatement.containsKey(txn)) ? transactionToStatement.get(txn) : 0;
+		transactionToStatement.put(txn, stmt_counts + 1);
+		Query_Statement result = new Query_Statement(stmt_counts, q);
+		ifStatementMap.get(txn + "-if-" + if_id).addStatementInElse(result);
+		return result;
+	}
+
+	public If_Statement addIfStatementInIf(String txn, int if_id, Expression c) {
+		int if_stmt_counts = (transactionToIf.containsKey(txn)) ? transactionToIf.get(txn) : 0;
+		transactionToIf.put(txn, if_stmt_counts + 1);
+		If_Statement result = new If_Statement(if_stmt_counts, c, new ArrayList<Statement>());
+		ifStatementMap.put(txn + "-if-" + if_stmt_counts, result);
+		ifStatementMap.get(txn + "-if-" + if_id).addStatementInIf(result);
+		return result;
+	}
+
+	public If_Statement addIfStatementInElse(String txn, int if_id, Expression c) {
+		int if_stmt_counts = (transactionToIf.containsKey(txn)) ? transactionToIf.get(txn) : 0;
+		transactionToIf.put(txn, if_stmt_counts + 1);
+		If_Statement result = new If_Statement(if_stmt_counts, c, new ArrayList<Statement>());
+		ifStatementMap.put(txn + "-if-" + if_stmt_counts, result);
+		ifStatementMap.get(txn + "-if-" + if_id).addStatementInElse(result);
+		return result;
+	}
+
+	// create and add an empty if statement --> the enclosed statements will be
+	// added later
+	public If_Statement addIfStatement(String txn, Expression c) {
+		int if_stmt_counts = (transactionToIf.containsKey(txn)) ? transactionToIf.get(txn) : 0;
+		transactionToIf.put(txn, if_stmt_counts + 1);
+		If_Statement result = new If_Statement(if_stmt_counts, c, new ArrayList<Statement>());
+		ifStatementMap.put(txn + "-if-" + if_stmt_counts, result);
 		trasnsactionMap.get(txn).addStatement(result);
 		return result;
 	}
@@ -101,16 +160,8 @@ public class Program_Utils {
 	public Update_Query addUpdateQuery(String txn, String tableName, boolean isAtomic, WHC whc) {
 		int update_counts = (transactionToUpdateCount.containsKey(txn)) ? transactionToSelectCount.get(txn) : 0;
 		transactionToUpdateCount.put(txn, update_counts + 1);
-		ArrayList<Tuple<FieldName, Expression>> fresh_update_tuples = new ArrayList<>();
 		Update_Query result = new Update_Query(update_counts, isAtomic, tableNameMap.get(tableName), whc);
 		return result;
-	}
-
-	public Variable getFreshVariable(String txn) {
-		String fresh_variable_name = txn + "-V" + transactionToVariableSetMap.get(txn).size();
-		Variable fresh_variable = new Variable(fresh_variable_name);
-		transactionToVariableSetMap.get(txn).add(fresh_variable);
-		return fresh_variable;
 	}
 
 	public Transaction addTrnasaction(String txn_name, String... args) {
@@ -138,6 +189,9 @@ public class Program_Utils {
 		return newTable;
 	}
 
+	/*
+	 * add a table with default values for SK, PK and types
+	 */
 	public Table addBasicTable(String tn_name, String... fns) {
 		TableName tn = new TableName(tn_name);
 		this.tableNameMap.put(tn_name, tn);
@@ -151,7 +205,6 @@ public class Program_Utils {
 			isPK = false;
 			isPK = false;
 		}
-
 		Table newTable = new Table(tn, fresh_fn_list);
 		this.tableMap.put(tn_name, newTable);
 		return newTable;

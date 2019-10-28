@@ -26,7 +26,7 @@ public class Select_Query extends Query {
 	}
 
 	public String getId() {
-		return this.kind.toString() + this.id;
+		return this.kind.toString() +"#"+ this.id;
 	}
 
 	@Override
@@ -38,8 +38,8 @@ public class Select_Query extends Query {
 			delim = ",";
 		}
 		String isAtomicString = isAtomic ? "ATOMIC " : "";
-		return isAtomicString + "SELECT (" + fieldNamesString + ") FROM " + this.tableName + " AS " + this.variable
-				+ " WHERE " + this.where_clause;
+		return isAtomicString + "SELECT" + this.id + " (" + fieldNamesString + ") FROM " + this.tableName + " AS "
+				+ this.variable + " WHERE " + this.where_clause;
 	}
 
 	@Override

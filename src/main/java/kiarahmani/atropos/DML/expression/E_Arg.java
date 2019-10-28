@@ -9,7 +9,7 @@ public class E_Arg extends Expression {
 
 	@Override
 	public String toString() {
-		return "arg_" + this.arg_name;
+		return "" + this.arg_name;
 	}
 
 }

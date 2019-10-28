@@ -32,14 +32,22 @@ public class If_Statement extends Statement {
 		this.else_statements = new ArrayList<>();
 	}
 
+	public void addStatementInIf(Statement stmt) {
+		this.if_statements.add(stmt);
+	}
+
+	public void addStatementInElse(Statement stmt) {
+		this.else_statements.add(stmt);
+	}
+
 	@Override
 	public void printStatemenet(String indent) {
-		System.out.println(indent + "if(" + this.condition.toString() + "){");
+		System.out.println(indent + "IF" + this.id + " (" + this.condition.toString() + "){");
 		for (Statement stmt : if_statements)
 			stmt.printStatemenet(indent + "   ");
 		System.out.println(indent + "}");
 		if (else_statements.size() > 0) {
-			System.out.println(indent + "else {");
+			System.out.println(indent + "ELSE {");
 			for (Statement stmt : else_statements)
 				stmt.printStatemenet(indent + "   ");
 			System.out.println(indent + "}");
@@ -48,12 +56,12 @@ public class If_Statement extends Statement {
 
 	@Override
 	public void printStatemenet() {
-		System.out.println("if(" + this.condition.toString() + "){");
+		System.out.println("IF" + this.id + " (" + this.condition.toString() + "){");
 		for (Statement stmt : if_statements)
 			stmt.printStatemenet("   ");
 		System.out.println("}");
 		if (else_statements.size() > 0) {
-			System.out.println("else {");
+			System.out.println("ELSE {");
 			for (Statement stmt : else_statements)
 				stmt.printStatemenet("   ");
 			System.out.println("}");
