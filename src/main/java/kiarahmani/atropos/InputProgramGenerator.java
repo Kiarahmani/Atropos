@@ -1,5 +1,7 @@
 package kiarahmani.atropos;
 
+import kiarahmani.atropos.DDL.F_Type;
+import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DML.expression.BinOp;
 import kiarahmani.atropos.DML.expression.E_BinUp;
 import kiarahmani.atropos.DML.expression.Expression;
@@ -24,7 +26,9 @@ public class InputProgramGenerator {
 		Program_Utils pu = new Program_Utils("very simple banking");
 		pu.addTrnasaction("inc", "inc_id", "inc_amnt");
 		pu.addTrnasaction("dec", "dec_id", "dec_amnt");
-		pu.addBasicTable("accounts", "acc_id", "acc_balance");
+		pu.addTable("accounts", new FieldName("acc_id", true, true, F_Type.NUM),
+				new FieldName("acc_name", false, false, F_Type.TEXT),
+				new FieldName("acc_balance", false, false, F_Type.NUM));
 
 		// inc transaction
 		WHC INC_S1_WHC = new WHC(new WHC_Constraint(pu.getFieldName("acc_id"), BinOp.EQ, pu.getArg("inc_id")));

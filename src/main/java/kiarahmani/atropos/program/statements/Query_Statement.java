@@ -24,7 +24,7 @@ public class Query_Statement extends Statement {
 
 	@Override
 	public String getId() {
-		return "#" + this.id;
+		return "Q_Stmt#" + this.id;
 	}
 
 	public Query getQuery() {

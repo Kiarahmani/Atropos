@@ -26,7 +26,7 @@ public class Select_Query extends Query {
 	}
 
 	public String getId() {
-		return this.kind.toString() +"#"+ this.id;
+		return this.kind.toString() + "#" + this.id;
 	}
 
 	@Override
@@ -54,6 +54,11 @@ public class Select_Query extends Query {
 
 	@Override
 	public ArrayList<FieldName> getAccessedFieldNames() {
-		return this.fieldNames;
+		ArrayList<FieldName> result = new ArrayList<>();
+		for (FieldName fn : this.fieldNames)
+			result.add(fn);
+		for (FieldName fn : this.where_clause.getAccessedFieldNames())
+			result.add(fn);
+		return result;
 	}
 }

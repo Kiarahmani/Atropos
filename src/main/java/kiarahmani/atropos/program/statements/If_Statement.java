@@ -91,6 +91,6 @@ public class If_Statement extends Statement {
 
 	@Override
 	public String getId() {
-		return "#" + this.id + "(IF)";
+		return "If_Stmt#" + this.id ;
 	}
 }

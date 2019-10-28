@@ -1,9 +1,6 @@
 package kiarahmani.atropos.refactoring_engine;
 
-import java.nio.file.WatchEvent.Kind;
 import java.util.ArrayList;
-import java.util.HashSet;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -24,18 +21,18 @@ public class Refactoring_Engine {
 	private static final Logger logger = LogManager.getLogger(Atropos.class);
 
 	public Conflict_Graph constructConfGraph(Program p) {
-		logger.debug("asserted that conflict graph is initialized");
+		logger.debug("Asserted that conflict graph is initialized");
 		Conflict_Graph cg = new Conflict_Graph();
 		for (int i = 0; i < p.numberOfTransactions(); i++) {
 			Transaction txn1 = p.getTransactions(i);
-			logger.debug("begin inner loop for src txn=" + txn1.getName());
+			logger.debug("Begin inner loop for src txn=" + txn1.getName());
 			for (int j = i + 1; j < p.numberOfTransactions(); j++) {
 				Transaction txn2 = p.getTransactions(j);
-				logger.debug("begin analysis for dst txn=" + txn2.getName());
+				logger.debug("Begin analysis for dst txn=" + txn2.getName());
 				// iterate over all statements of txn1 and txn2
 				for (Statement stmt1 : txn1.getStatements()) {
 					for (Statement stmt2 : txn2.getStatements()) {
-						cg = constructConfGraph_help(cg, stmt1, stmt2);
+						cg = constructConfGraph_help(cg, txn1, stmt1, txn2, stmt2);
 
 					}
 				}
@@ -45,8 +42,9 @@ public class Refactoring_Engine {
 		return cg;
 	}
 
-	private Conflict_Graph constructConfGraph_help(Conflict_Graph cg, Statement stmt1, Statement stmt2) {
-		logger.debug("begin conflict analysis for statements: " + stmt1.getId() + " and " + stmt2.getId());
+	private Conflict_Graph constructConfGraph_help(Conflict_Graph cg, Transaction txn1, Statement stmt1,
+			Transaction txn2, Statement stmt2) {
+		logger.debug("Begin conflict analysis for statements: " + stmt1.getId() + " and " + stmt2.getId());
 		Query q1 = null, q2 = null;
 		if (stmt1.getClass().toString().contains("Query"))
 			q1 = ((Query_Statement) stmt1).getQuery();
@@ -55,36 +53,39 @@ public class Refactoring_Engine {
 
 		if (q1 == null && q2 == null) {
 			logger.debug(
-					"both statements are IF statements: must recursively call constructConfGraph_help on the enclosed statements");
+					"Both statements are IF statements: must recursively call constructConfGraph_help on the enclosed statements");
 			for (Statement stmt1_iter : ((If_Statement) stmt1).getAllStatements())
 				for (Statement stmt2_iter : ((If_Statement) stmt2).getAllStatements())
-					cg = constructConfGraph_help(cg, stmt1_iter, stmt2_iter);
+					cg = constructConfGraph_help(cg, txn1, stmt1_iter, txn2, stmt2_iter);
 		}
 
 		if (q1 == null && q2 != null) {
-			logger.debug("only stmt1 is IF");
+			logger.debug("Only Stmt#1 is IF: will recurse over all enclosed statements");
 			for (Statement stmt1_iter : ((If_Statement) stmt1).getAllStatements())
-				cg = constructConfGraph_help(cg, stmt1_iter, stmt2);
+				cg = constructConfGraph_help(cg, txn1, stmt1_iter, txn2, stmt2);
 
 		}
 
 		if (q1 != null && q2 == null) {
-			logger.debug("only stmt2 is IF");
+			logger.debug("Only Stmt#2 is IF: will recurse over all enclosed statements");
 			for (Statement stmt2_iter : ((If_Statement) stmt2).getAllStatements())
-				cg = constructConfGraph_help(cg, stmt1, stmt2_iter);
+				cg = constructConfGraph_help(cg, txn1, stmt1, txn2, stmt2_iter);
 		}
 
 		if (q1 != null && q2 != null) {
-			logger.debug("neither stmts was IF");
-			Conflict c = constructConf(q1, q2);
+			logger.debug("Neither Stmts were If");
+			Conflict c = constructConf(txn1, q1, txn2, q2);
 			if (c != null)
 				cg.addConflict(c);
 		}
 		return cg;
 	}
 
-	private Conflict constructConf(Query q1, Query q2) {
-		logger.debug("constructing conflict for queries: " + q1.getId() + " and " + q2.getId());
+	// given two *queries* returns the conflict between them
+	// Returns null if there is no conflict
+	private Conflict constructConf(Transaction txn1, Query q1, Transaction txn2, Query q2) {
+		logger.debug("constructing conflict for queries  " + "q1: " + txn1.getName() + "." + q1.getId() + " and "
+				+ "q2: " + txn2.getName() + "." + q2.getId());
 		assert (q1 != null && q2 != null);
 		ArrayList<FieldName> fns = new ArrayList<>();
 		TableName tn = null;
@@ -94,18 +95,24 @@ public class Refactoring_Engine {
 			logger.debug("both queries share the same table (" + tn.toString() + "): must consisder analysis");
 			if (q1.isWrite() || q2.isWrite()) {
 				logger.debug("at least one of the queries is an update: must consisder analysis");
+				logger.debug("accessed fields by q1: " + q1.getAccessedFieldNames());
+				logger.debug("accessed fields by q2: " + q2.getAccessedFieldNames());
 				fns = (ArrayList<FieldName>) Util.getIntersectOfCollections(q1.getAccessedFieldNames(),
 						q2.getAccessedFieldNames());
 				if (fns.size() > 0) {
-					c = new Conflict(q1, q2, tn, fns);
+					logger.debug("queries access some common fields: " + fns);
+					c = new Conflict(txn1, q1, txn2, q2, tn, fns);
+					logger.debug("new conflict constructed and added: " + c);
 				} else
 					logger.debug("queries do not share common field names: no need for analysis");
 			} else
 				logger.debug("both queries are select: no need for analysis");
-
 		} else
 			logger.debug("queries do NOT share the same table: no need for analysis");
+		logger.debug("");
+
 		return c;
+
 	}
 
 }

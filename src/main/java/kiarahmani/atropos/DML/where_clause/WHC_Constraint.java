@@ -15,6 +15,10 @@ public class WHC_Constraint {
 		this.exp = exp;
 	}
 
+	public FieldName getFieldName() {
+		return this.f;
+	}
+
 	@Override
 	public String toString() {
 		return this.f + BinOp.BinOpToString(op) + exp.toString();
