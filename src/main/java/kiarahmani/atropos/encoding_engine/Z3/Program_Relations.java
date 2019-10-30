@@ -24,7 +24,7 @@ public class Program_Relations {
 	Expr qry1, qry2, rec1, rec2, time1, time2;
 
 	public Program_Relations(Program program, Context ctx, DeclaredObjects objs) {
-		Z3Logger.HeaderZ3(program.getName() + " (Sorts, types and functions)");
+
 		this.program = program;
 		this.ctx = ctx;
 		this.objs = objs;
@@ -68,9 +68,6 @@ public class Program_Relations {
 	public void addRecFldDataTypes() {
 		Z3Logger.LogZ3("\n;; records and fields data types");
 		objs.addDataType("RecType", mkDataType("RecType", program.getAllTableNames()));
-		// objs.addDataType("FldType", mkDataType("FldType",
-		// program.getAllFieldNames()));
-
 	}
 
 	public void addTxnOpDataTypes() {
@@ -97,6 +94,16 @@ public class Program_Relations {
 
 	public void addParentFunc() {
 		objs.addFunc("parent", ctx.mkFuncDecl("parent", objs.getSort("Qry"), objs.getSort("Txn")));
+	}
+
+	public Quantifier mk_uniqueness_of_time() {
+		BoolExpr rhs = (BoolExpr) ctx.mkNot(
+				ctx.mkEq(ctx.mkApp(objs.getfuncs("qry_time"), qry1), ctx.mkApp(objs.getfuncs("qry_time"), qry2)));
+		BoolExpr lhs = ctx.mkDistinct(qry1, qry2);// ctx.mkNot(ctx.mkEq(qry1, qry2));
+
+		BoolExpr body = ctx.mkImplies(lhs, rhs);
+		Quantifier result = ctx.mkForall(new Expr[] { qry1, qry2 }, body, 1, null, null, null, null);
+		return result;
 	}
 
 	public Quantifier mk_bound_on_qry_time() {

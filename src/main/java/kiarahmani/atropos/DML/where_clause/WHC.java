@@ -19,6 +19,10 @@ public class WHC extends Expression {
 			whc_constraints.add(whcc);
 	}
 
+	public ArrayList<WHC_Constraint> getConstraints() {
+		return this.whc_constraints;
+	}
+
 	public ArrayList<FieldName> getAccessedFieldNames() {
 		ArrayList<FieldName> result = new ArrayList<>();
 		for (WHC_Constraint whcc : this.whc_constraints)

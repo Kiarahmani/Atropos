@@ -14,11 +14,15 @@ public class Constants {
 	public static int _MAX_TXN_INSTANCES;
 	public static int _MAX_FIELD_INT;
 	public static int _MAX_FIELD_STRING;
+	public static int _MAX_ARG_INT;
+	public static int _MAX_ARG_STRING;
 
 	public Constants() throws IOException {
 		Properties prop = new Properties();
 		InputStream input = new FileInputStream("src/main/java/kiarahmani/atropos/config.properties");
 		prop.load(input);
+		Constants._MAX_ARG_STRING = Integer.parseInt(prop.getProperty("_MAX_ARG_STRING"));
+		Constants._MAX_ARG_INT = Integer.parseInt(prop.getProperty("_MAX_ARG_INT"));
 		Constants._MAX_FIELD_INT = Integer.parseInt(prop.getProperty("_MAX_FIELD_INT"));
 		Constants._MAX_FIELD_STRING = Integer.parseInt(prop.getProperty("_MAX_FIELD_STRING"));
 		Constants._MAX_CYCLE_LENGTH = Integer.parseInt(prop.getProperty("_MAX_CYCLE_LENGTH"));

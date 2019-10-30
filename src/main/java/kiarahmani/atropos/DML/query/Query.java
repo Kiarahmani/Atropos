@@ -16,6 +16,10 @@ public abstract class Query {
 	protected boolean isAtomic;
 	protected int id;
 
+	public abstract WHC getWHC();
+
+	public abstract Kind getKind();
+
 	public abstract String toString();
 
 	public abstract String getId();

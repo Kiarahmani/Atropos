@@ -73,9 +73,9 @@ public class Program_Utils {
 		return variableMap.get(txn + "_v" + id);
 	}
 
-	public Variable getFreshVariable(String txn) {
+	public Variable getFreshVariable(String tn, String txn) {
 		String fresh_variable_name = txn + "_v" + transactionToVariableSetMap.get(txn).size();
-		Variable fresh_variable = new Variable(fresh_variable_name);
+		Variable fresh_variable = new Variable(tn, fresh_variable_name);
 		transactionToVariableSetMap.get(txn).add(fresh_variable);
 		variableMap.put(fresh_variable_name, fresh_variable);
 		return fresh_variable;
@@ -147,7 +147,7 @@ public class Program_Utils {
 	}
 
 	public Select_Query addSelectQuery(String txn, String tableName, boolean isAtomic, WHC whc, String... fieldNames) {
-		Variable fresh_variable = getFreshVariable(txn);
+		Variable fresh_variable = getFreshVariable(tableName, txn);
 		int select_counts = (transactionToSelectCount.containsKey(txn)) ? transactionToSelectCount.get(txn) : 0;
 		transactionToSelectCount.put(txn, select_counts + 1);
 		ArrayList<FieldName> fresh_field_names = new ArrayList<>();
@@ -172,12 +172,27 @@ public class Program_Utils {
 		transactionToArgsSetMap.put(transaction_name, new ArrayList<>());
 		transactionToVariableSetMap.put(transaction_name, new ArrayList<>());
 		for (String arg : args) {
-			E_Arg current_arg = new E_Arg(arg);
-			argsMap.put(arg, current_arg);
+			String[] parts = arg.split(":");
+			E_Arg current_arg = new E_Arg(txn_name, parts[0], stringTypeToFType(parts[1]));
+			argsMap.put(parts[0], current_arg);
 			txn.addArg(current_arg);
 			transactionToArgsSetMap.get(transaction_name).add(current_arg);
 		}
 		return txn;
+	}
+
+	private F_Type stringTypeToFType(String tp) {
+		switch (tp.toLowerCase()) {
+		case "int":
+			return F_Type.NUM;
+		case "string":
+			return F_Type.TEXT;
+		case "bool":
+			return F_Type.BOOL;
+		default:
+			assert (false) : "unhandled string type";
+			return null;
+		}
 	}
 
 	public Table addTable(String tn_name, FieldName... fns) {
@@ -193,6 +208,12 @@ public class Program_Utils {
 	/*
 	 * add a table with default values for SK, PK and types
 	 */
+
+	public TableName getTableName(String tn) {
+		assert (this.tableNameMap.get(tn) != null);
+		return this.tableNameMap.get(tn);
+	}
+
 	public Table addBasicTable(String tn_name, String... fns) {
 		TableName tn = new TableName(tn_name);
 		this.tableNameMap.put(tn_name, tn);

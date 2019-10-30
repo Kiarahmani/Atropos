@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DDL.TableName;
 import kiarahmani.atropos.DML.expression.Expression;
+import kiarahmani.atropos.DML.query.Query.Kind;
 import kiarahmani.atropos.DML.where_clause.WHC;
 import kiarahmani.atropos.utils.Tuple;
 
@@ -22,7 +23,7 @@ public class Update_Query extends Query {
 	}
 
 	public String getId() {
-		return this.kind.toString() +"#"+ this.id;
+		return this.kind.toString() + "#" + this.id;
 	}
 
 	public void addUpdateExp(FieldName fn, Expression exp) {
@@ -59,5 +60,15 @@ public class Update_Query extends Query {
 		for (Tuple<FieldName, Expression> tuple : update_expressions)
 			result.add(tuple.x);
 		return result;
+	}
+
+	@Override
+	public Kind getKind() {
+		return this.kind;
+	}
+	
+	@Override
+	public WHC getWHC() {
+		return this.where_clause;
 	}
 }

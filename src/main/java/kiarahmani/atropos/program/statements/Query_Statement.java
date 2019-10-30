@@ -1,5 +1,7 @@
 package kiarahmani.atropos.program.statements;
 
+import java.util.ArrayList;
+
 import kiarahmani.atropos.DML.query.Query;
 import kiarahmani.atropos.program.Statement;
 
@@ -34,6 +36,13 @@ public class Query_Statement extends Statement {
 	@Override
 	public String[] getAllQueryIds() {
 		return new String[] { this.query.getId() };
+	}
+
+	@Override
+	public ArrayList<Query> getAllQueries() {
+		ArrayList<Query> result = new ArrayList<>();
+		result.add(this.query);
+		return result;
 	}
 
 }

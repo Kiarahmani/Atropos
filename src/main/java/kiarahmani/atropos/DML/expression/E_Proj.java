@@ -5,9 +5,9 @@ import kiarahmani.atropos.DML.Variable;
 
 public class E_Proj extends Expression {
 
-	private Variable v;
-	private FieldName f;
-	private Expression e;
+	public Variable v;
+	public FieldName f;
+	public Expression e;
 
 	public E_Proj(Variable v, FieldName f, Expression e) {
 		this.f = f;

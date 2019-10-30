@@ -52,6 +52,10 @@ public class Select_Query extends Query {
 		return this.kind != kind.SELECT;
 	}
 
+	public Variable getVariable() {
+		return this.variable;
+	}
+
 	@Override
 	public ArrayList<FieldName> getAccessedFieldNames() {
 		ArrayList<FieldName> result = new ArrayList<>();
@@ -60,5 +64,15 @@ public class Select_Query extends Query {
 		for (FieldName fn : this.where_clause.getAccessedFieldNames())
 			result.add(fn);
 		return result;
+	}
+
+	@Override
+	public Kind getKind() {
+		return this.kind;
+	}
+
+	@Override
+	public WHC getWHC() {
+		return this.where_clause;
 	}
 }

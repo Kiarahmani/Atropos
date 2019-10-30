@@ -5,8 +5,8 @@ public class E_UnOp extends Expression {
 		NOT
 	}
 
-	private UnOp un_op;
-	private Expression exp;
+	public UnOp un_op;
+	public Expression exp;
 
 	public E_UnOp(UnOp un_op, Expression exp) {
 		this.un_op = un_op;

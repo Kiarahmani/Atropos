@@ -3,12 +3,18 @@ package kiarahmani.atropos.program;
 import java.util.ArrayList;
 import java.util.List;
 
+import kiarahmani.atropos.DML.Variable;
 import kiarahmani.atropos.DML.expression.E_Arg;
+import kiarahmani.atropos.DML.query.Query;
 
 public class Transaction {
 	private String TransactionName;
 	private ArrayList<Statement> statements;
 	private ArrayList<E_Arg> args;
+
+	public ArrayList<E_Arg> getArgs() {
+		return this.args;
+	}
 
 	public String getName() {
 		return this.TransactionName;
@@ -26,6 +32,13 @@ public class Transaction {
 
 	public void addStatement(Statement statement) {
 		this.statements.add(statement);
+	}
+
+	public ArrayList<Query> getAllQueries() {
+		ArrayList<Query> result = new ArrayList<>();
+		for (Statement stmt : getStatements())
+			result.addAll(stmt.getAllQueries());
+		return result;
 	}
 
 	public String[] getAllStmtTypes() {

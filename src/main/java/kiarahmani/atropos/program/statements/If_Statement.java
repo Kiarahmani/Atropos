@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import kiarahmani.atropos.DML.expression.Expression;
+import kiarahmani.atropos.DML.query.Query;
 import kiarahmani.atropos.program.Statement;
 import kiarahmani.atropos.program.Transaction;
 
@@ -112,5 +113,18 @@ public class If_Statement extends Statement {
 			}
 		return result.toArray(new String[size]);
 	}
+
+	@Override
+	public ArrayList<Query> getAllQueries() {
+		ArrayList<Query> result = new ArrayList<>();
+		for (Statement if_stmt : this.if_statements)
+			result.addAll(if_stmt.getAllQueries());
+		for (Statement else_stmt : this.else_statements)
+			result.addAll(else_stmt.getAllQueries());
+		return result;
+	}
+	
+	
+	
 
 }

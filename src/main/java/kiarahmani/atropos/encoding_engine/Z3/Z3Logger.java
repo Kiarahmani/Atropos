@@ -38,7 +38,8 @@ public class Z3Logger {
 
 	public static void SubHeaderZ3(String s) {
 		if (Constants._SHOULD_WRITE_ASSERTIONS_TO_FILE) {
-			LogZ3("\n;" + s.toUpperCase());
+			String star = "\n;; " + String.format("%0" + s.length() + "d", 0).replace("0", "-");
+			LogZ3(star + "\n;; " + s + star);
 			printer.flush();
 		}
 	}
