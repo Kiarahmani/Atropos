@@ -31,4 +31,9 @@ public class Query_Statement extends Statement {
 		return this.query;
 	}
 
+	@Override
+	public String[] getAllQueryIds() {
+		return new String[] { this.query.getId() };
+	}
+
 }

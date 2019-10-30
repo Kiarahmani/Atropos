@@ -1,9 +1,11 @@
 package kiarahmani.atropos.program.statements;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.program.Statement;
+import kiarahmani.atropos.program.Transaction;
 
 public class If_Statement extends Statement {
 	private Expression condition;
@@ -91,6 +93,24 @@ public class If_Statement extends Statement {
 
 	@Override
 	public String getId() {
-		return "If_Stmt#" + this.id ;
+		return "If_Stmt#" + this.id;
 	}
+
+	@Override
+	public String[] getAllQueryIds() {
+		List<String> result = new ArrayList<String>();
+		int size = 0;
+		for (Statement if_stmt : if_statements)
+			for (String s : if_stmt.getAllQueryIds()) {
+				result.add(s);
+				size++;
+			}
+		for (Statement else_stmt : else_statements)
+			for (String s : else_stmt.getAllQueryIds()) {
+				result.add(s);
+				size++;
+			}
+		return result.toArray(new String[size]);
+	}
+
 }

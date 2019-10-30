@@ -7,4 +7,5 @@ public abstract class Statement {
 
 	public abstract String getId();
 
+	public abstract String[] getAllQueryIds(); 
 }

@@ -7,6 +7,7 @@ import kiarahmani.atropos.Atropos;
 import kiarahmani.atropos.dependency.Conflict_Graph;
 import kiarahmani.atropos.dependency.DAI_Graph;
 import kiarahmani.atropos.encoding_engine.Z3.Z3Driver;
+import kiarahmani.atropos.encoding_engine.Z3.Z3Logger;
 import kiarahmani.atropos.program.Program;
 
 public class Encoding_Engine {
@@ -23,11 +24,21 @@ public class Encoding_Engine {
 		logger.debug("Begin analysis to create *initial* DAI graph");
 		this.conflict_graph = conflict_graph;
 		this.program = program;
-		this.z3_driver = new Z3Driver();
+		new Z3Logger("z3-encoding.smt2");
+
+		int current_cycle_length = 4;
+
+		this.z3_driver = new Z3Driver(this.program, current_cycle_length);
 
 		// there will be a loop here ---> similar to CLOTHO must find all bounded
 		// anomlies within a given bound
+		// To be more precise, each iteration will return a set of isolation
+		// requirements within operations of the same transaction. We will then take
+		// them and merge them into existing requirements.
+		// The new set of requirements will be used for the next round of analysis (??)
+		//
 
 		return null;
 	}
+
 }

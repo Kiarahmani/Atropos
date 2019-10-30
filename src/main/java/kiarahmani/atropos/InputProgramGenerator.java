@@ -30,6 +30,8 @@ public class InputProgramGenerator {
 				new FieldName("acc_name", false, false, F_Type.TEXT),
 				new FieldName("acc_balance", false, false, F_Type.NUM));
 
+		pu.addBasicTable("departments", "dept_id", "dept_address", "dept_budget");
+
 		// inc transaction
 		WHC INC_S1_WHC = new WHC(new WHC_Constraint(pu.getFieldName("acc_id"), BinOp.EQ, pu.getArg("inc_id")));
 		Select_Query INC_S1 = pu.addSelectQuery("inc", "accounts", true, INC_S1_WHC, "acc_balance");

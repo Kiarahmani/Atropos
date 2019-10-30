@@ -47,6 +47,7 @@ public class Program_Utils {
 				program.addTable(t);
 			for (Transaction t : trasnsactionMap.values())
 				program.addTransaction(t);
+			program.setMaxQueryCount();
 		}
 		return program;
 	}

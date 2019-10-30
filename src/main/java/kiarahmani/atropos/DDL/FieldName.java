@@ -11,13 +11,17 @@ public class FieldName {
 		return this.isPK;
 	}
 
+	public F_Type getType() {
+		return this.f_type;
+	}
+
 	public FieldName(String name, boolean isPK, boolean isSK, F_Type f_type) {
 		this.name = name;
 		this.isPK = isPK;
 		this.isSK = isSK;
 		this.f_type = f_type;
 	}
-	
+
 	public String getName() {
 		return this.name;
 	}

@@ -1,6 +1,7 @@
 package kiarahmani.atropos.program;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import kiarahmani.atropos.DML.expression.E_Arg;
 
@@ -25,6 +26,17 @@ public class Transaction {
 
 	public void addStatement(Statement statement) {
 		this.statements.add(statement);
+	}
+
+	public String[] getAllStmtTypes() {
+		List<String> result = new ArrayList<String>();
+		int size = 0;
+		for (Statement stmt : getStatements())
+			for (String s : stmt.getAllQueryIds()) {
+				result.add(getName() + "-" + s);
+				size++;
+			}
+		return result.toArray(new String[size]);
 	}
 
 	public void addArg(E_Arg a) {
