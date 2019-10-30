@@ -138,6 +138,7 @@ public class Z3Driver {
 		Expr txn_expr = ctx.mkFreshConst("txn", objs.getSort("Txn"));
 		Expr order_expr = ctx.mkFreshConst("order", objs.getSort("Int"));
 		Expr qry_expr = ctx.mkFreshConst("qry", objs.getSort("Qry"));
+		Expr rec_expr = ctx.mkFreshConst("rec", objs.getSort("Rec"));
 		for (Transaction txn : program.getTransactions()) {
 			for (Query q : txn.getAllQueries())
 				if (!q.isWrite()) {
@@ -146,8 +147,10 @@ public class Z3Driver {
 					Z3Logger.SubHeaderZ3("Functions and properties for " + current_var.getName());
 
 					Z3Logger.LogZ3("\n;; definition of var function " + funcName);
-					objs.addFunc(funcName, ctx.mkFuncDecl(funcName,
-							new Sort[] { objs.getSort("Txn"), objs.getSort("Int") }, objs.getSort("Rec")));
+					objs.addFunc(funcName,
+							ctx.mkFuncDecl(funcName,
+									new Sort[] { objs.getSort("Txn"), objs.getSort("Int"), objs.getSort("Rec") },
+									objs.getSort("Bool")));
 
 					String timeFuncName = txn.getName() + "_var_" + current_var.getName() + "_gen_time";
 					objs.addFunc(timeFuncName,
@@ -165,16 +168,28 @@ public class Z3Driver {
 					Quantifier ass1 = ctx.mkForall(new Expr[] { txn_expr, qry_expr }, body, 1, null, null, null, null);
 					addAssertion("assertion that the associated time matches the select for " + current_var.getName(),
 							ass1);
-
-					Expr rec_expr = ctx.mkApp(objs.getfuncs(funcName), txn_expr, order_expr);
+					// a record is in var only if satisfies the where clause of the associated
+					// select
 					Expr rec_time = ctx.mkApp(objs.getfuncs(timeFuncName), txn_expr);
+					BoolExpr is_the_record = (BoolExpr) ctx.mkApp(objs.getfuncs(funcName), txn_expr, order_expr,
+							rec_expr);
 					BoolExpr where_body = translateWhereClauseToZ3Expr(txn.getName(), txn_expr, q.getWHC(), rec_expr,
 							rec_time);
-					Quantifier where_assertion = ctx.mkForall(new Expr[] { txn_expr, order_expr }, where_body, 1, null,
-							null, null, null);
+					Quantifier where_assertion = ctx.mkForall(new Expr[] { txn_expr, order_expr, rec_expr },
+							ctx.mkImplies(is_the_record, where_body), 1, null, null, null, null);
 					addAssertion("any record in " + current_var.getName() + " must satisfy the associated where clause",
 							where_assertion);
 
+					// the other direction: if a record satisfies the wherer condition of the
+					// select, it must be in the var
+
+					Quantifier is_the_record2 = ctx.mkExists(new Expr[] { order_expr },
+							(BoolExpr) ctx.mkApp(objs.getfuncs(funcName), txn_expr, order_expr, rec_expr), 1, null,
+							null, null, null);
+					Quantifier where_assertion2 = ctx.mkForall(new Expr[] { txn_expr, rec_expr },
+							ctx.mkImplies(where_body, is_the_record2), 1, null, null, null, null);
+					addAssertion("if a record satisfies the where clause, it must be in " + current_var.getName(),
+							where_assertion2);
 				}
 		}
 	}
