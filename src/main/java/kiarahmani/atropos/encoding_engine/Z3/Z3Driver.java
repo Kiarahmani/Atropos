@@ -95,8 +95,7 @@ public class Z3Driver {
 		addRecordsValConstraints(program);
 		for (Transaction txn : program.getTransactions())
 			for (Query q : txn.getAllQueries())
-				// TODO : uncomment this motherfucker
-				;//addQryTypeToIsExecuted(txn, q);
+				addQryTypeToIsExecuted(txn, q);
 
 		/* --- */
 		checkSAT();
@@ -110,7 +109,8 @@ public class Z3Driver {
 		Expr type_get_qry = ctx.mkApp(objs.getfuncs("qry_type"), qry_expr);
 		BoolExpr lhs2 = ctx.mkEq(type_get_qry, expected_type);
 		BoolExpr lhs = ctx.mkAnd(lhs1, lhs2);
-		BoolExpr rhs = (BoolExpr) translateExpressionsToZ3Expr(txn.getName(), txn_expr, q.getPathCondition());
+		BoolExpr rhs = ctx.mkEq(ctx.mkApp(objs.getfuncs("qry_is_executed"), qry_expr),
+				(BoolExpr) translateExpressionsToZ3Expr(txn.getName(), txn_expr, q.getPathCondition()));
 		BoolExpr body = ctx.mkImplies(lhs, rhs);
 		BoolExpr result = ctx.mkForall(new Expr[] { txn_expr, qry_expr }, body, 1, null, null, null, null);
 		addAssertion("qry_type_to_is_executed_" + q.getId(), result);
@@ -145,10 +145,24 @@ public class Z3Driver {
 									new Sort[] { objs.getSort("Txn"), objs.getSort("Int"), objs.getSort("Rec") },
 									objs.getSort("Bool")));
 
+					// def helper function, which returns the record that main functions is true for
+					objs.addFunc(funcName + "_get_rec", ctx.mkFuncDecl(funcName + "_get_rec",
+							new Sort[] { objs.getSort("Txn"), objs.getSort("Int") }, objs.getSort("Rec")));
+
 					// def time func
 					String timeFuncName = txn.getName() + "_var_" + current_var.getName() + "_gen_time";
 					objs.addFunc(timeFuncName,
 							ctx.mkFuncDecl(timeFuncName, new Sort[] { objs.getSort("Txn") }, objs.getSort("Int")));
+
+					// properties of the helper function
+					BoolExpr lhs0 = (BoolExpr) ctx.mkApp(objs.getfuncs(funcName), txn_expr, order_expr, rec_expr);
+					Quantifier ass0 = ctx.mkForall(new Expr[] { txn_expr, order_expr, rec_expr },
+							ctx.mkImplies(lhs0, ctx.mkEq(
+									ctx.mkApp(objs.getfuncs(funcName + "_get_rec"), txn_expr, order_expr), rec_expr)),
+							1, null, null, null, null);
+					addAssertion(
+							"Any record that satisfies " + funcName + "must be returned by " + funcName + "_get_rec",
+							ass0);
 
 					// properties of time func
 					Expr generated_time = ctx.mkApp(objs.getfuncs(timeFuncName), txn_expr);
@@ -376,7 +390,8 @@ public class Z3Driver {
 			E_Proj p_exp = (E_Proj) input_expr;
 			Expr order = translateExpressionsToZ3Expr(txnName, transaction, p_exp.e);
 			Expr var_time = ctx.mkApp(objs.getfuncs(txnName + "_var_" + p_exp.v.getName() + "_gen_time"), transaction);
-			Expr rec_expr = ctx.mkApp(objs.getfuncs(txnName + "_var_" + p_exp.v.getName()), transaction, order);
+			Expr rec_expr = ctx.mkApp(objs.getfuncs(txnName + "_var_" + p_exp.v.getName() + "_get_rec"), transaction,
+					order);
 			return ctx.mkApp(objs.getfuncs("proj_" + p_exp.v.getTableName() + "_" + p_exp.f.getName()), rec_expr,
 					var_time);
 		case "E_Size":
