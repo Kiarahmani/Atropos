@@ -2,6 +2,7 @@ package kiarahmani.atropos.program;
 
 import java.util.ArrayList;
 
+import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.query.Query;
 
 public abstract class Statement {
@@ -14,4 +15,11 @@ public abstract class Statement {
 	public abstract String[] getAllQueryIds();
 
 	public abstract ArrayList<Query> getAllQueries();
+
+	protected Expression path_condition;
+
+	public abstract void setPathCondition(Expression path_condition);
+
+	public abstract Expression getPathCondition();
+
 }

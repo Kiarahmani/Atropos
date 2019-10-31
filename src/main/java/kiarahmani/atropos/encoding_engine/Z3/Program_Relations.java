@@ -86,6 +86,7 @@ public class Program_Relations {
 	public void addExecutionFuncs() {
 		objs.addFunc("qry_time", ctx.mkFuncDecl("qry_time", objs.getSort("Qry"), objs.getSort("Int")));
 		objs.addFunc("qry_part", ctx.mkFuncDecl("qry_part", objs.getSort("Qry"), objs.getSort("Int")));
+		objs.addFunc("qry_is_executed", ctx.mkFuncDecl("qry_is_executed", objs.getSort("Qry"), objs.getSort("Bool")));
 	}
 
 	public void addProgramOrderFunc() {

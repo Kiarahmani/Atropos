@@ -8,9 +8,14 @@ import kiarahmani.atropos.DDL.F_Type;
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DDL.TableName;
 import kiarahmani.atropos.DML.Variable;
+import kiarahmani.atropos.DML.expression.BinOp;
 import kiarahmani.atropos.DML.expression.E_Arg;
+import kiarahmani.atropos.DML.expression.E_BinUp;
 import kiarahmani.atropos.DML.expression.E_Proj;
+import kiarahmani.atropos.DML.expression.E_UnOp;
 import kiarahmani.atropos.DML.expression.Expression;
+import kiarahmani.atropos.DML.expression.E_UnOp.UnOp;
+import kiarahmani.atropos.DML.expression.constants.E_Const_Bool;
 import kiarahmani.atropos.DML.expression.constants.E_Const_Num;
 import kiarahmani.atropos.DML.query.Query;
 import kiarahmani.atropos.DML.query.Select_Query;
@@ -98,6 +103,7 @@ public class Program_Utils {
 		transactionToStatement.put(txn, stmt_counts + 1);
 		Query_Statement result = new Query_Statement(stmt_counts, q);
 		trasnsactionMap.get(txn).addStatement(result);
+		result.setPathCondition(new E_Const_Bool(true));
 		return result;
 	}
 
@@ -105,7 +111,10 @@ public class Program_Utils {
 		int stmt_counts = (transactionToStatement.containsKey(txn)) ? transactionToStatement.get(txn) : 0;
 		transactionToStatement.put(txn, stmt_counts + 1);
 		Query_Statement result = new Query_Statement(stmt_counts, q);
-		ifStatementMap.get(txn + "-if-" + if_id).addStatementInIf(result);
+		If_Statement if_stmt = ifStatementMap.get(txn + "-if-" + if_id);
+		Expression new_path_condition = new E_BinUp(BinOp.AND, if_stmt.getPathCondition(), if_stmt.getCondition());
+		result.setPathCondition(new_path_condition);
+		if_stmt.addStatementInIf(result);
 		return result;
 	}
 
@@ -113,7 +122,11 @@ public class Program_Utils {
 		int stmt_counts = (transactionToStatement.containsKey(txn)) ? transactionToStatement.get(txn) : 0;
 		transactionToStatement.put(txn, stmt_counts + 1);
 		Query_Statement result = new Query_Statement(stmt_counts, q);
-		ifStatementMap.get(txn + "-if-" + if_id).addStatementInElse(result);
+		If_Statement if_stmt = ifStatementMap.get(txn + "-if-" + if_id);
+		Expression new_path_condition = new E_BinUp(BinOp.AND, if_stmt.getPathCondition(),
+				new E_UnOp(UnOp.NOT, if_stmt.getCondition()));
+		result.setPathCondition(new_path_condition);
+		if_stmt.addStatementInElse(result);
 		return result;
 	}
 
@@ -121,6 +134,9 @@ public class Program_Utils {
 		int if_stmt_counts = (transactionToIf.containsKey(txn)) ? transactionToIf.get(txn) : 0;
 		transactionToIf.put(txn, if_stmt_counts + 1);
 		If_Statement result = new If_Statement(if_stmt_counts, c, new ArrayList<Statement>());
+		Expression old_path_condition = ifStatementMap.get(txn + "-if-" + if_id).getPathCondition();
+		Expression old_condition = ifStatementMap.get(txn + "-if-" + if_id).getCondition();
+		result.setPathCondition(new E_BinUp(BinOp.AND, old_path_condition, old_condition));
 		ifStatementMap.put(txn + "-if-" + if_stmt_counts, result);
 		ifStatementMap.get(txn + "-if-" + if_id).addStatementInIf(result);
 		return result;
@@ -130,6 +146,9 @@ public class Program_Utils {
 		int if_stmt_counts = (transactionToIf.containsKey(txn)) ? transactionToIf.get(txn) : 0;
 		transactionToIf.put(txn, if_stmt_counts + 1);
 		If_Statement result = new If_Statement(if_stmt_counts, c, new ArrayList<Statement>());
+		Expression old_path_condition = ifStatementMap.get(txn + "-if-" + if_id).getPathCondition();
+		Expression old_condition = ifStatementMap.get(txn + "-if-" + if_id).getCondition();
+		result.setPathCondition(new E_BinUp(BinOp.AND, old_path_condition, new E_UnOp(UnOp.NOT, old_condition)));
 		ifStatementMap.put(txn + "-if-" + if_stmt_counts, result);
 		ifStatementMap.get(txn + "-if-" + if_id).addStatementInElse(result);
 		return result;
@@ -141,6 +160,7 @@ public class Program_Utils {
 		int if_stmt_counts = (transactionToIf.containsKey(txn)) ? transactionToIf.get(txn) : 0;
 		transactionToIf.put(txn, if_stmt_counts + 1);
 		If_Statement result = new If_Statement(if_stmt_counts, c, new ArrayList<Statement>());
+		result.setPathCondition(new E_Const_Bool(true));
 		ifStatementMap.put(txn + "-if-" + if_stmt_counts, result);
 		trasnsactionMap.get(txn).addStatement(result);
 		return result;

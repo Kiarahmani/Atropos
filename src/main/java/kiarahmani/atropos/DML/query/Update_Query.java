@@ -55,6 +55,12 @@ public class Update_Query extends Query {
 	}
 
 	@Override
+	public Expression getPathCondition() {
+		assert (this.path_condition != null) : "cannot return null";
+		return this.path_condition;
+	}
+
+	@Override
 	public ArrayList<FieldName> getAccessedFieldNames() {
 		ArrayList<FieldName> result = new ArrayList<>();
 		for (Tuple<FieldName, Expression> tuple : update_expressions)
@@ -66,9 +72,14 @@ public class Update_Query extends Query {
 	public Kind getKind() {
 		return this.kind;
 	}
-	
+
 	@Override
 	public WHC getWHC() {
 		return this.where_clause;
+	}
+
+	@Override
+	public void setPathCondition(Expression path_condition) {
+		this.path_condition = path_condition;
 	}
 }

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DDL.TableName;
 import kiarahmani.atropos.DML.Variable;
+import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.where_clause.WHC;
 
 public class Select_Query extends Query {
@@ -74,5 +75,16 @@ public class Select_Query extends Query {
 	@Override
 	public WHC getWHC() {
 		return this.where_clause;
+	}
+
+	@Override
+	public void setPathCondition(Expression path_condition) {
+		this.path_condition = path_condition;
+	}
+
+	@Override
+	public Expression getPathCondition() {
+		assert (this.path_condition != null) : "cannot return null";
+		return this.path_condition;
 	}
 }

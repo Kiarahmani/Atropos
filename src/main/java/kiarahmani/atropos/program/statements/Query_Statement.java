@@ -2,6 +2,7 @@ package kiarahmani.atropos.program.statements;
 
 import java.util.ArrayList;
 
+import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.query.Query;
 import kiarahmani.atropos.program.Statement;
 
@@ -43,6 +44,18 @@ public class Query_Statement extends Statement {
 		ArrayList<Query> result = new ArrayList<>();
 		result.add(this.query);
 		return result;
+	}
+
+	@Override
+	public void setPathCondition(Expression path_condition) {
+		this.path_condition = path_condition;
+		this.query.setPathCondition(path_condition);
+	}
+
+	@Override
+	public Expression getPathCondition() {
+		assert (this.path_condition != null) : "cannot return null";
+		return this.path_condition;
 	}
 
 }

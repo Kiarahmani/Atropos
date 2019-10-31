@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DDL.TableName;
+import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.where_clause.WHC;
 
 public abstract class Query {
@@ -11,10 +12,15 @@ public abstract class Query {
 		SELECT, INSERT, DELETE, UPDATE
 	};
 
+	protected Expression path_condition;
 	protected Kind kind;
 	protected WHC where_clause;
 	protected boolean isAtomic;
 	protected int id;
+
+	public abstract void setPathCondition(Expression path_condition);
+	
+	public abstract Expression getPathCondition();
 
 	public abstract WHC getWHC();
 

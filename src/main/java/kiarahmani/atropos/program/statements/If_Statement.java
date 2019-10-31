@@ -123,8 +123,20 @@ public class If_Statement extends Statement {
 			result.addAll(else_stmt.getAllQueries());
 		return result;
 	}
-	
-	
-	
+
+	@Override
+	public void setPathCondition(Expression path_condition) {
+		this.path_condition = path_condition;
+	}
+
+	@Override
+	public Expression getPathCondition() {
+		assert (this.path_condition!=null) : "cannot return null";
+		return this.path_condition;
+	}
+
+	public Expression getCondition() {
+		return this.condition;
+	}
 
 }
