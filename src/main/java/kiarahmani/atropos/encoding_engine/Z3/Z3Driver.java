@@ -76,13 +76,7 @@ public class Z3Driver {
 		for (Transaction txn : program.getTransactions()) {
 			int po = 1;
 			for (String qry_name : txn.getAllStmtTypes())
-				addAssertion("qry_type_to_po", program_relations.mk_qry_type_to_po(qry_name, po++));
-			for (Query q :txn.getAllQueries()) {
-				System.out.println(q);
-				System.out.println(q.getPathCondition());
-				System.out.println();
-			}
-
+				addAssertion("qry_type_to_po_" + qry_name, program_relations.mk_qry_type_to_po(qry_name, po++));
 		}
 		for (Transaction txn : program.getTransactions())
 			for (String qry_name : txn.getAllStmtTypes())
@@ -99,19 +93,38 @@ public class Z3Driver {
 		addArgsFuncs(program);
 		addVariablesFuncs(program);
 		addRecordsValConstraints(program);
+		for (Transaction txn : program.getTransactions())
+			for (Query q : txn.getAllQueries())
+				// TODO : uncomment this motherfucker
+				;//addQryTypeToIsExecuted(txn, q);
 
 		/* --- */
 		checkSAT();
+	}
+
+	private void addQryTypeToIsExecuted(Transaction txn, Query q) {
+		Expr txn_expr = ctx.mkFreshConst("txn", objs.getSort("Txn"));
+		Expr qry_expr = ctx.mkFreshConst("qry", objs.getSort("Qry"));
+		BoolExpr lhs1 = ctx.mkEq(ctx.mkApp(objs.getfuncs("parent"), qry_expr), txn_expr);
+		Expr expected_type = ctx.mkApp(objs.getConstructor("QryType", txn.getName() + "-" + q.getId()));
+		Expr type_get_qry = ctx.mkApp(objs.getfuncs("qry_type"), qry_expr);
+		BoolExpr lhs2 = ctx.mkEq(type_get_qry, expected_type);
+		BoolExpr lhs = ctx.mkAnd(lhs1, lhs2);
+		BoolExpr rhs = (BoolExpr) translateExpressionsToZ3Expr(txn.getName(), txn_expr, q.getPathCondition());
+		BoolExpr body = ctx.mkImplies(lhs, rhs);
+		BoolExpr result = ctx.mkForall(new Expr[] { txn_expr, qry_expr }, body, 1, null, null, null, null);
+		addAssertion("qry_type_to_is_executed_" + q.getId(), result);
 	}
 
 	private void addRecordsValConstraints(Program program) {
 		for (Transaction txn : program.getTransactions()) {
 			for (Query q : txn.getAllQueries())
 				if (q.isWrite()) {
-					//TODO: Must implement relationship between updates and records
+					// TODO: Must implement relationship between updates and records
 				}
 		}
 	}
+
 	private void addVariablesFuncs(Program program) {
 		Z3Logger.HeaderZ3(program.getName() + " (Variables)");
 		Expr txn_expr = ctx.mkFreshConst("txn", objs.getSort("Txn"));
@@ -174,6 +187,7 @@ public class Z3Driver {
 				}
 		}
 	}
+
 	public void addArgsFuncs(Program program) {
 		for (Transaction txn : program.getTransactions()) {
 			Z3Logger.SubHeaderZ3("Transaction: " + txn.getName());

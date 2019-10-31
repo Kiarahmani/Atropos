@@ -13,15 +13,17 @@ import com.microsoft.z3.Sort;
 import com.microsoft.z3.Symbol;
 
 import kiarahmani.atropos.DDL.FieldName;
+import kiarahmani.atropos.DML.query.Query;
 import kiarahmani.atropos.program.Program;
 import kiarahmani.atropos.program.Table;
+import kiarahmani.atropos.program.Transaction;
 import kiarahmani.atropos.utils.Constants;
 
 public class Program_Relations {
 	Program program;
 	Context ctx;
 	DeclaredObjects objs;
-	Expr qry1, qry2, rec1, rec2, time1, time2;
+	Expr qry1, qry2, rec1, rec2, time1, time2, txn1;
 
 	public Program_Relations(Program program, Context ctx, DeclaredObjects objs) {
 
@@ -29,6 +31,7 @@ public class Program_Relations {
 		this.ctx = ctx;
 		this.objs = objs;
 		qry1 = ctx.mkFreshConst("qry", objs.getSort("Qry"));
+		txn1 = ctx.mkFreshConst("txn", objs.getSort("Txn"));
 		qry2 = ctx.mkFreshConst("qry", objs.getSort("Qry"));
 		rec1 = ctx.mkFreshConst("rec", objs.getSort("Rec"));
 		rec2 = ctx.mkFreshConst("rec", objs.getSort("Rec"));
