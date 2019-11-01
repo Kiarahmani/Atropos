@@ -24,7 +24,7 @@ public class Encoding_Engine {
 		logger.debug("Begin analysis to create *initial* DAI graph");
 		this.conflict_graph = conflict_graph;
 		this.program = program;
-		new Z3Logger("z3-encoding.smt2");
+		new Z3Logger("smt2/z3-encoding.smt2");
 
 		int current_cycle_length = 4;
 

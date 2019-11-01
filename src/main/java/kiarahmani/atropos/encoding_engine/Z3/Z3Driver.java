@@ -1,5 +1,9 @@
 package kiarahmani.atropos.encoding_engine.Z3;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -39,8 +43,8 @@ public class Z3Driver {
 	private static final Logger logger = LogManager.getLogger(Atropos.class);
 	Context ctx;
 	Solver slv;
-	Axioms axioms;
 	Model model;
+	Model_Handler model_handler;
 	Program_Relations program_relations;
 
 	DeclaredObjects objs;
@@ -52,7 +56,6 @@ public class Z3Driver {
 		cfg.put("unsat_core", "true");
 		ctx = new Context(cfg);
 		objs = new DeclaredObjects();
-		axioms = new Axioms();
 
 		// begin encoding
 		slv = ctx.mkSolver();
@@ -67,6 +70,7 @@ public class Z3Driver {
 		program_relations.addExecutionFuncs();
 		program_relations.addProgramOrderFunc();
 		program_relations.addParentFunc();
+
 		addProjFuncsAndBounds(program);
 		addAssertion("uniqueness_of_time", program_relations.mk_uniqueness_of_time());
 		addAssertion("bound_on_qry_time", program_relations.mk_bound_on_qry_time());
@@ -97,8 +101,16 @@ public class Z3Driver {
 			for (Query q : txn.getAllQueries())
 				addQryTypeToIsExecuted(txn, q);
 
+		Expr rec_expr = ctx.mkFreshConst("rec", objs.getSort("Rec"));
+		Expr txn_expr = ctx.mkFreshConst("txn", objs.getSort("Txn"));
+		Expr order_expr = ctx.mkFreshConst("order", objs.getSort("Int"));
+		addAssertion("ass", ctx.mkExists(new Expr[] { txn_expr, order_expr, rec_expr },
+				ctx.mkApp(objs.getfuncs("dec_var_dec_v0"), txn_expr, order_expr, rec_expr), 1, null, null, null, null));
+		addAssertion("ass", ctx.mkExists(new Expr[] { txn_expr, order_expr, rec_expr },
+				ctx.mkApp(objs.getfuncs("inc_var_inc_v0"), txn_expr, order_expr, rec_expr), 1, null, null, null, null));
+
 		/* --- */
-		checkSAT();
+		checkSAT(program);
 	}
 
 	private void addQryTypeToIsExecuted(Transaction txn, Query q) {
@@ -160,9 +172,8 @@ public class Z3Driver {
 							ctx.mkImplies(lhs0, ctx.mkEq(
 									ctx.mkApp(objs.getfuncs(funcName + "_get_rec"), txn_expr, order_expr), rec_expr)),
 							1, null, null, null, null);
-					addAssertion(
-							"Any record that satisfies " + funcName + "must be returned by " + funcName + "_get_rec",
-							ass0);
+					addAssertion("Any record that satisfies " + funcName + " must also be returned by " + funcName
+							+ "_get_rec", ass0);
 
 					// properties of time func
 					Expr generated_time = ctx.mkApp(objs.getfuncs(timeFuncName), txn_expr);
@@ -184,10 +195,12 @@ public class Z3Driver {
 							rec_expr);
 					BoolExpr where_body = translateWhereClauseToZ3Expr(txn.getName(), txn_expr, q.getWHC(), rec_expr,
 							rec_time);
+					BoolExpr is_alive_body = (BoolExpr) ctx.mkApp(objs.getfuncs("is_alive"), rec_expr, rec_time);
 					Quantifier where_assertion = ctx.mkForall(new Expr[] { txn_expr, order_expr, rec_expr },
-							ctx.mkImplies(is_the_record, where_body), 1, null, null, null, null);
-					addAssertion("any record in " + current_var.getName() + " must satisfy the associated where clause",
-							where_assertion);
+							ctx.mkImplies(is_the_record, ctx.mkAnd(where_body, is_alive_body)), 1, null, null, null,
+							null);
+					addAssertion("any *alive* record in " + current_var.getName()
+							+ " must satisfy the associated where clause", where_assertion);
 					// prop#2: if record satisfies whc then it must be in var
 					BoolExpr body1 = (BoolExpr) ctx.mkApp(objs.getfuncs(funcName), txn_expr, order_expr, rec_expr);
 					BoolExpr body2 = ctx.mkLt((ArithExpr) order_expr, ctx.mkInt(Constants._MAX_FIELD_INT));
@@ -195,8 +208,10 @@ public class Z3Driver {
 					Quantifier is_the_record2 = ctx.mkExists(new Expr[] { order_expr }, ctx.mkAnd(body1, body2, body3),
 							1, null, null, null, null);
 					Quantifier where_assertion2 = ctx.mkForall(new Expr[] { txn_expr, rec_expr },
-							ctx.mkImplies(where_body, is_the_record2), 1, null, null, null, null);
-					addAssertion("if a record satisfies the where clause, it must be in " + current_var.getName(),
+							ctx.mkImplies(ctx.mkAnd(where_body, is_alive_body), is_the_record2), 1, null, null, null,
+							null);
+					addAssertion(
+							"if an *alive* record satisfies the where clause, it must be in " + current_var.getName(),
 							where_assertion2);
 				}
 		}
@@ -297,13 +312,16 @@ public class Z3Driver {
 		}
 	}
 
-	private void checkSAT() {
+	private void checkSAT(Program program) {
 		long begin = System.currentTimeMillis();
 		if (slv.check() == Status.SATISFIABLE) {
 			model = slv.getModel();
 			long end = System.currentTimeMillis();
 			System.out.println(
 					"\n\n==================\n" + "SATISFIABLE (" + (end - begin) + "ms)" + "\n==================\n\n");
+			model_handler = new Model_Handler(model, ctx, objs, program);
+			model_handler.printRawModelInToFile();
+			model_handler.printUniverse();
 		} else {
 			System.out.println("\n\n================\n" + slv.check() + "\n================\n\n");
 			for (Expr e : slv.getUnsatCore())
