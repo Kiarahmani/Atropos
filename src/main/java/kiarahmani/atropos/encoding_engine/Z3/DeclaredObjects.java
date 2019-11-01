@@ -45,7 +45,7 @@ public class DeclaredObjects {
 
 	public void addSort(String key, Sort value) {
 		sorts.put(key, value);
-		Z3Logger.LogZ3("(declare-sort " + value.toString() + ")");
+		Z3Logger.LogZ3("(declare-sort "+key+": " + value.toString() + ")");
 	}
 
 	public Sort getSort(String key) {
