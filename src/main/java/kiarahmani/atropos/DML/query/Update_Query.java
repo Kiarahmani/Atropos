@@ -13,13 +13,14 @@ public class Update_Query extends Query {
 	private TableName tableName;
 	private ArrayList<Tuple<FieldName, Expression>> update_expressions;
 
-	public Update_Query(int id, boolean isAtomic, TableName tableName, WHC whc) {
+	public Update_Query(int po, int id, boolean isAtomic, TableName tableName, WHC whc) {
 		this.kind = Kind.UPDATE;
 		this.id = id;
 		this.isAtomic = isAtomic;
 		this.where_clause = whc;
 		this.tableName = tableName;
 		this.update_expressions = new ArrayList<>();
+		this.po = po;
 	}
 
 	public String getId() {
@@ -81,5 +82,10 @@ public class Update_Query extends Query {
 	@Override
 	public void setPathCondition(Expression path_condition) {
 		this.path_condition = path_condition;
+	}
+
+	@Override
+	public int getPo() {
+		return this.po;
 	}
 }

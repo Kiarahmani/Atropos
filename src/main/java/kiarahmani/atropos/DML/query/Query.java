@@ -17,8 +17,11 @@ public abstract class Query {
 	protected WHC where_clause;
 	protected boolean isAtomic;
 	protected int id;
+	protected int po;
 
 	public abstract void setPathCondition(Expression path_condition);
+	
+	public abstract int getPo();
 	
 	public abstract Expression getPathCondition();
 

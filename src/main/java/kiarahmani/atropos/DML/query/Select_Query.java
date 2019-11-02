@@ -13,7 +13,7 @@ public class Select_Query extends Query {
 	private Variable variable;
 	private ArrayList<FieldName> fieldNames;
 
-	public Select_Query(int id, boolean isAtomic, TableName tableName, ArrayList<FieldName> fieldNames,
+	public Select_Query(int po, int id, boolean isAtomic, TableName tableName, ArrayList<FieldName> fieldNames,
 			Variable variable, WHC whc) {
 		assert (!(tableName == null));
 		assert (!(fieldNames == null));
@@ -24,6 +24,7 @@ public class Select_Query extends Query {
 		this.variable = variable;
 		this.isAtomic = isAtomic;
 		this.where_clause = whc;
+		this.po = po;
 	}
 
 	public String getId() {
@@ -86,5 +87,10 @@ public class Select_Query extends Query {
 	public Expression getPathCondition() {
 		assert (this.path_condition != null) : "cannot return null";
 		return this.path_condition;
+	}
+
+	@Override
+	public int getPo() {
+		return this.po;
 	}
 }

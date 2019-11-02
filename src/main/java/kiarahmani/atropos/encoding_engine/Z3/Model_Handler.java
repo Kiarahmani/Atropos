@@ -13,6 +13,7 @@ import com.microsoft.z3.Sort;
 
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DML.expression.E_Arg;
+import kiarahmani.atropos.DML.query.Query;
 import kiarahmani.atropos.program.Program;
 import kiarahmani.atropos.program.Table;
 import kiarahmani.atropos.program.Transaction;
@@ -46,9 +47,9 @@ public class Model_Handler {
 	}
 
 	public void printUniverse() {
-		System.out.println("\n\nMODEL UNIVERSE");
+		System.out.println("\n\n## MODEL UNIVERSE");
 		for (Sort sort : model.getSorts()) {
-			System.out.println("\n**Sort: " + sort);
+			System.out.println("\n## " + sort + "s ##");
 			String indent = "   ";
 			// print rec sort
 			if (sort.toString().equals("Rec")) {
@@ -65,15 +66,13 @@ public class Model_Handler {
 								for (FieldName fn : tab.getFieldNames()) {
 									String fn_val = model
 											.eval(objs.getfuncs("proj_" + tab.getTableName().getName() + "_" + fn)
-													.apply(x,time_expr), true)
+													.apply(x, time_expr), true)
 											.toString();
 									rec_val += delim + fn_val;
 									delim = ",";
 								}
-								rec_val += "," + model.eval(objs.getfuncs("is_alive").apply(x,time_expr), true);
+								rec_val += "," + model.eval(objs.getfuncs("is_alive").apply(x, time_expr), true);
 							}
-						// if (!rec_type.equals("departments"))
-						// rec_type += " ";
 						System.out.println(rec_type.toUpperCase() + rec_val + ")");
 					}
 				}
@@ -96,12 +95,24 @@ public class Model_Handler {
 								args += delim + a + ":" + arg_val;
 								delim = ",";
 							}
+							System.out.println(
+									indent + x.toString().replace("!val!", "") + ": " + txn_type + "(" + args + ")");
+							// print queries
+							for (Query q : txn.getAllQueries()) {
+								Expr po_expr = objs.getEnumConstructor("Po", "po_" + q.getPo());
+								boolean is_executed = model
+										.eval(objs.getfuncs("qry_is_executed").apply(x, po_expr), true).toString()
+										.equals("true");
+								Expr execution_time = model.eval(objs.getfuncs("qry_time").apply(x, po_expr), true);
+								if (is_executed) {
+									System.out.println(indent + indent + execution_time.toString().replace("_", ":")
+											+ " " + q.getId() + "(po:" + q.getPo() + ")");
+								}
+							}
 						}
 					}
 
-					System.out.println(indent + x.toString().replace("!val!", "") + ": " + txn_type + "(" + args + ")");
 				}
-				
 		}
 		System.out.println("\n\n\n\n\n");
 	}
