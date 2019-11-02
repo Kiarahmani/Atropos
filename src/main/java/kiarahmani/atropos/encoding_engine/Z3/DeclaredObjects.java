@@ -5,6 +5,8 @@ import java.util.Map;
 
 import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.DatatypeSort;
+import com.microsoft.z3.EnumSort;
+import com.microsoft.z3.Expr;
 import com.microsoft.z3.FuncDecl;
 import com.microsoft.z3.Sort;
 import com.microsoft.z3.Symbol;
@@ -15,6 +17,7 @@ public class DeclaredObjects {
 	private Map<String, FuncDecl> funcs;
 	private Map<String, DatatypeSort> datatypes;
 	private Map<String, BoolExpr> assertions;
+	private Map<String, EnumSort> enums;
 	private Map<String, Map<String, FuncDecl>> constructors;
 
 	public DeclaredObjects() {
@@ -23,6 +26,31 @@ public class DeclaredObjects {
 		this.constructors = new HashMap<>();
 		this.funcs = new HashMap<>();
 		this.assertions = new HashMap<>();
+		this.symbols = new HashMap<>();
+		this.enums = new HashMap<>();
+	}
+
+	public EnumSort getEnum(String key) {
+		return this.enums.get(key);
+	}
+
+	public void addEnum(String key, EnumSort v) {
+		assert (!this.enums.keySet().contains(key));
+		Z3Logger.SubHeaderZ3("Enum: " + v);
+		for (FuncDecl f : v.getConstDecls())
+			Z3Logger.LogZ3(f.toString());
+
+		this.enums.put(key, v);
+	}
+
+	public Symbol getSymbol(String k) {
+		return this.symbols.get(k);
+	}
+
+	public void addSymbol(String k, Symbol s) {
+		assert (!this.symbols.keySet().contains(k));
+		// Z3Logger.LogZ3("Symbol: "+s);
+		this.symbols.put(k, s);
 	}
 
 	public FuncDecl getfuncs(String key) {
@@ -43,9 +71,21 @@ public class DeclaredObjects {
 		return this.constructors.get(type).get(cnstrctrName);
 	}
 
+	public Expr getEnumConstructor(String enum_name, String cnstrctrName) {
+		Expr[] all_constructors = this.enums.get(enum_name).getConsts();
+		Expr result = null;
+		for (Expr e : all_constructors)
+			if (e.toString().contains(cnstrctrName)) {
+				result = e;
+				break;
+			}
+		assert (result != null);
+		return result;
+	}
+
 	public void addSort(String key, Sort value) {
 		sorts.put(key, value);
-		Z3Logger.LogZ3("(declare-sort "+key+": " + value.toString() + ")");
+		Z3Logger.LogZ3("(declare-sort " + key + ": " + value.toString() + ")");
 	}
 
 	public Sort getSort(String key) {

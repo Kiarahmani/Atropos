@@ -8,6 +8,7 @@ import com.microsoft.z3.Constructor;
 import com.microsoft.z3.Context;
 import com.microsoft.z3.DatatypeSort;
 import com.microsoft.z3.Expr;
+import com.microsoft.z3.FuncDecl;
 import com.microsoft.z3.Quantifier;
 import com.microsoft.z3.Sort;
 import com.microsoft.z3.Symbol;
@@ -33,16 +34,16 @@ public class Expression_Maker {
 		txn2 = ctx.mkFreshConst("txn", objs.getSort("Txn"));
 		rec1 = ctx.mkFreshConst("rec", objs.getSort("Rec"));
 		rec2 = ctx.mkFreshConst("rec", objs.getSort("Rec"));
-		time1 = ctx.mkFreshConst("time", objs.getSort("TimeSort"));
-		time2 = ctx.mkFreshConst("time", objs.getSort("TimeSort"));
-		po1 = ctx.mkFreshConst("po", objs.getSort("PoSort"));
-		po2 = ctx.mkFreshConst("po", objs.getSort("PoSort"));
-		arg1 = ctx.mkFreshConst("arg", objs.getSort("ArgSort"));
-		arg2 = ctx.mkFreshConst("arg", objs.getSort("ArgSort"));
-		fld1 = ctx.mkFreshConst("fld", objs.getSort("FldSort"));
-		fld2 = ctx.mkFreshConst("fld", objs.getSort("FldSort"));
-		part1 = ctx.mkFreshConst("part", objs.getSort("PartSort"));
-		part2 = ctx.mkFreshConst("part", objs.getSort("PartSort"));
+		time1 = ctx.mkFreshConst("time", objs.getEnum("Time"));
+		time2 = ctx.mkFreshConst("time", objs.getEnum("Time"));
+		po1 = ctx.mkFreshConst("po", objs.getEnum("Po"));
+		po2 = ctx.mkFreshConst("po", objs.getEnum("Po"));
+		arg1 = ctx.mkFreshConst("arg", objs.getSort("Arg"));
+		arg2 = ctx.mkFreshConst("arg", objs.getSort("Arg"));
+		fld1 = ctx.mkFreshConst("fld", objs.getSort("Fld"));
+		fld2 = ctx.mkFreshConst("fld", objs.getSort("Fld"));
+		part1 = ctx.mkFreshConst("part", objs.getEnum("Part"));
+		part2 = ctx.mkFreshConst("part", objs.getEnum("Part"));
 	}
 
 	private String[] getTypeConsNames(String name, int size) {
@@ -99,38 +100,13 @@ public class Expression_Maker {
 		objs.addDataType("QryType", mkDataType("QryType", program.getAllStmtTypes()));
 	}
 
-	public void addTypingFuncs() {
-		Z3Logger.LogZ3(";; value assignment for uninterpreted sorts");
-		objs.addFunc("time_getVal",
-				ctx.mkFuncDecl("time_getVal", objs.getSort("TimeSort"), objs.getDataTypes("TimeVal")));
-		objs.addFunc("po_getVal", ctx.mkFuncDecl("po_getVal", objs.getSort("PoSort"), objs.getDataTypes("PoVal")));
-		objs.addFunc("fld_getVal", ctx.mkFuncDecl("fld_getVal", objs.getSort("FldSort"), objs.getDataTypes("FldVal")));
-		objs.addFunc("part_getVal",
-				ctx.mkFuncDecl("part_getVal", objs.getSort("PartSort"), objs.getDataTypes("PartVal")));
-		objs.addFunc("arg_getVal", ctx.mkFuncDecl("arg_getVal", objs.getSort("ArgSort"), objs.getDataTypes("ArgVal")));
-
-		objs.addFunc("txn_type", ctx.mkFuncDecl("txn_type", objs.getSort("Txn"), objs.getDataTypes("TxnType")));
-		objs.addFunc("qry_type", ctx.mkFuncDecl("qry_type", new Sort[] { objs.getSort("Txn"), objs.getSort("PoSort") },
-				objs.getDataTypes("QryType")));
-		objs.addFunc("rec_type", ctx.mkFuncDecl("rec_type", objs.getSort("Rec"), objs.getDataTypes("RecType")));
-
-	}
-
-	public void addExecutionFuncs() {
-		Z3Logger.LogZ3(";; query related functions");
-		objs.addFunc("qry_time", ctx.mkFuncDecl("qry_time", new Sort[] { objs.getSort("Txn"), objs.getSort("PoSort") },
-				objs.getSort("TimeSort")));
-		objs.addFunc("qry_part", ctx.mkFuncDecl("qry_part", new Sort[] { objs.getSort("Txn"), objs.getSort("PoSort") },
-				objs.getSort("PartSort")));
-		objs.addFunc("qry_is_executed", ctx.mkFuncDecl("qry_is_executed",
-				new Sort[] { objs.getSort("Txn"), objs.getSort("PoSort") }, objs.getSort("Bool")));
-	}
-
 	public Quantifier mk_uniqueness_of_time() {
-		BoolExpr rhs = ctx.mkNot(ctx.mkEq(ctx.mkApp(objs.getfuncs("qry_time"), txn1, po1),
-				ctx.mkApp(objs.getfuncs("qry_time"), txn2, po2)));
-		BoolExpr lhs = ctx.mkOr(ctx.mkNot(ctx.mkEq(txn1, txn2)), ctx.mkNot(ctx.mkEq(po1, po2)));
-
+		Expr int_of_time1 = ctx.mkApp(objs.getfuncs("time_to_int"), ctx.mkApp(objs.getfuncs("qry_time"), txn1, po1));
+		Expr int_of_time2 = ctx.mkApp(objs.getfuncs("time_to_int"), ctx.mkApp(objs.getfuncs("qry_time"), txn2, po2));
+		Expr int_of_po1 = ctx.mkApp(objs.getfuncs("po_to_int"), po1);
+		Expr int_of_po2 = ctx.mkApp(objs.getfuncs("po_to_int"), po2);
+		BoolExpr lhs = ctx.mkEq(int_of_time1, int_of_time2);
+		BoolExpr rhs = ctx.mkAnd((ctx.mkEq(txn1, txn2)), ctx.mkEq(int_of_po1, int_of_po2));
 		BoolExpr body = ctx.mkImplies(lhs, rhs);
 		Quantifier result = ctx.mkForall(new Expr[] { txn1, txn2, po1, po2 }, body, 1, null, null, null, null);
 		return result;
@@ -173,27 +149,32 @@ public class Expression_Maker {
 		return result;
 	}
 
-	public BoolExpr mk_qry_type_to_po(String qry_name, int po) {
-		BoolExpr lhs = (BoolExpr) ctx.mkEq(ctx.mkApp(objs.getfuncs("qry_type"), qry1),
-				ctx.mkApp(objs.getConstructor("QryType", qry_name)));
-		BoolExpr rhs = ctx.mkEq((ArithExpr) ctx.mkApp(objs.getfuncs("qry_po"), qry1), ctx.mkInt(po));
+	public BoolExpr mk_po_to_qry_type(String txn_name, String qry_name, int po) {
+		Expr po_val = objs.getEnum("Po").getConsts()[po];
+		Expr txn_type = objs.getEnumConstructor("TxnType", txn_name);
+		Expr expected_qry_type = objs.getEnumConstructor("QryType", qry_name);
+		BoolExpr lhs1 = (BoolExpr) ctx.mkEq(ctx.mkApp(objs.getfuncs("txn_type"), txn1), txn_type);
+		BoolExpr lhs2 = (BoolExpr) ctx.mkEq(po1, po_val);
+		BoolExpr lhs = ctx.mkAnd(lhs1, lhs2);
+		BoolExpr rhs = ctx.mkEq(ctx.mkApp(objs.getfuncs("qry_type"), txn1, po1), expected_qry_type);
 		BoolExpr body = ctx.mkImplies(lhs, rhs);
-		Quantifier x = ctx.mkForall(new Expr[] { qry1 }, body, 1, null, null, null, null);
+		Quantifier x = ctx.mkForall(new Expr[] { txn1, po1 }, body, 1, null, null, null, null);
 		return x;
 	}
 
 	public BoolExpr mk_qry_time_respects_po() {
-		ArithExpr time1 = (ArithExpr) ctx.mkApp(objs.getfuncs("qry_time"), qry1);
-		ArithExpr time2 = (ArithExpr) ctx.mkApp(objs.getfuncs("qry_time"), qry2);
-		ArithExpr po1 = (ArithExpr) ctx.mkApp(objs.getfuncs("qry_po"), qry1);
-		ArithExpr po2 = (ArithExpr) ctx.mkApp(objs.getfuncs("qry_po"), qry2);
+		Expr local_time1 = ctx.mkApp(objs.getfuncs("qry_time"), txn1, po1);
+		Expr local_time2 = ctx.mkApp(objs.getfuncs("qry_time"), txn1, po2);
+		ArithExpr int_of_local_time1 = (ArithExpr) ctx.mkApp(objs.getfuncs("time_to_int"), local_time1);
+		ArithExpr int_of_local_time2 = (ArithExpr) ctx.mkApp(objs.getfuncs("time_to_int"), local_time2);
+		ArithExpr int_of_po1 = (ArithExpr) ctx.mkApp(objs.getfuncs("po_to_int"), po1);
+		ArithExpr int_of_po2 = (ArithExpr) ctx.mkApp(objs.getfuncs("po_to_int"), po2);
 
-		BoolExpr lhs1 = ctx.mkGt(po1, po2);
-		BoolExpr lhs2 = ctx.mkEq(ctx.mkApp(objs.getfuncs("parent"), qry1), ctx.mkApp(objs.getfuncs("parent"), qry2));
-		BoolExpr rhs = ctx.mkGt(time1, time2);
+		BoolExpr lhs = ctx.mkGt(int_of_po2, int_of_po1);
+		BoolExpr rhs = ctx.mkGt(int_of_local_time2, int_of_local_time1);
 
-		BoolExpr body = ctx.mkImplies(ctx.mkAnd(lhs1, lhs2), rhs);
-		Quantifier x = ctx.mkForall(new Expr[] { qry1, qry2 }, body, 1, null, null, null, null);
+		BoolExpr body = ctx.mkImplies(lhs, rhs);
+		Quantifier x = ctx.mkForall(new Expr[] { txn1, po1, po2 }, body, 1, null, null, null, null);
 		return x;
 	}
 
@@ -220,7 +201,7 @@ public class Expression_Maker {
 		}
 
 		BoolExpr lhs = ctx.mkEq(ctx.mkApp(objs.getfuncs("rec_type"), rec1),
-				ctx.mkApp(objs.getConstructor("RecType", table_name)));
+				objs.getEnumConstructor("RecType", table_name));
 		BoolExpr body = ctx.mkAnd(eqs);
 		Quantifier x = ctx.mkForall(new Expr[] { rec1, time1, time2 }, ctx.mkImplies(lhs, body), 1, null, null, null,
 				null);
@@ -237,10 +218,8 @@ public class Expression_Maker {
 			eqs[i++] = ctx.mkEq(ctx.mkApp(objs.getfuncs(funcName), rec1, time1),
 					ctx.mkApp(objs.getfuncs(funcName), rec2, time1));
 		}
-		eqs[i++] = ctx.mkEq(ctx.mkApp(objs.getfuncs("rec_type"), rec1),
-				ctx.mkApp(objs.getConstructor("RecType", table_name)));
-		eqs[i++] = ctx.mkEq(ctx.mkApp(objs.getfuncs("rec_type"), rec2),
-				ctx.mkApp(objs.getConstructor("RecType", table_name)));
+		eqs[i++] = ctx.mkEq(ctx.mkApp(objs.getfuncs("rec_type"), rec1), objs.getEnumConstructor("RecType", table_name));
+		eqs[i++] = ctx.mkEq(ctx.mkApp(objs.getfuncs("rec_type"), rec2), objs.getEnumConstructor("RecType", table_name));
 		BoolExpr lhs = ctx.mkAnd(eqs);
 		BoolExpr body = ctx.mkEq(rec1, rec2);
 		Quantifier x = ctx.mkForall(new Expr[] { rec1, rec2, time1 }, ctx.mkImplies(lhs, body), 1, null, null, null,
