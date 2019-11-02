@@ -48,8 +48,7 @@ public class Model_Handler {
 	public void printUniverse() {
 		System.out.println("\n\nMODEL UNIVERSE");
 		for (Sort sort : model.getSorts()) {
-			System.out.println("\n**Sort: " + sort);
-			System.out.println("**Instances: ");
+			System.out.println("\n**Sort " + sort + ":");
 			String indent = "   ";
 			// print rec sort
 			if (sort.toString().equals("Rec")) {
@@ -67,7 +66,6 @@ public class Model_Handler {
 											.eval(objs.getfuncs("proj_" + tab.getTableName().getName() + "_" + fn)
 													.apply(x, ctx.mkInt(t)), true)
 											.toString();
-									// rec_val += fn + ":" + fn_val + " ";
 									rec_val += delim + fn_val;
 									delim = ",";
 								}
@@ -80,7 +78,9 @@ public class Model_Handler {
 				}
 				System.out.println();
 			}
-			// print qry sort
+			
+		
+		/*	// print qry sort
 			if (sort.toString().equals("Qry"))
 				for (int t = 0; t < Constants._MAX_EXECECUTION_LENGTH; t++) {
 					System.out.println(indent + "time:" + t);
@@ -93,6 +93,8 @@ public class Model_Handler {
 						}
 					}
 				}
+				
+				*/
 			// print txn sort
 			if (sort.toString().equals("Txn"))
 				for (Expr x : model.getSortUniverse(sort)) {
@@ -114,6 +116,7 @@ public class Model_Handler {
 
 					System.out.println(indent + x.toString().replace("!val!", "") + ": " + txn_type + "(" + args + ")");
 				}
+				
 		}
 		System.out.println("\n\n\n\n\n");
 	}

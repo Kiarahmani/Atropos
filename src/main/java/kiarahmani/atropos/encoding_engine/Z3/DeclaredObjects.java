@@ -5,6 +5,7 @@ import java.util.Map;
 
 import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.DatatypeSort;
+import com.microsoft.z3.Expr;
 import com.microsoft.z3.FuncDecl;
 import com.microsoft.z3.Sort;
 import com.microsoft.z3.Symbol;
@@ -14,6 +15,7 @@ public class DeclaredObjects {
 	private Map<String, Symbol> symbols;
 	private Map<String, FuncDecl> funcs;
 	private Map<String, DatatypeSort> datatypes;
+	private Map<String, Expr> constants;
 	private Map<String, BoolExpr> assertions;
 	private Map<String, Map<String, FuncDecl>> constructors;
 
@@ -23,6 +25,15 @@ public class DeclaredObjects {
 		this.constructors = new HashMap<>();
 		this.funcs = new HashMap<>();
 		this.assertions = new HashMap<>();
+		this.constants = new HashMap<String, Expr>();
+	}
+
+	public Expr getConst(String keString) {
+		return this.constants.get(keString);
+	}
+	
+	public void addConst(String s, Expr e) {
+		constants.put(s, e);
 	}
 
 	public FuncDecl getfuncs(String key) {
@@ -45,7 +56,7 @@ public class DeclaredObjects {
 
 	public void addSort(String key, Sort value) {
 		sorts.put(key, value);
-		Z3Logger.LogZ3("(declare-sort "+key+": " + value.toString() + ")");
+		Z3Logger.LogZ3("(declare-sort " + key + ": " + value.toString() + ")");
 	}
 
 	public Sort getSort(String key) {

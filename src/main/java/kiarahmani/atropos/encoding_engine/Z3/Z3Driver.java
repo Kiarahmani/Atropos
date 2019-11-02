@@ -7,6 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.microsoft.z3.ArithExpr;
+import com.microsoft.z3.BitVecExpr;
 import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Context;
 import com.microsoft.z3.Expr;
@@ -42,7 +43,7 @@ public class Z3Driver {
 	Model model;
 	Model_Handler model_handler;
 	Expression_Maker em;
-	Expr rec1, rec2, time1, time2, txn1, txn2, po1, po2, arg1, arg2, fld1, fld2, part1, part2;
+	Expr rec1, rec2, time1, time2, txn1, txn2, po1, po2, arg1, arg2, fld1, fld2, part1, part2, order1, order2;
 
 	DeclaredObjects objs;
 
@@ -66,56 +67,50 @@ public class Z3Driver {
 		em.addRecFldDataTypes();
 		em.addTxnOpDataTypes();
 		em.addTypingFuncs();
+		em.mk_time_to_int();
+		for (int i = 0; i < Constants._MAX_EXECECUTION_LENGTH; i++) {
+			addAssertion("define values of time_to_int function based on the timeVal type", em.bound_time_to_int(i));
+			objs.addConst("cons_time_" + i, ctx.mkConst("cons_time_" + i, objs.getSort("TimeSort")));
+			addAssertion("constants to their type", const_to_type("Time", i));
+		}
+		em.mk_po_to_int();
+		for (int i = 0; i < Constants._MAX_EXECUTION_PO; i++) {
+			addAssertion("define values of po_to_int function based on the poVal type", em.bound_po_to_int(i));
+			objs.addConst("cons_po_" + i,   ctx.mkConst("cons_po_" + i, objs.getSort("PoSort")));
+			addAssertion("constants to their type", const_to_type("Po", i));
+		}
+		for (int i = 0; i < Math.pow(2, Constants._MAX_FIELD_INT); i++){
+			addAssertion("define values of ro_to_int function based on the roVal type", em.bound_ro_to_int(i));
+			objs.addConst("cons_ro_" + i, ctx.mkConst("cons_ro_" + i, objs.getSort("RoSort")));
+			addAssertion("constants to their type", const_to_type("Ro", i));
+		}
 		em.addExecutionFuncs();
 		addProjFuncsAndBounds(program);
 		Z3Logger.SubHeaderZ3("Properties of query functions");
 		addAssertion("uniqueness of time", em.mk_uniqueness_of_time());
-		//
-		// addAssertion("bound_on_qry_part", program_relations.mk_bound_on_qry_part());
-		// addAssertion("bound_on_qry_po", program_relations.mk_bound_on_po_part());
-		// addAssertion("bound_on_txn_instances",
-		// em.mk_bound_on_txn_instances(current_cycle_length));
-		// for (Transaction txn : program.getTransactions()) {
-		// int po = 1;
-		// for (String qry_name : txn.getAllStmtTypes())
-		// addAssertion("qry_type_to_po_" + qry_name,
-		// program_relations.mk_qry_type_to_po(qry_name, po++));
-		// }
-		// for (Transaction txn : program.getTransactions())
-		// for (String qry_name : txn.getAllStmtTypes())
-		// addAssertion("qry_types_to_txn_types_" + txn.getName() + "_" + qry_name,
-		// program_relations.mk_qry_types_to_txn_types(txn.getName(), qry_name));
-		// addAssertion("qry_time_respects_po",
-		// program_relations.mk_qry_time_respects_po());
-		// addAssertion("eq_types_and_eq_par_then_eq",
-		// program_relations.mk_eq_types_and_eq_par_then_eq());
-		// for (Table t : program.getTables()) {
-		// String table_name = t.getTableName().getName();
-		// addAssertion("pk_must_not_change_" + table_name,
-		// program_relations.mk_pk_must_not_change(t));
-		// addAssertion("eq_pk_eq_rec_" + table_name,
-		// program_relations.mk_eq_pk_eq_rec(t));
-		// }
-		// Z3Logger.HeaderZ3(program.getName() + " (Transactrions Sorts, types and
-		// functions)");
-		// addArgsFuncs(program);
-		// addVariablesFuncs(program);
-		// addRecordsValConstraints(program);
-		// for (Transaction txn : program.getTransactions())
-		// for (Query q : txn.getAllQueries())
-		// addQryTypeToIsExecuted(txn, q);
+		addAssertion("bound_on_txn_instances", em.mk_bound_on_txn_instances(current_cycle_length));
 
-		// Expr rec_expr = ctx.mkFreshConst("rec", objs.getSort("Rec"));
-		// Expr txn_expr = ctx.mkFreshConst("txn", objs.getSort("Txn"));
-		// Expr order_expr = ctx.mkFreshConst("order", objs.getSort("Int"));
-		// addAssertion("ass", ctx.mkExists(new Expr[] { txn_expr, order_expr, rec_expr
-		// },
-		// ctx.mkApp(objs.getfuncs("dec_var_dec_v0"), txn_expr, order_expr, rec_expr),
-		// 1, null, null, null, null));
-		// addAssertion("ass", ctx.mkExists(new Expr[] { txn_expr, order_expr, rec_expr
-		// },
-		// ctx.mkApp(objs.getfuncs("inc_var_inc_v0"), txn_expr, order_expr, rec_expr),
-		// 1, null, null, null, null));
+		for (Transaction txn : program.getTransactions()) {
+			int po = 0;
+			for (String qry_name : txn.getAllStmtTypes())
+				addAssertion("qry_type_to_po_" + qry_name, em.mk_po_val_to_qry_type(txn.getName(), qry_name, po++));
+		}
+
+		addAssertion("qry_time_respects_po", em.mk_qry_time_respects_po());
+		for (Table t : program.getTables()) {
+			String table_name = t.getTableName().getName();
+			addAssertion("pk_must_not_change_" + table_name, em.mk_pk_must_not_change(t));
+			addAssertion("eq_pk_eq_rec_" + table_name, em.mk_eq_pk_eq_rec(t));
+		}
+		Z3Logger.HeaderZ3(program.getName() + " (Transactrions Sorts, types and functions)");
+		addArgsFuncs(program);
+		addVariablesFuncs(program);
+		addRecordsValConstraints(program);
+		for (Transaction txn : program.getTransactions()) {
+			int i = 0;
+			for (Query q : txn.getAllQueries())
+				addQryTypeToIsExecuted(txn, q, i++);
+		}
 
 		/* --- */
 		checkSAT(program);
@@ -127,12 +122,14 @@ public class Z3Driver {
 		objs.addSort("Rec", ctx.mkUninterpretedSort("Rec"));
 		objs.addSort("Txn", ctx.mkUninterpretedSort("Txn"));
 		objs.addSort("Bool", ctx.mkBoolSort());
+		objs.addSort("Int", ctx.mkIntSort());
 		objs.addSort("String", ctx.mkStringSort());
 		objs.addSort("PoSort", ctx.mkUninterpretedSort("PoSort"));
+		objs.addSort("RoSort", ctx.mkUninterpretedSort("RoSort"));
 		objs.addSort("TimeSort", ctx.mkUninterpretedSort("TimeSort"));
 		objs.addSort("PartSort", ctx.mkUninterpretedSort("PartSort"));
-		objs.addSort("ArgSort", ctx.mkUninterpretedSort("ArgSort"));
-		objs.addSort("FldSort", ctx.mkUninterpretedSort("FldSort"));
+		objs.addSort("ArgSort", ctx.mkBitVecSort(Constants._MAX_ARG_INT));
+		objs.addSort("FldSort", ctx.mkBitVecSort(Constants._MAX_FIELD_INT));
 	}
 
 	private void initializeLocalVariables() {
@@ -150,20 +147,24 @@ public class Z3Driver {
 		fld2 = ctx.mkFreshConst("fld", objs.getSort("FldSort"));
 		part1 = ctx.mkFreshConst("part", objs.getSort("PartSort"));
 		part2 = ctx.mkFreshConst("part", objs.getSort("PartSort"));
+		order1 = ctx.mkFreshConst("order", objs.getSort("RoSort"));
+		order2 = ctx.mkFreshConst("order", objs.getSort("RoSort"));
 	}
 
-	private void addQryTypeToIsExecuted(Transaction txn, Query q) {
-		Expr txn_expr = ctx.mkFreshConst("txn", objs.getSort("Txn"));
-		Expr qry_expr = ctx.mkFreshConst("qry", objs.getSort("Qry"));
-		BoolExpr lhs1 = ctx.mkEq(ctx.mkApp(objs.getfuncs("parent"), qry_expr), txn_expr);
-		Expr expected_type = ctx.mkApp(objs.getConstructor("QryType", txn.getName() + "-" + q.getId()));
-		Expr type_get_qry = ctx.mkApp(objs.getfuncs("qry_type"), qry_expr);
-		BoolExpr lhs2 = ctx.mkEq(type_get_qry, expected_type);
-		BoolExpr lhs = ctx.mkAnd(lhs1, lhs2);
-		BoolExpr rhs = ctx.mkEq(ctx.mkApp(objs.getfuncs("qry_is_executed"), qry_expr),
-				(BoolExpr) translateExpressionsToZ3Expr(txn.getName(), txn_expr, q.getPathCondition()));
-		BoolExpr body = ctx.mkImplies(lhs, rhs);
-		BoolExpr result = ctx.mkForall(new Expr[] { txn_expr, qry_expr }, body, 1, null, null, null, null);
+	private BoolExpr const_to_type(String tp, int i) {
+		return ctx.mkEq(
+				ctx.mkApp(objs.getfuncs(tp.toLowerCase() + "_getVal"),
+						objs.getConst("cons_" + tp.toLowerCase() + "_" + i)),
+				ctx.mkApp(objs.getConstructor(tp + "Val", tp.toLowerCase() + i)));
+	}
+
+	private void addQryTypeToIsExecuted(Transaction txn, Query q, int i) {
+		BoolExpr pre_condition = ctx.mkEq(ctx.mkApp(objs.getfuncs("po_getVal"), po1),
+				ctx.mkApp(objs.getConstructor("PoVal", "po" + i)));
+		BoolExpr body = ctx.mkEq(ctx.mkApp(objs.getfuncs("qry_is_executed"), txn1, po1),
+				(BoolExpr) translateExpressionsToZ3Expr(txn.getName(), txn1, q.getPathCondition()));
+		BoolExpr result = ctx.mkForall(new Expr[] { txn1, po1 }, ctx.mkImplies(pre_condition, body), 1, null, null,
+				null, null);
 		addAssertion("qry_type_to_is_executed_" + q.getId(), result);
 	}
 
@@ -178,11 +179,12 @@ public class Z3Driver {
 
 	private void addVariablesFuncs(Program program) {
 		Z3Logger.HeaderZ3(program.getName() + " (Variables)");
-		Expr txn_expr = ctx.mkFreshConst("txn", objs.getSort("Txn"));
-		Expr order_expr = ctx.mkFreshConst("order", objs.getSort("Int"));
-		Expr qry_expr = ctx.mkFreshConst("qry", objs.getSort("Qry"));
-		Expr rec_expr = ctx.mkFreshConst("rec", objs.getSort("Rec"));
+		// Expr txn_expr = ctx.mkFreshConst("txn", objs.getSort("Txn"));
+		// Expr order_expr = ctx.mkFreshConst("order", objs.getSort("Int"));
+		// Expr qry_expr = ctx.mkFreshConst("qry", objs.getSort("Qry"));
+		// Expr rec_expr = ctx.mkFreshConst("rec", objs.getSort("Rec"));
 		for (Transaction txn : program.getTransactions()) {
+			int i = 0;
 			for (Query q : txn.getAllQueries())
 				if (!q.isWrite()) {
 					Variable current_var = ((Select_Query) q).getVariable();
@@ -191,67 +193,69 @@ public class Z3Driver {
 
 					// def main function
 					Z3Logger.LogZ3("\n;; definition of var function " + funcName);
-					objs.addFunc(funcName,
-							ctx.mkFuncDecl(funcName,
-									new Sort[] { objs.getSort("Txn"), objs.getSort("Int"), objs.getSort("Rec") },
-									objs.getSort("Bool")));
+//					objs.addFunc(funcName,
+//							ctx.mkFuncDecl(funcName,
+//									new Sort[] { objs.getSort("Txn"), objs.getSort("RoSort"), objs.getSort("Rec") },
+//									objs.getSort("Bool")));
 
 					// def helper function, which returns the record that main functions is true for
 					objs.addFunc(funcName + "_get_rec", ctx.mkFuncDecl(funcName + "_get_rec",
-							new Sort[] { objs.getSort("Txn"), objs.getSort("Int") }, objs.getSort("Rec")));
+							new Sort[] { objs.getSort("Txn"), objs.getSort("RoSort") }, objs.getSort("Rec")));
 
 					// def time func
 					String timeFuncName = txn.getName() + "_var_" + current_var.getName() + "_gen_time";
 					objs.addFunc(timeFuncName,
-							ctx.mkFuncDecl(timeFuncName, new Sort[] { objs.getSort("Txn") }, objs.getSort("Int")));
+							ctx.mkFuncDecl(timeFuncName, new Sort[] { objs.getSort("Txn") }, objs.getSort("TimeSort")));
 
 					// properties of the helper function
-					BoolExpr lhs0 = (BoolExpr) ctx.mkApp(objs.getfuncs(funcName), txn_expr, order_expr, rec_expr);
-					Quantifier ass0 = ctx.mkForall(new Expr[] { txn_expr, order_expr, rec_expr },
-							ctx.mkImplies(lhs0, ctx.mkEq(
-									ctx.mkApp(objs.getfuncs(funcName + "_get_rec"), txn_expr, order_expr), rec_expr)),
-							1, null, null, null, null);
-					addAssertion("Any record that satisfies " + funcName + " must also be returned by " + funcName
-							+ "_get_rec", ass0);
+					// BoolExpr lhs0 = (BoolExpr) ctx.mkApp(objs.getfuncs(funcName), txn_expr,
+					// order_expr, rec_expr);
+					// Quantifier ass0 = ctx.mkForall(new Expr[] { txn_expr, order_expr, rec_expr },
+					// ctx.mkImplies(lhs0, ctx.mkEq(
+					// ctx.mkApp(objs.getfuncs(funcName + "_get_rec"), txn_expr, order_expr),
+					// rec_expr)),
+					// 1, null, null, null, null);
+					// addAssertion("Any record that satisfies " + funcName + " must also be
+					// returned by " + funcName
+					// + "_get_rec", ass0);
 
 					// properties of time func
-					Expr generated_time = ctx.mkApp(objs.getfuncs(timeFuncName), txn_expr);
-					Expr time_of_query = ctx.mkApp(objs.getfuncs("qry_time"), qry_expr);
-					BoolExpr lhs1 = ctx.mkEq(ctx.mkApp(objs.getfuncs("parent"), qry_expr), txn_expr);
-					Expr type_get_qry = ctx.mkApp(objs.getfuncs("qry_type"), qry_expr);
-					Expr expected_type = ctx.mkApp(objs.getConstructor("QryType", txn.getName() + "-" + q.getId()));
-					BoolExpr lhs2 = ctx.mkEq(type_get_qry, expected_type);
-					BoolExpr lhs = ctx.mkAnd(lhs1, lhs2);
+					Expr generated_time = ctx.mkApp(objs.getfuncs(timeFuncName), txn1);
+					Expr time_of_query = ctx.mkApp(objs.getfuncs("qry_time"), txn1, po1);
 					BoolExpr rhs = ctx.mkEq(generated_time, time_of_query);
+
+					Expr expected_type = ctx.mkApp(objs.getConstructor("PoVal", "po" + i));
+					BoolExpr lhs = ctx.mkEq(ctx.mkApp(objs.getfuncs("po_getVal"), po1), expected_type);
+
 					BoolExpr body = ctx.mkImplies(lhs, rhs);
-					Quantifier ass1 = ctx.mkForall(new Expr[] { txn_expr, qry_expr }, body, 1, null, null, null, null);
+					Quantifier ass1 = ctx.mkForall(new Expr[] { txn1, po1 }, body, 1, null, null, null, null);
 					addAssertion("assertion that the time matches the select time for " + current_var.getName(), ass1);
 
 					// properties of main func
 					// prop#1: a record is in var only if satisfies the whc
-					Expr rec_time = ctx.mkApp(objs.getfuncs(timeFuncName), txn_expr);
-					BoolExpr is_the_record = (BoolExpr) ctx.mkApp(objs.getfuncs(funcName), txn_expr, order_expr,
-							rec_expr);
-					BoolExpr where_body = translateWhereClauseToZ3Expr(txn.getName(), txn_expr, q.getWHC(), rec_expr,
+					Expr rec_time = ctx.mkApp(objs.getfuncs(timeFuncName), txn1);
+					Expr the_record = ctx.mkApp(objs.getfuncs(funcName + "_get_rec"), txn1, order1);
+					BoolExpr where_body = translateWhereClauseToZ3Expr(txn.getName(), txn1, q.getWHC(), the_record,
 							rec_time);
-					BoolExpr is_alive_body = (BoolExpr) ctx.mkApp(objs.getfuncs("is_alive"), rec_expr, rec_time);
-					Quantifier where_assertion = ctx.mkForall(new Expr[] { txn_expr, order_expr, rec_expr },
-							ctx.mkImplies(is_the_record, ctx.mkAnd(where_body, is_alive_body)), 1, null, null, null,
-							null);
+					BoolExpr is_alive_body = (BoolExpr) ctx.mkApp(objs.getfuncs("is_alive"), the_record, rec_time);
+					Quantifier where_assertion = ctx.mkForall(new Expr[] { txn1, order1 },
+							ctx.mkAnd(where_body, is_alive_body), 1, null, null, null, null);
 					addAssertion("any *alive* record in " + current_var.getName()
 							+ " must satisfy the associated where clause", where_assertion);
+
 					// prop#2: if record satisfies whc then it must be in var
-					BoolExpr body1 = (BoolExpr) ctx.mkApp(objs.getfuncs(funcName), txn_expr, order_expr, rec_expr);
-					BoolExpr body2 = ctx.mkLt((ArithExpr) order_expr, ctx.mkInt(Constants._MAX_FIELD_INT));
-					BoolExpr body3 = ctx.mkGt((ArithExpr) order_expr, ctx.mkInt(0));
-					Quantifier is_the_record2 = ctx.mkExists(new Expr[] { order_expr }, ctx.mkAnd(body1, body2, body3),
-							1, null, null, null, null);
-					Quantifier where_assertion2 = ctx.mkForall(new Expr[] { txn_expr, rec_expr },
-							ctx.mkImplies(ctx.mkAnd(where_body, is_alive_body), is_the_record2), 1, null, null, null,
-							null);
+
+					BoolExpr where_body2 = translateWhereClauseToZ3Expr(txn.getName(), txn1, q.getWHC(), rec1,
+							rec_time);
+					BoolExpr body2 = ctx.mkEq(the_record, rec1);
+					BoolExpr exists_clause = ctx.mkExists(new Expr[] { order1 }, body2, 1, null, null, null, null);
+					Quantifier where_assertion2 = ctx.mkForall(new Expr[] { txn1, rec1 },
+							ctx.mkImplies(where_body2, exists_clause), 1, null, null, null, null);
 					addAssertion(
 							"if an *alive* record satisfies the where clause, it must be in " + current_var.getName(),
 							where_assertion2);
+
+					i++;
 				}
 		}
 	}
@@ -266,14 +270,15 @@ public class Z3Driver {
 
 				switch (arg.getType()) {
 				case NUM:
-					objs.addFunc(funcName, ctx.mkFuncDecl(funcName, objs.getSort("Txn"), objs.getSort("Int")));
+					objs.addFunc(funcName, ctx.mkFuncDecl(funcName, objs.getSort("Txn"), objs.getSort("ArgSort")));
 					// create bound for the function
-					ArithExpr ret_val = (ArithExpr) ctx.mkApp(objs.getfuncs(funcName), txn_expr);
-					BoolExpr bodyGT = ctx.mkGt(ret_val, ctx.mkInt(0));
-					BoolExpr bodyLT = ctx.mkLt(ret_val, ctx.mkInt(Constants._MAX_ARG_INT));
-					BoolExpr body = ctx.mkAnd(bodyGT, bodyLT);
-					Quantifier result = ctx.mkForall(new Expr[] { txn_expr }, body, 1, null, null, null, null);
-					addAssertion("bound_on_" + funcName, result);
+					// ArithExpr ret_val = (ArithExpr) ctx.mkApp(objs.getfuncs(funcName), txn_expr);
+					// BoolExpr bodyGT = ctx.mkGt(ret_val, ctx.mkInt(0));
+					// BoolExpr bodyLT = ctx.mkLt(ret_val, ctx.mkInt(Constants._MAX_ARG_INT));
+					// BoolExpr body = ctx.mkAnd(bodyGT, bodyLT);
+					// Quantifier result = ctx.mkForall(new Expr[] { txn_expr }, body, 1, null,
+					// null, null, null);
+					// addAssertion("bound_on_" + funcName, result);
 					break;
 				case TEXT:
 					objs.addFunc(funcName, ctx.mkFuncDecl(funcName, objs.getSort("Txn"), objs.getSort("String")));
@@ -422,10 +427,13 @@ public class Z3Driver {
 			}
 		case "E_Proj":
 			E_Proj p_exp = (E_Proj) input_expr;
-			Expr order = translateExpressionsToZ3Expr(txnName, transaction, p_exp.e);
+			Expr order = ctx.mkApp(
+					objs.getConstructor("RoVal", "ro" + translateExpressionsToZ3Expr(txnName, transaction, p_exp.e)));
+			Expr new_constant = ctx.mkConst("constant_" + order, objs.getSort("RoSort"));
+			addAssertion("local constants value", ctx.mkEq(order, ctx.mkApp(objs.getfuncs("ro_getVal"), new_constant)));
 			Expr var_time = ctx.mkApp(objs.getfuncs(txnName + "_var_" + p_exp.v.getName() + "_gen_time"), transaction);
 			Expr rec_expr = ctx.mkApp(objs.getfuncs(txnName + "_var_" + p_exp.v.getName() + "_get_rec"), transaction,
-					order);
+					new_constant);
 			return ctx.mkApp(objs.getfuncs("proj_" + p_exp.v.getTableName() + "_" + p_exp.f.getName()), rec_expr,
 					var_time);
 		case "E_Size":
@@ -437,26 +445,26 @@ public class Z3Driver {
 			E_BinUp bu_exp = (E_BinUp) input_expr;
 			switch (bu_exp.op) {
 			case GT:
-				return ctx.mkGt((ArithExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper1),
-						(ArithExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper2));
+				return ctx.mkBVUGT((BitVecExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper1),
+						(BitVecExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper2));
 			case LT:
-				return ctx.mkLt((ArithExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper1),
-						(ArithExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper2));
+				return ctx.mkBVULT((BitVecExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper1),
+						(BitVecExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper2));
 			case EQ:
 				return ctx.mkEq(translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper1),
 						translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper2));
 			case MULT:
-				return ctx.mkMul((ArithExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper1),
-						(ArithExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper2));
+				return ctx.mkBVMul((BitVecExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper1),
+						(BitVecExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper2));
 			case PLUS:
-				return ctx.mkAdd((ArithExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper1),
-						(ArithExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper2));
+				return ctx.mkBVAdd((BitVecExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper1),
+						(BitVecExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper2));
 			case MINUS:
-				return ctx.mkSub((ArithExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper1),
-						(ArithExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper2));
+				return ctx.mkBVSub((BitVecExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper1),
+						(BitVecExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper2));
 			case DIV:
-				return ctx.mkDiv((ArithExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper1),
-						(ArithExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper2));
+				return ctx.mkBVSDiv((BitVecExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper1),
+						(BitVecExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper2));
 			case AND:
 				return ctx.mkAnd((BoolExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper1),
 						(BoolExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper2));

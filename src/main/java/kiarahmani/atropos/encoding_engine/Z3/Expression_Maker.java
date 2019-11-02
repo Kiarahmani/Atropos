@@ -22,7 +22,8 @@ public class Expression_Maker {
 	Context ctx;
 	DeclaredObjects objs;
 	// TODO: remove qry1 and qry2 once done with updating this class
-	Expr qry1, qry2, rec1, rec2, txn1, txn2, time1, time2, po1, po2, part1, part2, arg1, arg2, fld1, fld2;
+	Expr qry1, qry2, rec1, rec2, txn1, txn2, time1, time2, po1, po2, part1, part2, arg1, arg2, fld1, fld2, order1,
+			order2;
 
 	public Expression_Maker(Program program, Context ctx, DeclaredObjects objs) {
 
@@ -43,6 +44,8 @@ public class Expression_Maker {
 		fld2 = ctx.mkFreshConst("fld", objs.getSort("FldSort"));
 		part1 = ctx.mkFreshConst("part", objs.getSort("PartSort"));
 		part2 = ctx.mkFreshConst("part", objs.getSort("PartSort"));
+		order1 = ctx.mkFreshConst("order", objs.getSort("RoSort"));
+		order2 = ctx.mkFreshConst("order", objs.getSort("RoSort"));
 	}
 
 	private String[] getTypeConsNames(String name, int size) {
@@ -89,9 +92,12 @@ public class Expression_Maker {
 		Z3Logger.LogZ3("\n;; bounded domains for execution variables");
 		objs.addDataType("TimeVal", mkDataType("TimeVal", getTypeConsNames("time", Constants._MAX_EXECECUTION_LENGTH)));
 		objs.addDataType("PoVal", mkDataType("PoVal", getTypeConsNames("po", Constants._MAX_EXECUTION_PO)));
+		objs.addDataType("RoVal", mkDataType("RoVal", getTypeConsNames("ro", (int) Math.pow(2, Constants._MAX_FIELD_INT))));
 		objs.addDataType("PartVal", mkDataType("PartVal", getTypeConsNames("part", Constants._MAX_PARTITION_NUMBER)));
-		objs.addDataType("ArgVal", mkDataType("ArgVal", getTypeConsNames("arg", Constants._MAX_ARG_INT)));
-		objs.addDataType("FldVal", mkDataType("FldVal", getTypeConsNames("fld", Constants._MAX_FIELD_INT)));
+		// objs.addDataType("ArgVal", mkDataType("ArgVal", getTypeConsNames("arg",
+		// Constants._MAX_ARG_INT)));
+		// objs.addDataType("FldVal", mkDataType("FldVal", getTypeConsNames("fld",
+		// Constants._MAX_FIELD_INT)));
 	}
 
 	public void addTxnOpDataTypes() {
@@ -104,10 +110,13 @@ public class Expression_Maker {
 		objs.addFunc("time_getVal",
 				ctx.mkFuncDecl("time_getVal", objs.getSort("TimeSort"), objs.getDataTypes("TimeVal")));
 		objs.addFunc("po_getVal", ctx.mkFuncDecl("po_getVal", objs.getSort("PoSort"), objs.getDataTypes("PoVal")));
-		objs.addFunc("fld_getVal", ctx.mkFuncDecl("fld_getVal", objs.getSort("FldSort"), objs.getDataTypes("FldVal")));
+		objs.addFunc("ro_getVal", ctx.mkFuncDecl("ro_getVal", objs.getSort("RoSort"), objs.getDataTypes("RoVal")));
+		// objs.addFunc("fld_getVal", ctx.mkFuncDecl("fld_getVal",
+		// objs.getSort("FldSort"), objs.getDataTypes("FldVal")));
 		objs.addFunc("part_getVal",
 				ctx.mkFuncDecl("part_getVal", objs.getSort("PartSort"), objs.getDataTypes("PartVal")));
-		objs.addFunc("arg_getVal", ctx.mkFuncDecl("arg_getVal", objs.getSort("ArgSort"), objs.getDataTypes("ArgVal")));
+		// objs.addFunc("arg_getVal", ctx.mkFuncDecl("arg_getVal",
+		// objs.getSort("ArgSort"), objs.getDataTypes("ArgVal")));
 
 		objs.addFunc("txn_type", ctx.mkFuncDecl("txn_type", objs.getSort("Txn"), objs.getDataTypes("TxnType")));
 		objs.addFunc("qry_type", ctx.mkFuncDecl("qry_type", new Sort[] { objs.getSort("Txn"), objs.getSort("PoSort") },
@@ -156,11 +165,11 @@ public class Expression_Maker {
 	}
 
 	public Quantifier mk_bound_on_qry_part() {
-		ArithExpr ret_val = (ArithExpr) ctx.mkApp(objs.getfuncs("qry_part"), qry1);
+		ArithExpr ret_val = (ArithExpr) ctx.mkApp(objs.getfuncs("qry_part"), txn1, po1);
 		BoolExpr bodyGT = ctx.mkGt(ret_val, ctx.mkInt(0));
 		BoolExpr bodyLT = ctx.mkLt(ret_val, ctx.mkInt(Constants._MAX_PARTITION_NUMBER));
 		BoolExpr body = ctx.mkAnd(bodyGT, bodyLT);
-		Quantifier result = ctx.mkForall(new Expr[] { qry1 }, body, 1, null, null, null, null);
+		Quantifier result = ctx.mkForall(new Expr[] { txn1, po1 }, body, 1, null, null, null, null);
 		return result;
 	}
 
@@ -173,27 +182,72 @@ public class Expression_Maker {
 		return result;
 	}
 
-	public BoolExpr mk_qry_type_to_po(String qry_name, int po) {
-		BoolExpr lhs = (BoolExpr) ctx.mkEq(ctx.mkApp(objs.getfuncs("qry_type"), qry1),
+	public BoolExpr mk_po_val_to_qry_type(String txn_name, String qry_name, int po) {
+
+		BoolExpr rhs = ctx.mkEq(ctx.mkApp(objs.getfuncs("qry_type"), txn1, po1),
 				ctx.mkApp(objs.getConstructor("QryType", qry_name)));
-		BoolExpr rhs = ctx.mkEq((ArithExpr) ctx.mkApp(objs.getfuncs("qry_po"), qry1), ctx.mkInt(po));
+
+		// BoolExpr lhs = (BoolExpr) ctx.mkEq(ctx.mkApp(objs.getfuncs("qry_type"),
+		// qry1),
+		// ctx.mkApp(objs.getConstructor("QryType", qry_name)));
+		// BoolExpr rhs = ctx.mkEq((ArithExpr) ctx.mkApp(objs.getfuncs("qry_po"), qry1),
+		// ctx.mkInt(po));
+		BoolExpr lhs1 = ctx.mkEq(ctx.mkApp(objs.getfuncs("txn_type"), txn1),
+				ctx.mkApp(objs.getConstructor("TxnType", txn_name)));
+		BoolExpr lhs2 = ctx.mkEq(ctx.mkApp(objs.getfuncs("po_getVal"), po1), intToConstructor("Po", po));
+		BoolExpr lhs = ctx.mkAnd(lhs1, lhs2);
 		BoolExpr body = ctx.mkImplies(lhs, rhs);
-		Quantifier x = ctx.mkForall(new Expr[] { qry1 }, body, 1, null, null, null, null);
+		Quantifier x = ctx.mkForall(new Expr[] { txn1, po1 }, body, 1, null, null, null, null);
 		return x;
 	}
 
+	public Expr intToConstructor(String type_name, int i) {
+		return ctx.mkApp(objs.getConstructor(type_name + "Val", type_name.toLowerCase() + i));
+	}
+
 	public BoolExpr mk_qry_time_respects_po() {
-		ArithExpr time1 = (ArithExpr) ctx.mkApp(objs.getfuncs("qry_time"), qry1);
-		ArithExpr time2 = (ArithExpr) ctx.mkApp(objs.getfuncs("qry_time"), qry2);
-		ArithExpr po1 = (ArithExpr) ctx.mkApp(objs.getfuncs("qry_po"), qry1);
-		ArithExpr po2 = (ArithExpr) ctx.mkApp(objs.getfuncs("qry_po"), qry2);
+		ArithExpr assigned_time1 = (ArithExpr) ctx.mkApp(objs.getfuncs("time_to_int"),
+				ctx.mkApp(objs.getfuncs("qry_time"), txn1, po1));
+		ArithExpr assigned_time2 = (ArithExpr) ctx.mkApp(objs.getfuncs("time_to_int"),
+				ctx.mkApp(objs.getfuncs("qry_time"), txn1, po2));
+		BoolExpr lhs = ctx.mkLt((ArithExpr) ctx.mkApp(objs.getfuncs("po_to_int"), po1),
+				(ArithExpr) ctx.mkApp(objs.getfuncs("po_to_int"), po2));
+		BoolExpr rhs = ctx.mkLt(assigned_time1, assigned_time2);
+		BoolExpr body = ctx.mkImplies(lhs, rhs);
+		Quantifier x = ctx.mkForall(new Expr[] { txn1, po1, po2 }, body, 1, null, null, null, null);
+		return x;
+	}
 
-		BoolExpr lhs1 = ctx.mkGt(po1, po2);
-		BoolExpr lhs2 = ctx.mkEq(ctx.mkApp(objs.getfuncs("parent"), qry1), ctx.mkApp(objs.getfuncs("parent"), qry2));
-		BoolExpr rhs = ctx.mkGt(time1, time2);
+	public void mk_time_to_int() {
+		objs.addFunc("time_to_int", ctx.mkFuncDecl("time_to_int", objs.getSort("TimeSort"), objs.getSort("Int")));
+	}
 
-		BoolExpr body = ctx.mkImplies(ctx.mkAnd(lhs1, lhs2), rhs);
-		Quantifier x = ctx.mkForall(new Expr[] { qry1, qry2 }, body, 1, null, null, null, null);
+	public BoolExpr bound_time_to_int(int i) {
+		BoolExpr lhs = ctx.mkEq(ctx.mkApp(objs.getfuncs("time_getVal"), time1), intToConstructor("Time", i));
+		BoolExpr rhs = ctx.mkEq(ctx.mkApp(objs.getfuncs("time_to_int"), time1), ctx.mkInt(i));
+		BoolExpr body = ctx.mkImplies(lhs, rhs);
+		Quantifier x = ctx.mkForall(new Expr[] { time1 }, body, 1, null, null, null, null);
+		return x;
+	}
+
+	public void mk_po_to_int() {
+		objs.addFunc("po_to_int", ctx.mkFuncDecl("po_to_int", objs.getSort("PoSort"), objs.getSort("Int")));
+		objs.addFunc("ro_to_int", ctx.mkFuncDecl("ro_to_int", objs.getSort("RoSort"), objs.getSort("Int")));
+	}
+
+	public BoolExpr bound_po_to_int(int i) {
+		BoolExpr lhs = ctx.mkEq(ctx.mkApp(objs.getfuncs("po_getVal"), po1), intToConstructor("Po", i));
+		BoolExpr rhs = ctx.mkEq(ctx.mkApp(objs.getfuncs("po_to_int"), po1), ctx.mkInt(i));
+		BoolExpr body = ctx.mkImplies(lhs, rhs);
+		Quantifier x = ctx.mkForall(new Expr[] { po1 }, body, 1, null, null, null, null);
+		return x;
+	}
+
+	public BoolExpr bound_ro_to_int(int i) {
+		BoolExpr lhs = ctx.mkEq(ctx.mkApp(objs.getfuncs("ro_getVal"), order1), intToConstructor("Ro", i));
+		BoolExpr rhs = ctx.mkEq(ctx.mkApp(objs.getfuncs("ro_to_int"), order1), ctx.mkInt(i));
+		BoolExpr body = ctx.mkImplies(lhs, rhs);
+		Quantifier x = ctx.mkForall(new Expr[] { order1 }, body, 1, null, null, null, null);
 		return x;
 	}
 

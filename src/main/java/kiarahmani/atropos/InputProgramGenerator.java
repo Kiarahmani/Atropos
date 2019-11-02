@@ -51,7 +51,7 @@ public class InputProgramGenerator {
 		Select_Query DEC_S1 = pu.addSelectQuery("dec", "accounts", true, DEC_S1_WHC, "acc_balance");
 		pu.addQueryStatement("dec", DEC_S1);
 
-		Expression DEC_IF1_C = new E_BinUp(BinOp.GT, pu.getProjExpr("dec", 0, "acc_balance", 1), pu.getArg("dec_amnt"));
+		Expression DEC_IF1_C = new E_BinUp(BinOp.GT, pu.getProjExpr("dec", 0, "acc_balance", 3), pu.getArg("dec_amnt"));
 		pu.addIfStatement("dec", DEC_IF1_C);
 
 		WHC DEC_U1_WHC = new WHC(new WHC_Constraint(pu.getTableName("accounts"), pu.getFieldName("acc_id"), BinOp.EQ,
