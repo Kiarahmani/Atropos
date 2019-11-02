@@ -365,7 +365,7 @@ public class Z3Driver {
 			long end = System.currentTimeMillis();
 			System.out.println(
 					"\n\n==================\n" + "SATISFIABLE (" + (end - begin) + "ms)" + "\n==================\n\n");
-			model_handler = new Model_Handler(model, ctx, objs, program);
+			this.model_handler = new Model_Handler(model, ctx, objs, program);
 			model_handler.printRawModelInToFile();
 			// model_handler.printUniverse();
 		} else {
