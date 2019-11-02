@@ -1,3 +1,7 @@
 /target/
 z3-encoding.smt2
 *.swp
+/smt2/
+.classpath
+.project
+.settings/

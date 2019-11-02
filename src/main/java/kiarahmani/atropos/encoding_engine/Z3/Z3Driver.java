@@ -44,9 +44,7 @@ public class Z3Driver {
 	Solver slv;
 	Model model;
 	Model_Handler model_handler;
-	Expression_Maker em;
 	Expr rec1, rec2, time1, time2, txn1, txn2, po1, po2, arg1, arg2, fld1, fld2, part1, part2, order1, order2;
-
 	DeclaredObjects objs;
 
 	public Z3Driver(Program program, int current_cycle_length) {
@@ -67,20 +65,14 @@ public class Z3Driver {
 		addNumericEnumSorts("Part", Constants._MAX_PARTITION_NUMBER);
 		addEnumSorts("RecType", program.getAllTableNames());
 		addEnumSorts("TxnType", program.getAllTxnNames());
-		// addEnumSorts("QryType", program.getAllStmtTypes());
-		Z3Logger.LogZ3("\n");
 		addTypingFuncs();
 		addExecutionFuncs();
 		initializeLocalVariables();
-
-		Z3Logger.HeaderZ3(program.getName() + " (Schema sorts, types and functions)");
-		em = new Expression_Maker(program, ctx, objs);
 		addProjFuncsAndBounds(program);
-
+		Expression_Maker em = new Expression_Maker(program, ctx, objs);
 		Z3Logger.SubHeaderZ3("Properties of query functions");
 		addAssertion("uniqueness of time", em.mk_uniqueness_of_time());
 		addAssertion("bound_on_txn_instances", em.mk_bound_on_txn_instances(current_cycle_length));
-
 		addAssertion("qry_time_respects_po", em.mk_qry_time_respects_po());
 		Z3Logger.SubHeaderZ3("Properties of tables");
 		for (Table t : program.getTables()) {
@@ -97,8 +89,6 @@ public class Z3Driver {
 			for (Query q : txn.getAllQueries())
 				addQryTypeToIsExecuted(txn, q, i++);
 		}
-
-		/* --- */
 		checkSAT(program);
 	}
 
@@ -113,7 +103,7 @@ public class Z3Driver {
 	}
 
 	private void addTypingFuncs() {
-		Z3Logger.LogZ3(";; functions for bounded type assignment for uninterpreted sorts");
+		Z3Logger.LogZ3("\n;; functions for bounded type assignment for uninterpreted sorts");
 		objs.addFunc("txn_type", ctx.mkFuncDecl("txn_type", objs.getSort("Txn"), objs.getEnum("TxnType")));
 		objs.addFunc("rec_type", ctx.mkFuncDecl("rec_type", objs.getSort("Rec"), objs.getEnum("RecType")));
 	}
@@ -148,6 +138,7 @@ public class Z3Driver {
 			array[i] = ctx.mkSymbol(name.toLowerCase() + "_" + i);
 		EnumSort new_enum = ctx.mkEnumSort(symbol, array);
 		objs.addEnum(name, new_enum);
+
 		// define toInt function for this enum sort
 		String func_name = name.toLowerCase() + "_to_int";
 		Z3Logger.LogZ3(";; " + func_name);
@@ -155,6 +146,7 @@ public class Z3Driver {
 		for (int i = 0; i < size; i++)
 			addAssertions(
 					ctx.mkEq(ctx.mkApp(objs.getfuncs(func_name), objs.getEnum(name).getConsts()[i]), ctx.mkInt(i)));
+
 		// define fromInt function this enum sort
 		String from_func_name = name.toLowerCase() + "_from_int";
 		Z3Logger.LogZ3(";; " + from_func_name);
@@ -268,7 +260,6 @@ public class Z3Driver {
 			for (E_Arg arg : txn.getArgs()) {
 				String funcName = txn.getName() + "_arg_" + arg.getName();
 				Z3Logger.LogZ3("\n;; definition of arg function " + funcName);
-
 				switch (arg.getType()) {
 				case NUM:
 					objs.addFunc(funcName, ctx.mkFuncDecl(funcName, objs.getSort("Txn"), objs.getSort("Arg")));
@@ -298,7 +289,7 @@ public class Z3Driver {
 	}
 
 	private void addProjFuncsAndBounds(Program program) {
-		// is_alive proj function for all tables and records
+		Z3Logger.HeaderZ3(program.getName() + " (Schema sorts, types and functions)");
 		Z3Logger.LogZ3("\n;; definition of is_alive projection function for all tables");
 		String funcName = "is_alive";
 		objs.addFunc(funcName, ctx.mkFuncDecl(funcName, new Sort[] { objs.getSort("Rec"), objs.getEnum("Time") },
