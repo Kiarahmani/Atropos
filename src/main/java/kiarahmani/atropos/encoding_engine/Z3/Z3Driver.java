@@ -83,10 +83,11 @@ public class Z3Driver {
 		Z3Logger.HeaderZ3(program.getName() + " (Transactrions Sorts, types and functions)");
 		addArgsFuncs(program);
 		addVariablesFuncs(program);
-
 		for (Transaction txn : program.getTransactions()) 
 			for (Query q : txn.getAllQueries())
 				addQryTypeToIsExecuted(txn, q);
+		
+		
 		checkSAT(program);
 	}
 
