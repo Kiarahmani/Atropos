@@ -348,7 +348,7 @@ public class Z3Driver {
 					"\n\n==================\n" + "SATISFIABLE (" + (end - begin) + "ms)" + "\n==================\n\n");
 			model_handler = new Model_Handler(model, ctx, objs, program);
 			model_handler.printRawModelInToFile();
-			// model_handler.printUniverse();
+			model_handler.printUniverse();
 		} else {
 			System.out.println("\n\n================\n" + slv.check() + "\n================\n\n");
 			for (Expr e : slv.getUnsatCore())

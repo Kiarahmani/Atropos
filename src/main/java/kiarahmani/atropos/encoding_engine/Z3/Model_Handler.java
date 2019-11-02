@@ -49,12 +49,12 @@ public class Model_Handler {
 		System.out.println("\n\nMODEL UNIVERSE");
 		for (Sort sort : model.getSorts()) {
 			System.out.println("\n**Sort: " + sort);
-			System.out.println("**Instances: ");
 			String indent = "   ";
 			// print rec sort
 			if (sort.toString().equals("Rec")) {
 				for (int t = 0; t < Constants._MAX_EXECECUTION_LENGTH; t++) {
 					System.out.println(indent + "time:" + t);
+					Expr time_expr = model.eval(objs.getfuncs("time_from_int").apply(ctx.mkInt(t)), true);
 					for (Expr x : model.getSortUniverse(sort)) {
 						System.out.print(indent + indent + x.toString().replace("!val!", "") + ": ");
 						String rec_type = model.eval(objs.getfuncs("rec_type").apply(x), true).toString();
@@ -65,13 +65,13 @@ public class Model_Handler {
 								for (FieldName fn : tab.getFieldNames()) {
 									String fn_val = model
 											.eval(objs.getfuncs("proj_" + tab.getTableName().getName() + "_" + fn)
-													.apply(x, ctx.mkInt(t)), true)
+													.apply(x,time_expr), true)
 											.toString();
 									// rec_val += fn + ":" + fn_val + " ";
 									rec_val += delim + fn_val;
 									delim = ",";
 								}
-								rec_val += "," + model.eval(objs.getfuncs("is_alive").apply(x, ctx.mkInt(t)), true);
+								rec_val += "," + model.eval(objs.getfuncs("is_alive").apply(x,time_expr), true);
 							}
 						// if (!rec_type.equals("departments"))
 						// rec_type += " ";
@@ -80,19 +80,7 @@ public class Model_Handler {
 				}
 				System.out.println();
 			}
-			// print qry sort
-			if (sort.toString().equals("Qry"))
-				for (int t = 0; t < Constants._MAX_EXECECUTION_LENGTH; t++) {
-					System.out.println(indent + "time:" + t);
-					for (Expr x : model.getSortUniverse(sort)) {
-						if (model.eval(objs.getfuncs("qry_time").apply(x), true).toString().equals(String.valueOf(t))) {
-							String qry_type = model.eval(objs.getfuncs("qry_type").apply(x), true).toString();
-							String parent_txn = model.eval(objs.getfuncs("parent").apply(x), true).toString();
-							System.out.println(indent + indent + x.toString().replace("!val!", "") + ": "
-									+ parent_txn.replace("!val!", "") + "." + qry_type);
-						}
-					}
-				}
+
 			// print txn sort
 			if (sort.toString().equals("Txn"))
 				for (Expr x : model.getSortUniverse(sort)) {
