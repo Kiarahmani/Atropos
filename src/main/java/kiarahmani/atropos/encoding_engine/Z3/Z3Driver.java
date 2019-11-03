@@ -92,6 +92,8 @@ public class Z3Driver {
 		constrainWritesTo(program);
 		addReadsFrom(program);
 		constrainReadsFrom(program);
+		addConflictFuncs(program);
+		constrainConflictFunc(program);
 		addWRFuncs(program);
 		constrainWR(program);
 		addRWFuncs(program);
@@ -101,6 +103,29 @@ public class Z3Driver {
 		Z3Logger.SubHeaderZ3(";; Temporary constraint to ensure minimum number of transactions");
 		addAssertions(em.mk_minimum_txn_instances(2));
 		checkSAT(program);
+	}
+
+	private void constrainConflictFunc(Program program) {
+		Z3Logger.SubHeaderZ3(";; constraints on WR functions");
+		for (Table t : program.getTables()) {
+			for (FieldName fn : t.getFieldNames()) {
+				String funcName = "conflict_on_" + t.getTableName().getName() + "_" + fn.getName();
+				String rf_funcName = "reads_from_" + t.getTableName().getName() + "_" + fn.getName();
+				String wt_funcName = "writes_to_" + t.getTableName().getName() + "_" + fn.getName();
+				BoolExpr writes_to = (BoolExpr) ctx.mkApp(objs.getfuncs(wt_funcName), txn1, po1, rec1);
+				BoolExpr reads_from = (BoolExpr) ctx.mkApp(objs.getfuncs(rf_funcName), txn2, po2, rec1);
+				BoolExpr q1_is_executed = (BoolExpr) ctx.mkApp(objs.getfuncs("qry_is_executed"), txn1, po1);
+				BoolExpr q2_is_executed = (BoolExpr) ctx.mkApp(objs.getfuncs("qry_is_executed"), txn2, po2);
+				BoolExpr exists_a_record = ctx.mkExists(new Expr[] { rec1 }, ctx.mkAnd(writes_to, reads_from), 1, null,
+						null, null, null);
+				BoolExpr exists_func = (BoolExpr) ctx.mkApp(objs.getfuncs(funcName), txn1, po1, txn2, po2);
+				Z3Logger.LogZ3(";; constrain conflict relation only if a conflicting record exists");
+				Quantifier no_rec_no_wr = ctx.mkForall(new Expr[] { txn1, txn2, po1, po2 },
+						ctx.mkEq(ctx.mkAnd(q1_is_executed, q2_is_executed, exists_a_record), exists_func), 1, null,
+						null, null, null);
+				addAssertions(no_rec_no_wr);
+			}
+		}
 	}
 
 	private void addRWFuncs(Program program) {
@@ -117,22 +142,28 @@ public class Z3Driver {
 		}
 	}
 
+	private void addConflictFuncs(Program program) {
+		Z3Logger.SubHeaderZ3(";; definition of conflict functions");
+		String funcName;
+		for (Table t : program.getTables()) {
+			Z3Logger.LogZ3(";; table: " + t.getTableName().getName());
+			for (FieldName fn : t.getFieldNames()) {
+				funcName = "conflict_on_" + t.getTableName().getName() + "_" + fn.getName();
+				objs.addFunc(funcName, ctx.mkFuncDecl(funcName,
+						new Sort[] { objs.getSort("Txn"), objs.getEnum("Po"), objs.getSort("Txn"), objs.getEnum("Po") },
+						objs.getSort("Bool")));
+			}
+		}
+	}
+
 	private void constrainWR(Program program) {
 		Z3Logger.SubHeaderZ3(";; constraints on WR functions");
 		for (Table t : program.getTables()) {
 			for (FieldName fn : t.getFieldNames()) {
 				String WRfuncName = "WR_" + t.getTableName().getName() + "_" + fn.getName();
-				String rf_funcName = "reads_from_" + t.getTableName().getName() + "_" + fn.getName();
-				String wt_funcName = "writes_to_" + t.getTableName().getName() + "_" + fn.getName();
-				BoolExpr writes_to = (BoolExpr) ctx.mkApp(objs.getfuncs(wt_funcName), txn1, po1, rec1);
-				BoolExpr reads_from = (BoolExpr) ctx.mkApp(objs.getfuncs(rf_funcName), txn2, po2, rec1);
-				BoolExpr exists_a_record = ctx.mkExists(new Expr[] { rec1 }, ctx.mkAnd(writes_to, reads_from), 1, null,
-						null, null, null);
+				String conffuncName = "conflict_on_" + t.getTableName().getName() + "_" + fn.getName();
 				BoolExpr exists_wr = (BoolExpr) ctx.mkApp(objs.getfuncs(WRfuncName), txn1, po1, txn2, po2);
-				Z3Logger.LogZ3(";; assert that no dep exists between queries that do not access the same record");
-				Quantifier no_rec_no_wr = ctx.mkForall(new Expr[] { txn1, txn2, po1, po2 },
-						ctx.mkImplies(ctx.mkNot(exists_a_record), ctx.mkNot(exists_wr)), 1, null, null, null, null);
-				addAssertions(no_rec_no_wr);
+				BoolExpr exists_conflict = (BoolExpr) ctx.mkApp(objs.getfuncs(conffuncName), txn1, po1, txn2, po2);
 				ArithExpr int_of_time1 = (ArithExpr) ctx.mkApp(objs.getfuncs("time_to_int"),
 						ctx.mkApp(objs.getfuncs("qry_time"), txn1, po1));
 				ArithExpr int_of_time2 = (ArithExpr) ctx.mkApp(objs.getfuncs("time_to_int"),
@@ -140,12 +171,11 @@ public class Z3Driver {
 				Expr part_of_1 = ctx.mkApp(objs.getfuncs("qry_part"), txn1, po1);
 				Expr part_of_2 = ctx.mkApp(objs.getfuncs("qry_part"), txn2, po2);
 				BoolExpr parts_are_eq = ctx.mkEq(part_of_1, part_of_2);
-				BoolExpr time_is_gtS = ctx.mkGt(int_of_time2, int_of_time1);
-
-				Expr conditions = ctx.mkAnd(parts_are_eq, time_is_gtS, exists_a_record);
+				BoolExpr time_is_gt = ctx.mkGt(int_of_time2, int_of_time1);
+				Expr conditions = ctx.mkAnd(parts_are_eq, time_is_gt, exists_conflict);
 				Quantifier result = ctx.mkForall(new Expr[] { txn1, txn2, po1, po2 }, ctx.mkEq(exists_wr, conditions),
 						1, null, null, null, null);
-				Z3Logger.LogZ3(";; assert conditions that must hold if dep exists");
+				Z3Logger.LogZ3(";; conditions that must hold if dep exists");
 				addAssertions(result);
 			}
 		}
@@ -155,21 +185,10 @@ public class Z3Driver {
 		Z3Logger.SubHeaderZ3(";; constraints on RW functions");
 		for (Table t : program.getTables()) {
 			for (FieldName fn : t.getFieldNames()) {
-				String RWfuncName = "RW_" + t.getTableName().getName() + "_" + fn.getName();
-				String rf_funcName = "reads_from_" + t.getTableName().getName() + "_" + fn.getName();
-				String wt_funcName = "writes_to_" + t.getTableName().getName() + "_" + fn.getName();
-				BoolExpr writes_to = (BoolExpr) ctx.mkApp(objs.getfuncs(wt_funcName), txn1, po1, rec1);
-				BoolExpr reads_from = (BoolExpr) ctx.mkApp(objs.getfuncs(rf_funcName), txn2, po2, rec1);
-				BoolExpr exists_a_record = ctx.mkExists(new Expr[] { rec1 }, ctx.mkAnd(writes_to, reads_from), 1, null,
-						null, null, null);
-				BoolExpr exists_wr = (BoolExpr) ctx.mkApp(objs.getfuncs(RWfuncName), txn1, po1, txn2, po2);
-
-				Z3Logger.LogZ3(";; assert that no dep exists between queries that do not access the same record");
-				Quantifier no_rec_no_wr = ctx.mkForall(new Expr[] { txn1, txn2, po1, po2 },
-						ctx.mkImplies(ctx.mkNot(exists_a_record), ctx.mkNot(exists_wr)), 1, null, null, null, null);
-				addAssertions(no_rec_no_wr);
-
-				Z3Logger.LogZ3(";; assert conditions that must hold if dep exists");
+				String WRfuncName = "RW_" + t.getTableName().getName() + "_" + fn.getName();
+				String conffuncName = "conflict_on_" + t.getTableName().getName() + "_" + fn.getName();
+				BoolExpr exists_wr = (BoolExpr) ctx.mkApp(objs.getfuncs(WRfuncName), txn1, po1, txn2, po2);
+				BoolExpr exists_conflict = (BoolExpr) ctx.mkApp(objs.getfuncs(conffuncName), txn1, po1, txn2, po2);
 				ArithExpr int_of_time1 = (ArithExpr) ctx.mkApp(objs.getfuncs("time_to_int"),
 						ctx.mkApp(objs.getfuncs("qry_time"), txn1, po1));
 				ArithExpr int_of_time2 = (ArithExpr) ctx.mkApp(objs.getfuncs("time_to_int"),
@@ -178,9 +197,10 @@ public class Z3Driver {
 				Expr part_of_2 = ctx.mkApp(objs.getfuncs("qry_part"), txn2, po2);
 				BoolExpr parts_are_eq = ctx.mkEq(part_of_1, part_of_2);
 				BoolExpr time_is_gt = ctx.mkGt(int_of_time2, int_of_time1);
-				Expr conditions = ctx.mkAnd(ctx.mkNot(ctx.mkAnd(parts_are_eq, time_is_gt)), exists_a_record);
+				Expr conditions = ctx.mkAnd(ctx.mkNot(ctx.mkAnd(parts_are_eq, time_is_gt)), exists_conflict);
 				Quantifier result = ctx.mkForall(new Expr[] { txn1, txn2, po1, po2 }, ctx.mkEq(exists_wr, conditions),
 						1, null, null, null, null);
+				Z3Logger.LogZ3(";; conditions that must hold if dep exists");
 				addAssertions(result);
 			}
 		}
