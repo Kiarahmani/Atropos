@@ -16,7 +16,7 @@ public class Expression_Maker {
 	Program program;
 	Context ctx;
 	DeclaredObjects objs;
-	Expr rec1, rec2, txn1, txn2, time1, time2, po1, po2;
+	Expr rec1, rec2, txn1, txn2, txn3, time1, time2, po1, po2;
 
 	public Expression_Maker(Program program, Context ctx, DeclaredObjects objs) {
 		this.program = program;
@@ -24,6 +24,7 @@ public class Expression_Maker {
 		this.objs = objs;
 		txn1 = ctx.mkFreshConst("txn", objs.getSort("Txn"));
 		txn2 = ctx.mkFreshConst("txn", objs.getSort("Txn"));
+		txn3 = ctx.mkFreshConst("txn", objs.getSort("Txn"));
 		rec1 = ctx.mkFreshConst("rec", objs.getSort("Rec"));
 		rec2 = ctx.mkFreshConst("rec", objs.getSort("Rec"));
 		time1 = ctx.mkFreshConst("time", objs.getEnum("Time"));
@@ -37,8 +38,8 @@ public class Expression_Maker {
 		Expr int_of_time2 = ctx.mkApp(objs.getfuncs("time_to_int"), ctx.mkApp(objs.getfuncs("qry_time"), txn2, po2));
 		Expr int_of_po1 = ctx.mkApp(objs.getfuncs("po_to_int"), po1);
 		Expr int_of_po2 = ctx.mkApp(objs.getfuncs("po_to_int"), po2);
-		BoolExpr lhs = ctx.mkEq(int_of_time1, int_of_time2);
-		BoolExpr rhs = ctx.mkAnd((ctx.mkEq(txn1, txn2)), ctx.mkEq(int_of_po1, int_of_po2));
+		BoolExpr rhs = ctx.mkNot(ctx.mkEq(int_of_time1, int_of_time2));
+		BoolExpr lhs = ctx.mkOr(ctx.mkNot(ctx.mkEq(txn1, txn2)), ctx.mkNot(ctx.mkEq(int_of_po1, int_of_po2)));
 		BoolExpr body = ctx.mkImplies(lhs, rhs);
 		Quantifier result = ctx.mkForall(new Expr[] { txn1, txn2, po1, po2 }, body, 1, null, null, null, null);
 		return result;
@@ -52,6 +53,14 @@ public class Expression_Maker {
 		Expr body = ctx.mkNot(ctx.mkDistinct(Ts));
 		Quantifier x = ctx.mkForall(Ts, body, 1, null, null, null, null);
 		return x;
+	}
+
+	public Quantifier mk_minimum_txn_instances(int limit) {
+		Expr[] Ts = new Expr[limit];
+		for (int i = 0; i < limit; i++)
+			Ts[i] = ctx.mkFreshConst("txn", objs.getSort("Txn"));
+		Expr body = ctx.mkDistinct(Ts);
+		return ctx.mkExists(Ts, body, 1, null, null, null, null);
 	}
 
 	public Quantifier mk_qry_time_respects_po() {

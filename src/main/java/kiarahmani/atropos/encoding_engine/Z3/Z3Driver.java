@@ -92,7 +92,53 @@ public class Z3Driver {
 		constrainWritesTo(program);
 		addReadsFrom(program);
 		constrainReadsFrom(program);
+		addWRFuncs(program);
+		constrainWR(program);
+		// TODO: will be replaced by exact cycle requirements
+		addAssertions(em.mk_minimum_txn_instances(2));
 		checkSAT(program);
+	}
+
+	private void constrainWR(Program program) {
+		Z3Logger.SubHeaderZ3(";; constraints on WR functions");
+		for (Table t : program.getTables()) {
+			for (FieldName fn : t.getFieldNames()) {
+				String funcName = "WR_" + t.getTableName().getName() + "_" + fn.getName();
+				String rf_funcName = "reads_from_" + t.getTableName().getName() + "_" + fn.getName();
+				String wt_funcName = "writes_to_" + t.getTableName().getName() + "_" + fn.getName();
+				Expr apply_func = ctx.mkApp(objs.getfuncs(funcName), txn1, po1, txn2, po2);
+				ArithExpr int_of_time1 = (ArithExpr) ctx.mkApp(objs.getfuncs("time_to_int"),
+						ctx.mkApp(objs.getfuncs("qry_time"), txn1, po1));
+				ArithExpr int_of_time2 = (ArithExpr) ctx.mkApp(objs.getfuncs("time_to_int"),
+						ctx.mkApp(objs.getfuncs("qry_time"), txn2, po2));
+				BoolExpr writes_to = (BoolExpr) ctx.mkApp(objs.getfuncs(wt_funcName), txn1, po1, rec1);
+				BoolExpr reads_from = (BoolExpr) ctx.mkApp(objs.getfuncs(rf_funcName), txn2, po2, rec1);
+				Expr part_of_1 = ctx.mkApp(objs.getfuncs("qry_part"), txn1, po1);
+				Expr part_of_2 = ctx.mkApp(objs.getfuncs("qry_part"), txn2, po2);
+				BoolExpr condition0 = ctx.mkEq(part_of_1, part_of_2);
+				BoolExpr condition1 = ctx.mkGt(int_of_time2, int_of_time1);
+				BoolExpr condition2 = ctx.mkExists(new Expr[] { rec1 }, ctx.mkAnd(writes_to, reads_from), 1, null, null,
+						null, null);
+				Expr conditions = ctx.mkAnd(condition0, condition1, condition2);
+				Quantifier result = ctx.mkForall(new Expr[] { txn1, txn2, po1, po2 }, ctx.mkEq(apply_func, conditions),
+						1, null, null, null, null);
+				addAssertions(result);
+			}
+		}
+	}
+
+	private void addWRFuncs(Program program) {
+		Z3Logger.SubHeaderZ3("\n;; definition of WR functions");
+		String funcName;
+		for (Table t : program.getTables()) {
+			Z3Logger.LogZ3(";; table: " + t.getTableName().getName());
+			for (FieldName fn : t.getFieldNames()) {
+				funcName = "WR_" + t.getTableName().getName() + "_" + fn.getName();
+				objs.addFunc(funcName, ctx.mkFuncDecl(funcName,
+						new Sort[] { objs.getSort("Txn"), objs.getEnum("Po"), objs.getSort("Txn"), objs.getEnum("Po") },
+						objs.getSort("Bool")));
+			}
+		}
 	}
 
 	private void addReadsFrom(Program program) {
