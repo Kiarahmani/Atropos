@@ -66,6 +66,8 @@ public class Update_Query extends Query {
 		ArrayList<FieldName> result = new ArrayList<>();
 		for (Tuple<FieldName, Expression> tuple : update_expressions)
 			result.add(tuple.x);
+		for (FieldName fn : this.where_clause.getAccessedFieldNames())
+			result.add(fn);
 		return result;
 	}
 
@@ -87,5 +89,21 @@ public class Update_Query extends Query {
 	@Override
 	public int getPo() {
 		return this.po;
+	}
+
+	@Override
+	public ArrayList<FieldName> getWrittenFieldNames() {
+		ArrayList<FieldName> result = new ArrayList<>();
+		for (Tuple<FieldName, Expression> tuple : update_expressions)
+			result.add(tuple.x);
+		return result;
+	}
+
+	@Override
+	public ArrayList<FieldName> getReadFieldNames() {
+		ArrayList<FieldName> result = new ArrayList<>();
+		for (FieldName fn : this.where_clause.getAccessedFieldNames())
+			result.add(fn);
+		return result;
 	}
 }

@@ -83,12 +83,28 @@ public class Z3Driver {
 		Z3Logger.HeaderZ3(program.getName() + " (Transactrions Sorts, types and functions)");
 		addArgsFuncs(program);
 		addVariablesFuncs(program);
-		for (Transaction txn : program.getTransactions()) 
+		Z3Logger.SubHeaderZ3("is executed?");
+		for (Transaction txn : program.getTransactions())
 			for (Query q : txn.getAllQueries())
 				addQryTypeToIsExecuted(txn, q);
-		
-		
+		addWritesTo(program);
+
 		checkSAT(program);
+	}
+
+	private void addWritesTo(Program program) {
+		Z3Logger.HeaderZ3(program.getName() + " (Variables)");
+		for (Transaction txn : program.getTransactions()) {
+			for (Query q : txn.getAllQueries()) {
+				Z3Logger.LogZ3("\n;; functions for relating written records and queries");
+				// TODO: start here
+				//objs.addFunc("writes_to", ctx.mkFuncDecl("txn_type",  new Sort[] {objs.getSort("Txn"), objs.getSort("Po"), objs.}, objs.getEnum("Bool")));
+				if (q.isWrite()) {
+				//	System.out.println(q.getAccessedFieldNames());
+				} else {
+				}
+			}
+		}
 	}
 
 	private void addExecutionFuncs() {

@@ -26,7 +26,8 @@ public class WHC extends Expression {
 	public ArrayList<FieldName> getAccessedFieldNames() {
 		ArrayList<FieldName> result = new ArrayList<>();
 		for (WHC_Constraint whcc : this.whc_constraints)
-			result.add(whcc.getFieldName());
+			if (!whcc.getFieldName().isPK())
+				result.add(whcc.getFieldName());
 		return result;
 	}
 

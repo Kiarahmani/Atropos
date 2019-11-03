@@ -69,6 +69,17 @@ public class Select_Query extends Query {
 	}
 
 	@Override
+	public ArrayList<FieldName> getWrittenFieldNames() {
+		ArrayList<FieldName> result = new ArrayList<>();
+		return result;
+	}
+
+	@Override
+	public ArrayList<FieldName> getReadFieldNames() {
+		return getAccessedFieldNames();
+	}
+
+	@Override
 	public Kind getKind() {
 		return this.kind;
 	}

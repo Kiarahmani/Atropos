@@ -39,4 +39,8 @@ public abstract class Query {
 
 	public abstract ArrayList<FieldName> getAccessedFieldNames();
 
+	public abstract ArrayList<FieldName> getWrittenFieldNames();
+	
+	public abstract ArrayList<FieldName> getReadFieldNames();
+
 }
