@@ -87,24 +87,122 @@ public class Z3Driver {
 		for (Transaction txn : program.getTransactions())
 			for (Query q : txn.getAllQueries())
 				addQryTypeToIsExecuted(txn, q);
+		Z3Logger.HeaderZ3(program.getName() + " reads_from and writes_to functions");
 		addWritesTo(program);
-
+		constrainWritesTo(program);
+		addReadsFrom(program);
+		constrainReadsFrom(program);
 		checkSAT(program);
 	}
 
+	private void addReadsFrom(Program program) {
+		Z3Logger.SubHeaderZ3("\n;; definition of reads_from functions");
+		// definition of projection functions
+		String funcName;
+		for (Table t : program.getTables()) {
+			Z3Logger.LogZ3(";; table: " + t.getTableName().getName());
+			for (FieldName fn : t.getFieldNames()) {
+				funcName = "reads_from_" + t.getTableName().getName() + "_" + fn.getName();
+				objs.addFunc(funcName,
+						ctx.mkFuncDecl(funcName,
+								new Sort[] { objs.getSort("Txn"), objs.getEnum("Po"), objs.getSort("Rec") },
+								objs.getSort("Bool")));
+			}
+		}
+	}
+
 	private void addWritesTo(Program program) {
-		Z3Logger.HeaderZ3(program.getName() + " (Variables)");
+		Z3Logger.SubHeaderZ3("\n;; definition of writes_to functions");
+		// definition of projection functions
+		String funcName;
+		for (Table t : program.getTables()) {
+			Z3Logger.LogZ3(";; table: " + t.getTableName().getName());
+			for (FieldName fn : t.getFieldNames()) {
+				funcName = "writes_to_" + t.getTableName().getName() + "_" + fn.getName();
+				objs.addFunc(funcName,
+						ctx.mkFuncDecl(funcName,
+								new Sort[] { objs.getSort("Txn"), objs.getEnum("Po"), objs.getSort("Rec") },
+								objs.getSort("Bool")));
+			}
+		}
+	}
+
+	private void constrainReadsFrom(Program program) {
+		Z3Logger.SubHeaderZ3(";; constraints on reads_from functions");
 		for (Transaction txn : program.getTransactions()) {
+			Z3Logger.LogZ3(";; Queries of txn: " + txn.getName());
 			for (Query q : txn.getAllQueries()) {
-				Z3Logger.LogZ3("\n;; functions for relating written records and queries");
-				// TODO: start here
-				//objs.addFunc("writes_to", ctx.mkFuncDecl("txn_type",  new Sort[] {objs.getSort("Txn"), objs.getSort("Po"), objs.}, objs.getEnum("Bool")));
-				if (q.isWrite()) {
-				//	System.out.println(q.getAccessedFieldNames());
-				} else {
+				Z3Logger.LogZ3(";; " + q.getId());
+				for (Table t : program.getTables()) {
+					for (FieldName fn : t.getFieldNames()) {
+						if (q.getReadFieldNames().contains(fn)) {
+							BoolExpr pre_condition1 = ctx.mkEq(ctx.mkApp(objs.getfuncs("txn_type"), txn1),
+									objs.getEnumConstructor("TxnType", txn.getName()));
+							BoolExpr pre_condition2 = ctx.mkEq(po1, objs.getEnumConstructor("Po", "po_" + q.getPo()));
+							BoolExpr pre_condition = ctx.mkAnd(pre_condition1, pre_condition2);
+							String funcName = "reads_from_" + t.getTableName().getName() + "_" + fn.getName();
+							Expr query_time = ctx.mkApp(objs.getfuncs("qry_time"), txn1, po1);
+							BoolExpr whc_to_expr = translateWhereClauseToZ3Expr(txn.getName(), txn1, q.getWHC(), rec1,
+									query_time);
+							BoolExpr body = ctx.mkEq(ctx.mkApp(objs.getfuncs(funcName), txn1, po1, rec1), whc_to_expr);
+							Quantifier result = ctx.mkForall(new Expr[] { txn1, po1, rec1 },
+									ctx.mkImplies(pre_condition, body), 1, null, null, null, null);
+							addAssertions(result);
+						} else {
+							BoolExpr pre_condition1 = ctx.mkEq(ctx.mkApp(objs.getfuncs("txn_type"), txn1),
+									objs.getEnumConstructor("TxnType", txn.getName()));
+							BoolExpr pre_condition2 = ctx.mkEq(po1, objs.getEnumConstructor("Po", "po_" + q.getPo()));
+							BoolExpr pre_condition = ctx.mkAnd(pre_condition1, pre_condition2);
+							String funcName = "reads_from_" + t.getTableName().getName() + "_" + fn.getName();
+							BoolExpr body = ctx.mkNot((BoolExpr) ctx.mkApp(objs.getfuncs(funcName), txn1, po1, rec1));
+							Quantifier result = ctx.mkForall(new Expr[] { txn1, po1, rec1 },
+									ctx.mkImplies(pre_condition, body), 1, null, null, null, null);
+							addAssertions(result);
+						}
+					}
 				}
 			}
 		}
+
+	}
+
+	private void constrainWritesTo(Program program) {
+		Z3Logger.SubHeaderZ3(";; constraints on writes_to functions");
+		for (Transaction txn : program.getTransactions()) {
+			Z3Logger.LogZ3(";; Queries of txn: " + txn.getName());
+			for (Query q : txn.getAllQueries()) {
+				Z3Logger.LogZ3(";; " + q.getId());
+				for (Table t : program.getTables()) {
+					for (FieldName fn : t.getFieldNames()) {
+						if (q.isWrite() && q.getWrittenFieldNames().contains(fn)) {
+							BoolExpr pre_condition1 = ctx.mkEq(ctx.mkApp(objs.getfuncs("txn_type"), txn1),
+									objs.getEnumConstructor("TxnType", txn.getName()));
+							BoolExpr pre_condition2 = ctx.mkEq(po1, objs.getEnumConstructor("Po", "po_" + q.getPo()));
+							BoolExpr pre_condition = ctx.mkAnd(pre_condition1, pre_condition2);
+							String funcName = "writes_to_" + t.getTableName().getName() + "_" + fn.getName();
+							Expr query_time = ctx.mkApp(objs.getfuncs("qry_time"), txn1, po1);
+							BoolExpr whc_to_expr = translateWhereClauseToZ3Expr(txn.getName(), txn1, q.getWHC(), rec1,
+									query_time);
+							BoolExpr body = ctx.mkEq(ctx.mkApp(objs.getfuncs(funcName), txn1, po1, rec1), whc_to_expr);
+							Quantifier result = ctx.mkForall(new Expr[] { txn1, po1, rec1 },
+									ctx.mkImplies(pre_condition, body), 1, null, null, null, null);
+							addAssertions(result);
+						} else {
+							BoolExpr pre_condition1 = ctx.mkEq(ctx.mkApp(objs.getfuncs("txn_type"), txn1),
+									objs.getEnumConstructor("TxnType", txn.getName()));
+							BoolExpr pre_condition2 = ctx.mkEq(po1, objs.getEnumConstructor("Po", "po_" + q.getPo()));
+							BoolExpr pre_condition = ctx.mkAnd(pre_condition1, pre_condition2);
+							String funcName = "writes_to_" + t.getTableName().getName() + "_" + fn.getName();
+							BoolExpr body = ctx.mkNot((BoolExpr) ctx.mkApp(objs.getfuncs(funcName), txn1, po1, rec1));
+							Quantifier result = ctx.mkForall(new Expr[] { txn1, po1, rec1 },
+									ctx.mkImplies(pre_condition, body), 1, null, null, null, null);
+							addAssertions(result);
+						}
+					}
+				}
+			}
+		}
+
 	}
 
 	private void addExecutionFuncs() {
