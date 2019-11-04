@@ -27,7 +27,7 @@ public class InputProgramGenerator {
 		pu.addTrnasaction("inc", "inc_id:int", "inc_amnt:int");
 		pu.addTrnasaction("dec", "dec_id:int", "dec_amnt:int");
 		pu.addTable("accounts", new FieldName("acc_id", true, true, F_Type.NUM),
-				new FieldName("acc_name", false, false, F_Type.TEXT),
+				//new FieldName("acc_name", false, false, F_Type.TEXT),
 				new FieldName("acc_balance", false, false, F_Type.NUM));
 
 		//pu.addBasicTable("departments", "dept_id", "dept_address", "dept_budget");
