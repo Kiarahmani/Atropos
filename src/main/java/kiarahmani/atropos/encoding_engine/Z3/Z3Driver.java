@@ -81,7 +81,7 @@ public class Z3Driver {
 		constrainWritesTo(program);
 		addReadsFrom(program);
 		constrainReadsFrom(program);
-		addConflictFuncs(program);
+		//addConflictFuncs(program);
 		//constrainConflictFunc(program);
 
 		Z3Logger.HeaderZ3("ROUND 1: FIND ALL POTENTIAL CONFLICTS");

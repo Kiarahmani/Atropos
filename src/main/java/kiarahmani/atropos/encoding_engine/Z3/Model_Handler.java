@@ -47,73 +47,85 @@ public class Model_Handler {
 	}
 
 	public void printUniverse() {
-		System.out.println("\n\n## MODEL UNIVERSE");
-		for (Sort sort : model.getSorts()) {
-			System.out.println("\n## " + sort + "s ##");
-			String indent = "   ";
-			// print rec sort
-			if (sort.toString().equals("Rec")) {
-				for (int t = 0; t < Constants._MAX_EXECECUTION_LENGTH; t++) {
-					System.out.println(indent + "time:" + t);
-					Expr time_expr = model.eval(objs.getfuncs("time_from_int").apply(ctx.mkInt(t)), true);
-					for (Expr x : model.getSortUniverse(sort)) {
-						System.out.print(indent + indent + x.toString().replace("!val!", "") + ": ");
-						String rec_type = model.eval(objs.getfuncs("rec_type").apply(x), true).toString();
-						String rec_val = " (";
-						String delim = "";
-						for (Table tab : program.getTables())
-							if (rec_type.equals(tab.getTableName().getName())) {
-								for (FieldName fn : tab.getFieldNames()) {
-									String fn_val = model
-											.eval(objs.getfuncs("proj_" + tab.getTableName().getName() + "_" + fn)
-													.apply(x, time_expr), true)
-											.toString();
-									rec_val += delim + fn_val;
-									delim = ",";
-								}
-								rec_val += "," + model.eval(objs.getfuncs("is_alive").apply(x, time_expr), true);
-							}
-						System.out.println(rec_type.toUpperCase() + rec_val + ")");
-					}
-				}
-				System.out.println();
-			}
+		Sort txnSort = null, recSort = null;
+		for (Sort sort : model.getSorts())
+			if (sort.toString().equals("Rec"))
+				recSort = sort;
+			else if (sort.toString().equals("Txn"))
+				txnSort = sort;
 
-			// print txn sort
-			if (sort.toString().equals("Txn"))
-				for (Expr x : model.getSortUniverse(sort)) {
-					String txn_type = model.eval(objs.getfuncs("txn_type").apply(x), true).toString();
-					String args = "";
-					String delim;
-					for (Transaction txn : program.getTransactions()) {
-						delim = "";
-						if (txn.getName().equalsIgnoreCase(txn_type)) {
-							for (E_Arg a : txn.getArgs()) {
-								String arg_val = model
-										.eval(objs.getfuncs(txn_type + "_arg_" + a.toString()).apply(x), true)
+		System.out.println("\n\n## MODEL UNIVERSE");
+		String indent = "  ";
+		for (Expr txn_instance : model.getSortUniverse(txnSort)) {
+			String txn_type = model.eval(objs.getfuncs("txn_type").apply(txn_instance), true).toString();
+			String args = "";
+			String delim;
+			for (Transaction txn : program.getTransactions()) {
+				delim = "";
+				if (txn.getName().equalsIgnoreCase(txn_type)) {
+					for (E_Arg a : txn.getArgs()) {
+						String arg_val = model
+								.eval(objs.getfuncs(txn_type + "_arg_" + a.toString()).apply(txn_instance), true)
+								.toString();
+						args += delim + a + ":" + arg_val;
+						delim = ",";
+					}
+					System.out.println("\n"+indent + txn_instance.toString().replace("xn!val!", "") + ":" + txn_type + "("
+							+ args + ")");
+					// print queries
+					for (Query q : txn.getAllQueries()) {
+						Expr po_expr = objs.getEnumConstructor("Po", "po_" + q.getPo());
+						boolean is_executed = model
+								.eval(objs.getfuncs("qry_is_executed").apply(txn_instance, po_expr), true).toString()
+								.equals("true");
+						if (is_executed) {
+							System.out.println(indent + indent + "(Q" + q.getPo() + ") " + q.getId().replace("#", ""));
+							Expr current_po = model.eval(objs.getfuncs("po_from_int").apply(ctx.mkInt(q.getPo())),
+									true);
+							for (Expr rec_instance : model.getSortUniverse(recSort)) {
+								System.out.print(indent + indent + indent
+										+ rec_instance.toString().replace("ec!val!", "") + ": ");
+								String rec_type = model.eval(objs.getfuncs("rec_type").apply(rec_instance), true)
 										.toString();
-								args += delim + a + ":" + arg_val;
-								delim = ",";
-							}
-							System.out.println(
-									indent + x.toString().replace("!val!", "") + ": " + txn_type + "(" + args + ")");
-							// print queries
-							for (Query q : txn.getAllQueries()) {
-								Expr po_expr = objs.getEnumConstructor("Po", "po_" + q.getPo());
-								boolean is_executed = model
-										.eval(objs.getfuncs("qry_is_executed").apply(x, po_expr), true).toString()
-										.equals("true");
-								Expr execution_time = model.eval(objs.getfuncs("qry_time").apply(x, po_expr), true);
-								if (is_executed) {
-									System.out.println(indent + indent + execution_time.toString().replace("_", ":")
-											+ " " + q.getId() + "(po:" + q.getPo() + ")");
-								}
+								String rec_val = " (";
+								delim = "";
+								for (Table tab : program.getTables())
+									if (rec_type.equals(tab.getTableName().getName())) {
+										for (FieldName fn : tab.getFieldNames()) {
+											String fn_val = model
+													.eval(objs
+															.getfuncs("proj_" + tab.getTableName().getName() + "_" + fn)
+															.apply(rec_instance, txn_instance, current_po), true)
+													.toString();
+											rec_val += delim + fn_val;
+											delim = ",";
+										}
+										rec_val += "," + model.eval(
+												objs.getfuncs("is_alive").apply(rec_instance, txn_instance, current_po),
+												true);
+										Expr is_read_expression = model
+												.eval(objs.getfuncs("reads_from_accounts_acc_balance")
+														.apply(txn_instance, po_expr, rec_instance), true);
+										Expr is_written_expression = model
+												.eval(objs.getfuncs("writes_to_accounts_acc_balance")
+														.apply(txn_instance, po_expr, rec_instance), true);
+										String is_read_string = (is_read_expression.toString().contains("true")) ? "(R)"
+												: "";
+										String is_written_string = (is_written_expression.toString().contains("true"))
+												? "(W)"
+												: "";
+
+										System.out.println(rec_type.toUpperCase() + rec_val + ")" + is_read_string
+												+ is_written_string);
+									}
 							}
 						}
 					}
-
 				}
+			}
+
 		}
+
 		System.out.println("\n\n\n\n\n");
 	}
 
