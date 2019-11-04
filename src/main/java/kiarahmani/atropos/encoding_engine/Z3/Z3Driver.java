@@ -62,7 +62,6 @@ public class Z3Driver {
 		addInitialStaticSorts();
 		addNumericEnumSorts("Po", Constants._MAX_EXECUTION_PO);
 		addNumericEnumSorts("Ro", Constants._MAX_ARG_INT);
-		addNumericEnumSorts("Time", Constants._MAX_EXECECUTION_LENGTH);
 		addNumericEnumSorts("Part", Constants._MAX_PARTITION_NUMBER);
 		addEnumSorts("RecType", program.getAllTableNames());
 		addEnumSorts("TxnType", program.getAllTxnNames());
@@ -72,9 +71,7 @@ public class Z3Driver {
 		addProjFuncsAndBounds(program);
 		Expression_Maker em = new Expression_Maker(program, ctx, objs);
 		Z3Logger.SubHeaderZ3("Properties of query functions");
-		addAssertion("uniqueness of time", em.mk_uniqueness_of_time());
 		addAssertion("bound_on_txn_instances", em.mk_bound_on_txn_instances(current_cycle_length));
-		addAssertion("qry_time_respects_po", em.mk_qry_time_respects_po());
 		constrainPKs(program, em);
 		addArgsFuncs(program);
 		addVariablesFuncs(program);
@@ -92,9 +89,9 @@ public class Z3Driver {
 		addAssertions(em.mk_minimum_txn_instances(2));
 		checkSAT(program);
 		//Z3Logger.HeaderZ3("POP");
-		//slv.pop();
-		//addAssertions(em.mk_minimum_txn_instances(2));
-		//checkSAT(program);
+		// slv.pop();
+		// addAssertions(em.mk_minimum_txn_instances(2));
+		// checkSAT(program);
 
 	}
 
@@ -215,9 +212,8 @@ public class Z3Driver {
 							BoolExpr pre_condition2 = ctx.mkEq(po1, objs.getEnumConstructor("Po", "po_" + q.getPo()));
 							BoolExpr pre_condition = ctx.mkAnd(pre_condition1, pre_condition2);
 							String funcName = "reads_from_" + t.getTableName().getName() + "_" + fn.getName();
-							Expr query_time = ctx.mkApp(objs.getfuncs("qry_time"), txn1, po1);
 							BoolExpr whc_to_expr = translateWhereClauseToZ3Expr(txn.getName(), txn1, q.getWHC(), rec1,
-									query_time);
+									po1);
 							BoolExpr body = ctx.mkEq(ctx.mkApp(objs.getfuncs(funcName), txn1, po1, rec1), whc_to_expr);
 							Quantifier result = ctx.mkForall(new Expr[] { txn1, po1, rec1 },
 									ctx.mkImplies(pre_condition, body), 1, null, null, null, null);
@@ -254,9 +250,9 @@ public class Z3Driver {
 							BoolExpr pre_condition2 = ctx.mkEq(po1, objs.getEnumConstructor("Po", "po_" + q.getPo()));
 							BoolExpr pre_condition = ctx.mkAnd(pre_condition1, pre_condition2);
 							String funcName = "writes_to_" + t.getTableName().getName() + "_" + fn.getName();
-							Expr query_time = ctx.mkApp(objs.getfuncs("qry_time"), txn1, po1);
+							//Expr query_time = ctx.mkApp(objs.getfuncs("qry_time"), txn1, po1);
 							BoolExpr whc_to_expr = translateWhereClauseToZ3Expr(txn.getName(), txn1, q.getWHC(), rec1,
-									query_time);
+									po1);
 							BoolExpr body = ctx.mkEq(ctx.mkApp(objs.getfuncs(funcName), txn1, po1, rec1), whc_to_expr);
 							Quantifier result = ctx.mkForall(new Expr[] { txn1, po1, rec1 },
 									ctx.mkImplies(pre_condition, body), 1, null, null, null, null);
@@ -281,8 +277,6 @@ public class Z3Driver {
 
 	private void addExecutionFuncs() {
 		Z3Logger.LogZ3(";; query related functions");
-		objs.addFunc("qry_time", ctx.mkFuncDecl("qry_time", new Sort[] { objs.getSort("Txn"), objs.getEnum("Po") },
-				objs.getEnum("Time")));
 		objs.addFunc("qry_part", ctx.mkFuncDecl("qry_part", new Sort[] { objs.getSort("Txn"), objs.getEnum("Po") },
 				objs.getEnum("Part")));
 		objs.addFunc("qry_is_executed", ctx.mkFuncDecl("qry_is_executed",
@@ -349,8 +343,6 @@ public class Z3Driver {
 		txn3 = ctx.mkFreshConst("txn", objs.getSort("Txn"));
 		rec1 = ctx.mkFreshConst("rec", objs.getSort("Rec"));
 		rec2 = ctx.mkFreshConst("rec", objs.getSort("Rec"));
-		time1 = ctx.mkFreshConst("time", objs.getEnum("Time"));
-		time2 = ctx.mkFreshConst("time", objs.getEnum("Time"));
 		po1 = ctx.mkFreshConst("po", objs.getEnum("Po"));
 		po2 = ctx.mkFreshConst("po", objs.getEnum("Po"));
 		po3 = ctx.mkFreshConst("po", objs.getEnum("Po"));
@@ -375,14 +367,6 @@ public class Z3Driver {
 		addAssertion("qry_type_to_is_executed_" + q.getId(), result);
 	}
 
-	private void addRecordsValConstraints(Program program) {
-		for (Transaction txn : program.getTransactions()) {
-			for (Query q : txn.getAllQueries())
-				if (q.isWrite()) {
-					// TODO: Must implement relationship between updates and records
-				}
-		}
-	}
 
 	private void addVariablesFuncs(Program program) {
 		Z3Logger.HeaderZ3(program.getName() + " (Variables)");
@@ -401,10 +385,10 @@ public class Z3Driver {
 					// def time func
 					String timeFuncName = txn.getName() + "_var_" + current_var.getName() + "_gen_time";
 					objs.addFunc(timeFuncName,
-							ctx.mkFuncDecl(timeFuncName, new Sort[] { objs.getSort("Txn") }, objs.getEnum("Time")));
+							ctx.mkFuncDecl(timeFuncName, new Sort[] { objs.getSort("Txn") }, objs.getEnum("Po")));
 					// properties of time func
 					Expr generated_time = ctx.mkApp(objs.getfuncs(timeFuncName), txn1);
-					Expr time_of_query = ctx.mkApp(objs.getfuncs("qry_time"), txn1, po1);
+					Expr time_of_query = po1; // ctx.mkApp(objs.getfuncs("qry_time"), txn1, po1);
 					Expr expected_po = objs.getEnumConstructor("Po", "po_" + q.getPo());
 					Expr expected_txn_type = objs.getEnumConstructor("TxnType", txn.getName());
 					BoolExpr lhs1 = ctx.mkEq(po1, expected_po);
@@ -419,7 +403,8 @@ public class Z3Driver {
 					Expr the_record = ctx.mkApp(objs.getfuncs(funcName), txn1, order1);
 					BoolExpr where_body = translateWhereClauseToZ3Expr(txn.getName(), txn1, q.getWHC(), the_record,
 							gen_time);
-					BoolExpr is_alive_body = (BoolExpr) ctx.mkApp(objs.getfuncs("is_alive"), the_record, gen_time);
+					BoolExpr is_alive_body = (BoolExpr) ctx.mkApp(objs.getfuncs("is_alive"), the_record, txn1,
+							gen_time);
 					Quantifier where_assertion = ctx.mkForall(new Expr[] { txn1, order1 },
 							ctx.mkAnd(where_body, is_alive_body), 1, null, null, null, null);
 					addAssertion("any record in " + current_var.getName()
@@ -478,8 +463,8 @@ public class Z3Driver {
 		Z3Logger.HeaderZ3(program.getName() + " (Schema sorts, types and functions)");
 		Z3Logger.LogZ3("\n;; definition of is_alive projection function for all tables");
 		String funcName = "is_alive";
-		objs.addFunc(funcName, ctx.mkFuncDecl(funcName, new Sort[] { objs.getSort("Rec"), objs.getEnum("Time") },
-				objs.getSort("Bool")));
+		objs.addFunc(funcName, ctx.mkFuncDecl(funcName,
+				new Sort[] { objs.getSort("Rec"), objs.getSort("Txn"), objs.getEnum("Po") }, objs.getSort("Bool")));
 		// definition of projection functions
 		for (Table t : program.getTables()) {
 			Z3Logger.SubHeaderZ3(t.getTableName().getName().toUpperCase());
@@ -489,13 +474,17 @@ public class Z3Driver {
 				switch (fn.getType()) {
 				case NUM:
 					// define function
-					objs.addFunc(funcName, ctx.mkFuncDecl(funcName,
-							new Sort[] { objs.getSort("Rec"), objs.getEnum("Time") }, objs.getSort("Fld")));
+					objs.addFunc(funcName,
+							ctx.mkFuncDecl(funcName,
+									new Sort[] { objs.getSort("Rec"), objs.getSort("Txn"), objs.getEnum("Po") },
+									objs.getSort("Fld")));
 					break;
 				case TEXT:
 					// define function
-					objs.addFunc(funcName, ctx.mkFuncDecl(funcName,
-							new Sort[] { objs.getSort("Rec"), objs.getEnum("Time") }, objs.getSort("String")));
+					objs.addFunc(funcName,
+							ctx.mkFuncDecl(funcName,
+									new Sort[] { objs.getSort("Rec"), objs.getSort("Txn"), objs.getEnum("Po") },
+									objs.getSort("String")));
 					// define bounds
 					Expr ret_val2 = ctx.mkApp(objs.getfuncs(funcName), rec1, time1);
 					BoolExpr[] eqs = new BoolExpr[Constants._MAX_FIELD_STRING];
@@ -506,8 +495,10 @@ public class Z3Driver {
 					addAssertions(result2);
 					break;
 				case BOOL:
-					objs.addFunc(funcName, ctx.mkFuncDecl(funcName,
-							new Sort[] { objs.getSort("Rec"), objs.getEnum("Time") }, objs.getSort("Bool")));
+					objs.addFunc(funcName,
+							ctx.mkFuncDecl(funcName,
+									new Sort[] { objs.getSort("Rec"), objs.getSort("Txn"), objs.getEnum("Po") },
+									objs.getSort("Bool")));
 					break;
 				default:
 					assert (false) : "unhandled field type";
@@ -555,11 +546,11 @@ public class Z3Driver {
 	}
 
 	private BoolExpr translateWhereClauseToZ3Expr(String txnName, Expr transaction, WHC input_whc, Expr record,
-			Expr time) {
+			Expr po) {
 		ArrayList<WHC_Constraint> constraints = input_whc.getConstraints();
 		BoolExpr[] result = new BoolExpr[constraints.size()];
 		for (int i = 0; i < constraints.size(); i++)
-			result[i] = translateWhereConstraintToZ3Expr(txnName, transaction, constraints.get(i), record, time);
+			result[i] = translateWhereConstraintToZ3Expr(txnName, transaction, constraints.get(i), record, po);
 		return ctx.mkAnd(result);
 	}
 
@@ -597,7 +588,7 @@ public class Z3Driver {
 			Expr var_time = ctx.mkApp(objs.getfuncs(txnName + "_var_" + p_exp.v.getName() + "_gen_time"), transaction);
 			Expr rec_expr = ctx.mkApp(objs.getfuncs(txnName + "_var_" + p_exp.v.getName()), transaction, order);
 			return ctx.mkApp(objs.getfuncs("proj_" + p_exp.v.getTableName() + "_" + p_exp.f.getName()), rec_expr,
-					var_time);
+					transaction, var_time);
 		case "E_Size":
 			// TODO: E_Size encoding must be implemented
 			assert (false) : "TODO: E_Size encoding not implemented yet...";
@@ -645,13 +636,13 @@ public class Z3Driver {
 	}
 
 	private BoolExpr translateWhereConstraintToZ3Expr(String txnName, Expr transaction, WHC_Constraint input_constraint,
-			Expr record, Expr time) {
+			Expr record, Expr po) {
 		BoolExpr result = null;
 		Expr rhs = translateExpressionsToZ3Expr(txnName, transaction, input_constraint.getExpression());
 		String tableName = input_constraint.getTableName().getName();
 		String fieldName = input_constraint.getFieldName().getName();
 		FuncDecl projFunc = objs.getfuncs("proj_" + tableName + "_" + fieldName);
-		Expr lhs = ctx.mkApp(projFunc, record, time);
+		Expr lhs = ctx.mkApp(projFunc, record, transaction, po);
 		switch (input_constraint.getOp()) {
 		case EQ:
 			return ctx.mkEq(lhs, rhs);

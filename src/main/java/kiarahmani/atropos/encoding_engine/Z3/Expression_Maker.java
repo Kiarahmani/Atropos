@@ -27,8 +27,8 @@ public class Expression_Maker {
 		txn3 = ctx.mkFreshConst("txn", objs.getSort("Txn"));
 		rec1 = ctx.mkFreshConst("rec", objs.getSort("Rec"));
 		rec2 = ctx.mkFreshConst("rec", objs.getSort("Rec"));
-		time1 = ctx.mkFreshConst("time", objs.getEnum("Time"));
-		time2 = ctx.mkFreshConst("time", objs.getEnum("Time"));
+		// time1 = ctx.mkFreshConst("time", objs.getEnum("Time"));
+		// time2 = ctx.mkFreshConst("time", objs.getEnum("Time"));
 		po1 = ctx.mkFreshConst("po", objs.getEnum("Po"));
 		po2 = ctx.mkFreshConst("po", objs.getEnum("Po"));
 	}
@@ -98,15 +98,14 @@ public class Expression_Maker {
 		int i = 0;
 		for (FieldName fn : pk_fields) {
 			String funcName = "proj_" + table_name + "_" + fn.getName();
-			eqs[i++] = ctx.mkEq(ctx.mkApp(objs.getfuncs(funcName), rec1, time1),
-					ctx.mkApp(objs.getfuncs(funcName), rec1, time2));
+			eqs[i++] = ctx.mkEq(ctx.mkApp(objs.getfuncs(funcName), rec1, txn1, po1),
+					ctx.mkApp(objs.getfuncs(funcName), rec1, txn2, po2));
 		}
-
 		BoolExpr lhs = ctx.mkEq(ctx.mkApp(objs.getfuncs("rec_type"), rec1),
 				objs.getEnumConstructor("RecType", table_name));
 		BoolExpr body = ctx.mkAnd(eqs);
-		Quantifier x = ctx.mkForall(new Expr[] { rec1, time1, time2 }, ctx.mkImplies(lhs, body), 1, null, null, null,
-				null);
+		Quantifier x = ctx.mkForall(new Expr[] { rec1, txn1, po1, txn2, po2 }, ctx.mkImplies(lhs, body), 1, null, null,
+				null, null);
 		return x;
 	}
 
@@ -117,14 +116,14 @@ public class Expression_Maker {
 		int i = 0;
 		for (FieldName fn : pk_fields) {
 			String funcName = "proj_" + table_name + "_" + fn.getName();
-			eqs[i++] = ctx.mkEq(ctx.mkApp(objs.getfuncs(funcName), rec1, time1),
-					ctx.mkApp(objs.getfuncs(funcName), rec2, time1));
+			eqs[i++] = ctx.mkEq(ctx.mkApp(objs.getfuncs(funcName), rec1, txn1, po1),
+					ctx.mkApp(objs.getfuncs(funcName), rec2, txn1, po1));
 		}
 		eqs[i++] = ctx.mkEq(ctx.mkApp(objs.getfuncs("rec_type"), rec1), objs.getEnumConstructor("RecType", table_name));
 		eqs[i++] = ctx.mkEq(ctx.mkApp(objs.getfuncs("rec_type"), rec2), objs.getEnumConstructor("RecType", table_name));
 		BoolExpr lhs = ctx.mkAnd(eqs);
 		BoolExpr body = ctx.mkEq(rec1, rec2);
-		Quantifier x = ctx.mkForall(new Expr[] { rec1, rec2, time1 }, ctx.mkImplies(lhs, body), 1, null, null, null,
+		Quantifier x = ctx.mkForall(new Expr[] { rec1, rec2, txn1, po1 }, ctx.mkImplies(lhs, body), 1, null, null, null,
 				null);
 		return x;
 	}
