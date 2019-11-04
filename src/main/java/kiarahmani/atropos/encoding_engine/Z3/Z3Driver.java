@@ -82,13 +82,12 @@ public class Z3Driver {
 		addReadsFrom(program);
 		constrainReadsFrom(program);
 		addConflictFuncs(program);
-		constrainConflictFunc(program);
-		Z3Logger.HeaderZ3("PUSH");
-		slv.push();
+		//constrainConflictFunc(program);
+
 		Z3Logger.HeaderZ3("ROUND 1: FIND ALL POTENTIAL CONFLICTS");
-		addAssertions(em.mk_minimum_txn_instances(2));
+		addAssertions(em.mk_minimum_txn_instances(5));
 		checkSAT(program);
-		//Z3Logger.HeaderZ3("POP");
+		// Z3Logger.HeaderZ3("POP");
 		// slv.pop();
 		// addAssertions(em.mk_minimum_txn_instances(2));
 		// checkSAT(program);
@@ -250,7 +249,7 @@ public class Z3Driver {
 							BoolExpr pre_condition2 = ctx.mkEq(po1, objs.getEnumConstructor("Po", "po_" + q.getPo()));
 							BoolExpr pre_condition = ctx.mkAnd(pre_condition1, pre_condition2);
 							String funcName = "writes_to_" + t.getTableName().getName() + "_" + fn.getName();
-							//Expr query_time = ctx.mkApp(objs.getfuncs("qry_time"), txn1, po1);
+							// Expr query_time = ctx.mkApp(objs.getfuncs("qry_time"), txn1, po1);
 							BoolExpr whc_to_expr = translateWhereClauseToZ3Expr(txn.getName(), txn1, q.getWHC(), rec1,
 									po1);
 							BoolExpr body = ctx.mkEq(ctx.mkApp(objs.getfuncs(funcName), txn1, po1, rec1), whc_to_expr);
@@ -366,7 +365,6 @@ public class Z3Driver {
 		BoolExpr result = ctx.mkForall(new Expr[] { txn1, po1 }, body, 1, null, null, null, null);
 		addAssertion("qry_type_to_is_executed_" + q.getId(), result);
 	}
-
 
 	private void addVariablesFuncs(Program program) {
 		Z3Logger.HeaderZ3(program.getName() + " (Variables)");
