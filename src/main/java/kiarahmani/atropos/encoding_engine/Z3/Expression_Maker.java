@@ -55,11 +55,23 @@ public class Expression_Maker {
 		return x;
 	}
 
+	public Quantifier mk_minimum_txn_instances_with_type(int limit, String... types) {
+		Expr[] Ts = new Expr[limit];
+		BoolExpr[] txn_types = new BoolExpr[limit];
+		for (int i = 0; i < limit; i++) {
+			Ts[i] = ctx.mkFreshConst("txn", objs.getSort("Txn"));
+			txn_types[i] = ctx.mkEq(ctx.mkApp(objs.getfuncs("txn_type"), Ts[i]),
+					objs.getEnumConstructor("TxnType", types[i]));
+		}
+		Expr body = ctx.mkAnd(ctx.mkDistinct(Ts), ctx.mkAnd(txn_types));
+		return ctx.mkExists(Ts, body, 1, null, null, null, null);
+	}
+
 	public Quantifier mk_minimum_txn_instances(int limit) {
 		Expr[] Ts = new Expr[limit];
 		for (int i = 0; i < limit; i++)
 			Ts[i] = ctx.mkFreshConst("txn", objs.getSort("Txn"));
-		Expr body = ctx.mkDistinct(Ts);
+		Expr body = ctx.mkAnd(ctx.mkDistinct(Ts));
 		return ctx.mkExists(Ts, body, 1, null, null, null, null);
 	}
 
