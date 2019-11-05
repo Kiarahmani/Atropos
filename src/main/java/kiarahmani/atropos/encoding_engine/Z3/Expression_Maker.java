@@ -7,6 +7,8 @@ import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Context;
 import com.microsoft.z3.Expr;
 import com.microsoft.z3.Quantifier;
+import com.microsoft.z3.Sort;
+
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.program.Program;
 import kiarahmani.atropos.program.Table;
@@ -16,7 +18,7 @@ public class Expression_Maker {
 	Program program;
 	Context ctx;
 	DeclaredObjects objs;
-	Expr rec1, rec2, txn1, txn2, txn3, time1, time2, po1, po2;
+	Expr rec1, rec2, txn1, txn2, txn3, time1, time2, po1, po2, po3, po4;
 
 	public Expression_Maker(Program program, Context ctx, DeclaredObjects objs) {
 		this.program = program;
@@ -31,6 +33,8 @@ public class Expression_Maker {
 		// time2 = ctx.mkFreshConst("time", objs.getEnum("Time"));
 		po1 = ctx.mkFreshConst("po", objs.getEnum("Po"));
 		po2 = ctx.mkFreshConst("po", objs.getEnum("Po"));
+		po3 = ctx.mkFreshConst("po", objs.getEnum("Po"));
+		po4 = ctx.mkFreshConst("po", objs.getEnum("Po"));
 	}
 
 	public Quantifier mk_uniqueness_of_time() {
@@ -73,6 +77,13 @@ public class Expression_Maker {
 			Ts[i] = ctx.mkFreshConst("txn", objs.getSort("Txn"));
 		Expr body = ctx.mkAnd(ctx.mkDistinct(Ts));
 		return ctx.mkExists(Ts, body, 1, null, null, null, null);
+	}
+
+	public Quantifier mk_cycle_exists() {
+		BoolExpr conf1 = (BoolExpr) ctx.mkApp(objs.getfuncs("conflict_on_accounts_acc_balance"), txn1, po1, txn2, po3);
+		BoolExpr conf2 = (BoolExpr) ctx.mkApp(objs.getfuncs("conflict_on_accounts_acc_balance"), txn2, po4, txn1, po2);
+		Expr body = ctx.mkAnd(ctx.mkDistinct(txn1, txn2), conf1, conf2);
+		return ctx.mkExists(new Expr[] { txn1, txn2, po1, po2, po3, po4 }, body, 1, null, null, null, null);
 	}
 
 	public Quantifier mk_qry_time_respects_po() {

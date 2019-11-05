@@ -70,8 +70,8 @@ public class Model_Handler {
 						args += delim + a + ":" + arg_val;
 						delim = ",";
 					}
-					System.out.println("\n"+indent + txn_instance.toString().replace("xn!val!", "") + ":" + txn_type + "("
-							+ args + ")");
+					System.out.println("\n" + indent + txn_instance.toString().replace("xn!val!", "") + ":" + txn_type
+							+ "(" + args + ")");
 					// print queries
 					for (Query q : txn.getAllQueries()) {
 						Expr po_expr = objs.getEnumConstructor("Po", "po_" + q.getPo());
@@ -125,6 +125,44 @@ public class Model_Handler {
 			}
 
 		}
+		System.out.println("\n\n");
+		System.out.println("## Conflicts ");
+		////// PRINT CONFLICT EDGES
+		for (Expr txn_instance1 : model.getSortUniverse(txnSort))
+			for (Expr txn_instance2 : model.getSortUniverse(txnSort)) {
+				String txn_type1 = model.eval(objs.getfuncs("txn_type").apply(txn_instance1), true).toString();
+				String txn_type2 = model.eval(objs.getfuncs("txn_type").apply(txn_instance2), true).toString();
+				String are_eq_string = model.eval(ctx.mkEq(txn_instance1, txn_instance2), true).toString();
+				if (!are_eq_string.contains("true")) {
+					for (Transaction txn1 : program.getTransactions())
+						for (Transaction txn2 : program.getTransactions())
+							if (txn1.getName().equalsIgnoreCase(txn_type1)
+									&& txn2.getName().equalsIgnoreCase(txn_type2))
+								for (Query q1 : txn1.getAllQueries())
+									for (Query q2 : txn2.getAllQueries()) {
+										Expr po_expr1 = objs.getEnumConstructor("Po", "po_" + q1.getPo());
+										Expr po_expr2 = objs.getEnumConstructor("Po", "po_" + q2.getPo());
+										boolean is_executed1 = model
+												.eval(objs.getfuncs("qry_is_executed").apply(txn_instance1, po_expr1),
+														true)
+												.toString().equals("true");
+										boolean is_executed2 = model
+												.eval(objs.getfuncs("qry_is_executed").apply(txn_instance2, po_expr2),
+														true)
+												.toString().equals("true");
+										if (is_executed1 && is_executed2) {
+											String is_conflict_string = model
+													.eval(objs.getfuncs("conflict_on_accounts_acc_balance").apply(
+															txn_instance1, po_expr1, txn_instance2, po_expr2), true)
+													.toString();
+											if (is_conflict_string.contains("true"))
+												System.out.println(txn_instance1.toString().replace("xn!val!", "") + "Q"
+														+ q1.getPo() + "<--->" +txn_instance2.toString().replace("xn!val!", "") + "Q"
+														+ q2.getPo() );
+										}
+									}
+				}
+			}
 
 		System.out.println("\n\n\n\n\n");
 	}

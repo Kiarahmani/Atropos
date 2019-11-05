@@ -81,17 +81,17 @@ public class Z3Driver {
 		constrainWritesTo(program);
 		addReadsFrom(program);
 		constrainReadsFrom(program);
-		//addConflictFuncs(program);
-		//constrainConflictFunc(program);
+		addConflictFuncs(program);
+		constrainConflictFunc(program);
 
 		Z3Logger.HeaderZ3("ROUND 1: FIND ALL POTENTIAL CONFLICTS");
-		addAssertions(em.mk_minimum_txn_instances(5));
+		addAssertions(em.mk_cycle_exists());
 		checkSAT(program);
+
 		// Z3Logger.HeaderZ3("POP");
 		// slv.pop();
 		// addAssertions(em.mk_minimum_txn_instances(2));
 		// checkSAT(program);
-
 	}
 
 	private void constrainIsExecuted(Program program, Expression_Maker em) {
@@ -126,11 +126,12 @@ public class Z3Driver {
 					BoolExpr exists_a_record = ctx.mkExists(new Expr[] { rec1 }, ctx.mkAnd(writes_to, reads_from), 1,
 							null, null, null, null);
 					BoolExpr exists_func = (BoolExpr) ctx.mkApp(objs.getfuncs(funcName), txn1, po1, txn2, po2);
-					Z3Logger.LogZ3(";; constrain conflict relation only if a conflicting record exists");
+					BoolExpr all_conditions = ctx.mkAnd(q1_is_executed, q2_is_executed, exists_a_record,
+							txns_are_different);
+					Z3Logger.LogZ3(
+							";; constrain conflict relation only if both queries are executed and a conflicting record exists");
 					Quantifier no_rec_no_wr = ctx.mkForall(new Expr[] { txn1, txn2, po1, po2 },
-							ctx.mkEq(ctx.mkAnd(q1_is_executed, q2_is_executed, exists_a_record, txns_are_different),
-									exists_func),
-							1, null, null, null, null);
+							ctx.mkImplies(exists_func, all_conditions), 1, null, null, null, null);
 					addAssertions(no_rec_no_wr);
 				}
 		}
