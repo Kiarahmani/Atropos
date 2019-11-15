@@ -81,16 +81,19 @@ public class Z3Driver {
 		constrainWritesTo(program);
 		addReadsFrom(program);
 		constrainReadsFrom(program);
-		addConflictFuncs(program);
-		constrainConflictFunc(program);
+		
+		
+		
+		//addConflictFuncs(program);
+		//constrainConflictFunc(program);
 
 		Z3Logger.HeaderZ3("ROUND 1: FIND ALL POTENTIAL CONFLICTS");
-		addAssertions(em.mk_cycle_exists());
+		// addAssertions(em.mk_cycle_exists());
 		checkSAT(program);
 
 		// Z3Logger.HeaderZ3("POP");
 		// slv.pop();
-		// addAssertions(em.mk_minimum_txn_instances(2));
+		addAssertions(em.mk_minimum_txn_instances(2));
 		// checkSAT(program);
 	}
 

@@ -25,7 +25,6 @@ public class Encoding_Engine {
 		this.conflict_graph = conflict_graph;
 		this.program = program;
 		new Z3Logger("smt2/z3-encoding.smt2");
-
 		int current_cycle_length = 4;
 
 		this.z3_driver = new Z3Driver(this.program, current_cycle_length);
