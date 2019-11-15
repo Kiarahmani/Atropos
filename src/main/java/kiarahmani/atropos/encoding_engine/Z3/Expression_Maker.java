@@ -80,8 +80,8 @@ public class Expression_Maker {
 	}
 
 	public Quantifier mk_cycle_exists() {
-		BoolExpr conf1 = (BoolExpr) ctx.mkApp(objs.getfuncs("conflict_on_accounts_acc_balance"), txn1, po1, txn2, po3);
-		BoolExpr conf2 = (BoolExpr) ctx.mkApp(objs.getfuncs("conflict_on_accounts_acc_balance"), txn2, po4, txn1, po2);
+		BoolExpr conf1 = (BoolExpr) ctx.mkApp(objs.getfuncs("dep"), txn1, po1, txn2, po3);
+		BoolExpr conf2 = (BoolExpr) ctx.mkApp(objs.getfuncs("dep"), txn2, po4, txn1, po2);
 		Expr body = ctx.mkAnd(ctx.mkDistinct(txn1, txn2), conf1, conf2);
 		return ctx.mkExists(new Expr[] { txn1, txn2, po1, po2, po3, po4 }, body, 1, null, null, null, null);
 	}
