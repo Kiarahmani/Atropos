@@ -121,6 +121,11 @@ public class Z3Driver {
 		result = ctx.mkForall(new Expr[] { txn1, po1 }, ctx.mkNot(loop), 1, null, null, null, null);
 		addAssertion("irreflixivity of arbit function", result);
 
+		FuncDecl po_to_int = objs.getfuncs("po_to_int");
+		pre1 = (BoolExpr) ctx.mkApp(objs.getfuncs("arbit"), txn1, po1, txn1, po2);
+		post1 = ctx.mkLt((ArithExpr) ctx.mkApp(po_to_int, po1), (ArithExpr) ctx.mkApp(po_to_int, po2));
+		result = ctx.mkForall(new Expr[] { txn1, po1 }, ctx.mkImplies(pre1, post1), 1, null, null, null, null);
+		addAssertion("arbitration respects program order", result);
 	}
 
 	private void constrainIsExecuted(Program program, Expression_Maker em) {
