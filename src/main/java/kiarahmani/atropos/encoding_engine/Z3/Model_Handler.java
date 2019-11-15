@@ -39,7 +39,7 @@ public class Model_Handler {
 		try {
 			writer = new FileWriter(file, false);
 			printer = new PrintWriter(writer);
-			printer.append(model.toString());
+			printer.append(model.toString().replace("!val!", "").replace("!", ""));
 			printer.flush();
 		} catch (IOException e) {
 			e.printStackTrace();

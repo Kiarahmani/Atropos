@@ -23,6 +23,13 @@ public class Update_Query extends Query {
 		this.po = po;
 	}
 
+	public Expression getUpdateExpressionByFieldName(FieldName fn) {
+		for (Tuple<FieldName, Expression> tp : this.update_expressions)
+			if (tp.x == fn)
+				return tp.y;
+		return null;
+	}
+
 	public String getId() {
 		return this.kind.toString() + "#" + this.id;
 	}

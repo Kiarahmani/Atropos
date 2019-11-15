@@ -19,10 +19,12 @@ public abstract class Query {
 	protected int id;
 	protected int po;
 
+	public abstract Expression getUpdateExpressionByFieldName(FieldName fn);
+
 	public abstract void setPathCondition(Expression path_condition);
-	
+
 	public abstract int getPo();
-	
+
 	public abstract Expression getPathCondition();
 
 	public abstract WHC getWHC();
@@ -40,7 +42,7 @@ public abstract class Query {
 	public abstract ArrayList<FieldName> getAccessedFieldNames();
 
 	public abstract ArrayList<FieldName> getWrittenFieldNames();
-	
+
 	public abstract ArrayList<FieldName> getReadFieldNames();
 
 }

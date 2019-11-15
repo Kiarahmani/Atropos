@@ -104,4 +104,9 @@ public class Select_Query extends Query {
 	public int getPo() {
 		return this.po;
 	}
+
+	@Override
+	public Expression getUpdateExpressionByFieldName(FieldName fn) {
+		return null;
+	}
 }
