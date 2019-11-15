@@ -81,11 +81,12 @@ public class Z3Driver {
 		constrainWritesTo(program);
 		addReadsFrom(program);
 		constrainReadsFrom(program);
-		
-		
-		
-		//addConflictFuncs(program);
-		//constrainConflictFunc(program);
+
+		addArFunc(program);
+		constrainArFunc(program);
+
+		// addConflictFuncs(program);
+		// constrainConflictFunc(program);
 
 		Z3Logger.HeaderZ3("ROUND 1: FIND ALL POTENTIAL CONFLICTS");
 		// addAssertions(em.mk_cycle_exists());
@@ -95,6 +96,31 @@ public class Z3Driver {
 		// slv.pop();
 		addAssertions(em.mk_minimum_txn_instances(2));
 		// checkSAT(program);
+	}
+
+	private void addArFunc(Program program) {
+		Z3Logger.SubHeaderZ3(";; definition of arbitration function");
+		String funcName = "arbit";
+		objs.addFunc(funcName,
+				ctx.mkFuncDecl(funcName,
+						new Sort[] { objs.getSort("Txn"), objs.getEnum("Po"), objs.getSort("Txn"), objs.getEnum("Po") },
+						objs.getSort("Bool")));
+	}
+
+	private void constrainArFunc(Program program) {
+		String funcName = "arbit";
+		BoolExpr pre1 = (BoolExpr) ctx.mkApp(objs.getfuncs(funcName), txn1, po1, txn2, po2);
+		BoolExpr pre2 = (BoolExpr) ctx.mkApp(objs.getfuncs(funcName), txn2, po2, txn3, po3);
+		BoolExpr post1 = (BoolExpr) ctx.mkApp(objs.getfuncs(funcName), txn1, po1, txn3, po3);
+		BoolExpr body = ctx.mkImplies(ctx.mkAnd(pre1, pre2), post1);
+		Quantifier result = ctx.mkForall(new Expr[] { txn1, po1, txn2, po2, txn3, po3 }, body, 1, null, null, null,
+				null);
+		addAssertion("transitivity of arbit function", result);
+
+		BoolExpr loop = (BoolExpr) ctx.mkApp(objs.getfuncs(funcName), txn1, po1, txn1, po1);
+		result = ctx.mkForall(new Expr[] { txn1, po1 }, ctx.mkNot(loop), 1, null, null, null, null);
+		addAssertion("irreflixivity of arbit function", result);
+
 	}
 
 	private void constrainIsExecuted(Program program, Expression_Maker em) {
