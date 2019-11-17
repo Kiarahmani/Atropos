@@ -79,11 +79,33 @@ public class Expression_Maker {
 		return ctx.mkExists(Ts, body, 1, null, null, null, null);
 	}
 
-	public Quantifier mk_cycle_exists() {
-		BoolExpr conf1 = (BoolExpr) ctx.mkApp(objs.getfuncs("dep"), txn1, po1, txn2, po3);
-		BoolExpr conf2 = (BoolExpr) ctx.mkApp(objs.getfuncs("dep"), txn2, po4, txn1, po2);
-		Expr body = ctx.mkAnd(ctx.mkDistinct(txn1, txn2), conf1, conf2);
-		return ctx.mkExists(new Expr[] { txn1, txn2, po1, po2, po3, po4 }, body, 1, null, null, null, null);
+	public Quantifier mk_cycle_exists(int dependency_length) {
+		// assert (dependency_length > txn_instances) : "Cannot form a cycle of length
+		// L, within T transaction instances, where T>=L";
+		Expr[] Ts = new Expr[dependency_length];
+		Expr[] POs = new Expr[dependency_length];
+		for (int i = 0; i < dependency_length; i++) {
+			Ts[i] = ctx.mkFreshConst("txn", objs.getSort("Txn"));
+			POs[i] = ctx.mkFreshConst("po", objs.getEnum("Po"));
+		}
+		BoolExpr[] edges = new BoolExpr[dependency_length - 3];
+		for (int i = 0; i < dependency_length - 3; i++) {
+			if (i % 2 == 0) {
+				edges[i] = (BoolExpr) ctx.mkApp(objs.getfuncs("dep_st"), Ts[i + 1], POs[i + 1], Ts[i + 2], POs[i + 2]);
+			} else {
+				edges[i] = (BoolExpr) ctx.mkApp(objs.getfuncs("dep"), Ts[i + 1], POs[i + 1], Ts[i + 2], POs[i + 2]);
+			}
+		}
+		BoolExpr base_txn_pos = ctx.mkDistinct(POs[0], POs[dependency_length - 1]);
+		BoolExpr base_txn = ctx.mkEq(Ts[0], Ts[dependency_length - 1]);
+		BoolExpr base_edge_1 = (BoolExpr) ctx.mkApp(objs.getfuncs("dep"), Ts[0], POs[0], Ts[1], POs[1]);
+		BoolExpr base_edge_2 = (BoolExpr) ctx.mkApp(objs.getfuncs("dep"), Ts[dependency_length - 2],
+				POs[dependency_length - 2], Ts[dependency_length - 1], POs[dependency_length - 1]);
+		Expr body = ctx.mkAnd(base_txn_pos, base_txn, base_edge_1, base_edge_2, ctx.mkAnd(edges));
+		Expr[] result = new Expr[dependency_length + dependency_length];
+		System.arraycopy(Ts, 0, result, 0, dependency_length);
+		System.arraycopy(POs, 0, result, dependency_length, dependency_length);
+		return ctx.mkExists(result, body, 1, null, null, null, null);
 	}
 
 	public Quantifier mk_qry_time_respects_po() {

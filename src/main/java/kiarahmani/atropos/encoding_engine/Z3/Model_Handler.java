@@ -151,14 +151,14 @@ public class Model_Handler {
 														true)
 												.toString().equals("true");
 										if (is_executed1 && is_executed2) {
-											String is_conflict_string = model
-													.eval(objs.getfuncs("dep").apply(
-															txn_instance1, po_expr1, txn_instance2, po_expr2), true)
+											String is_conflict_string = model.eval(objs.getfuncs("dep")
+													.apply(txn_instance1, po_expr1, txn_instance2, po_expr2), true)
 													.toString();
 											if (is_conflict_string.contains("true"))
 												System.out.println(txn_instance1.toString().replace("xn!val!", "") + "Q"
-														+ q1.getPo() + "<--->" +txn_instance2.toString().replace("xn!val!", "") + "Q"
-														+ q2.getPo() );
+														+ q1.getPo() + "<--->"
+														+ txn_instance2.toString().replace("xn!val!", "") + "Q"
+														+ q2.getPo());
 										}
 									}
 				}
