@@ -28,39 +28,54 @@ public class Encoding_Engine {
 
 	public void constructInitialDAIGraph(Conflict_Graph cg) {
 		DAI dai;
-		System.out.println("\n\n\n");
+		int iter = 0;
+		System.out.println("\n\n## DAI");
 		for (Transaction txn : program.getTransactions()) {
+			logger.debug("finding potential DAIs in txn:" + txn.getName());
 			ArrayList<Query> all_queries = txn.getAllQueries();
-			for (int i = 0; i < all_queries.size(); i++)
+			for (int i = 0; i < all_queries.size(); i++) {
 				for (int j = i + 1; j < all_queries.size(); j++) {
 					Query q1 = all_queries.get(i);
 					Query q2 = all_queries.get(j);
+					logger.debug(
+							"constructing potential DAIs consisted of q1:" + q1.getId() + " and " + "q2:" + q2.getId());
 					for (Conflict c1 : cg.getConfsFromQuery(q1))
 						for (Conflict c2 : cg.getConfsFromQuery(q2)) {
 							// create a potential DAI
 							dai = new DAI(txn, q1, q1.getAccessedFieldNames(), q2, q2.getAccessedFieldNames());
 							Z3Driver local_z3_driver = new Z3Driver();
-							Status status = local_z3_driver.generateDAI(this.program, 4, dai, c1, c2);
-							printBaseAnomaly(status, dai, c1, c2);
-							// free memory
+							// check if it is a valid DAI
+							long begin = System.currentTimeMillis();
+							Status status = Status.SATISFIABLE; // local_z3_driver.generateDAI(this.program, 4, dai, c1,
+																// c2);
+							long end = System.currentTimeMillis();
+							printBaseAnomaly(iter++, status, end - begin, dai, c1, c2);
+							// free up solver's memory for the next iteration
 							local_z3_driver = null;
 						}
 				}
+			}
 		}
 	}
 
-	private void printBaseAnomaly(Status status, DAI dai, Conflict c1, Conflict c2) {
+	private void printBaseAnomaly(int iter, Status status, long time, DAI dai, Conflict c1, Conflict c2) {
+		String txn1_name = dai.getTransaction().getName();
+		String txn_first_name = c1.getTransaction(2).getName();
+		String txn_last_name = c2.getTransaction(2).getName();
+		String txn1_line = String.format("%0" + txn1_name.length() + "d", 0).replace("0", "-");
+		String txn_first_line = String.format("%0" + txn_first_name.length() + "d", 0).replace("0", "-");
+		String txn_last_line = String.format("%0" + txn_last_name.length() + "d", 0).replace("0", "-");
 		System.out.println("\n***********************************");
-		System.out.println("[" + status + "]");
-		System.out.printf("%-12s %s\n", dai.getTransaction().getName(), c1.getTransaction(2).getName());
-		System.out.printf("%-12s %s\n", "----", "----");
-		System.out.printf("po#%-1s ======= po#%s\n", c1.getQuery(1).getPo(), c1.getQuery(2).getPo());
+		System.out.println("Round# "+iter+" [" + status + " (" + time + "ms)]");
+		System.out.printf("%-20s%s\n", txn1_name, txn_first_name);
+		System.out.printf("%-20s%s\n", txn1_line, txn_first_line);
+		System.out.printf("%-8s ========== %s\n", c1.getQuery(1).getId(), c1.getQuery(2).getId());
 		//
 		System.out.println();
 		//
-		System.out.printf("%-12s %s\n", "", c2.getTransaction(2).getName());
-		System.out.printf("%-12s %s\n", "", "----");
-		System.out.printf("po#%-1s ======= po#%s\n", dai.getQuery(2).getPo(), c2.getQuery(2).getPo());
+		System.out.printf("%-20s%s\n", "", txn_last_name);
+		System.out.printf("%-20s%s\n", "", txn_last_line);
+		System.out.printf("%-8s ========== %s\n", dai.getQuery(2).getId(), c2.getQuery(2).getId());
 		System.out.println("\n");
 	}
 

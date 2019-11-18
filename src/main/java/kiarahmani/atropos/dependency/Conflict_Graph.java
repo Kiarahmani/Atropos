@@ -41,13 +41,26 @@ public class Conflict_Graph {
 		for (int i = 0; i < program.numberOfTransactions(); i++) {
 			Transaction txn1 = program.getTransactions(i);
 			logger.debug("Begin inner loop for src txn=" + txn1.getName());
-			for (int j = i + 1; j < program.numberOfTransactions(); j++) {
-				Transaction txn2 = program.getTransactions(j);
-				logger.debug("Begin analysis for dst txn=" + txn2.getName());
-				// iterate over all statements of txn1 and txn2
-				for (Statement stmt1 : txn1.getStatements()) {
-					for (Statement stmt2 : txn2.getStatements()) {
-						constructConfGraph_help(txn1, stmt1, txn2, stmt2);
+			for (int j = i; j < program.numberOfTransactions(); j++) {
+				if (j == i) {
+					Transaction txn2 = program.getTransactions(j);
+					logger.debug("Begin analysis for dst txn=" + txn2.getName());
+					// iterate over all statements of txn1 and txn2
+					ArrayList<Statement> stmts1 = txn1.getStatements();
+					ArrayList<Statement> stmts2 = txn2.getStatements();
+					for (int m = 0; m < stmts1.size(); m++) {
+						for (int n = m; n < stmts2.size(); n++) {
+							constructConfGraph_help(txn1, stmts1.get(m), txn2, stmts2.get(n));
+						}
+					}
+				} else {
+					Transaction txn2 = program.getTransactions(j);
+					logger.debug("Begin analysis for dst txn=" + txn2.getName());
+					// iterate over all statements of txn1 and txn2
+					for (Statement stmt1 : txn1.getStatements()) {
+						for (Statement stmt2 : txn2.getStatements()) {
+							constructConfGraph_help(txn1, stmt1, txn2, stmt2);
+						}
 					}
 				}
 			}

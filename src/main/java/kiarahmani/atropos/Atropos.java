@@ -23,7 +23,7 @@ public class Atropos {
 		}
 		logger.debug("New Constants object initialized");
 		InputProgramGenerator ipg = new InputProgramGenerator();
-		Program program = ipg.generateVerySimpleBankingProgram();
+		Program program = ipg.generateSmallBankProgram();
 
 		Conflict_Graph cg = new Conflict_Graph(program);
 		Encoding_Engine ee = new Encoding_Engine(program);

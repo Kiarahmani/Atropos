@@ -41,14 +41,14 @@ public class Update_Query extends Query {
 	@Override
 	public String toString() {
 		assert (!update_expressions.isEmpty()) : "No update list specified";
-		String isAtomicString = isAtomic ? "ATOMIC " : "";
+		String isAtomicString = isAtomic ? "ATOMIC " : "       ";
 		String updateTuplesList = "";
 		String delim = "";
 		for (Tuple<FieldName, Expression> tuple : update_expressions) {
 			updateTuplesList += delim + tuple.x + "=" + tuple.y;
 			delim = ",";
 		}
-		return isAtomicString + "UPDATE" + this.id + " " + this.tableName + " SET " + updateTuplesList + " WHERE "
+		return isAtomicString + "UPDATE" + this.id + " " + String.format("%-11s", this.tableName) + " SET  " + updateTuplesList + " WHERE "
 				+ this.where_clause;
 	}
 

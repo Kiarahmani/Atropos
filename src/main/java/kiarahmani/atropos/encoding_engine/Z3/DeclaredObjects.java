@@ -81,7 +81,7 @@ public class DeclaredObjects {
 				result = e;
 				break;
 			}
-		assert (result != null);
+		assert (result != null):"enum_name:"+enum_name+"  cnstrctrName:"+cnstrctrName;
 		return result;
 	}
 

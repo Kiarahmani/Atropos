@@ -1,7 +1,12 @@
 ====================================================================================================
 TODO:
-  
-  - define objects to be created after Z3 returns --> Cycle/Anomaly object
+ 
+
+  - Verify that the implemented SmallBank is correct
+  - Run the encoding engine on SmallBank it is probably going to be very slow
+    must figure out ways to both prunes iterations out and also maybe constrain
+    each query further.
+  - *add support for re-encoding already found anomalies 
   - support for ATOMIC ops and range operations 
   - support for insert and delete
   - support for for loops

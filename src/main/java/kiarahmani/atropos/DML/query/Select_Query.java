@@ -38,10 +38,10 @@ public class Select_Query extends Query {
 		for (FieldName fn : fieldNames) {
 			fieldNamesString += delim + fn.toString();
 			delim = ",";
-		}
-		String isAtomicString = isAtomic ? "ATOMIC " : "";
-		return isAtomicString + "SELECT" + this.id + " (" + fieldNamesString + ") FROM " + this.tableName + " AS "
-				+ this.variable + " WHERE " + this.where_clause;
+		}fieldNamesString+=")";
+		String isAtomicString = isAtomic ? "ATOMIC " : "       ";
+		return isAtomicString + "SELECT" + this.id + " (" + String.format("%-10s", fieldNamesString) + " FROM "
+				+ String.format("%-10s", this.tableName) + " AS " + this.variable + " WHERE " + this.where_clause;
 	}
 
 	@Override
