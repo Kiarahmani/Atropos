@@ -1,15 +1,10 @@
 ====================================================================================================
 TODO:
   
-  - study various possibilities for the final cycle query. What sorts of
-    restrictions can speed up the process?
-  - enhance the model handler -> it must be easier to read and understand the model
-  - run some tests on the current encoding engine. 
-  - figure out what else is still missing. 
+  - define objects to be created after Z3 returns --> Cycle/Anomaly object
   - support for ATOMIC ops and range operations 
   - support for insert and delete
-  - support for for loops?
-  - get a better sense of the engine's scalability.
+  - support for for loops
  
 
 ====================================================================================================

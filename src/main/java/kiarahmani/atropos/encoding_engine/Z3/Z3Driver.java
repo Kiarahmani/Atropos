@@ -53,7 +53,7 @@ public class Z3Driver {
 			po3;
 	DeclaredObjects objs;
 
-	public Model generateDAI(Program program, int dependency_length, DAI dai, Conflict c1, Conflict c2) {
+	public Status generateDAI(Program program, int dependency_length, DAI dai, Conflict c1, Conflict c2) {
 		HashMap<String, String> cfg = new HashMap<String, String>();
 		cfg.put("model", "true");
 		cfg.put("unsat_core", "true");
@@ -107,6 +107,8 @@ public class Z3Driver {
 		//
 		//
 		// check satisfiability
+		return slv.check();
+/*
 		long begin = System.currentTimeMillis();
 		Status status = slv.check();
 		if (status == Status.SATISFIABLE) {
@@ -119,11 +121,11 @@ public class Z3Driver {
 				System.out.println(e);
 			return null;
 		}
+		*/
 	}
 
 	private void print_result_header(Status status, long begin, long end) {
-		System.out.println(
-				"==================\n" + status + " (" + (end - begin) + "ms)" + "\n==================\n\n");
+		System.out.println("==================\n" + status + " (" + (end - begin) + "ms)" + "\n==================\n\n");
 	}
 
 	private void constrainWrittenVals(Program program) {
