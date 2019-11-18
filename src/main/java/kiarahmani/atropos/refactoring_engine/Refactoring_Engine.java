@@ -19,7 +19,7 @@ import kiarahmani.atropos.utils.Util;
 
 public class Refactoring_Engine {
 	private static final Logger logger = LogManager.getLogger(Atropos.class);
-
+/*
 	public Conflict_Graph constructConfGraph(Program p) {
 		logger.debug("Asserted that conflict graph is initialized");
 		Conflict_Graph cg = new Conflict_Graph();
@@ -114,5 +114,5 @@ public class Refactoring_Engine {
 		return c;
 
 	}
-
+*/
 }

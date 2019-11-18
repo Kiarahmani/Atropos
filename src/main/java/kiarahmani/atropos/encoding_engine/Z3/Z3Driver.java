@@ -14,6 +14,7 @@ import com.microsoft.z3.EnumSort;
 import com.microsoft.z3.Expr;
 import com.microsoft.z3.FuncDecl;
 import com.microsoft.z3.Model;
+import com.microsoft.z3.Params;
 import com.microsoft.z3.Quantifier;
 import com.microsoft.z3.Solver;
 import com.microsoft.z3.Sort;
@@ -33,6 +34,9 @@ import kiarahmani.atropos.DML.query.Query;
 import kiarahmani.atropos.DML.query.Select_Query;
 import kiarahmani.atropos.DML.where_clause.WHC;
 import kiarahmani.atropos.DML.where_clause.WHC_Constraint;
+import kiarahmani.atropos.dependency.Conflict;
+import kiarahmani.atropos.dependency.Conflict_Graph;
+import kiarahmani.atropos.dependency.DAI;
 import kiarahmani.atropos.program.Program;
 import kiarahmani.atropos.program.Table;
 import kiarahmani.atropos.program.Transaction;
@@ -43,20 +47,19 @@ public class Z3Driver {
 	Context ctx;
 	Solver slv;
 	Model model;
+	Expression_Maker em;
 	Model_Handler model_handler;
 	Expr rec1, rec2, time1, time2, txn1, txn2, po1, po2, arg1, arg2, fld1, fld2, part1, part2, order1, order2, txn3,
 			po3;
 	DeclaredObjects objs;
 
-	public Z3Driver(Program program, int current_cycle_length) {
-		logger.debug("new Z3 Driver object is being created");
+	public Model generateDAI(Program program, int dependency_length, DAI dai, Conflict c1, Conflict c2) {
 		HashMap<String, String> cfg = new HashMap<String, String>();
 		cfg.put("model", "true");
 		cfg.put("unsat_core", "true");
 		ctx = new Context(cfg);
 		objs = new DeclaredObjects();
-
-		// begin encoding
+		// begin encoding the context
 		slv = ctx.mkSolver();
 		addInitialHeader();
 		addInitialStaticSorts();
@@ -69,9 +72,9 @@ public class Z3Driver {
 		addExecutionFuncs();
 		initializeLocalVariables();
 		addProjFuncsAndBounds(program);
-		Expression_Maker em = new Expression_Maker(program, ctx, objs);
+		this.em = new Expression_Maker(program, ctx, objs);
 		Z3Logger.SubHeaderZ3("Properties of query functions");
-		addAssertion("bound_on_txn_instances", em.mk_bound_on_txn_instances(current_cycle_length));
+		addAssertion("bound_on_txn_instances", em.mk_bound_on_txn_instances(dependency_length));
 		constrainPKs(program, em);
 		addArgsFuncs(program);
 		addVariablesFuncs(program);
@@ -94,15 +97,33 @@ public class Z3Driver {
 		constrainDepFunc(program);
 		addDepSTFunc(program);
 		constrainDepSTFunc(program);
+		// end encoding context
+		//
+		// final query
+		addAssertion("cycle", em.mk_cycle_exists_constrained(dependency_length, dai, c1, c2));
+		//
+		//
+		//
+		//
+		//
+		// check satisfiability
+		long begin = System.currentTimeMillis();
+		Status status = slv.check();
+		if (status == Status.SATISFIABLE) {
+			model = slv.getModel();
+			print_result_header(status, begin, System.currentTimeMillis());
+			return model;
+		} else {
+			print_result_header(status, begin, System.currentTimeMillis());
+			for (Expr e : slv.getUnsatCore())
+				System.out.println(e);
+			return null;
+		}
+	}
 
-		Z3Logger.HeaderZ3("ROUND 1: FIND ALL POTENTIAL CONFLICTS");
-		addAssertions(em.mk_cycle_exists(4));
-		checkSAT(program);
-
-		// Z3Logger.HeaderZ3("POP");
-		// slv.pop();
-		// addAssertions(em.mk_minimum_txn_instances(2));
-		// checkSAT(program);
+	private void print_result_header(Status status, long begin, long end) {
+		System.out.println(
+				"==================\n" + status + " (" + (end - begin) + "ms)" + "\n==================\n\n");
 	}
 
 	private void constrainWrittenVals(Program program) {
@@ -397,7 +418,7 @@ public class Z3Driver {
 		FuncDecl po_to_int = objs.getfuncs("po_to_int");
 		pre1 = (BoolExpr) ctx.mkApp(objs.getfuncs("arbit"), txn1, po1, txn1, po2);
 		post1 = ctx.mkLt((ArithExpr) ctx.mkApp(po_to_int, po1), (ArithExpr) ctx.mkApp(po_to_int, po2));
-		result = ctx.mkForall(new Expr[] { txn1, po1 }, ctx.mkImplies(pre1, post1), 1, null, null, null, null);
+		result = ctx.mkForall(new Expr[] { txn1, po1, po2 }, ctx.mkImplies(pre1, post1), 1, null, null, null, null);
 		addAssertion("arbitration respects program order", result);
 	}
 
@@ -798,23 +819,6 @@ public class Z3Driver {
 				}
 
 			}
-		}
-	}
-
-	private void checkSAT(Program program) {
-		long begin = System.currentTimeMillis();
-		if (slv.check() == Status.SATISFIABLE) {
-			model = slv.getModel();
-			long end = System.currentTimeMillis();
-			System.out.println(
-					"\n\n==================\n" + "SATISFIABLE (" + (end - begin) + "ms)" + "\n==================\n\n");
-			this.model_handler = new Model_Handler(model, ctx, objs, program);
-			model_handler.printRawModelInToFile();
-			model_handler.printUniverse();
-		} else {
-			System.out.println("\n\n================\n" + slv.check() + "\n================\n\n");
-			for (Expr e : slv.getUnsatCore())
-				System.out.println(e);
 		}
 	}
 

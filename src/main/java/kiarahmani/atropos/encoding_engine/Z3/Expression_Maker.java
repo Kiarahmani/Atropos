@@ -10,8 +10,11 @@ import com.microsoft.z3.Quantifier;
 import com.microsoft.z3.Sort;
 
 import kiarahmani.atropos.DDL.FieldName;
+import kiarahmani.atropos.dependency.Conflict;
+import kiarahmani.atropos.dependency.DAI;
 import kiarahmani.atropos.program.Program;
 import kiarahmani.atropos.program.Table;
+import kiarahmani.atropos.program.Transaction;
 import kiarahmani.atropos.utils.Constants;
 
 public class Expression_Maker {
@@ -106,6 +109,61 @@ public class Expression_Maker {
 		System.arraycopy(Ts, 0, result, 0, dependency_length);
 		System.arraycopy(POs, 0, result, dependency_length, dependency_length);
 		return ctx.mkExists(result, body, 1, null, null, null, null);
+	}
+
+	public Quantifier mk_cycle_exists_constrained(int dependency_length, DAI dai, Conflict c1, Conflict c2) {
+		// declare new bound variables (base transaction will be assigned 2 POs)
+		Expr[] Ts = new Expr[dependency_length - 1];
+		Expr[] POs = new Expr[dependency_length];
+		// initialize variable arrays
+		for (int i = 0; i < dependency_length - 1; i++) {
+			Ts[i] = ctx.mkFreshConst("txn" + i, objs.getSort("Txn"));
+			POs[i] = ctx.mkFreshConst("po" + i, objs.getEnum("Po"));
+		}
+		POs[dependency_length-1] = ctx.mkFreshConst("po" + dependency_length, objs.getEnum("Po"));
+		// declare dependency edges (other then the 3 edge on/from/to the base
+		// transaction
+		BoolExpr[] edges = new BoolExpr[dependency_length - 3];
+		for (int i = 0; i < dependency_length - 3; i++)
+			if (i % 2 == 0) {
+				edges[i] = (BoolExpr) ctx.mkApp(objs.getfuncs("dep_st"), Ts[i + 1], POs[i + 1], Ts[i + 2], POs[i + 2]);
+			} else {
+				edges[i] = (BoolExpr) ctx.mkApp(objs.getfuncs("dep"), Ts[i + 1], POs[i + 1], Ts[i + 2], POs[i + 2]);
+			}
+
+		// assertions regarding base transaction
+		BoolExpr base_txn_type = ctx.mkEq(ctx.mkApp(objs.getfuncs("txn_type"), Ts[0]),
+				objs.getEnumConstructor("TxnType", dai.getTransaction().getName()));
+		BoolExpr base_txn_po_1 = ctx.mkEq(ctx.mkApp(objs.getfuncs("po_to_int"), POs[0]),
+				ctx.mkInt(dai.getQuery(1).getPo()));
+		BoolExpr base_txn_po_2 = ctx.mkEq(ctx.mkApp(objs.getfuncs("po_to_int"), POs[dependency_length - 1]),
+				ctx.mkInt(dai.getQuery(2).getPo()));
+
+		// assertions regarding the first neighbour
+		BoolExpr first_txn_type = ctx.mkEq(ctx.mkApp(objs.getfuncs("txn_type"), Ts[1]),
+				objs.getEnumConstructor("TxnType", c1.getTransaction(2).getName()));
+		BoolExpr first_txn_po_1 = ctx.mkEq(ctx.mkApp(objs.getfuncs("po_to_int"), POs[1]),
+				ctx.mkInt(c1.getQuery(2).getPo()));
+
+		// assertions regarding the last neighbour
+		BoolExpr last_txn_type = ctx.mkEq(ctx.mkApp(objs.getfuncs("txn_type"), Ts[dependency_length - 2]),
+				objs.getEnumConstructor("TxnType", c2.getTransaction(2).getName()));
+		BoolExpr last_txn_po_1 = ctx.mkEq(ctx.mkApp(objs.getfuncs("po_to_int"), POs[dependency_length - 2]),
+				ctx.mkInt(c2.getQuery(2).getPo()));
+
+		// assertions regarding the edge between the base and first neighbour
+		BoolExpr base_edge_1 = (BoolExpr) ctx.mkApp(objs.getfuncs("dep"), Ts[0], POs[0], Ts[1], POs[1]);
+		// assertions regarding the edge between the base and last neighbour
+		BoolExpr base_edge_2 = (BoolExpr) ctx.mkApp(objs.getfuncs("dep"), Ts[dependency_length - 2],
+				POs[dependency_length - 2], Ts[0], POs[dependency_length - 1]);
+
+		Expr body = ctx.mkAnd(base_txn_type, base_txn_po_1, base_txn_po_2, first_txn_type, first_txn_po_1,
+				last_txn_type, last_txn_po_1, base_edge_1, base_edge_2, ctx.mkAnd(edges));
+		Expr[] result = new Expr[dependency_length + dependency_length - 1];
+		System.arraycopy(Ts, 0, result, 0, dependency_length - 1);
+		System.arraycopy(POs, 0, result, dependency_length - 1, dependency_length);
+		return ctx.mkExists(result, body, 1, null, null, null, null);
+
 	}
 
 	public Quantifier mk_qry_time_respects_po() {
