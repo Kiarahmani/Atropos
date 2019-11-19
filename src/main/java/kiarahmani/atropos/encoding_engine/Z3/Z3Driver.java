@@ -100,7 +100,7 @@ public class Z3Driver {
 		// end encoding context
 		//
 		// final query
-		//addAssertion("cycle", em.mk_cycle_exists_constrained(dependency_length, dai, c1, c2));
+		addAssertion("cycle", em.mk_cycle_exists_constrained(dependency_length, dai, c1, c2));
 		//
 		//
 		//
