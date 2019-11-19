@@ -6,7 +6,6 @@ import kiarahmani.atropos.DML.expression.BinOp;
 import kiarahmani.atropos.DML.expression.E_BinUp;
 import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.expression.constants.E_Const_Num;
-import kiarahmani.atropos.DML.expression.constants.E_Const_Text;
 import kiarahmani.atropos.DML.query.Select_Query;
 import kiarahmani.atropos.DML.query.Update_Query;
 import kiarahmani.atropos.DML.where_clause.WHC;
@@ -285,14 +284,14 @@ public class InputProgramGenerator {
 		pu.addTrnasaction("TransactSavings", "ts_custName:string", "ts_amount:int");
 		// retrieve customer's id based on his/her name
 		WHC TransactSavings_GetAccount0_WHC = new WHC(new WHC_Constraint(pu.getTableName("accounts"),
-				pu.getFieldName("a_name"), BinOp.EQ, new E_Const_Text("kir")));
+				pu.getFieldName("a_name"), BinOp.EQ, pu.getArg("ts_custName")));
 		Select_Query TransactSavings_GetAccount0 = pu.addSelectQuery(0, "TransactSavings", "accounts", false,
 				TransactSavings_GetAccount0_WHC, "a_custid");
 		pu.addQueryStatement("TransactSavings", TransactSavings_GetAccount0);
 
 		// retrieve customer's old savings balance
 		WHC TransactSavings_GetSavings_WHC = new WHC(new WHC_Constraint(pu.getTableName("savings"),
-				pu.getFieldName("s_custid"), BinOp.EQ, new E_Const_Num(1)));
+				pu.getFieldName("s_custid"), BinOp.EQ, pu.getProjExpr("TransactSavings", 0, "a_custid", 1)));
 		Select_Query TransactSavings_GetSavings = pu.addSelectQuery(1, "TransactSavings", "savings", true,
 				TransactSavings_GetSavings_WHC, "s_bal");
 		pu.addQueryStatement("TransactSavings", TransactSavings_GetSavings);
@@ -300,15 +299,15 @@ public class InputProgramGenerator {
 		// if the balance is larger than amount
 		Expression TransactSavings_IF1_C = new E_BinUp(BinOp.GT, pu.getProjExpr("TransactSavings", 1, "s_bal", 1),
 				pu.getArg("ts_amount"));
-		//pu.addIfStatement("TransactSavings", TransactSavings_IF1_C);
+		pu.addIfStatement("TransactSavings", TransactSavings_IF1_C);
 
 		// write customer's new saving's balance
 		WHC TransactSavings_U1_WHC = new WHC(new WHC_Constraint(pu.getTableName("savings"), pu.getFieldName("s_custid"),
-				BinOp.EQ,new E_Const_Num(1)));
+				BinOp.EQ, pu.getProjExpr("TransactSavings", 0, "a_custid", 1)));
 		Update_Query TransactSavings_U1 = pu.addUpdateQuery(2, "TransactSavings", "savings", true, TransactSavings_U1_WHC);
 		TransactSavings_U1.addUpdateExp(pu.getFieldName("s_bal"),
-				new E_Const_Num(1));
-		pu.addQueryStatement("TransactSavings", TransactSavings_U1);
+				new E_BinUp(BinOp.MINUS, pu.getProjExpr("TransactSavings", 1, "s_bal", 1), pu.getArg("ts_amount")));
+		pu.addQueryStatementInIf("TransactSavings", 0, TransactSavings_U1);
 
 		/*
 		 * 

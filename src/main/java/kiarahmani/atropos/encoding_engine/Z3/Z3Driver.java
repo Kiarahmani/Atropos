@@ -734,7 +734,7 @@ public class Z3Driver {
 					Expr ret_val2 = ctx.mkApp(objs.getfuncs(funcName), txn1);
 					BoolExpr[] eqs = new BoolExpr[Constants._MAX_ARG_STRING];
 					for (int i = 0; i < Constants._MAX_ARG_STRING; i++)
-						eqs[i] = ctx.mkEq(ret_val2, ctx.MkString("arg-val#" + i));
+						eqs[i] = ctx.mkEq(ret_val2, ctx.MkString("string-val#" + i));
 					BoolExpr body2 = ctx.mkOr(eqs);
 					Quantifier result2 = ctx.mkForall(new Expr[] { txn1 }, body2, 1, null, null, null, null);
 					addAssertion("bound_on_" + funcName, result2);
