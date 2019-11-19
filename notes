@@ -1,8 +1,8 @@
 ====================================================================================================
 TODO:
  
-
-  - Verify that the implemented SmallBank is correct
+  - run some tests on some micro-benchmarks and validate the current encoding
+    (right now there are bugs)
   - Run the encoding engine on SmallBank it is probably going to be very slow
     must figure out ways to both prunes iterations out and also maybe constrain
     each query further.

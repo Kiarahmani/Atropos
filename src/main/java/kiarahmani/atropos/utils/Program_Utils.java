@@ -179,7 +179,7 @@ public class Program_Utils {
 	}
 
 	public Update_Query addUpdateQuery(int po, String txn, String tableName, boolean isAtomic, WHC whc) {
-		int update_counts = (transactionToUpdateCount.containsKey(txn)) ? transactionToSelectCount.get(txn) : 0;
+		int update_counts = (transactionToUpdateCount.containsKey(txn)) ? transactionToUpdateCount.get(txn) : 0;
 		transactionToUpdateCount.put(txn, update_counts + 1);
 		Update_Query result = new Update_Query(po, update_counts, isAtomic, tableNameMap.get(tableName), whc);
 		return result;

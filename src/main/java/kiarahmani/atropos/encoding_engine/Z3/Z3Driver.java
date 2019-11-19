@@ -108,20 +108,13 @@ public class Z3Driver {
 		//
 		// check satisfiability
 		return slv.check();
-/*
-		long begin = System.currentTimeMillis();
-		Status status = slv.check();
-		if (status == Status.SATISFIABLE) {
-			model = slv.getModel();
-			print_result_header(status, begin, System.currentTimeMillis());
-			return model;
-		} else {
-			print_result_header(status, begin, System.currentTimeMillis());
-			for (Expr e : slv.getUnsatCore())
-				System.out.println(e);
-			return null;
-		}
-		*/
+		/*
+		 * long begin = System.currentTimeMillis(); Status status = slv.check(); if
+		 * (status == Status.SATISFIABLE) { model = slv.getModel();
+		 * print_result_header(status, begin, System.currentTimeMillis()); return model;
+		 * } else { print_result_header(status, begin, System.currentTimeMillis()); for
+		 * (Expr e : slv.getUnsatCore()) System.out.println(e); return null; }
+		 */
 	}
 
 	private void print_result_header(Status status, long begin, long end) {
@@ -955,5 +948,9 @@ public class Z3Driver {
 			break;
 		}
 		return result;
+	}
+
+	public void printUnsatCore() {
+		// TODO
 	}
 }
