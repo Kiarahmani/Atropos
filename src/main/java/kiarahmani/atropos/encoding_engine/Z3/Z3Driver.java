@@ -79,7 +79,7 @@ public class Z3Driver {
 		this.em = new Expression_Maker(program, ctx, objs);
 		Z3Logger.SubHeaderZ3("Properties of query functions");
 		addAssertion("bound_on_txn_instances", em.mk_bound_on_txn_instances(dependency_length));
-		// constrainPKs(program, em);
+		constrainPKs(program, em);
 		addArgsFuncs(program);
 		addVariablesFuncs(program);
 		constrainIsExecuted(program, em);
@@ -731,6 +731,7 @@ public class Z3Driver {
 					addAssertion("any record in " + current_var.getName()
 							+ " must be alive and satisfy the associated where clause, at the time of generation",
 							where_assertion);
+					// prop#2 if a rec satisfies certain properties, then it must be in the var
 					BoolExpr where_body2 = translateWhereClauseToZ3Expr(txn.getName(), txn1, q.getWHC(), rec1,
 							gen_time);
 					BoolExpr body2 = ctx.mkEq(the_record, rec1);
@@ -796,16 +797,46 @@ public class Z3Driver {
 				Z3Logger.LogZ3(";; definition of projection functions " + funcName);
 				switch (fn.getType()) {
 				case NUM:
-					// define function
+					// define function1
 					objs.addFunc(funcName,
 							ctx.mkFuncDecl(funcName,
 									new Sort[] { objs.getSort("Rec"), objs.getSort("Txn"), objs.getEnum("Po") },
 									objs.getSort("Fld")));
-					// define function
+					// define function2
 					objs.addFunc(writen_proj_func,
 							ctx.mkFuncDecl(writen_proj_func,
 									new Sort[] { objs.getSort("Rec"), objs.getSort("Txn"), objs.getEnum("Po") },
 									objs.getSort("Fld")));
+
+					// define bounds1
+					Z3Logger.LogZ3(";; constrain the values of " + funcName + " for unrelated tables");
+					Expr func_ret_val = ctx.mkApp(objs.getfuncs(funcName), rec1, txn1, po1);
+					int number_of_unrelated_tables = program.getTables().size() - 1;
+					BoolExpr[] num_eqs = new BoolExpr[number_of_unrelated_tables];
+					int iter = 0;
+					for (Table unrelated_table : program.getTables())
+						if (!unrelated_table.getTableName().getName().contains(t.getTableName().getName()))
+							num_eqs[iter++] = ctx.mkEq(ctx.mkApp(objs.getfuncs("rec_type"), rec1),
+									objs.getEnumConstructor("RecType", unrelated_table.getTableName().getName()));
+					BoolExpr num_body = ctx.mkEq(func_ret_val, ctx.mkBV(0, Constants._MAX_FIELD_INT));
+					Quantifier num_result2 = ctx.mkForall(new Expr[] { rec1, txn1, po1 },
+							ctx.mkImplies(ctx.mkOr(num_eqs), num_body), 1, null, null, null, null);
+					addAssertions(num_result2);
+
+					Z3Logger.LogZ3(";; constrain the values of " + writen_proj_func + " for unrelated tables");
+					Expr func_ret_val2 = ctx.mkApp(objs.getfuncs(writen_proj_func), rec1, txn1, po1);
+					int number_of_unrelated_tables2 = program.getTables().size() - 1;
+					BoolExpr[] num_eqs2 = new BoolExpr[number_of_unrelated_tables2];
+					int iter2 = 0;
+					for (Table unrelated_table2 : program.getTables())
+						if (!unrelated_table2.getTableName().getName().contains(t.getTableName().getName()))
+							num_eqs2[iter2++] = ctx.mkEq(ctx.mkApp(objs.getfuncs("rec_type"), rec1),
+									objs.getEnumConstructor("RecType", unrelated_table2.getTableName().getName()));
+					BoolExpr num_body2 = ctx.mkEq(func_ret_val2, ctx.mkBV(0, Constants._MAX_FIELD_INT));
+					Quantifier num_result22 = ctx.mkForall(new Expr[] { rec1, txn1, po1 },
+							ctx.mkImplies(ctx.mkOr(num_eqs2), num_body2), 1, null, null, null, null);
+					addAssertions(num_result22);
+
 					break;
 				case TEXT:
 					// define function
