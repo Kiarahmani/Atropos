@@ -100,7 +100,7 @@ public class Z3Driver {
 		// end encoding context
 		//
 		// final query
-		addAssertion("cycle", em.mk_cycle_exists_constrained(dependency_length, dai, c1, c2));
+		//addAssertion("cycle", em.mk_cycle_exists_constrained(dependency_length, dai, c1, c2));
 		//
 		//
 		//
@@ -502,7 +502,7 @@ public class Z3Driver {
 
 							BoolExpr whc_to_expr = translateWhereClauseToZ3Expr(txn.getName(), txn1, q.getWHC(), rec1,
 									po1);
-							BoolExpr body = ctx.mkEq(validWT, ctx.mkAnd(whc_to_expr, validRecType));
+							BoolExpr body = ctx.mkImplies((BoolExpr) validWT, ctx.mkAnd(whc_to_expr, validRecType));
 							Quantifier result = ctx.mkForall(new Expr[] { txn1, po1, rec1 },
 									ctx.mkImplies(pre_condition, body), 1, null, null, null, null);
 							addAssertions(result);
@@ -544,7 +544,7 @@ public class Z3Driver {
 							// Expr query_time = ctx.mkApp(objs.getfuncs("qry_time"), txn1, po1);
 							BoolExpr whc_to_expr = translateWhereClauseToZ3Expr(txn.getName(), txn1, q.getWHC(), rec1,
 									po1);
-							BoolExpr body = ctx.mkEq(validWT, ctx.mkAnd(whc_to_expr, validRecType));
+							BoolExpr body = ctx.mkImplies((BoolExpr) validWT, ctx.mkAnd(whc_to_expr, validRecType));
 							Quantifier result = ctx.mkForall(new Expr[] { txn1, po1, rec1 },
 									ctx.mkImplies(pre_condition, body), 1, null, null, null, null);
 							addAssertions(result);

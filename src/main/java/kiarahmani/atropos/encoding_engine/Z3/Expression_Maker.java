@@ -163,7 +163,6 @@ public class Expression_Maker {
 		System.arraycopy(Ts, 0, result, 0, dependency_length - 1);
 		System.arraycopy(POs, 0, result, dependency_length - 1, dependency_length);
 		return ctx.mkExists(result, body, 1, null, null, null, null);
-
 	}
 
 	public Quantifier mk_qry_time_respects_po() {
