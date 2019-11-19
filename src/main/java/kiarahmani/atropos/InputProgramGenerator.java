@@ -352,7 +352,7 @@ public class InputProgramGenerator {
 		// else: update their checking
 		WHC WriteCheck_U1_dest_WHC_else = new WHC(new WHC_Constraint(pu.getTableName("checking"),
 				pu.getFieldName("c_custid"), BinOp.EQ, pu.getProjExpr("WriteCheck", 0, "a_custid", 1)));
-		Update_Query WriteCheck_U1_dest_else = pu.addUpdateQuery(3, "WriteCheck", "checking", true,
+		Update_Query WriteCheck_U1_dest_else = pu.addUpdateQuery(4, "WriteCheck", "checking", true,
 				WriteCheck_U1_dest_WHC_else);
 		E_BinUp penalty = new E_BinUp(BinOp.PLUS, pu.getArg("wc_amount"), new E_Const_Num(1));
 		WriteCheck_U1_dest_else.addUpdateExp(pu.getFieldName("c_bal"),
