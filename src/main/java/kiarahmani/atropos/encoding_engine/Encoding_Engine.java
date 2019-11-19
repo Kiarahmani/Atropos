@@ -48,10 +48,11 @@ public class Encoding_Engine {
 							Z3Driver local_z3_driver = new Z3Driver();
 							// check if it is a valid DAI
 							long begin = System.currentTimeMillis();
-							//Status status = Status.SATISFIABLE;
+							// Status status = Status.SATISFIABLE;
+							printBaseAnomaly(iter++, dai, c1, c2);
 							Status status = local_z3_driver.generateDAI(this.program, 4, dai, c1, c2);
 							long end = System.currentTimeMillis();
-							printBaseAnomaly(iter++, status, end - begin, dai, c1, c2);
+							System.out.println("" + status + " (" + (end - begin) + "ms)\n\n");
 							// free up solver's memory for the next iteration
 							local_z3_driver = null;
 						}
@@ -60,7 +61,7 @@ public class Encoding_Engine {
 		}
 	}
 
-	private void printBaseAnomaly(int iter, Status status, long time, DAI dai, Conflict c1, Conflict c2) {
+	private void printBaseAnomaly(int iter, DAI dai, Conflict c1, Conflict c2) {
 		String txn1_name = dai.getTransaction().getName();
 		String txn_first_name = c1.getTransaction(2).getName();
 		String txn_last_name = c2.getTransaction(2).getName();
@@ -68,7 +69,7 @@ public class Encoding_Engine {
 		String txn_first_line = String.format("%0" + txn_first_name.length() + "d", 0).replace("0", "-");
 		String txn_last_line = String.format("%0" + txn_last_name.length() + "d", 0).replace("0", "-");
 		System.out.println("\n***********************************");
-		System.out.println("Round# " + iter + " [" + status + " (" + time + "ms)]\n");
+		System.out.println("Round# " + iter + "\n");
 		System.out.printf("%-20s%s\n", txn1_name, txn_first_name);
 		System.out.printf("%-20s%s\n", txn1_line, txn_first_line);
 		System.out.printf("%-8s ========== %s\n", c1.getQuery(1).getId(), c1.getQuery(2).getId());
@@ -78,7 +79,7 @@ public class Encoding_Engine {
 		System.out.printf("%-20s%s\n", "", txn_last_name);
 		System.out.printf("%-20s%s\n", "", txn_last_line);
 		System.out.printf("%-8s ========== %s\n", dai.getQuery(2).getId(), c2.getQuery(2).getId());
-		System.out.println("\n");
+		System.out.println();
 	}
 
 }

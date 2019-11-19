@@ -153,7 +153,7 @@ public class Z3Driver {
 		BoolExpr exists_dep_st = (BoolExpr) ctx.mkApp(objs.getfuncs("dep_st"), txn1, po1, txn2, po2);
 		BoolExpr exists_dep = (BoolExpr) ctx.mkApp(objs.getfuncs("dep"), txn1, po1, txn2, po2);
 		Quantifier dep_st_conditions = ctx.mkForall(new Expr[] { txn1, txn2, po1, po2 },
-				ctx.mkImplies(exists_dep_st, ctx.mkOr(exists_dep, ctx.mkEq(txn1, txn2))), 1, null, null, null, null);
+				ctx.mkImplies(exists_dep_st, ctx.mkOr(ctx.mkEq(txn1, txn2),exists_dep)), 1, null, null, null, null);
 		addAssertion("relating dep_st to dep and same transaction relation", dep_st_conditions);
 	}
 
