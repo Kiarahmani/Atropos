@@ -68,7 +68,7 @@ public class Encoding_Engine {
 		String txn_first_line = String.format("%0" + txn_first_name.length() + "d", 0).replace("0", "-");
 		String txn_last_line = String.format("%0" + txn_last_name.length() + "d", 0).replace("0", "-");
 		System.out.println("\n***********************************");
-		System.out.println("Round# " + iter + " [" + status + " (" + time + "ms)]");
+		System.out.println("Round# " + iter + " [" + status + " (" + time + "ms)]\n");
 		System.out.printf("%-20s%s\n", txn1_name, txn_first_name);
 		System.out.printf("%-20s%s\n", txn1_line, txn_first_line);
 		System.out.printf("%-8s ========== %s\n", c1.getQuery(1).getId(), c1.getQuery(2).getId());

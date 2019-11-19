@@ -44,6 +44,7 @@ public class Program_Utils {
 	private HashMap<String, Integer> transactionToIf;
 	private HashMap<String, If_Statement> ifStatementMap;
 	private HashMap<String, Variable> variableMap;
+	private HashMap<String, Integer> transactionToPoCnt;
 
 	public Program getProgram() {
 		if (this.program == null) {
@@ -71,6 +72,7 @@ public class Program_Utils {
 		transactionToUpdateCount = new HashMap<>();
 		transactionToIf = new HashMap<>();
 		ifStatementMap = new HashMap<>();
+		transactionToPoCnt = new HashMap<>();
 		variableMap = new HashMap<>();
 	}
 
@@ -166,19 +168,24 @@ public class Program_Utils {
 		return result;
 	}
 
-	public Select_Query addSelectQuery(int po, String txn, String tableName, boolean isAtomic, WHC whc, String... fieldNames) {
+	public Select_Query addSelectQuery(String txn, String tableName, boolean isAtomic, WHC whc,
+			String... fieldNames) {
+		int po = transactionToPoCnt.containsKey(txn) ? transactionToPoCnt.get(txn) : 0;
+		transactionToPoCnt.put(txn, po + 1);
 		Variable fresh_variable = getFreshVariable(tableName, txn);
 		int select_counts = (transactionToSelectCount.containsKey(txn)) ? transactionToSelectCount.get(txn) : 0;
 		transactionToSelectCount.put(txn, select_counts + 1);
 		ArrayList<FieldName> fresh_field_names = new ArrayList<>();
 		for (String fn : fieldNames)
 			fresh_field_names.add(fieldNameMap.get(fn));
-		Select_Query result = new Select_Query(po, select_counts, isAtomic, tableNameMap.get(tableName), fresh_field_names,
-				fresh_variable, whc);
+		Select_Query result = new Select_Query(po, select_counts, isAtomic, tableNameMap.get(tableName),
+				fresh_field_names, fresh_variable, whc);
 		return result;
 	}
 
-	public Update_Query addUpdateQuery(int po, String txn, String tableName, boolean isAtomic, WHC whc) {
+	public Update_Query addUpdateQuery(String txn, String tableName, boolean isAtomic, WHC whc) {
+		int po = transactionToPoCnt.containsKey(txn) ? transactionToPoCnt.get(txn) : 0;
+		transactionToPoCnt.put(txn, po + 1);
 		int update_counts = (transactionToUpdateCount.containsKey(txn)) ? transactionToUpdateCount.get(txn) : 0;
 		transactionToUpdateCount.put(txn, update_counts + 1);
 		Update_Query result = new Update_Query(po, update_counts, isAtomic, tableNameMap.get(tableName), whc);
