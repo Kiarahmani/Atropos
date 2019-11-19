@@ -495,9 +495,14 @@ public class Z3Driver {
 							BoolExpr pre_condition2 = ctx.mkEq(po1, objs.getEnumConstructor("Po", "po_" + q.getPo()));
 							BoolExpr pre_condition = ctx.mkAnd(pre_condition1, pre_condition2);
 							String funcName = "reads_from_" + t.getTableName().getName() + "_" + fn.getName();
+
+							Expr validWT = ctx.mkApp(objs.getfuncs(funcName), txn1, po1, rec1);
+							BoolExpr validRecType = ctx.mkEq(ctx.mkApp(objs.getfuncs("rec_type"), rec1),
+									objs.getEnumConstructor("RecType", t.getTableName().getName()));
+
 							BoolExpr whc_to_expr = translateWhereClauseToZ3Expr(txn.getName(), txn1, q.getWHC(), rec1,
 									po1);
-							BoolExpr body = ctx.mkEq(ctx.mkApp(objs.getfuncs(funcName), txn1, po1, rec1), whc_to_expr);
+							BoolExpr body = ctx.mkEq(validWT, ctx.mkAnd(whc_to_expr, validRecType));
 							Quantifier result = ctx.mkForall(new Expr[] { txn1, po1, rec1 },
 									ctx.mkImplies(pre_condition, body), 1, null, null, null, null);
 							addAssertions(result);
@@ -533,10 +538,13 @@ public class Z3Driver {
 							BoolExpr pre_condition2 = ctx.mkEq(po1, objs.getEnumConstructor("Po", "po_" + q.getPo()));
 							BoolExpr pre_condition = ctx.mkAnd(pre_condition1, pre_condition2);
 							String funcName = "writes_to_" + t.getTableName().getName() + "_" + fn.getName();
+							Expr validWT = ctx.mkApp(objs.getfuncs(funcName), txn1, po1, rec1);
+							BoolExpr validRecType = ctx.mkEq(ctx.mkApp(objs.getfuncs("rec_type"), rec1),
+									objs.getEnumConstructor("RecType", t.getTableName().getName()));
 							// Expr query_time = ctx.mkApp(objs.getfuncs("qry_time"), txn1, po1);
 							BoolExpr whc_to_expr = translateWhereClauseToZ3Expr(txn.getName(), txn1, q.getWHC(), rec1,
 									po1);
-							BoolExpr body = ctx.mkEq(ctx.mkApp(objs.getfuncs(funcName), txn1, po1, rec1), whc_to_expr);
+							BoolExpr body = ctx.mkEq(validWT, ctx.mkAnd(whc_to_expr, validRecType));
 							Quantifier result = ctx.mkForall(new Expr[] { txn1, po1, rec1 },
 									ctx.mkImplies(pre_condition, body), 1, null, null, null, null);
 							addAssertions(result);

@@ -280,7 +280,7 @@ public class InputProgramGenerator {
 		 * TransactSavings
 		 * 
 		 */
-		
+		/*
 		pu.addTrnasaction("TransactSavings", "ts_custName:string", "ts_amount:int");
 		// retrieve customer's id based on his/her name
 		WHC TransactSavings_GetAccount0_WHC = new WHC(new WHC_Constraint(pu.getTableName("accounts"),
@@ -308,13 +308,13 @@ public class InputProgramGenerator {
 		TransactSavings_U1.addUpdateExp(pu.getFieldName("s_bal"),
 				new E_BinUp(BinOp.MINUS, pu.getProjExpr("TransactSavings", 1, "s_bal", 1), pu.getArg("ts_amount")));
 		pu.addQueryStatementInIf("TransactSavings", 0, TransactSavings_U1);
-
+*/
 		/*
 		 * 
 		 * WriteCheck
 		 * 
 		 */
-		/*
+		
 		pu.addTrnasaction("WriteCheck", "wc_custName:string", "wc_amount:int");
 		// retrive customer's id based on his/her name
 		WHC WriteCheck_GetAccount0_WHC = new WHC(new WHC_Constraint(pu.getTableName("accounts"),
@@ -344,7 +344,7 @@ public class InputProgramGenerator {
 		// update their checking
 		WHC WriteCheck_U1_dest_WHC = new WHC(new WHC_Constraint(pu.getTableName("checking"),
 				pu.getFieldName("c_custid"), BinOp.EQ, pu.getProjExpr("WriteCheck", 0, "a_custid", 1)));
-		Update_Query WriteCheck_U1_dest = pu.addUpdateQuery(3, "WriteCheck", "accounts", true, WriteCheck_U1_dest_WHC);
+		Update_Query WriteCheck_U1_dest = pu.addUpdateQuery(3, "WriteCheck", "checking", true, WriteCheck_U1_dest_WHC);
 		WriteCheck_U1_dest.addUpdateExp(pu.getFieldName("c_bal"),
 				new E_BinUp(BinOp.MINUS, pu.getProjExpr("WriteCheck", 1, "c_bal", 1), pu.getArg("wc_amount")));
 		pu.addQueryStatementInIf("WriteCheck", 0, WriteCheck_U1_dest);
@@ -352,13 +352,13 @@ public class InputProgramGenerator {
 		// else: update their checking
 		WHC WriteCheck_U1_dest_WHC_else = new WHC(new WHC_Constraint(pu.getTableName("checking"),
 				pu.getFieldName("c_custid"), BinOp.EQ, pu.getProjExpr("WriteCheck", 0, "a_custid", 1)));
-		Update_Query WriteCheck_U1_dest_else = pu.addUpdateQuery(3, "WriteCheck", "accounts", true,
+		Update_Query WriteCheck_U1_dest_else = pu.addUpdateQuery(3, "WriteCheck", "checking", true,
 				WriteCheck_U1_dest_WHC_else);
 		E_BinUp penalty = new E_BinUp(BinOp.PLUS, pu.getArg("wc_amount"), new E_Const_Num(1));
 		WriteCheck_U1_dest_else.addUpdateExp(pu.getFieldName("c_bal"),
 				new E_BinUp(BinOp.MINUS, pu.getProjExpr("WriteCheck", 1, "c_bal", 1), penalty));
 		pu.addQueryStatementInElse("WriteCheck", 0, WriteCheck_U1_dest_else);
-*/
+
 		return pu.getProgram();
 
 	}
