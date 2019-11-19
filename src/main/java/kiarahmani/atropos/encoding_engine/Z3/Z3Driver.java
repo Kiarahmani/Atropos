@@ -1,5 +1,9 @@
 package kiarahmani.atropos.encoding_engine.Z3;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -75,7 +79,7 @@ public class Z3Driver {
 		this.em = new Expression_Maker(program, ctx, objs);
 		Z3Logger.SubHeaderZ3("Properties of query functions");
 		addAssertion("bound_on_txn_instances", em.mk_bound_on_txn_instances(dependency_length));
-		constrainPKs(program, em);
+		// constrainPKs(program, em);
 		addArgsFuncs(program);
 		addVariablesFuncs(program);
 		constrainIsExecuted(program, em);
@@ -97,17 +101,33 @@ public class Z3Driver {
 		constrainDepFunc(program);
 		addDepSTFunc(program);
 		constrainDepSTFunc(program);
-		// end encoding context
+		//
 		//
 		// final query
-		addAssertion("cycle", em.mk_cycle_exists_constrained(dependency_length, dai, c1, c2));
+		// addAssertion("cycle", em.mk_cycle_exists_constrained(dependency_length, dai,
+		// c1, c2));
 		//
 		//
 		//
 		//
 		//
 		// check satisfiability
-		return slv.check();
+		Status status = slv.check();
+		if (status == Status.SATISFIABLE) {
+			model = slv.getModel();
+			File file = new File("smt2/model.smt2");
+			PrintWriter printer;
+			FileWriter writer;
+			try {
+				writer = new FileWriter(file, false);
+				printer = new PrintWriter(writer);
+				printer.append(model.toString().replace("!val!", "").replace("!", ""));
+				printer.flush();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		return status;
 		/*
 		 * long begin = System.currentTimeMillis(); Status status = slv.check(); if
 		 * (status == Status.SATISFIABLE) { model = slv.getModel();
@@ -153,7 +173,7 @@ public class Z3Driver {
 		BoolExpr exists_dep_st = (BoolExpr) ctx.mkApp(objs.getfuncs("dep_st"), txn1, po1, txn2, po2);
 		BoolExpr exists_dep = (BoolExpr) ctx.mkApp(objs.getfuncs("dep"), txn1, po1, txn2, po2);
 		Quantifier dep_st_conditions = ctx.mkForall(new Expr[] { txn1, txn2, po1, po2 },
-				ctx.mkImplies(exists_dep_st, ctx.mkOr(ctx.mkEq(txn1, txn2),exists_dep)), 1, null, null, null, null);
+				ctx.mkImplies(exists_dep_st, ctx.mkOr(ctx.mkEq(txn1, txn2), exists_dep)), 1, null, null, null, null);
 		addAssertion("relating dep_st to dep and same transaction relation", dep_st_conditions);
 	}
 
@@ -163,7 +183,7 @@ public class Z3Driver {
 		BoolExpr exists_ww = (BoolExpr) ctx.mkApp(objs.getfuncs("ww"), txn1, po1, txn2, po2);
 		BoolExpr exists_dep = (BoolExpr) ctx.mkApp(objs.getfuncs("dep"), txn1, po1, txn2, po2);
 		Quantifier dep_to_wr_rw_ww = ctx.mkForall(new Expr[] { txn1, txn2, po1, po2 },
-				ctx.mkImplies(exists_dep, ctx.mkOr(exists_wr, exists_rw, exists_ww)), 1, null, null, null, null);
+				ctx.mkImplies(exists_dep, ctx.mkOr(exists_rw, exists_ww, exists_wr)), 1, null, null, null, null);
 		addAssertion("relating dep to wr/rw/ww", dep_to_wr_rw_ww);
 	}
 
