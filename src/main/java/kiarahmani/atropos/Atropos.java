@@ -29,7 +29,8 @@ public class Atropos {
 		// DepositChecking
 		// Balance
 		// Amalgamate
-		Program program = ipg.generateSmallBankProgram("DepositChecking",  "Balance","WriteCheck","TransactSavings1","SendPayment1","Amalgamate1");
+		Program program = ipg.generateSmallBankProgram("DepositChecking1", "Balance1", "WriteCheck1", "TransactSavings1",
+				"SendPayment1", "Amalgamate");
 
 		Conflict_Graph cg = new Conflict_Graph(program);
 		Encoding_Engine ee = new Encoding_Engine(program);

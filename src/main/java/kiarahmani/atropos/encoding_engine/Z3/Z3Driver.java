@@ -104,8 +104,7 @@ public class Z3Driver {
 		//
 		//
 		// final query
-		// addAssertion("cycle", em.mk_cycle_exists_constrained(dependency_length, dai,
-		// c1, c2));
+		addAssertion("cycle", em.mk_cycle_exists_constrained(dependency_length, dai, c1, c2));
 		//
 		//
 		//
@@ -153,7 +152,9 @@ public class Z3Driver {
 							BoolExpr pre_condition1 = ctx.mkEq(ctx.mkApp(objs.getfuncs("txn_type"), txn1),
 									objs.getEnumConstructor("TxnType", txn.getName()));
 							BoolExpr pre_condition2 = ctx.mkEq(po1, objs.getEnumConstructor("Po", "po_" + q.getPo()));
-							BoolExpr pre_condition = ctx.mkAnd(pre_condition1, pre_condition2);
+							BoolExpr pre_rectype = ctx.mkEq(ctx.mkApp(objs.getfuncs("rec_type"), rec1),
+									objs.getEnumConstructor("RecType", t.getTableName().getName()));
+							BoolExpr pre_condition = ctx.mkAnd(pre_condition1, pre_condition2, pre_rectype);
 							Expression exp = q.getUpdateExpressionByFieldName(fn);
 							String funcname = "written_val_" + t.getTableName().getName() + "_" + fn.getName();
 							Expr written_val = ctx.mkApp(objs.getfuncs(funcname), rec1, txn1, po1);
@@ -726,8 +727,10 @@ public class Z3Driver {
 							gen_time);
 					BoolExpr is_alive_body = (BoolExpr) ctx.mkApp(objs.getfuncs("is_alive"), the_record, txn1,
 							gen_time);
+					BoolExpr rec_type_body = ctx.mkEq(ctx.mkApp(objs.getfuncs("rec_type"), the_record),
+							objs.getEnumConstructor("RecType", q.getTableName().getName()));
 					Quantifier where_assertion = ctx.mkForall(new Expr[] { txn1, order1 },
-							ctx.mkAnd(where_body, is_alive_body), 1, null, null, null, null);
+							ctx.mkAnd(rec_type_body, where_body, is_alive_body), 1, null, null, null, null);
 					addAssertion("any record in " + current_var.getName()
 							+ " must be alive and satisfy the associated where clause, at the time of generation",
 							where_assertion);
@@ -821,6 +824,7 @@ public class Z3Driver {
 					BoolExpr num_body = ctx.mkEq(func_ret_val, ctx.mkBV(0, Constants._MAX_FIELD_INT));
 					Quantifier num_result2 = ctx.mkForall(new Expr[] { rec1, txn1, po1 },
 							ctx.mkImplies(ctx.mkOr(num_eqs), num_body), 1, null, null, null, null);
+
 					addAssertions(num_result2);
 
 					Z3Logger.LogZ3(";; constrain the values of " + writen_proj_func + " for unrelated tables");

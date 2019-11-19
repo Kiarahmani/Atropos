@@ -1,11 +1,11 @@
 ====================================================================================================
 TODO:
- 
-  - run some tests on some micro-benchmarks and validate the current encoding
-    (right now there are bugs)
-  - Run the encoding engine on SmallBank it is probably going to be very slow
-    must figure out ways to both prunes iterations out and also maybe constrain
-    each query further.
+  
+  - study further the body of the encoding (everything but the final query) to
+    find potentials for performance increase. 
+  - study the final query to understand how it can be further constrained
+  - Once optimizations are over, perform another round of tests to make sure the
+    encoding is correct!
   - *add support for re-encoding already found anomalies 
   - support for ATOMIC ops and range operations 
   - support for insert and delete
