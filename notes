@@ -1,7 +1,6 @@
 ====================================================================================================
 TODO:
   
-  - study the final query to understand how it can be further constrained
   - Once optimizations are over, perform another round of tests to make sure the
     encoding is correct!
   - *add support for re-encoding already found anomalies 
