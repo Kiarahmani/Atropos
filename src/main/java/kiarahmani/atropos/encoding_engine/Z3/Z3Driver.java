@@ -183,13 +183,13 @@ public class Z3Driver {
 					dep_funcName = "dep_on_" + t.getTableName().getName();
 					wr_funcName = "wr_on_" + t.getTableName().getName();
 					rw_funcName = "rw_on_" + t.getTableName().getName();
-					ww_funcName = "ww_on_" + t.getTableName().getName();
+					//ww_funcName = "ww_on_" + t.getTableName().getName();
 					BoolExpr exists_wr = (BoolExpr) ctx.mkApp(objs.getfuncs(wr_funcName), txn1, po1, txn2, po2);
 					BoolExpr exists_rw = (BoolExpr) ctx.mkApp(objs.getfuncs(rw_funcName), txn1, po1, txn2, po2);
-					BoolExpr exists_ww = (BoolExpr) ctx.mkApp(objs.getfuncs(ww_funcName), txn1, po1, txn2, po2);
+					//BoolExpr exists_ww = (BoolExpr) ctx.mkApp(objs.getfuncs(ww_funcName), txn1, po1, txn2, po2);
 					BoolExpr exists_dep = (BoolExpr) ctx.mkApp(objs.getfuncs(dep_funcName), txn1, po1, txn2, po2);
 					Quantifier dep_to_wr_rw_ww = ctx.mkForall(new Expr[] { txn1, txn2, po1, po2 },
-							ctx.mkImplies(exists_dep, ctx.mkOr(exists_rw, exists_ww, exists_wr)), 1, null, null, null,
+							ctx.mkImplies(exists_dep, ctx.mkOr(exists_rw, exists_wr)), 1, null, null, null,
 							null);
 					addAssertions(dep_to_wr_rw_ww);
 				}

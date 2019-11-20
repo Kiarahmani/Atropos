@@ -154,10 +154,10 @@ public class Expression_Maker {
 		String base_edge_1_func_name = "";
 		if (!dai.getQuery(1).isWrite()) {
 			assert (c1.getQuery(2).isWrite()) : "cannot form dependency between two selet queries";
-			base_edge_1_func_name = "rw_on_" + c1.getTableName().getName();
+			base_edge_1_func_name = "dep_on_" + c1.getTableName().getName();
 		} else {
 			if (!c1.getQuery(2).isWrite()) {
-				base_edge_1_func_name = "wr_on_" + c1.getTableName().getName();
+				base_edge_1_func_name = "dep_on_" + c1.getTableName().getName();
 			} else {
 				base_edge_1_func_name = "ww_on_" + c1.getTableName().getName();
 			}
@@ -168,12 +168,12 @@ public class Expression_Maker {
 		String base_edge_2_func_name = "";
 		if (!dai.getQuery(2).isWrite()) {
 			assert (c2.getQuery(2).isWrite()) : "cannot form dependency between two selet queries";
-			base_edge_2_func_name = "rw_on_" + c1.getTableName().getName();
+			base_edge_2_func_name = "dep_on_" + c2.getTableName().getName();
 		} else {
 			if (!c2.getQuery(2).isWrite()) {
-				base_edge_2_func_name = "wr_on_" + c1.getTableName().getName();
+				base_edge_2_func_name = "dep_on_" + c2.getTableName().getName();
 			} else {
-				base_edge_2_func_name = "ww_on_" + c1.getTableName().getName();
+				base_edge_2_func_name = "ww_on_" + c2.getTableName().getName();
 			}
 		}
 

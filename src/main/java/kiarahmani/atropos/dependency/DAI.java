@@ -40,7 +40,22 @@ public class DAI {
 		else
 			assert (false);
 		return null;
+	}
 
+	public boolean equls(DAI other) {
+		boolean arr1 = true;
+		boolean arr2 = true;
+		for (FieldName fn : this.field_names1)
+			if (!other.field_names1.contains(fn)) {
+				arr1 = false;
+				break;
+			}
+		for (FieldName fn : this.field_names2)
+			if (!other.field_names2.contains(fn)) {
+				arr2 = false;
+				break;
+			}
+		return (this.q1 == other.q1 && this.q2 == other.q2 && this.txn == other.txn && arr1 && arr2);
 	}
 
 }

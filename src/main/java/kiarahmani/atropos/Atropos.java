@@ -23,13 +23,7 @@ public class Atropos {
 		}
 		logger.debug("New Constants object initialized");
 		InputProgramGenerator ipg = new InputProgramGenerator();
-		// WriteCheck
-		// TransactSavings
-		// SendPayment
-		// DepositChecking
-		// Balance
-		// Amalgamate
-		Program program = ipg.generateUnitTestProgram("DepositChecking", "Balance", "WriteCheck", "TransactSavings",
+		Program program = ipg.generateSmallBankProgram("DepositChecking", "Balance", "WriteCheck", "TransactSavings",
 				"SendPayment", "Amalgamate");
 
 		Conflict_Graph cg = new Conflict_Graph(program);
@@ -38,8 +32,6 @@ public class Atropos {
 		program.printProgram();
 		cg.printGraph();
 		ee.constructInitialDAIGraph(program.getName(), cg);
-
-		// conflict_graph.printGraph();
 	}
 
 }
