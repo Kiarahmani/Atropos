@@ -20,51 +20,36 @@ public class InputProgramGenerator {
 	/*
 	 * 
 	 * 
-	 * VERY SIMPLE BANKING APPLICATION GENERATOR
+	 * UNIT TESTING APPLICATION GENERATOR
 	 * 
 	 * 
 	 */
-	public Program generateVerySimpleBankingProgram() {
-		Program_Utils pu = new Program_Utils("very simple banking");
-		pu.addTrnasaction("inc", "inc_id:int", "inc_amnt:int");
-		// pu.addTrnasaction("dec", "dec_id:int", "dec_amnt:int");
-		pu.addTable("accounts", new FieldName("acc_id", true, true, F_Type.NUM),
-				new FieldName("acc_name", false, false, F_Type.TEXT),
-				new FieldName("acc_balance", false, false, F_Type.NUM));
-
-		// pu.addBasicTable("departments", "dept_id", "dept_address", "dept_budget");
-		WHC INC_S1_WHC = new WHC(new WHC_Constraint(pu.getTableName("accounts"), pu.getFieldName("acc_id"), BinOp.EQ,
-				pu.getArg("inc_id")));
-		Select_Query INC_S1 = pu.addSelectQuery("inc", "accounts", true, INC_S1_WHC, "acc_balance");
-		pu.addQueryStatement("inc", INC_S1);
-
-		WHC INC_U1_WHC = new WHC(new WHC_Constraint(pu.getTableName("accounts"), pu.getFieldName("acc_id"), BinOp.EQ,
-				pu.getArg("inc_id")));
-		Update_Query INC_U1 = pu.addUpdateQuery("inc", "accounts", true, INC_U1_WHC);
-		INC_U1.addUpdateExp(pu.getFieldName("acc_balance"),
-				new E_BinUp(BinOp.PLUS, pu.getProjExpr("inc", 0, "acc_balance", 1), pu.getArg("inc_amnt")));
-		pu.addQueryStatement("inc", INC_U1);
+	public Program generateUnitTestProgram(String... txns) {
+		Program_Utils pu = new Program_Utils("unit test");
+		pu.addTrnasaction("txn", "arg_id:int", "arg_amnt:int");
+		pu.addTable("table", new FieldName("key", true, true, F_Type.NUM),
+				new FieldName("name", false, false, F_Type.TEXT), new FieldName("value", false, false, F_Type.NUM));
 
 		// dec transaction
-		WHC DEC_S1_WHC = new WHC(new WHC_Constraint(pu.getTableName("accounts"), pu.getFieldName("acc_id"), BinOp.EQ,
-				pu.getArg("dec_id")));
-		Select_Query DEC_S1 = pu.addSelectQuery("dec", "accounts", true, DEC_S1_WHC, "acc_balance");
-		pu.addQueryStatement("dec", DEC_S1);
+		WHC DEC_S1_WHC = new WHC(
+				new WHC_Constraint(pu.getTableName("table"), pu.getFieldName("key"), BinOp.EQ, pu.getArg("arg_id")));
+		Select_Query DEC_S1 = pu.addSelectQuery("txn", "table", true, DEC_S1_WHC, "name", "value");
+		pu.addQueryStatement("txn", DEC_S1);
 
-		Expression DEC_IF1_C = new E_BinUp(BinOp.GT, pu.getProjExpr("dec", 0, "acc_balance", 3), pu.getArg("dec_amnt"));
-		pu.addIfStatement("dec", DEC_IF1_C);
+		Expression DEC_IF1_C = new E_BinUp(BinOp.GT, pu.getProjExpr("txn", 0, "value", 1), pu.getArg("arg_amnt"));
+		pu.addIfStatement("txn", DEC_IF1_C);
 
-		WHC DEC_U1_WHC = new WHC(new WHC_Constraint(pu.getTableName("accounts"), pu.getFieldName("acc_id"), BinOp.EQ,
-				pu.getArg("dec_id")));
-		Update_Query DEC_U1 = pu.addUpdateQuery("dec", "accounts", true, DEC_U1_WHC);
-		DEC_U1.addUpdateExp(pu.getFieldName("acc_balance"),
-				new E_BinUp(BinOp.MINUS, pu.getProjExpr("dec", 0, "acc_balance", 1), pu.getArg("dec_amnt")));
-		pu.addQueryStatementInIf("dec", 0, DEC_U1);
+		WHC DEC_U1_WHC = new WHC(new WHC_Constraint(pu.getTableName("table"), pu.getFieldName("key"), BinOp.EQ,
+				pu.getArg("arg_id")));
+		Update_Query DEC_U1 = pu.addUpdateQuery("txn", "table", true, DEC_U1_WHC);
+		DEC_U1.addUpdateExp(pu.getFieldName("value"),
+				new E_BinUp(BinOp.MINUS, pu.getProjExpr("txn", 0, "value", 1), pu.getArg("arg_amnt")));
+		pu.addQueryStatementInIf("txn", 0, DEC_U1);
 
-		Update_Query DEC_U2 = pu.addUpdateQuery("dec", "accounts", true, DEC_U1_WHC);
-		DEC_U2.addUpdateExp(pu.getFieldName("acc_balance"),
-				new E_BinUp(BinOp.MINUS, pu.getProjExpr("dec", 0, "acc_balance", 1), new E_Const_Num(10)));
-		pu.addQueryStatementInElse("dec", 0, DEC_U2);
+		Update_Query DEC_U2 = pu.addUpdateQuery("txn", "table", true, DEC_U1_WHC);
+		DEC_U2.addUpdateExp(pu.getFieldName("value"),
+				new E_BinUp(BinOp.MINUS, pu.getProjExpr("txn", 0, "value", 1), new E_Const_Num(10)));
+		pu.addQueryStatementInElse("txn", 0, DEC_U2);
 
 		return pu.getProgram();
 	}

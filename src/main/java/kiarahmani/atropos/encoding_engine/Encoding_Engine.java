@@ -60,6 +60,8 @@ public class Encoding_Engine {
 							"constructing potential DAIs consisted of q1:" + q1.getId() + " and " + "q2:" + q2.getId());
 					for (Conflict c1 : cg.getConfsFromQuery(q1))
 						for (Conflict c2 : cg.getConfsFromQuery(q2)) {
+							System.out.println("c1:"+c1);
+							System.out.println("c2:"+c2);
 							// create a potential DAI
 							dai = new DAI(txn, q1, q1.getAccessedFieldNames(), q2, q2.getAccessedFieldNames());
 							Z3Driver local_z3_driver = new Z3Driver();
@@ -70,10 +72,10 @@ public class Encoding_Engine {
 							Status status = local_z3_driver.generateDAI(this.program, 4, dai, c1, c2);
 							long end = System.currentTimeMillis();
 							System.out.println("" + status + " (" + (end - begin) + "ms)\n\n");
-							if (status == Status.SATISFIABLE) {
+							//if (status == Status.SATISFIABLE) {
 								printer.append(String.valueOf(end - begin) + "\n");
 								printer.flush();
-							}
+							//}
 							// free up solver's memory for the next iteration
 							local_z3_driver = null;
 							z3logger.reset();

@@ -137,7 +137,12 @@ public class Conflict_Graph {
 	}
 
 	public void addConflict(Conflict c) {
+		// Vonflict edges are undirected
 		assert (c != null) : "Must NOT add a null conflict";
+		for (Conflict c1 : this.conflicts)
+			if (((c1.getQuery(1) == c.getQuery(1)) && (c1.getQuery(2) == c.getQuery(2)))
+					|| ((c1.getQuery(1) == c.getQuery(2)) && (c1.getQuery(2) == c.getQuery(1))))
+				return;
 		this.conflicts.add(c);
 	}
 
