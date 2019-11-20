@@ -89,22 +89,22 @@ public class Z3Driver {
 		addReadsFrom(program);
 		constrainReadsFrom(program);
 		constrainWrittenVals(program);
-		// addArFunc(program);
-		/// constrainArFunc(program);
-		// addWRFuncs(program);
-		// constrainWRFuncs(program);
-		// addRWFuncs(program);
-		// constrainRWFuncs(program);
-		// addWWFuncs(program);
-		// constrainWWFuncs(program);
-		// addDepFunc(program);
-		// constrainDepFunc(program);
-		// addDepSTFunc(program);
-		// constrainDepSTFunc(program);
+		addArFunc(program);
+		constrainArFunc(program);
+		addWRFuncs(program);
+		constrainWRFuncs(program);
+		addRWFuncs(program);
+		constrainRWFuncs(program);
+		addWWFuncs(program);
+		constrainWWFuncs(program);
+		addDepFunc(program);
+		constrainDepFunc(program);
+		addDepSTFunc(program);
+		constrainDepSTFunc(program);
 		//
 		// final query
-		// addAssertion("cycle", em.mk_cycle_exists_constrained(dependency_length, dai,
-		// c1, c2));
+		addAssertion("cycle", em.mk_cycle_exists_constrained(dependency_length, dai,
+		 c1, c2));
 		//
 		//
 		// check satisfiability
@@ -319,7 +319,7 @@ public class Z3Driver {
 					FuncDecl written_at_q1 = objs
 							.getfuncs("written_val_" + t.getTableName().getName() + "_" + fn.getName());
 					Expr val_read_by_q2 = ctx.mkApp(proj_at_q2, rec1, txn2, po2);
-					Expr val_written_by_q1 = ctx.mkApp(written_at_q1, rec1, txn2, po2);
+					Expr val_written_by_q1 = ctx.mkApp(written_at_q1, rec1, txn1, po1);
 					BoolExpr q2_reads_val_from_q1 = ctx.mkEq(val_written_by_q1, val_read_by_q2);
 
 					BoolExpr all_conditions = ctx.mkAnd(q1_is_executed, q2_is_executed, exists_a_record,
