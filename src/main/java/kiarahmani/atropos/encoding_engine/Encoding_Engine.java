@@ -70,8 +70,10 @@ public class Encoding_Engine {
 							Status status = local_z3_driver.generateDAI(this.program, 4, dai, c1, c2);
 							long end = System.currentTimeMillis();
 							System.out.println("" + status + " (" + (end - begin) + "ms)\n\n");
+							if (status==Status.SATISFIABLE) {
 							printer.append(String.valueOf(end - begin) + "\n");
 							printer.flush();
+							}
 							// free up solver's memory for the next iteration
 							local_z3_driver = null;
 							z3logger.reset();

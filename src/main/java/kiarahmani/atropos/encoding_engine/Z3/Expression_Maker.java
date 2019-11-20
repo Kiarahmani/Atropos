@@ -120,7 +120,7 @@ public class Expression_Maker {
 			Ts[i] = ctx.mkFreshConst("txn" + i, objs.getSort("Txn"));
 			POs[i] = ctx.mkFreshConst("po" + i, objs.getEnum("Po"));
 		}
-		POs[dependency_length-1] = ctx.mkFreshConst("po" + dependency_length, objs.getEnum("Po"));
+		POs[dependency_length - 1] = ctx.mkFreshConst("po" + dependency_length, objs.getEnum("Po"));
 		// declare dependency edges (other then the 3 edge on/from/to the base
 		// transaction
 		BoolExpr[] edges = new BoolExpr[dependency_length - 3];
@@ -134,28 +134,28 @@ public class Expression_Maker {
 		// assertions regarding base transaction
 		BoolExpr base_txn_type = ctx.mkEq(ctx.mkApp(objs.getfuncs("txn_type"), Ts[0]),
 				objs.getEnumConstructor("TxnType", dai.getTransaction().getName()));
-		BoolExpr base_txn_po_1 = ctx.mkEq(ctx.mkApp(objs.getfuncs("po_to_int"), POs[0]),
-				ctx.mkInt(dai.getQuery(1).getPo()));
-		BoolExpr base_txn_po_2 = ctx.mkEq(ctx.mkApp(objs.getfuncs("po_to_int"), POs[dependency_length - 1]),
-				ctx.mkInt(dai.getQuery(2).getPo()));
+		BoolExpr base_txn_po_1 = ctx.mkEq(POs[0], objs.getEnumConstructor("Po", "po_" + dai.getQuery(1).getPo()));
+		BoolExpr base_txn_po_2 = ctx.mkEq(POs[dependency_length - 1],
+				objs.getEnumConstructor("Po", "po_" + dai.getQuery(2).getPo()));
 
 		// assertions regarding the first neighbour
 		BoolExpr first_txn_type = ctx.mkEq(ctx.mkApp(objs.getfuncs("txn_type"), Ts[1]),
 				objs.getEnumConstructor("TxnType", c1.getTransaction(2).getName()));
-		BoolExpr first_txn_po_1 = ctx.mkEq(ctx.mkApp(objs.getfuncs("po_to_int"), POs[1]),
-				ctx.mkInt(c1.getQuery(2).getPo()));
+		BoolExpr first_txn_po_1 = ctx.mkEq(POs[1], objs.getEnumConstructor("Po", "po_" + c1.getQuery(2).getPo()));
 
 		// assertions regarding the last neighbour
 		BoolExpr last_txn_type = ctx.mkEq(ctx.mkApp(objs.getfuncs("txn_type"), Ts[dependency_length - 2]),
 				objs.getEnumConstructor("TxnType", c2.getTransaction(2).getName()));
-		BoolExpr last_txn_po_1 = ctx.mkEq(ctx.mkApp(objs.getfuncs("po_to_int"), POs[dependency_length - 2]),
-				ctx.mkInt(c2.getQuery(2).getPo()));
+		BoolExpr last_txn_po_1 = ctx.mkEq(POs[dependency_length - 2],
+				objs.getEnumConstructor("Po", "po_" + c2.getQuery(2).getPo()));
 
 		// assertions regarding the edge between the base and first neighbour
 		BoolExpr base_edge_1 = (BoolExpr) ctx.mkApp(objs.getfuncs("dep"), Ts[0], POs[0], Ts[1], POs[1]);
 		// assertions regarding the edge between the base and last neighbour
 		BoolExpr base_edge_2 = (BoolExpr) ctx.mkApp(objs.getfuncs("dep"), Ts[dependency_length - 2],
 				POs[dependency_length - 2], Ts[0], POs[dependency_length - 1]);
+
+		//edges[0] = (dependency_length == 4) ? ctx.mkEq(Ts[1], Ts[2]) : edges[0];
 
 		Expr body = ctx.mkAnd(base_txn_type, base_txn_po_1, base_txn_po_2, first_txn_type, first_txn_po_1,
 				last_txn_type, last_txn_po_1, base_edge_1, base_edge_2, ctx.mkAnd(edges));
@@ -194,8 +194,7 @@ public class Expression_Maker {
 		BoolExpr lhs = ctx.mkEq(ctx.mkApp(objs.getfuncs("rec_type"), rec1),
 				objs.getEnumConstructor("RecType", table_name));
 		BoolExpr body = ctx.mkAnd(eqs);
-		Quantifier x = ctx.mkForall(new Expr[] { rec1, txn1, po1, txn2, po2 }, body, 1, null, null,
-				null, null);
+		Quantifier x = ctx.mkForall(new Expr[] { rec1, txn1, po1, txn2, po2 }, body, 1, null, null, null, null);
 		return x;
 	}
 
