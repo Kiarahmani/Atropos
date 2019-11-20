@@ -86,8 +86,8 @@ public class Z3Driver {
 		Z3Logger.HeaderZ3(program.getName() + " reads_from and writes_to functions");
 		addWritesTo(program);
 		constrainWritesTo(program);
-		// addReadsFrom(program);
-		// constrainReadsFrom(program);
+		addReadsFrom(program);
+		constrainReadsFrom(program);
 		// constrainWrittenVals(program);
 		// addArFunc(program);
 		/// constrainArFunc(program);
@@ -438,7 +438,7 @@ public class Z3Driver {
 
 	private void constrainIsExecuted(Program program, Expression_Maker em) {
 		for (Transaction txn : program.getTransactions()) {
-			Z3Logger.SubHeaderZ3("is executed? ("+txn.getName()+")");
+			Z3Logger.SubHeaderZ3("is executed? (" + txn.getName() + ")");
 			for (Query q : txn.getAllQueries())
 				addQryTypeToIsExecuted(txn, q);
 			addPoLargerThanQryCntIsNotExecuted(txn);
@@ -502,6 +502,17 @@ public class Z3Driver {
 
 	private void constrainReadsFrom(Program program) {
 		Z3Logger.SubHeaderZ3(";; constraints on reads_from functions");
+		for (Table t : program.getTables())
+			for (FieldName fn : t.getFieldNames()) {
+				// constrain the function for unrelated transactions
+				BoolExpr unrelated_pre_condition1 = ctx.mkEq(ctx.mkApp(objs.getfuncs("rec_type"), rec1),
+						objs.getEnumConstructor("RecType", t.getTableName().getName()));
+				String unrelated_funcName = "reads_from_" + t.getTableName().getName() + "_" + fn.getName();
+				BoolExpr unrelated_body = (BoolExpr) ctx.mkApp(objs.getfuncs(unrelated_funcName), txn1, po1, rec1);
+				Quantifier unrelated_result = ctx.mkForall(new Expr[] { txn1, po1, rec1 },
+						ctx.mkImplies(unrelated_body, unrelated_pre_condition1), 1, null, null, null, null);
+				addAssertions(unrelated_result);
+			}
 		for (Transaction txn : program.getTransactions()) {
 			Z3Logger.LogZ3(";; Queries of txn: " + txn.getName());
 			for (Query q : txn.getAllQueries()) {
@@ -511,28 +522,29 @@ public class Z3Driver {
 						if (q.getReadFieldNames().contains(fn)) {
 							BoolExpr pre_condition1 = ctx.mkEq(ctx.mkApp(objs.getfuncs("txn_type"), txn1),
 									objs.getEnumConstructor("TxnType", txn.getName()));
-							BoolExpr pre_condition2 = ctx.mkEq(po1, objs.getEnumConstructor("Po", "po_" + q.getPo()));
-							BoolExpr pre_condition = ctx.mkAnd(pre_condition1, pre_condition2);
+							Expr expected_po = objs.getEnumConstructor("Po", "po_" + q.getPo());
+							BoolExpr pre_condition = (pre_condition1);
 							String funcName = "reads_from_" + t.getTableName().getName() + "_" + fn.getName();
 
-							Expr validWT = ctx.mkApp(objs.getfuncs(funcName), txn1, po1, rec1);
+							Expr validWT = ctx.mkApp(objs.getfuncs(funcName), txn1, expected_po, rec1);
 							BoolExpr validRecType = ctx.mkEq(ctx.mkApp(objs.getfuncs("rec_type"), rec1),
 									objs.getEnumConstructor("RecType", t.getTableName().getName()));
 
 							BoolExpr whc_to_expr = translateWhereClauseToZ3Expr(txn.getName(), txn1, q.getWHC(), rec1,
-									po1);
+									expected_po);
 							BoolExpr body = ctx.mkImplies((BoolExpr) validWT, ctx.mkAnd(whc_to_expr, validRecType));
-							Quantifier result = ctx.mkForall(new Expr[] { txn1, po1, rec1 },
+							Quantifier result = ctx.mkForall(new Expr[] { txn1, rec1 },
 									ctx.mkImplies(pre_condition, body), 1, null, null, null, null);
 							addAssertions(result);
 						} else {
+							Expr expected_po = objs.getEnumConstructor("Po", "po_" + q.getPo());
 							BoolExpr pre_condition1 = ctx.mkEq(ctx.mkApp(objs.getfuncs("txn_type"), txn1),
 									objs.getEnumConstructor("TxnType", txn.getName()));
-							BoolExpr pre_condition2 = ctx.mkEq(po1, objs.getEnumConstructor("Po", "po_" + q.getPo()));
+							BoolExpr pre_condition2 = ctx.mkEq(expected_po, objs.getEnumConstructor("Po", "po_" + q.getPo()));
 							BoolExpr pre_condition = ctx.mkAnd(pre_condition1, pre_condition2);
 							String funcName = "reads_from_" + t.getTableName().getName() + "_" + fn.getName();
-							BoolExpr body = ctx.mkNot((BoolExpr) ctx.mkApp(objs.getfuncs(funcName), txn1, po1, rec1));
-							Quantifier result = ctx.mkForall(new Expr[] { txn1, po1, rec1 },
+							BoolExpr body = ctx.mkNot((BoolExpr) ctx.mkApp(objs.getfuncs(funcName), txn1, expected_po, rec1));
+							Quantifier result = ctx.mkForall(new Expr[] { txn1, rec1 },
 									ctx.mkImplies(pre_condition, body), 1, null, null, null, null);
 							addAssertions(result);
 						}
@@ -545,8 +557,21 @@ public class Z3Driver {
 
 	private void constrainWritesTo(Program program) {
 		Z3Logger.SubHeaderZ3(";; constraints on writes_to functions");
+		for (Table t : program.getTables())
+			for (FieldName fn : t.getFieldNames()) {
+				// constrain the function for unrelated transactions
+				BoolExpr unrelated_pre_condition1 = ctx.mkEq(ctx.mkApp(objs.getfuncs("rec_type"), rec1),
+						objs.getEnumConstructor("RecType", t.getTableName().getName()));
+				String unrelated_funcName = "writes_to_" + t.getTableName().getName() + "_" + fn.getName();
+				BoolExpr unrelated_body = (BoolExpr) ctx.mkApp(objs.getfuncs(unrelated_funcName), txn1, po1, rec1);
+				Quantifier unrelated_result = ctx.mkForall(new Expr[] { txn1, po1, rec1 },
+						ctx.mkImplies(unrelated_body, unrelated_pre_condition1), 1, null, null, null, null);
+				addAssertions(unrelated_result);
+			}
+
 		for (Transaction txn : program.getTransactions()) {
 			Z3Logger.LogZ3(";; Queries of txn: " + txn.getName());
+			// constrain quries of the related transactions
 			for (Query q : txn.getAllQueries()) {
 				Z3Logger.LogZ3(";; " + q.getId());
 				for (Table t : program.getTables()) {
@@ -554,27 +579,30 @@ public class Z3Driver {
 						if (q.isWrite() && q.getWrittenFieldNames().contains(fn)) {
 							BoolExpr pre_condition1 = ctx.mkEq(ctx.mkApp(objs.getfuncs("txn_type"), txn1),
 									objs.getEnumConstructor("TxnType", txn.getName()));
+							Expr expected_po = objs.getEnumConstructor("Po", "po_" + q.getPo());
 							BoolExpr pre_condition2 = ctx.mkEq(po1, objs.getEnumConstructor("Po", "po_" + q.getPo()));
-							BoolExpr pre_condition = ctx.mkAnd(pre_condition1, pre_condition2);
+							BoolExpr pre_condition = pre_condition1;
 							String funcName = "writes_to_" + t.getTableName().getName() + "_" + fn.getName();
-							Expr validWT = ctx.mkApp(objs.getfuncs(funcName), txn1, po1, rec1);
+							Expr validWT = ctx.mkApp(objs.getfuncs(funcName), txn1, expected_po, rec1);
 							BoolExpr validRecType = ctx.mkEq(ctx.mkApp(objs.getfuncs("rec_type"), rec1),
 									objs.getEnumConstructor("RecType", t.getTableName().getName()));
 							// Expr query_time = ctx.mkApp(objs.getfuncs("qry_time"), txn1, po1);
 							BoolExpr whc_to_expr = translateWhereClauseToZ3Expr(txn.getName(), txn1, q.getWHC(), rec1,
-									po1);
+									expected_po);
 							BoolExpr body = ctx.mkImplies((BoolExpr) validWT, ctx.mkAnd(whc_to_expr, validRecType));
-							Quantifier result = ctx.mkForall(new Expr[] { txn1, po1, rec1 },
+							Quantifier result = ctx.mkForall(new Expr[] { txn1, rec1 },
 									ctx.mkImplies(pre_condition, body), 1, null, null, null, null);
 							addAssertions(result);
 						} else {
 							BoolExpr pre_condition1 = ctx.mkEq(ctx.mkApp(objs.getfuncs("txn_type"), txn1),
 									objs.getEnumConstructor("TxnType", txn.getName()));
+							Expr expected_po = objs.getEnumConstructor("Po", "po_" + q.getPo());
 							BoolExpr pre_condition2 = ctx.mkEq(po1, objs.getEnumConstructor("Po", "po_" + q.getPo()));
-							BoolExpr pre_condition = ctx.mkAnd(pre_condition1, pre_condition2);
+							BoolExpr pre_condition = pre_condition1;
 							String funcName = "writes_to_" + t.getTableName().getName() + "_" + fn.getName();
-							BoolExpr body = ctx.mkNot((BoolExpr) ctx.mkApp(objs.getfuncs(funcName), txn1, po1, rec1));
-							Quantifier result = ctx.mkForall(new Expr[] { txn1, po1, rec1 },
+							BoolExpr body = ctx
+									.mkNot((BoolExpr) ctx.mkApp(objs.getfuncs(funcName), txn1, expected_po, rec1));
+							Quantifier result = ctx.mkForall(new Expr[] { txn1, rec1 },
 									ctx.mkImplies(pre_condition, body), 1, null, null, null, null);
 							addAssertions(result);
 						}
@@ -679,9 +707,11 @@ public class Z3Driver {
 
 	private void addQryTypeToIsExecuted(Transaction txn, Query q) {
 		Expr expected_txn_type = objs.getEnumConstructor("TxnType", txn.getName());
-		//BoolExpr lhs1 = ctx.mkEq(po1, objs.getEnumConstructor("Po", "po_" + q.getPo()));
+		// BoolExpr lhs1 = ctx.mkEq(po1, objs.getEnumConstructor("Po", "po_" +
+		// q.getPo()));
 		BoolExpr lhs2 = ctx.mkEq(ctx.mkApp(objs.getfuncs("txn_type"), txn1), expected_txn_type);
-		BoolExpr rhs = ctx.mkEq(ctx.mkApp(objs.getfuncs("qry_is_executed"), txn1, objs.getEnumConstructor("Po", "po_" + q.getPo())),
+		BoolExpr rhs = ctx.mkEq(
+				ctx.mkApp(objs.getfuncs("qry_is_executed"), txn1, objs.getEnumConstructor("Po", "po_" + q.getPo())),
 				(BoolExpr) translateExpressionsToZ3Expr(txn.getName(), txn1, q.getPathCondition()));
 		BoolExpr body = ctx.mkImplies(lhs2, rhs);
 		BoolExpr result = ctx.mkForall(new Expr[] { txn1 }, body, 1, null, null, null, null);
@@ -708,13 +738,14 @@ public class Z3Driver {
 							ctx.mkFuncDecl(timeFuncName, new Sort[] { objs.getSort("Txn") }, objs.getEnum("Po")));
 					// properties of time func
 					Expr generated_time = ctx.mkApp(objs.getfuncs(timeFuncName), txn1);
-					//Expr time_of_query = po1; // ctx.mkApp(objs.getfuncs("qry_time"), txn1, po1);
+					// Expr time_of_query = po1; // ctx.mkApp(objs.getfuncs("qry_time"), txn1, po1);
 					Expr expected_po = objs.getEnumConstructor("Po", "po_" + q.getPo());
-					//Expr expected_txn_type = objs.getEnumConstructor("TxnType", txn.getName());
-					//BoolExpr lhs1 = ctx.mkEq(po1, expected_po);
-					//BoolExpr lhs2 = ctx.mkEq(ctx.mkApp(objs.getfuncs("txn_type"), txn1), expected_txn_type);
+					// Expr expected_txn_type = objs.getEnumConstructor("TxnType", txn.getName());
+					// BoolExpr lhs1 = ctx.mkEq(po1, expected_po);
+					// BoolExpr lhs2 = ctx.mkEq(ctx.mkApp(objs.getfuncs("txn_type"), txn1),
+					// expected_txn_type);
 					BoolExpr rhs = ctx.mkEq(generated_time, expected_po);
-					//BoolExpr body = ctx.mkImplies(lhs2, rhs);
+					// BoolExpr body = ctx.mkImplies(lhs2, rhs);
 					// performance enhance: try using rhs instead of body
 					Quantifier ass1 = ctx.mkForall(new Expr[] { txn1 }, rhs, 1, null, null, null, null);
 					addAssertion("assertion that the time matches the select time for " + current_var.getName(), ass1);
@@ -737,8 +768,8 @@ public class Z3Driver {
 							objs.getEnumConstructor("RecType", q.getTableName().getName()));
 					BoolExpr expected_is_alive = (BoolExpr) ctx.mkApp(objs.getfuncs("is_alive"), rec1, txn1,
 							expected_po);
-					BoolExpr where_body2 = ctx.mkAnd(expected_is_alive,expected_rec_type,translateWhereClauseToZ3Expr(txn.getName(), txn1, q.getWHC(), rec1,
-							expected_po));
+					BoolExpr where_body2 = ctx.mkAnd(expected_is_alive, expected_rec_type,
+							translateWhereClauseToZ3Expr(txn.getName(), txn1, q.getWHC(), rec1, expected_po));
 					BoolExpr body2 = ctx.mkEq(the_record, rec1);
 					BoolExpr exists_clause = ctx.mkExists(new Expr[] { order1 }, body2, 1, null, null, null, null);
 					Quantifier where_assertion2 = ctx.mkForall(new Expr[] { txn1, rec1 },
