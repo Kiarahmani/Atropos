@@ -149,12 +149,40 @@ public class Expression_Maker {
 		BoolExpr last_txn_po_1 = ctx.mkEq(POs[dependency_length - 2],
 				objs.getEnumConstructor("Po", "po_" + c2.getQuery(2).getPo()));
 
+		// constrain the type of dependency for the edge between the base and first
+		// neighbour
+		String base_edge_1_func_name = "";
+		if (!dai.getQuery(1).isWrite()) {
+			assert (c1.getQuery(2).isWrite()) : "cannot form dependency between two selet queries";
+			base_edge_1_func_name = "rw_on_" + c1.getTableName().getName();
+		} else {
+			if (!c1.getQuery(2).isWrite()) {
+				base_edge_1_func_name = "wr_on_" + c1.getTableName().getName();
+			} else {
+				base_edge_1_func_name = "dep_on_" + c1.getTableName().getName();
+			}
+		}
+
+		// constrain the type of dependency for the edge between the base and last
+		// neighbour
+		String base_edge_2_func_name = "";
+		if (!dai.getQuery(2).isWrite()) {
+			assert (c2.getQuery(2).isWrite()) : "cannot form dependency between two selet queries";
+			base_edge_2_func_name = "rw_on_" + c1.getTableName().getName();
+		} else {
+			if (!c2.getQuery(2).isWrite()) {
+				base_edge_2_func_name = "wr_on_" + c1.getTableName().getName();
+			} else {
+				base_edge_2_func_name = "dep_on_" + c1.getTableName().getName();
+			}
+		}
+
 		// assertions regarding the edge between the base and first neighbour
-		BoolExpr base_edge_1 = (BoolExpr) ctx.mkApp(objs.getfuncs("dep_on_"+c1.getTableName().getName()), Ts[0], POs[0], Ts[1], POs[1]);
+		BoolExpr base_edge_1 = (BoolExpr) ctx.mkApp(objs.getfuncs(base_edge_1_func_name), Ts[0], POs[0], Ts[1], POs[1]);
 		// assertions regarding the edge between the base and last neighbour
-		BoolExpr base_edge_2 = (BoolExpr) ctx.mkApp(objs.getfuncs("dep_on_"+c2.getTableName().getName()), Ts[dependency_length - 2],
+		BoolExpr base_edge_2 = (BoolExpr) ctx.mkApp(objs.getfuncs(base_edge_2_func_name), Ts[dependency_length - 2],
 				POs[dependency_length - 2], Ts[0], POs[dependency_length - 1]);
-		
+
 		// edges[0] = (dependency_length == 4) ? ctx.mkEq(Ts[1], Ts[2]) : edges[0];
 
 		Expr body = ctx.mkAnd(base_txn_type, base_txn_po_1, base_txn_po_2, first_txn_type, first_txn_po_1,
@@ -164,10 +192,6 @@ public class Expression_Maker {
 		System.arraycopy(POs, 0, result, dependency_length - 1, dependency_length);
 		return ctx.mkExists(result, body, 1, null, null, null, null);
 	}
-	
-	
-	
-	
 
 	public Quantifier mk_qry_time_respects_po() {
 		Expr local_time1 = ctx.mkApp(objs.getfuncs("qry_time"), txn1, po1);

@@ -56,7 +56,10 @@ public class DeclaredObjects {
 	}
 
 	public FuncDecl getfuncs(String key) {
-		return funcs.get(key);
+		FuncDecl result = funcs.get(key);
+		if (result == null)
+			assert (false) : "function " + key + " does not exist";
+		return result;
 	}
 
 	public void addAssertion(String key, BoolExpr value) {
@@ -81,7 +84,7 @@ public class DeclaredObjects {
 				result = e;
 				break;
 			}
-		assert (result != null):"enum_name:"+enum_name+"  cnstrctrName:"+cnstrctrName;
+		assert (result != null) : "enum_name:" + enum_name + "  cnstrctrName:" + cnstrctrName;
 		return result;
 	}
 
