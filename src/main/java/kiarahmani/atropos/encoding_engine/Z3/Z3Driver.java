@@ -86,33 +86,31 @@ public class Z3Driver {
 		Z3Logger.HeaderZ3(program.getName() + " reads_from and writes_to functions");
 		addWritesTo(program);
 		constrainWritesTo(program);
-		addReadsFrom(program);
-		constrainReadsFrom(program);
-		constrainWrittenVals(program);
-		addArFunc(program);
-		constrainArFunc(program);
-		addWRFuncs(program);
-		constrainWRFuncs(program);
-		addRWFuncs(program);
-		constrainRWFuncs(program);
-		addWWFuncs(program);
-		constrainWWFuncs(program);
-		addDepFunc(program);
-		constrainDepFunc(program);
-		addDepSTFunc(program);
-		constrainDepSTFunc(program);
-		//
+		// addReadsFrom(program);
+		// constrainReadsFrom(program);
+		// constrainWrittenVals(program);
+		// addArFunc(program);
+		/// constrainArFunc(program);
+		// addWRFuncs(program);
+		// constrainWRFuncs(program);
+		// addRWFuncs(program);
+		// constrainRWFuncs(program);
+		// addWWFuncs(program);
+		// constrainWWFuncs(program);
+		// addDepFunc(program);
+		// constrainDepFunc(program);
+		// addDepSTFunc(program);
+		// constrainDepSTFunc(program);
 		//
 		// final query
-		addAssertion("cycle", em.mk_cycle_exists_constrained(dependency_length, dai, c1, c2));
-		//
-		//
-		//
+		// addAssertion("cycle", em.mk_cycle_exists_constrained(dependency_length, dai,
+		// c1, c2));
 		//
 		//
 		// check satisfiability
 		Status status = slv.check();
 		if (status == Status.SATISFIABLE) {
+			// record the generated model
 			model = slv.getModel();
 			File file = new File("smt2/model.smt2");
 			PrintWriter printer;
@@ -439,8 +437,8 @@ public class Z3Driver {
 	}
 
 	private void constrainIsExecuted(Program program, Expression_Maker em) {
-		Z3Logger.SubHeaderZ3("is executed?");
 		for (Transaction txn : program.getTransactions()) {
+			Z3Logger.SubHeaderZ3("is executed? ("+txn.getName()+")");
 			for (Query q : txn.getAllQueries())
 				addQryTypeToIsExecuted(txn, q);
 			addPoLargerThanQryCntIsNotExecuted(txn);
@@ -681,12 +679,12 @@ public class Z3Driver {
 
 	private void addQryTypeToIsExecuted(Transaction txn, Query q) {
 		Expr expected_txn_type = objs.getEnumConstructor("TxnType", txn.getName());
-		BoolExpr lhs1 = ctx.mkEq(po1, objs.getEnumConstructor("Po", "po_" + q.getPo()));
+		//BoolExpr lhs1 = ctx.mkEq(po1, objs.getEnumConstructor("Po", "po_" + q.getPo()));
 		BoolExpr lhs2 = ctx.mkEq(ctx.mkApp(objs.getfuncs("txn_type"), txn1), expected_txn_type);
-		BoolExpr rhs = ctx.mkEq(ctx.mkApp(objs.getfuncs("qry_is_executed"), txn1, po1),
+		BoolExpr rhs = ctx.mkEq(ctx.mkApp(objs.getfuncs("qry_is_executed"), txn1, objs.getEnumConstructor("Po", "po_" + q.getPo())),
 				(BoolExpr) translateExpressionsToZ3Expr(txn.getName(), txn1, q.getPathCondition()));
-		BoolExpr body = ctx.mkImplies(ctx.mkAnd(lhs1, lhs2), rhs);
-		BoolExpr result = ctx.mkForall(new Expr[] { txn1, po1 }, body, 1, null, null, null, null);
+		BoolExpr body = ctx.mkImplies(lhs2, rhs);
+		BoolExpr result = ctx.mkForall(new Expr[] { txn1 }, body, 1, null, null, null, null);
 		addAssertion("qry_type_to_is_executed_" + q.getId(), result);
 	}
 
@@ -710,23 +708,23 @@ public class Z3Driver {
 							ctx.mkFuncDecl(timeFuncName, new Sort[] { objs.getSort("Txn") }, objs.getEnum("Po")));
 					// properties of time func
 					Expr generated_time = ctx.mkApp(objs.getfuncs(timeFuncName), txn1);
-					Expr time_of_query = po1; // ctx.mkApp(objs.getfuncs("qry_time"), txn1, po1);
+					//Expr time_of_query = po1; // ctx.mkApp(objs.getfuncs("qry_time"), txn1, po1);
 					Expr expected_po = objs.getEnumConstructor("Po", "po_" + q.getPo());
-					Expr expected_txn_type = objs.getEnumConstructor("TxnType", txn.getName());
-					BoolExpr lhs1 = ctx.mkEq(po1, expected_po);
-					BoolExpr lhs2 = ctx.mkEq(ctx.mkApp(objs.getfuncs("txn_type"), txn1), expected_txn_type);
-					BoolExpr rhs = ctx.mkEq(generated_time, time_of_query);
-					BoolExpr body = ctx.mkImplies(ctx.mkAnd(lhs1, lhs2), rhs);
-					Quantifier ass1 = ctx.mkForall(new Expr[] { txn1, po1 }, body, 1, null, null, null, null);
+					//Expr expected_txn_type = objs.getEnumConstructor("TxnType", txn.getName());
+					//BoolExpr lhs1 = ctx.mkEq(po1, expected_po);
+					//BoolExpr lhs2 = ctx.mkEq(ctx.mkApp(objs.getfuncs("txn_type"), txn1), expected_txn_type);
+					BoolExpr rhs = ctx.mkEq(generated_time, expected_po);
+					//BoolExpr body = ctx.mkImplies(lhs2, rhs);
+					// performance enhance: try using rhs instead of body
+					Quantifier ass1 = ctx.mkForall(new Expr[] { txn1 }, rhs, 1, null, null, null, null);
 					addAssertion("assertion that the time matches the select time for " + current_var.getName(), ass1);
 					// properties of main func
 					// prop#1: a record is in var only if satisfies the whc
-					Expr gen_time = ctx.mkApp(objs.getfuncs(timeFuncName), txn1);
 					Expr the_record = ctx.mkApp(objs.getfuncs(funcName), txn1, order1);
 					BoolExpr where_body = translateWhereClauseToZ3Expr(txn.getName(), txn1, q.getWHC(), the_record,
-							gen_time);
+							expected_po);
 					BoolExpr is_alive_body = (BoolExpr) ctx.mkApp(objs.getfuncs("is_alive"), the_record, txn1,
-							gen_time);
+							expected_po);
 					BoolExpr rec_type_body = ctx.mkEq(ctx.mkApp(objs.getfuncs("rec_type"), the_record),
 							objs.getEnumConstructor("RecType", q.getTableName().getName()));
 					Quantifier where_assertion = ctx.mkForall(new Expr[] { txn1, order1 },
@@ -735,8 +733,12 @@ public class Z3Driver {
 							+ " must be alive and satisfy the associated where clause, at the time of generation",
 							where_assertion);
 					// prop#2 if a rec satisfies certain properties, then it must be in the var
-					BoolExpr where_body2 = translateWhereClauseToZ3Expr(txn.getName(), txn1, q.getWHC(), rec1,
-							gen_time);
+					BoolExpr expected_rec_type = ctx.mkEq(ctx.mkApp(objs.getfuncs("rec_type"), rec1),
+							objs.getEnumConstructor("RecType", q.getTableName().getName()));
+					BoolExpr expected_is_alive = (BoolExpr) ctx.mkApp(objs.getfuncs("is_alive"), rec1, txn1,
+							expected_po);
+					BoolExpr where_body2 = ctx.mkAnd(expected_is_alive,expected_rec_type,translateWhereClauseToZ3Expr(txn.getName(), txn1, q.getWHC(), rec1,
+							expected_po));
 					BoolExpr body2 = ctx.mkEq(the_record, rec1);
 					BoolExpr exists_clause = ctx.mkExists(new Expr[] { order1 }, body2, 1, null, null, null, null);
 					Quantifier where_assertion2 = ctx.mkForall(new Expr[] { txn1, rec1 },

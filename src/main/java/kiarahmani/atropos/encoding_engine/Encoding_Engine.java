@@ -1,5 +1,9 @@
 package kiarahmani.atropos.encoding_engine;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 
 import javax.swing.plaf.SliderUI;
@@ -22,13 +26,26 @@ import kiarahmani.atropos.program.Transaction;
 public class Encoding_Engine {
 	private static final Logger logger = LogManager.getLogger(Atropos.class);
 	private Program program;
+	private Z3Logger z3logger;
 
 	public Encoding_Engine(Program program) {
-		new Z3Logger("smt2/z3-encoding.smt2");
+		z3logger = new Z3Logger("smt2/z3-encoding.smt2");
 		this.program = program;
 	}
 
-	public void constructInitialDAIGraph(Conflict_Graph cg) {
+	public void constructInitialDAIGraph(String program_name, Conflict_Graph cg) {
+		File file = new File("analytics/" + program_name + ".atps");
+		PrintWriter printer = null;
+		FileWriter writer;
+		try {
+			writer = new FileWriter(file, false);
+			printer = new PrintWriter(writer);
+			printer.append("##;##\n" + "@LiveGraph demo file.\nTime");
+			printer.flush();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 		DAI dai;
 		int iter = 0;
 		System.out.println("\n\n## DAI");
@@ -43,6 +60,7 @@ public class Encoding_Engine {
 							"constructing potential DAIs consisted of q1:" + q1.getId() + " and " + "q2:" + q2.getId());
 					for (Conflict c1 : cg.getConfsFromQuery(q1))
 						for (Conflict c2 : cg.getConfsFromQuery(q2)) {
+							z3logger.reset();
 							// create a potential DAI
 							dai = new DAI(txn, q1, q1.getAccessedFieldNames(), q2, q2.getAccessedFieldNames());
 							Z3Driver local_z3_driver = new Z3Driver();
@@ -53,8 +71,11 @@ public class Encoding_Engine {
 							Status status = local_z3_driver.generateDAI(this.program, 4, dai, c1, c2);
 							long end = System.currentTimeMillis();
 							System.out.println("" + status + " (" + (end - begin) + "ms)\n\n");
+							printer.append(String.valueOf(end - begin) + "\n");
+							printer.flush();
 							// free up solver's memory for the next iteration
 							local_z3_driver = null;
+
 						}
 				}
 			}

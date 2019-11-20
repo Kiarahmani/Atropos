@@ -11,8 +11,10 @@ public class Z3Logger {
 	static PrintWriter printer;
 	File file;
 	FileWriter writer;
+	String file_path;
 
 	public Z3Logger(String file_path) {
+		this.file_path = file_path;
 		this.file = new File(file_path);
 		try {
 			writer = new FileWriter(file, false);
@@ -20,6 +22,17 @@ public class Z3Logger {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	public void reset() {
+		this.file = new File(this.file_path);
+		try {
+			writer = null;
+			writer = new FileWriter(file, false);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		printer = new PrintWriter(writer);
 	}
 
 	/*

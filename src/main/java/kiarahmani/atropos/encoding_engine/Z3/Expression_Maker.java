@@ -194,7 +194,7 @@ public class Expression_Maker {
 		BoolExpr lhs = ctx.mkEq(ctx.mkApp(objs.getfuncs("rec_type"), rec1),
 				objs.getEnumConstructor("RecType", table_name));
 		BoolExpr body = ctx.mkAnd(eqs);
-		Quantifier x = ctx.mkForall(new Expr[] { rec1, txn1, po1, txn2, po2 }, ctx.mkImplies(lhs, body), 1, null, null,
+		Quantifier x = ctx.mkForall(new Expr[] { rec1, txn1, po1, txn2, po2 }, body, 1, null, null,
 				null, null);
 		return x;
 	}
