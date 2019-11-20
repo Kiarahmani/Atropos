@@ -88,7 +88,7 @@ public class Z3Driver {
 		constrainWritesTo(program);
 		addReadsFrom(program);
 		constrainReadsFrom(program);
-		// constrainWrittenVals(program);
+		constrainWrittenVals(program);
 		// addArFunc(program);
 		/// constrainArFunc(program);
 		// addWRFuncs(program);
@@ -149,6 +149,7 @@ public class Z3Driver {
 						if (q.getWrittenFieldNames().contains(fn)) {
 							BoolExpr pre_condition1 = ctx.mkEq(ctx.mkApp(objs.getfuncs("txn_type"), txn1),
 									objs.getEnumConstructor("TxnType", txn.getName()));
+							// potential performance bug: try replacing concrete values insteatd of constrained po variable
 							BoolExpr pre_condition2 = ctx.mkEq(po1, objs.getEnumConstructor("Po", "po_" + q.getPo()));
 							BoolExpr pre_rectype = ctx.mkEq(ctx.mkApp(objs.getfuncs("rec_type"), rec1),
 									objs.getEnumConstructor("RecType", t.getTableName().getName()));
