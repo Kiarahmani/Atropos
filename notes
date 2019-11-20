@@ -1,8 +1,6 @@
 ====================================================================================================
 TODO:
   
-  - study further the body of the encoding (everything but the final query) to
-    find potentials for performance increase. 
   - study the final query to understand how it can be further constrained
   - Once optimizations are over, perform another round of tests to make sure the
     encoding is correct!

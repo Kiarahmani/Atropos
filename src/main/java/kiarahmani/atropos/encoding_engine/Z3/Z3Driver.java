@@ -103,8 +103,7 @@ public class Z3Driver {
 		constrainDepSTFunc(program);
 		//
 		// final query
-		addAssertion("cycle", em.mk_cycle_exists_constrained(dependency_length, dai,
-		 c1, c2));
+		addAssertion("cycle", em.mk_cycle_exists_constrained(dependency_length, dai, c1, c2));
 		//
 		//
 		// check satisfiability
@@ -149,7 +148,8 @@ public class Z3Driver {
 						if (q.getWrittenFieldNames().contains(fn)) {
 							BoolExpr pre_condition1 = ctx.mkEq(ctx.mkApp(objs.getfuncs("txn_type"), txn1),
 									objs.getEnumConstructor("TxnType", txn.getName()));
-							// potential performance bug: try replacing concrete values insteatd of constrained po variable
+							// potential performance bug: try replacing concrete values insteatd of
+							// constrained po variable
 							BoolExpr pre_condition2 = ctx.mkEq(po1, objs.getEnumConstructor("Po", "po_" + q.getPo()));
 							BoolExpr pre_rectype = ctx.mkEq(ctx.mkApp(objs.getfuncs("rec_type"), rec1),
 									objs.getEnumConstructor("RecType", t.getTableName().getName()));
@@ -305,6 +305,8 @@ public class Z3Driver {
 					String wt_funcName = "writes_to_" + t.getTableName().getName() + "_" + fn.getName();
 					BoolExpr writes_to = (BoolExpr) ctx.mkApp(objs.getfuncs(wt_funcName), txn1, po1, rec1);
 					BoolExpr reads_from = (BoolExpr) ctx.mkApp(objs.getfuncs(rf_funcName), txn2, po2, rec1);
+					BoolExpr expected_rec_type = ctx.mkEq(ctx.mkApp(objs.getfuncs("rec_type"), rec1),
+							objs.getEnumConstructor("RecType", t.getTableName().getName()));
 					BoolExpr q1_is_executed = (BoolExpr) ctx.mkApp(objs.getfuncs("qry_is_executed"), txn1, po1);
 					BoolExpr q2_is_executed = (BoolExpr) ctx.mkApp(objs.getfuncs("qry_is_executed"), txn2, po2);
 					BoolExpr txns_are_different = ctx.mkDistinct(txn1, txn2);
@@ -541,10 +543,12 @@ public class Z3Driver {
 							Expr expected_po = objs.getEnumConstructor("Po", "po_" + q.getPo());
 							BoolExpr pre_condition1 = ctx.mkEq(ctx.mkApp(objs.getfuncs("txn_type"), txn1),
 									objs.getEnumConstructor("TxnType", txn.getName()));
-							BoolExpr pre_condition2 = ctx.mkEq(expected_po, objs.getEnumConstructor("Po", "po_" + q.getPo()));
+							BoolExpr pre_condition2 = ctx.mkEq(expected_po,
+									objs.getEnumConstructor("Po", "po_" + q.getPo()));
 							BoolExpr pre_condition = ctx.mkAnd(pre_condition1, pre_condition2);
 							String funcName = "reads_from_" + t.getTableName().getName() + "_" + fn.getName();
-							BoolExpr body = ctx.mkNot((BoolExpr) ctx.mkApp(objs.getfuncs(funcName), txn1, expected_po, rec1));
+							BoolExpr body = ctx
+									.mkNot((BoolExpr) ctx.mkApp(objs.getfuncs(funcName), txn1, expected_po, rec1));
 							Quantifier result = ctx.mkForall(new Expr[] { txn1, rec1 },
 									ctx.mkImplies(pre_condition, body), 1, null, null, null, null);
 							addAssertions(result);
