@@ -182,6 +182,7 @@ public class Z3Driver {
 		String wr_funcName;
 		String rw_funcName;
 		String ww_funcName;
+		int fld_cnt = 0;
 		Z3Logger.SubHeaderZ3("relating dep to wr/rw/ww");
 		for (Table t : program.getTables()) {
 			for (FieldName fn : t.getFieldNames()) {
@@ -198,24 +199,33 @@ public class Z3Driver {
 							ctx.mkImplies(exists_dep, ctx.mkOr(exists_rw, exists_ww, exists_wr)), 1, null, null, null,
 							null);
 					addAssertions(dep_to_wr_rw_ww);
+					fld_cnt++;
 				}
 			}
 		}
-		int i=3;
-		BoolExpr[] array_ww_t_f = new BoolExpr[i];
-		i = 0;
-		for (Table t : program.getTables())
+		BoolExpr[] array_dep_t = new BoolExpr[program.getTables().size()];
+		int tbl_iter = 0;
+		for (Table t : program.getTables()) {
+			int fld_iter = 0;
+			BoolExpr[] array_dep_t_f = new BoolExpr[t.getFieldNames().size() - t.getPKFields().size()];
 			for (FieldName fn : t.getFieldNames())
 				if (!fn.isPK()) {
 					String funcName = "dep_on_" + t.getTableName().getName() + "_" + fn.getName();
-					array_ww_t_f[i++] = (BoolExpr) ctx.mkApp(objs.getfuncs(funcName), txn1, po1, txn2, po2);
+					array_dep_t_f[fld_iter++] = (BoolExpr) ctx.mkApp(objs.getfuncs(funcName), txn1, po1, txn2, po2);
 				}
-		BoolExpr exists_ww = (BoolExpr) ctx.mkApp(objs.getfuncs("dep"), txn1, po1, txn2, po2);
-		Quantifier ww_to_ww_table_field = ctx.mkForall(new Expr[] { txn1, txn2, po1, po2 },
-				ctx.mkImplies(exists_ww, ctx.mkOr(array_ww_t_f)), 1, null, null, null, null);
-		addAssertion("relating dep to dep_*_*", ww_to_ww_table_field);
-		
-		
+			BoolExpr exists_dep = (BoolExpr) ctx.mkApp(objs.getfuncs("dep_on_" + t.getTableName().getName()), txn1, po1,
+					txn2, po2);
+			array_dep_t[tbl_iter++] = exists_dep;
+			Quantifier dep_to_dep_table_field = ctx.mkForall(new Expr[] { txn1, txn2, po1, po2 },
+					ctx.mkImplies(exists_dep, ctx.mkOr(array_dep_t_f)), 1, null, null, null, null);
+			addAssertion("relating dep to dep_*_*", dep_to_dep_table_field);
+		}
+		String funcName = "dep";
+		BoolExpr exists_dep = (BoolExpr) ctx.mkApp(objs.getfuncs(funcName), txn1, po1, txn2, po2);
+		Quantifier dep_to_dep_table_field = ctx.mkForall(new Expr[] { txn1, txn2, po1, po2 },
+				ctx.mkImplies(exists_dep, ctx.mkOr(array_dep_t)), 1, null, null, null, null);
+		addAssertion("relating dep to dep_*_*", dep_to_dep_table_field);
+
 	}
 
 	private void addDepSTFunc(Program program) {
@@ -240,6 +250,10 @@ public class Z3Driver {
 							objs.getEnum("Po"), objs.getSort("Txn"), objs.getEnum("Po") }, objs.getSort("Bool")));
 				}
 			}
+			funcName = "dep_on_" + t.getTableName().getName();
+			objs.addFunc(funcName, ctx.mkFuncDecl(funcName,
+					new Sort[] { objs.getSort("Txn"), objs.getEnum("Po"), objs.getSort("Txn"), objs.getEnum("Po") },
+					objs.getSort("Bool")));
 		}
 		funcName = "dep";
 		objs.addFunc(funcName,
@@ -284,10 +298,12 @@ public class Z3Driver {
 					String funcName = "ww_on_" + t.getTableName().getName() + "_" + fn.getName();
 					array_ww_t_f[i++] = (BoolExpr) ctx.mkApp(objs.getfuncs(funcName), txn1, po1, txn2, po2);
 				}
-		//BoolExpr exists_ww = (BoolExpr) ctx.mkApp(objs.getfuncs("ww"), txn1, po1, txn2, po2);
-		//Quantifier ww_to_ww_table_field = ctx.mkForall(new Expr[] { txn1, txn2, po1, po2 },
-		//		ctx.mkImplies(exists_ww, ctx.mkOr(array_ww_t_f)), 1, null, null, null, null);
-		//addAssertion("relating ww to ww_*_*", ww_to_ww_table_field);
+		// BoolExpr exists_ww = (BoolExpr) ctx.mkApp(objs.getfuncs("ww"), txn1, po1,
+		// txn2, po2);
+		// Quantifier ww_to_ww_table_field = ctx.mkForall(new Expr[] { txn1, txn2, po1,
+		// po2 },
+		// ctx.mkImplies(exists_ww, ctx.mkOr(array_ww_t_f)), 1, null, null, null, null);
+		// addAssertion("relating ww to ww_*_*", ww_to_ww_table_field);
 	}
 
 	private void constrainRWFuncs(Program program) {
@@ -330,10 +346,12 @@ public class Z3Driver {
 					String funcName = "rw_on_" + t.getTableName().getName() + "_" + fn.getName();
 					array_rw_t_f[i++] = (BoolExpr) ctx.mkApp(objs.getfuncs(funcName), txn1, po1, txn2, po2);
 				}
-		//BoolExpr exists_rw = (BoolExpr) ctx.mkApp(objs.getfuncs("rw"), txn1, po1, txn2, po2);
-		//Quantifier rw_to_rw_table_field = ctx.mkForall(new Expr[] { txn1, txn2, po1, po2 },
-		//		ctx.mkImplies(exists_rw, ctx.mkOr(array_rw_t_f)), 1, null, null, null, null);
-		//addAssertion("relating rw to rw_*_*", rw_to_rw_table_field);
+		// BoolExpr exists_rw = (BoolExpr) ctx.mkApp(objs.getfuncs("rw"), txn1, po1,
+		// txn2, po2);
+		// Quantifier rw_to_rw_table_field = ctx.mkForall(new Expr[] { txn1, txn2, po1,
+		// po2 },
+		// ctx.mkImplies(exists_rw, ctx.mkOr(array_rw_t_f)), 1, null, null, null, null);
+		// addAssertion("relating rw to rw_*_*", rw_to_rw_table_field);
 	}
 
 	private void constrainWRFuncs(Program program) {
@@ -384,10 +402,12 @@ public class Z3Driver {
 					String funcName = "wr_on_" + t.getTableName().getName() + "_" + fn.getName();
 					array_wr_t_f[i++] = (BoolExpr) ctx.mkApp(objs.getfuncs(funcName), txn1, po1, txn2, po2);
 				}
-		//BoolExpr exists_wr = (BoolExpr) ctx.mkApp(objs.getfuncs("wr"), txn1, po1, txn2, po2);
-		//Quantifier wr_to_wr_table_field = ctx.mkForall(new Expr[] { txn1, txn2, po1, po2 },
-		//		ctx.mkImplies(exists_wr, ctx.mkOr(array_wr_t_f)), 1, null, null, null, null);
-		//addAssertion("relating wr to wr_*_*", wr_to_wr_table_field);
+		// BoolExpr exists_wr = (BoolExpr) ctx.mkApp(objs.getfuncs("wr"), txn1, po1,
+		// txn2, po2);
+		// Quantifier wr_to_wr_table_field = ctx.mkForall(new Expr[] { txn1, txn2, po1,
+		// po2 },
+		// ctx.mkImplies(exists_wr, ctx.mkOr(array_wr_t_f)), 1, null, null, null, null);
+		// addAssertion("relating wr to wr_*_*", wr_to_wr_table_field);
 	}
 
 	private void addWRFuncs(Program program) {
@@ -403,11 +423,12 @@ public class Z3Driver {
 				}
 			}
 		}
-		//funcName = "wr";
-		//objs.addFunc(funcName,
-		//		ctx.mkFuncDecl(funcName,
-		//				new Sort[] { objs.getSort("Txn"), objs.getEnum("Po"), objs.getSort("Txn"), objs.getEnum("Po") },
-		//				objs.getSort("Bool")));
+		// funcName = "wr";
+		// objs.addFunc(funcName,
+		// ctx.mkFuncDecl(funcName,
+		// new Sort[] { objs.getSort("Txn"), objs.getEnum("Po"), objs.getSort("Txn"),
+		// objs.getEnum("Po") },
+		// objs.getSort("Bool")));
 	}
 
 	private void addRWFuncs(Program program) {
@@ -423,11 +444,12 @@ public class Z3Driver {
 				}
 			}
 		}
-		//funcName = "rw";
-		//objs.addFunc(funcName,
-		//		ctx.mkFuncDecl(funcName,
-		//				new Sort[] { objs.getSort("Txn"), objs.getEnum("Po"), objs.getSort("Txn"), objs.getEnum("Po") },
-		//				objs.getSort("Bool")));
+		// funcName = "rw";
+		// objs.addFunc(funcName,
+		// ctx.mkFuncDecl(funcName,
+		// new Sort[] { objs.getSort("Txn"), objs.getEnum("Po"), objs.getSort("Txn"),
+		// objs.getEnum("Po") },
+		// objs.getSort("Bool")));
 	}
 
 	private void addWWFuncs(Program program) {
@@ -443,11 +465,12 @@ public class Z3Driver {
 				}
 			}
 		}
-	//	funcName = "ww";
-	//	objs.addFunc(funcName,
-	//			ctx.mkFuncDecl(funcName,
-	//					new Sort[] { objs.getSort("Txn"), objs.getEnum("Po"), objs.getSort("Txn"), objs.getEnum("Po") },
-	//					objs.getSort("Bool")));
+		// funcName = "ww";
+		// objs.addFunc(funcName,
+		// ctx.mkFuncDecl(funcName,
+		// new Sort[] { objs.getSort("Txn"), objs.getEnum("Po"), objs.getSort("Txn"),
+		// objs.getEnum("Po") },
+		// objs.getSort("Bool")));
 	}
 
 	private void addArFunc(Program program) {
