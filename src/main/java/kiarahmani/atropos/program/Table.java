@@ -15,11 +15,13 @@ public class Table {
 		return this.fieldNames.stream().filter(fn -> fn.isPK()).collect(Collectors.toList());
 	}
 
-	public Table(TableName tn, FieldName... fns) {
+	public Table(TableName tn, FieldName is_alive, FieldName... fns) {
 		fieldNames = new ArrayList<>();
 		name = tn;
 		for (FieldName fn : fns)
 			this.fieldNames.add(fn);
+		this.fieldNames.add(is_alive);
+
 	}
 
 	public ArrayList<FieldName> getFieldNames() {

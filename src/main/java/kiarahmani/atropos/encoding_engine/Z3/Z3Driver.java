@@ -603,22 +603,42 @@ public class Z3Driver {
 				for (Table t : program.getTables()) {
 					for (FieldName fn : t.getFieldNames()) {
 						if (q.getReadFieldNames().contains(fn)) {
-							BoolExpr pre_condition1 = ctx.mkEq(ctx.mkApp(objs.getfuncs("txn_type"), txn1),
-									objs.getEnumConstructor("TxnType", txn.getName()));
-							Expr expected_po = objs.getEnumConstructor("Po", "po_" + q.getPo());
-							BoolExpr pre_condition = (pre_condition1);
-							String funcName = "reads_from_" + t.getTableName().getName() + "_" + fn.getName();
+							// special case: when the field is is_alive, read_from must NOT include the
+							// constrain from WHC regarding is_alive itself
+							if (fn.getName().contains("is_alive")) {
+								BoolExpr pre_condition1 = ctx.mkEq(ctx.mkApp(objs.getfuncs("txn_type"), txn1),
+										objs.getEnumConstructor("TxnType", txn.getName()));
+								Expr expected_po = objs.getEnumConstructor("Po", "po_" + q.getPo());
+								BoolExpr pre_condition = (pre_condition1);
+								String funcName = "reads_from_" + t.getTableName().getName() + "_" + fn.getName();
 
-							Expr validWT = ctx.mkApp(objs.getfuncs(funcName), txn1, expected_po, rec1);
-							BoolExpr validRecType = ctx.mkEq(ctx.mkApp(objs.getfuncs("rec_type"), rec1),
-									objs.getEnumConstructor("RecType", t.getTableName().getName()));
+								Expr validWT = ctx.mkApp(objs.getfuncs(funcName), txn1, expected_po, rec1);
+								BoolExpr validRecType = ctx.mkEq(ctx.mkApp(objs.getfuncs("rec_type"), rec1),
+										objs.getEnumConstructor("RecType", t.getTableName().getName()));
+								BoolExpr whc_to_expr = translateWhereClauseWithoutIsAliveToZ3Expr(txn.getName(), txn1,
+										q.getWHC(), rec1, expected_po);
+								BoolExpr body = ctx.mkImplies((BoolExpr) validWT, ctx.mkAnd(validRecType, whc_to_expr));
+								Quantifier result = ctx.mkForall(new Expr[] { txn1, rec1 },
+										ctx.mkImplies(pre_condition, body), 1, null, null, null, null);
+								addAssertions(result);
+							} else {
+								BoolExpr pre_condition1 = ctx.mkEq(ctx.mkApp(objs.getfuncs("txn_type"), txn1),
+										objs.getEnumConstructor("TxnType", txn.getName()));
+								Expr expected_po = objs.getEnumConstructor("Po", "po_" + q.getPo());
+								BoolExpr pre_condition = (pre_condition1);
+								String funcName = "reads_from_" + t.getTableName().getName() + "_" + fn.getName();
 
-							BoolExpr whc_to_expr = translateWhereClauseToZ3Expr(txn.getName(), txn1, q.getWHC(), rec1,
-									expected_po);
-							BoolExpr body = ctx.mkImplies((BoolExpr) validWT, ctx.mkAnd(whc_to_expr, validRecType));
-							Quantifier result = ctx.mkForall(new Expr[] { txn1, rec1 },
-									ctx.mkImplies(pre_condition, body), 1, null, null, null, null);
-							addAssertions(result);
+								Expr validWT = ctx.mkApp(objs.getfuncs(funcName), txn1, expected_po, rec1);
+								BoolExpr validRecType = ctx.mkEq(ctx.mkApp(objs.getfuncs("rec_type"), rec1),
+										objs.getEnumConstructor("RecType", t.getTableName().getName()));
+
+								BoolExpr whc_to_expr = translateWhereClauseToZ3Expr(txn.getName(), txn1, q.getWHC(),
+										rec1, expected_po);
+								BoolExpr body = ctx.mkImplies((BoolExpr) validWT, ctx.mkAnd(whc_to_expr, validRecType));
+								Quantifier result = ctx.mkForall(new Expr[] { txn1, rec1 },
+										ctx.mkImplies(pre_condition, body), 1, null, null, null, null);
+								addAssertions(result);
+							}
 						} else {
 							Expr expected_po = objs.getEnumConstructor("Po", "po_" + q.getPo());
 							BoolExpr pre_condition1 = ctx.mkEq(ctx.mkApp(objs.getfuncs("txn_type"), txn1),
@@ -839,21 +859,22 @@ public class Z3Driver {
 					Expr the_record = ctx.mkApp(objs.getfuncs(funcName), txn1, order1);
 					BoolExpr where_body = translateWhereClauseToZ3Expr(txn.getName(), txn1, q.getWHC(), the_record,
 							expected_po);
-					BoolExpr is_alive_body = (BoolExpr) ctx.mkApp(objs.getfuncs("is_alive"), the_record, txn1,
+					BoolExpr is_alive_body = (BoolExpr) ctx.mkApp(
+							objs.getfuncs("proj_" + q.getTableName().getName() + "_is_alive"), the_record, txn1,
 							expected_po);
 					BoolExpr rec_type_body = ctx.mkEq(ctx.mkApp(objs.getfuncs("rec_type"), the_record),
 							objs.getEnumConstructor("RecType", q.getTableName().getName()));
 					Quantifier where_assertion = ctx.mkForall(new Expr[] { txn1, order1 },
-							ctx.mkAnd(rec_type_body, where_body, is_alive_body), 1, null, null, null, null);
+							ctx.mkAnd(rec_type_body, where_body), 1, null, null, null, null);
 					addAssertion("any record in " + current_var.getName()
 							+ " must be alive and satisfy the associated where clause, at the time of generation",
 							where_assertion);
 					// prop#2 if a rec satisfies certain properties, then it must be in the var
 					BoolExpr expected_rec_type = ctx.mkEq(ctx.mkApp(objs.getfuncs("rec_type"), rec1),
 							objs.getEnumConstructor("RecType", q.getTableName().getName()));
-					BoolExpr expected_is_alive = (BoolExpr) ctx.mkApp(objs.getfuncs("is_alive"), rec1, txn1,
-							expected_po);
-					BoolExpr where_body2 = ctx.mkAnd(expected_is_alive, expected_rec_type,
+					BoolExpr expected_is_alive = (BoolExpr) ctx.mkApp(
+							objs.getfuncs("proj_" + q.getTableName().getName() + "_is_alive"), rec1, txn1, expected_po);
+					BoolExpr where_body2 = ctx.mkAnd(expected_rec_type,
 							translateWhereClauseToZ3Expr(txn.getName(), txn1, q.getWHC(), rec1, expected_po));
 					BoolExpr body2 = ctx.mkEq(the_record, rec1);
 					BoolExpr exists_clause = ctx.mkExists(new Expr[] { order1 }, body2, 1, null, null, null, null);
@@ -903,12 +924,14 @@ public class Z3Driver {
 	}
 
 	private void addProjFuncsAndBounds(Program program) {
-		Z3Logger.HeaderZ3(program.getName() + " (Schema sorts, types and functions)");
-		Z3Logger.LogZ3("\n;; definition of is_alive projection function for all tables");
-		String funcName = "is_alive";
+		Z3Logger.HeaderZ3(program.getName() + " (/ sorts, types and functions)");
+		// Z3Logger.LogZ3("\n;; definition of is_alive projection function for all
+		// tables");
+		String funcName = "";
 		String writen_proj_func = "";
-		objs.addFunc(funcName, ctx.mkFuncDecl(funcName,
-				new Sort[] { objs.getSort("Rec"), objs.getSort("Txn"), objs.getEnum("Po") }, objs.getSort("Bool")));
+		// objs.addFunc(funcName, ctx.mkFuncDecl(funcName,
+		// new Sort[] { objs.getSort("Rec"), objs.getSort("Txn"), objs.getEnum("Po") },
+		// objs.getSort("Bool")));
 		// definition of projection functions
 		for (Table t : program.getTables()) {
 			Z3Logger.SubHeaderZ3(t.getTableName().getName().toUpperCase());
@@ -1024,6 +1047,18 @@ public class Z3Driver {
 		BoolExpr[] result = new BoolExpr[constraints.size()];
 		for (int i = 0; i < constraints.size(); i++)
 			result[i] = translateWhereConstraintToZ3Expr(txnName, transaction, constraints.get(i), record, po);
+		return ctx.mkAnd(result);
+	}
+
+	private BoolExpr translateWhereClauseWithoutIsAliveToZ3Expr(String txnName, Expr transaction, WHC input_whc,
+			Expr record, Expr po) {
+		ArrayList<WHC_Constraint> constraints = input_whc.getConstraints();
+		BoolExpr[] result = new BoolExpr[constraints.size() - 1];
+		int i = 0;
+		for (WHC_Constraint constraint : constraints) {
+			if (!constraint.getFieldName().getName().contains("is_alive"))
+				result[i++] = translateWhereConstraintToZ3Expr(txnName, transaction, constraint, record, po);
+		}
 		return ctx.mkAnd(result);
 	}
 

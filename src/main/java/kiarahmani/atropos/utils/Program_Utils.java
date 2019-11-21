@@ -96,6 +96,10 @@ public class Program_Utils {
 		return this.fieldNameMap.get(fn);
 	}
 
+	public FieldName getIsAliveFieldName(String table_name) {
+		return this.fieldNameMap.get(table_name + "_is_alive");
+	}
+
 	public E_Arg getArg(String arg) {
 		return this.argsMap.get(arg);
 	}
@@ -168,8 +172,7 @@ public class Program_Utils {
 		return result;
 	}
 
-	public Select_Query addSelectQuery(String txn, String tableName, boolean isAtomic, WHC whc,
-			String... fieldNames) {
+	public Select_Query addSelectQuery(String txn, String tableName, boolean isAtomic, WHC whc, String... fieldNames) {
 		int po = transactionToPoCnt.containsKey(txn) ? transactionToPoCnt.get(txn) : 0;
 		transactionToPoCnt.put(txn, po + 1);
 		Variable fresh_variable = getFreshVariable(tableName, txn);
@@ -224,11 +227,13 @@ public class Program_Utils {
 
 	public Table addTable(String tn_name, FieldName... fns) {
 		TableName tn = new TableName(tn_name);
+		FieldName is_alive = new FieldName("is_alive", false, false, F_Type.BOOL);
 		this.tableNameMap.put(tn.getName(), tn);
-		Table newTable = new Table(tn, fns);
+		Table newTable = new Table(tn, is_alive, fns);
 		this.tableMap.put(tn.getName(), newTable);
 		for (FieldName fn : fns)
 			this.fieldNameMap.put(fn.getName(), fn);
+		this.fieldNameMap.put(tn_name + "_is_alive", is_alive);
 		return newTable;
 	}
 

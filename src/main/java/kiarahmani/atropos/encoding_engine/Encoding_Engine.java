@@ -70,14 +70,14 @@ public class Encoding_Engine {
 							Status status = local_z3_driver.generateDAI(this.program, 4, dai, c1, c2);
 							long end = System.currentTimeMillis();
 							printResults(status, end - begin);
-							// free up solver's memory for the next iteration
-							local_z3_driver = null;
-							z3logger.reset();
 							// if SAT, add the potential DAI to the graph
 							if (status == Status.SATISFIABLE) {
 								dai_graph.addDAI(dai);
 								break outer_conflicts;
 							}
+							// free up solver's memory for the next iteration
+							local_z3_driver = null;
+							z3logger.reset();
 
 						}
 				}

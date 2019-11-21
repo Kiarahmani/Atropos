@@ -3,7 +3,10 @@ package kiarahmani.atropos.DML.where_clause;
 import java.util.ArrayList;
 
 import kiarahmani.atropos.DDL.FieldName;
+import kiarahmani.atropos.DML.expression.BinOp;
 import kiarahmani.atropos.DML.expression.Expression;
+import kiarahmani.atropos.DML.expression.constants.E_Const_Bool;
+import kiarahmani.atropos.program.Table;
 
 public class WHC extends Expression {
 	public enum WHC_Type {
@@ -13,10 +16,12 @@ public class WHC extends Expression {
 	private WHC_Type whc_type;
 	private ArrayList<WHC_Constraint> whc_constraints;
 
-	public WHC(WHC_Constraint... whccs) {
+	public WHC(FieldName is_alive, WHC_Constraint... whccs) {
 		whc_constraints = new ArrayList<>();
 		for (WHC_Constraint whcc : whccs)
 			whc_constraints.add(whcc);
+		// all where cluases included a special constraint on is_alive
+		whc_constraints.add(new WHC_Constraint(whccs[0].getTableName(), is_alive, BinOp.EQ, new E_Const_Bool(true)));
 	}
 
 	public ArrayList<WHC_Constraint> getConstraints() {
