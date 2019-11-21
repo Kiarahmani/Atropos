@@ -8,6 +8,7 @@ import kiarahmani.atropos.DML.expression.BinOp;
 import kiarahmani.atropos.DML.expression.E_BinUp;
 import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.expression.constants.E_Const_Num;
+import kiarahmani.atropos.DML.expression.constants.E_Const_Text;
 import kiarahmani.atropos.DML.query.Select_Query;
 import kiarahmani.atropos.DML.query.Update_Query;
 import kiarahmani.atropos.DML.where_clause.WHC;
@@ -90,6 +91,12 @@ public class InputProgramGenerator {
 					new E_BinUp(BinOp.PLUS, pu.getProjExpr("increments", 0, "value", 1), pu.getArg("inc_amnt")));
 			pu.addQueryStatement("increments", increments_DEC_U1);
 
+			WHC increments_DEC_U1_WHC1 = new WHC(pu.getIsAliveFieldName("accs"),
+					new WHC_Constraint(pu.getTableName("accs"), pu.getFieldName("key"), BinOp.EQ, pu.getArg("inc_id")));
+			Update_Query increments_DEC_U11 = pu.addUpdateQuery("increments", "accs", true, increments_DEC_U1_WHC1);
+			increments_DEC_U11.addUpdateExp(pu.getFieldName("name"), new E_Const_Text("kir"));
+			pu.addQueryStatement("increments", increments_DEC_U11);
+
 		}
 
 		return pu.getProgram();
@@ -163,8 +170,8 @@ public class InputProgramGenerator {
 			pu.addQueryStatement("Amalgamate", GetAccount1);
 
 			// retrieve savings balance of cust0
-			WHC GetSavings0_WHC = new WHC(pu.getIsAliveFieldName("savings"), new WHC_Constraint(pu.getTableName("savings"),
-					pu.getFieldName("s_custid"), BinOp.EQ, pu.getArg("am_custId0")));
+			WHC GetSavings0_WHC = new WHC(pu.getIsAliveFieldName("savings"), new WHC_Constraint(
+					pu.getTableName("savings"), pu.getFieldName("s_custid"), BinOp.EQ, pu.getArg("am_custId0")));
 			Select_Query GetSavings0 = pu.addSelectQuery("Amalgamate", "savings", true, GetSavings0_WHC, "s_bal");
 			pu.addQueryStatement("Amalgamate", GetSavings0);
 
