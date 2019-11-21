@@ -12,6 +12,7 @@ import kiarahmani.atropos.DML.expression.BinOp;
 import kiarahmani.atropos.DML.expression.E_Arg;
 import kiarahmani.atropos.DML.expression.E_BinUp;
 import kiarahmani.atropos.DML.expression.E_Proj;
+import kiarahmani.atropos.DML.expression.E_Size;
 import kiarahmani.atropos.DML.expression.E_UnOp;
 import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.expression.E_UnOp.UnOp;
@@ -93,6 +94,10 @@ public class Program_Utils {
 
 	public E_Proj getProjExpr(String txn, int id, String fn, int order) {
 		return new E_Proj(getVariable(txn, id), getFieldName(fn), new E_Const_Num(order));
+	}
+
+	public E_Size getSizeExpr(String txn, int id) {
+		return new E_Size(getVariable(txn, id));
 	}
 
 	public FieldName getFieldName(String fn) {
