@@ -17,6 +17,7 @@ import com.microsoft.z3.Context;
 import com.microsoft.z3.EnumSort;
 import com.microsoft.z3.Expr;
 import com.microsoft.z3.FuncDecl;
+import com.microsoft.z3.IntExpr;
 import com.microsoft.z3.Model;
 import com.microsoft.z3.Params;
 import com.microsoft.z3.Quantifier;
@@ -841,6 +842,11 @@ public class Z3Driver {
 					String timeFuncName = txn.getName() + "_var_" + current_var.getName() + "_gen_time";
 					objs.addFunc(timeFuncName,
 							ctx.mkFuncDecl(timeFuncName, new Sort[] { objs.getSort("Txn") }, objs.getEnum("Po")));
+					// def size func
+					String sizeFuncName = txn.getName() + "_var_" + current_var.getName() + "_size";
+					objs.addFunc(sizeFuncName,
+							ctx.mkFuncDecl(sizeFuncName, new Sort[] { objs.getSort("Txn") }, objs.getEnum("Ro")));
+
 					// properties of time func
 					Expr generated_time = ctx.mkApp(objs.getfuncs(timeFuncName), txn1);
 					// Expr time_of_query = po1; // ctx.mkApp(objs.getfuncs("qry_time"), txn1, po1);
@@ -1099,9 +1105,10 @@ public class Z3Driver {
 			return ctx.mkApp(objs.getfuncs("proj_" + p_exp.v.getTableName() + "_" + p_exp.f.getName()), rec_expr,
 					transaction, var_time);
 		case "E_Size":
-			// TODO: E_Size encoding must be implemented
-			assert (false) : "TODO: E_Size encoding not implemented yet...";
-			break;
+			E_Size s_exp = (E_Size) input_expr;
+			Expr size = ctx.mkApp(objs.getfuncs(txnName + "_var_" + s_exp.v.getName() + "_size"), transaction);
+			Expr size_in_int = ctx.mkApp(objs.getfuncs("ro_to_int"), size);
+			return ctx.mkInt2BV(Constants._MAX_FIELD_INT, (IntExpr) size_in_int); 
 
 		case "E_BinUp":
 			E_BinUp bu_exp = (E_BinUp) input_expr;
