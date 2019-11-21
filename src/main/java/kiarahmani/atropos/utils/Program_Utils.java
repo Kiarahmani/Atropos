@@ -17,6 +17,7 @@ import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.expression.E_UnOp.UnOp;
 import kiarahmani.atropos.DML.expression.constants.E_Const_Bool;
 import kiarahmani.atropos.DML.expression.constants.E_Const_Num;
+import kiarahmani.atropos.DML.query.Delete_Query;
 import kiarahmani.atropos.DML.query.Query;
 import kiarahmani.atropos.DML.query.Select_Query;
 import kiarahmani.atropos.DML.query.Update_Query;
@@ -97,7 +98,7 @@ public class Program_Utils {
 	}
 
 	public FieldName getIsAliveFieldName(String table_name) {
-		assert (this.fieldNameMap.get(table_name + "_is_alive")!=null) : "something went wrong!";
+		assert (this.fieldNameMap.get(table_name + "_is_alive") != null) : "something went wrong!";
 		return this.fieldNameMap.get(table_name + "_is_alive");
 	}
 
@@ -193,6 +194,16 @@ public class Program_Utils {
 		int update_counts = (transactionToUpdateCount.containsKey(txn)) ? transactionToUpdateCount.get(txn) : 0;
 		transactionToUpdateCount.put(txn, update_counts + 1);
 		Update_Query result = new Update_Query(po, update_counts, isAtomic, tableNameMap.get(tableName), whc);
+		return result;
+	}
+
+	public Delete_Query addDeleteQuery(String txn, String tableName, boolean isAtomic, WHC whc) {
+		int po = transactionToPoCnt.containsKey(txn) ? transactionToPoCnt.get(txn) : 0;
+		transactionToPoCnt.put(txn, po + 1);
+		int update_counts = (transactionToUpdateCount.containsKey(txn)) ? transactionToUpdateCount.get(txn) : 0;
+		transactionToUpdateCount.put(txn, update_counts + 1);
+		Delete_Query result = new Delete_Query(po, update_counts, isAtomic, tableNameMap.get(tableName),
+				this.getIsAliveFieldName(tableName), whc);
 		return result;
 	}
 
