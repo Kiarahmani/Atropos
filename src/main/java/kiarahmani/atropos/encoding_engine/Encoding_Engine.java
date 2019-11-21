@@ -14,6 +14,7 @@ import org.apache.logging.log4j.Logger;
 import com.microsoft.z3.Status;
 
 import kiarahmani.atropos.Atropos;
+import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DML.query.Query;
 import kiarahmani.atropos.dependency.Conflict;
 import kiarahmani.atropos.dependency.Conflict_Graph;
@@ -57,7 +58,11 @@ public class Encoding_Engine {
 				for (int j = i + 1; j < all_queries.size(); j++) {
 					Query q1 = all_queries.get(i);
 					Query q2 = all_queries.get(j);
-					DAI dai = new DAI(txn, q1, q1.getAccessedFieldNames(), q2, q2.getAccessedFieldNames());
+					ArrayList<FieldName> accessed_by_q1 = (q1.isWrite()) ? q1.getWrittenFieldNames()
+							: q1.getReadFieldNames();
+					ArrayList<FieldName> accessed_by_q2 = (q2.isWrite()) ? q2.getWrittenFieldNames()
+							: q2.getReadFieldNames();
+					DAI dai = new DAI(txn, q1, accessed_by_q1, q2, accessed_by_q2);
 					logger.debug("potential DAI: " + dai);
 					outer_conflicts: for (Conflict c1 : cg.getConfsFromQuery(q1))
 						inner_conflicts: for (Conflict c2 : cg.getConfsFromQuery(q2)) {
@@ -65,7 +70,7 @@ public class Encoding_Engine {
 							Z3Driver local_z3_driver = new Z3Driver();
 							// check if it is actualy a valid instance
 							System.out.println("Round# " + iter++ + "");
-							//printBaseAnomaly(iter, dai, c1, c2);
+							printBaseAnomaly(iter, dai, c1, c2);
 							long begin = System.currentTimeMillis();
 							Status status = local_z3_driver.generateDAI(this.program, 4, dai, c1, c2);
 							long end = System.currentTimeMillis();

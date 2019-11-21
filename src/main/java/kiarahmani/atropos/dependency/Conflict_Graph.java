@@ -117,11 +117,18 @@ public class Conflict_Graph {
 			tn = q1.getTableName();
 			logger.debug("both queries share the same table (" + tn.toString() + "): must consisder analysis");
 			if (q1.isWrite() || q2.isWrite()) {
+
+				ArrayList<FieldName> accessed_by_q1 = (q1.isWrite()) ? q1.getWrittenFieldNames()
+						: q1.getReadFieldNames();
+				ArrayList<FieldName> accessed_by_q2 = (q2.isWrite()) ? q2.getWrittenFieldNames()
+						: q2.getReadFieldNames();
+
 				logger.debug("at least one of the queries is an update: must consisder analysis");
-				logger.debug("accessed fields by q1: " + q1.getAccessedFieldNames());
-				logger.debug("accessed fields by q2: " + q2.getAccessedFieldNames());
-				fns = (ArrayList<FieldName>) Util.getIntersectOfCollections(q1.getAccessedFieldNames(),
-						q2.getAccessedFieldNames());
+				logger.debug(
+						"accessed (written or read, depending on the type of query) fields by q1: " + accessed_by_q1);
+				logger.debug(
+						"accessed (written or read, depending on the type of query) fields by q2: " + accessed_by_q2);
+				fns = (ArrayList<FieldName>) Util.getIntersectOfCollections(accessed_by_q1, accessed_by_q2);
 				if (fns.size() > 0) {
 					logger.debug("queries access some common fields: " + fns);
 					c = new Conflict(txn1, q1, txn2, q2, tn, fns);
