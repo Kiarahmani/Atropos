@@ -48,7 +48,7 @@ public class Update_Query extends Query {
 			updateTuplesList += delim + tuple.x + "=" + tuple.y;
 			delim = ",";
 		}
-		return isAtomicString + "UPDATE" + this.id + " " + String.format("%-11s", this.tableName) + " SET  "
+		return isAtomicString + "UPDATE" + this.id + " " + String.format("%-11s", this.tableName) + " SET    "
 				+ updateTuplesList + " WHERE " + this.where_clause;
 	}
 

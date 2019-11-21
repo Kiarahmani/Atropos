@@ -40,8 +40,8 @@ public class Select_Query extends Query {
 			delim = ",";
 		}fieldNamesString+=")";
 		String isAtomicString = isAtomic ? "(" + po + ") ATOMIC " : "(" + po + ")        ";
-		return isAtomicString + "SELECT" + this.id + " (" + String.format("%-10s", fieldNamesString) + " FROM "
-				+ String.format("%-10s", this.tableName) + " AS " + this.variable + " WHERE " + this.where_clause;
+		return isAtomicString + "SELECT" + this.id + " (" + String.format("%-10s", fieldNamesString) + " FROM   "
+				+ String.format("%-10s", this.tableName) + " AS " + this.variable + " WHERE  " + this.where_clause;
 	}
 
 	@Override

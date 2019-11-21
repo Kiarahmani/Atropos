@@ -10,6 +10,7 @@ import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.expression.constants.E_Const_Num;
 import kiarahmani.atropos.DML.expression.constants.E_Const_Text;
 import kiarahmani.atropos.DML.query.Delete_Query;
+import kiarahmani.atropos.DML.query.Insert_Query;
 import kiarahmani.atropos.DML.query.Select_Query;
 import kiarahmani.atropos.DML.query.Update_Query;
 import kiarahmani.atropos.DML.where_clause.WHC;
@@ -84,21 +85,26 @@ public class InputProgramGenerator {
 			Select_Query increments_DEC_S1 = pu.addSelectQuery("increments", "accs", true, increments_DEC_S1_WHC,
 					"value");
 			pu.addQueryStatement("increments", increments_DEC_S1);
-
+			// update
 			WHC increments_DEC_U1_WHC = new WHC(pu.getIsAliveFieldName("accs"),
 					new WHC_Constraint(pu.getTableName("accs"), pu.getFieldName("key"), BinOp.EQ, pu.getArg("inc_id")));
 			Update_Query increments_DEC_U1 = pu.addUpdateQuery("increments", "accs", true, increments_DEC_U1_WHC);
 			increments_DEC_U1.addUpdateExp(pu.getFieldName("value"),
 					new E_BinUp(BinOp.PLUS, pu.getProjExpr("increments", 0, "value", 1), pu.getArg("inc_amnt")));
 			pu.addQueryStatement("increments", increments_DEC_U1);
-
+			// delete
 			WHC increments_DEC_U1_WHC1 = new WHC(pu.getIsAliveFieldName("accs"),
 					new WHC_Constraint(pu.getTableName("accs"), pu.getFieldName("key"), BinOp.EQ,
 							new E_BinUp(BinOp.PLUS, pu.getArg("inc_id"), new E_Const_Num(0))));
 			Delete_Query increments_DEC_U11 = pu.addDeleteQuery("increments", "accs", true, increments_DEC_U1_WHC1);
-			// increments_DEC_U11.addUpdateExp(pu.getFieldName("name"), new
-			// E_Const_Text("some_name"));
 			pu.addQueryStatement("increments", increments_DEC_U11);
+			// insert
+			WHC_Constraint increments_DEC_U1_WHC2 = new WHC_Constraint(pu.getTableName("accs"), pu.getFieldName("key"),
+					BinOp.EQ, pu.getArg("inc_id"));
+			Insert_Query increments_DEC_U12 = pu.addInsertQuery("increments", "accs", true, increments_DEC_U1_WHC2);
+			increments_DEC_U12.addInsertExp(pu.getFieldName("value"), pu.getArg("inc_amnt"));
+			increments_DEC_U12.addInsertExp(pu.getFieldName("name"), new E_Const_Text("kiri"));
+			pu.addQueryStatement("increments", increments_DEC_U12);
 
 		}
 

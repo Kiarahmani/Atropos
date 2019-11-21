@@ -18,10 +18,12 @@ import kiarahmani.atropos.DML.expression.E_UnOp.UnOp;
 import kiarahmani.atropos.DML.expression.constants.E_Const_Bool;
 import kiarahmani.atropos.DML.expression.constants.E_Const_Num;
 import kiarahmani.atropos.DML.query.Delete_Query;
+import kiarahmani.atropos.DML.query.Insert_Query;
 import kiarahmani.atropos.DML.query.Query;
 import kiarahmani.atropos.DML.query.Select_Query;
 import kiarahmani.atropos.DML.query.Update_Query;
 import kiarahmani.atropos.DML.where_clause.WHC;
+import kiarahmani.atropos.DML.where_clause.WHC_Constraint;
 import kiarahmani.atropos.program.Program;
 import kiarahmani.atropos.program.Statement;
 import kiarahmani.atropos.program.Table;
@@ -194,6 +196,17 @@ public class Program_Utils {
 		int update_counts = (transactionToUpdateCount.containsKey(txn)) ? transactionToUpdateCount.get(txn) : 0;
 		transactionToUpdateCount.put(txn, update_counts + 1);
 		Update_Query result = new Update_Query(po, update_counts, isAtomic, tableNameMap.get(tableName), whc);
+		return result;
+	}
+
+	public Insert_Query addInsertQuery(String txn, String tableName, boolean isAtomic, WHC_Constraint... pks) {
+		int po = transactionToPoCnt.containsKey(txn) ? transactionToPoCnt.get(txn) : 0;
+		transactionToPoCnt.put(txn, po + 1);
+		int update_counts = (transactionToUpdateCount.containsKey(txn)) ? transactionToUpdateCount.get(txn) : 0;
+		transactionToUpdateCount.put(txn, update_counts + 1);
+		Insert_Query result = new Insert_Query(po, update_counts, tableMap.get(tableName),
+				this.getIsAliveFieldName(tableName));
+		result.addPKExp(pks);
 		return result;
 	}
 

@@ -24,8 +24,23 @@ public class WHC extends Expression {
 		whc_constraints.add(new WHC_Constraint(whccs[0].getTableName(), is_alive, BinOp.EQ, new E_Const_Bool(true)));
 	}
 
+	public WHC(WHC_Constraint... whccs) {
+		whc_constraints = new ArrayList<>();
+		for (WHC_Constraint whcc : whccs)
+			whc_constraints.add(whcc);
+		// all where cluases included a special constraint on is_alive
+	}
+
 	public ArrayList<WHC_Constraint> getConstraints() {
 		return this.whc_constraints;
+	}
+
+	public WHC_Constraint getConstraintByFieldName(FieldName fn) {
+		for (WHC_Constraint whcc : this.whc_constraints)
+			if (whcc.getFieldName() == fn)
+				return whcc;
+		assert (false) : "unexepected field name";
+		return null;
 	}
 
 	public ArrayList<FieldName> getAccessedFieldNames() {
