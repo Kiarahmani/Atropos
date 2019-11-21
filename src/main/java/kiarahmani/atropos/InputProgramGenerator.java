@@ -81,29 +81,29 @@ public class InputProgramGenerator {
 		if (txns.contains("insert_increments")) {
 			pu.addTrnasaction("increments", "inc_id:int", "inc_amnt:int");
 			WHC increments_DEC_S1_WHC = new WHC(pu.getIsAliveFieldName("accs"),
-					new WHC_Constraint(pu.getTableName("accs"), pu.getFieldName("key"), BinOp.EQ, pu.getArg("inc_id")));
+					new WHC_Constraint(pu.getTableName("accs"), pu.getFieldName("key"), BinOp.EQ,new E_Const_Num(68)));
 			Select_Query increments_DEC_S1 = pu.addSelectQuery("increments", "accs", true, increments_DEC_S1_WHC,
 					"value");
 			pu.addQueryStatement("increments", increments_DEC_S1);
 			// update
-			WHC increments_DEC_U1_WHC = new WHC(pu.getIsAliveFieldName("accs"),
-					new WHC_Constraint(pu.getTableName("accs"), pu.getFieldName("key"), BinOp.EQ, pu.getArg("inc_id")));
-			Update_Query increments_DEC_U1 = pu.addUpdateQuery("increments", "accs", true, increments_DEC_U1_WHC);
-			increments_DEC_U1.addUpdateExp(pu.getFieldName("value"),
-					new E_BinUp(BinOp.PLUS, pu.getProjExpr("increments", 0, "value", 1), pu.getArg("inc_amnt")));
-			pu.addQueryStatement("increments", increments_DEC_U1);
+			//WHC increments_DEC_U1_WHC = new WHC(pu.getIsAliveFieldName("accs"),
+			//		new WHC_Constraint(pu.getTableName("accs"), pu.getFieldName("key"), BinOp.EQ, pu.getArg("inc_id")));
+			//Update_Query increments_DEC_U1 = pu.addUpdateQuery("increments", "accs", true, increments_DEC_U1_WHC);
+			//increments_DEC_U1.addUpdateExp(pu.getFieldName("value"),
+			//		new E_BinUp(BinOp.PLUS, pu.getProjExpr("increments", 0, "value", 1), pu.getArg("inc_amnt")));
+			//pu.addQueryStatement("increments", increments_DEC_U1);
 			// delete
 			WHC increments_DEC_U1_WHC1 = new WHC(pu.getIsAliveFieldName("accs"),
 					new WHC_Constraint(pu.getTableName("accs"), pu.getFieldName("key"), BinOp.EQ,
-							new E_BinUp(BinOp.PLUS, pu.getArg("inc_id"), new E_Const_Num(0))));
+							new E_BinUp(BinOp.PLUS,new E_Const_Num(67), new E_Const_Num(1))));
 			Delete_Query increments_DEC_U11 = pu.addDeleteQuery("increments", "accs", true, increments_DEC_U1_WHC1);
 			pu.addQueryStatement("increments", increments_DEC_U11);
 			// insert
 			WHC_Constraint increments_DEC_U1_WHC2 = new WHC_Constraint(pu.getTableName("accs"), pu.getFieldName("key"),
-					BinOp.EQ, pu.getArg("inc_id"));
+					BinOp.EQ,new E_Const_Num(69));
 			Insert_Query increments_DEC_U12 = pu.addInsertQuery("increments", "accs", true, increments_DEC_U1_WHC2);
 			increments_DEC_U12.addInsertExp(pu.getFieldName("value"), pu.getArg("inc_amnt"));
-			increments_DEC_U12.addInsertExp(pu.getFieldName("name"), new E_Const_Text("kiri"));
+			increments_DEC_U12.addInsertExp(pu.getFieldName("name"), new E_Const_Text("kia"));
 			pu.addQueryStatement("increments", increments_DEC_U12);
 
 		}

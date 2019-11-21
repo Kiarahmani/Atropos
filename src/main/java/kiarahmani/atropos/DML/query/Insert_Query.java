@@ -60,13 +60,13 @@ public class Insert_Query extends Query {
 
 		for (FieldName fn : this.table.getFieldNames()) {
 			if (fn.isPK())
-				updateTuplesList += delim + this.where_clause.getConstraintByFieldName(fn);
+				updateTuplesList += delim + this.where_clause.getConstraintByFieldName(fn).getExpression();
 			else
-				updateTuplesList += delim + fn.getName() + "=" + this.getUpdateExpressionByFieldName(fn);
+				updateTuplesList += delim + /*fn.getName() + "=" + */this.getUpdateExpressionByFieldName(fn);
 			delim = ",";
 		}
-		return isAtomicString + "INSERT" + this.id + " INTO " + String.format("%-6s", this.tableName) + " VALUES "
-				+ updateTuplesList;
+		return isAtomicString + "INSERT" + this.id + " INTO " + String.format("%-6s", this.tableName) + " VALUES ("
+				+ updateTuplesList +")";
 	}
 
 	@Override
