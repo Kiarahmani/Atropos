@@ -1,11 +1,11 @@
 ====================================================================================================
 TODO:
   
-  - Once optimizations are over, perform another round of tests to make sure the
-    encoding is correct!
-  - *add support for re-encoding already found anomalies 
-  - support for ATOMIC ops and range operations 
+  
   - support for insert and delete
+  - support for determining size of variables
+  - support for aggregating queries
+  - support for ATOMIC ops and range operations 
   - support for for loops
  
 

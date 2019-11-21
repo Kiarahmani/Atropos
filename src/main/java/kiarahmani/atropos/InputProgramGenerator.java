@@ -24,33 +24,75 @@ public class InputProgramGenerator {
 	 * 
 	 * 
 	 */
-	public Program generateUnitTestProgram(String... txns) {
+	public Program generateUnitTestProgram(String... args) {
+
+		ArrayList<String> txns = new ArrayList<>();
+		for (String txn : args)
+			txns.add(txn);
+
 		Program_Utils pu = new Program_Utils("unit test");
-		pu.addTrnasaction("txn", "arg_id:int", "arg_amnt:int");
+
 		pu.addTable("table", new FieldName("key", true, true, F_Type.NUM),
 				new FieldName("name", false, false, F_Type.TEXT), new FieldName("value", false, false, F_Type.NUM));
 
-		// dec transaction
-		WHC DEC_S1_WHC = new WHC(
-				new WHC_Constraint(pu.getTableName("table"), pu.getFieldName("key"), BinOp.EQ, pu.getArg("arg_id")));
-		Select_Query DEC_S1 = pu.addSelectQuery("txn", "table", true, DEC_S1_WHC, "name", "value");
-		pu.addQueryStatement("txn", DEC_S1);
+		if (txns.contains("txn")) {
+			// dec transaction
+			pu.addTrnasaction("txn", "arg_id:int", "arg_amnt:int");
+			WHC DEC_S1_WHC = new WHC(new WHC_Constraint(pu.getTableName("table"), pu.getFieldName("key"), BinOp.EQ,
+					pu.getArg("arg_id")));
+			Select_Query DEC_S1 = pu.addSelectQuery("txn", "table", true, DEC_S1_WHC, "name", "value");
+			pu.addQueryStatement("txn", DEC_S1);
 
-		Expression DEC_IF1_C = new E_BinUp(BinOp.GT, pu.getProjExpr("txn", 0, "value", 1), pu.getArg("arg_amnt"));
-		pu.addIfStatement("txn", DEC_IF1_C);
+			Expression DEC_IF1_C = new E_BinUp(BinOp.GT, pu.getProjExpr("txn", 0, "value", 1), pu.getArg("arg_amnt"));
+			pu.addIfStatement("txn", DEC_IF1_C);
 
-		WHC DEC_U1_WHC = new WHC(new WHC_Constraint(pu.getTableName("table"), pu.getFieldName("key"), BinOp.EQ,
-				pu.getArg("arg_id")));
-		Update_Query DEC_U1 = pu.addUpdateQuery("txn", "table", true, DEC_U1_WHC);
-		DEC_U1.addUpdateExp(pu.getFieldName("value"),
-				new E_BinUp(BinOp.MINUS, pu.getProjExpr("txn", 0, "value", 1), pu.getArg("arg_amnt")));
-		pu.addQueryStatementInIf("txn", 0, DEC_U1);
+			WHC DEC_U1_WHC = new WHC(new WHC_Constraint(pu.getTableName("table"), pu.getFieldName("key"), BinOp.EQ,
+					pu.getArg("arg_id")));
+			Update_Query DEC_U1 = pu.addUpdateQuery("txn", "table", true, DEC_U1_WHC);
+			DEC_U1.addUpdateExp(pu.getFieldName("value"),
+					new E_BinUp(BinOp.MINUS, pu.getProjExpr("txn", 0, "value", 1), pu.getArg("arg_amnt")));
+			pu.addQueryStatementInIf("txn", 0, DEC_U1);
 
-		Update_Query DEC_U2 = pu.addUpdateQuery("txn", "table", true, DEC_U1_WHC);
-		DEC_U2.addUpdateExp(pu.getFieldName("value"),
-				new E_BinUp(BinOp.MINUS, pu.getProjExpr("txn", 0, "value", 1), new E_Const_Num(10)));
-		pu.addQueryStatementInElse("txn", 0, DEC_U2);
+			Update_Query DEC_U2 = pu.addUpdateQuery("txn", "table", true, DEC_U1_WHC);
+			DEC_U2.addUpdateExp(pu.getFieldName("value"),
+					new E_BinUp(BinOp.MINUS, pu.getProjExpr("txn", 0, "value", 1), new E_Const_Num(10)));
+			pu.addQueryStatementInElse("txn", 0, DEC_U2);
+		}
 
+		if (txns.contains("increments")) {
+			pu.addTrnasaction("increments", "inc_id:int", "inc_amnt:int");
+			WHC increments_DEC_S1_WHC = new WHC(new WHC_Constraint(pu.getTableName("table"), pu.getFieldName("key"),
+					BinOp.EQ, pu.getArg("inc_id")));
+			Select_Query increments_DEC_S1 = pu.addSelectQuery("increments", "table", true, increments_DEC_S1_WHC,
+					"name", "value");
+			pu.addQueryStatement("increments", increments_DEC_S1);
+
+			WHC increments_DEC_U1_WHC = new WHC(new WHC_Constraint(pu.getTableName("table"), pu.getFieldName("key"),
+					BinOp.EQ, pu.getArg("inc_id")));
+			Update_Query increments_DEC_U1 = pu.addUpdateQuery("increments", "table", true, increments_DEC_U1_WHC);
+			increments_DEC_U1.addUpdateExp(pu.getFieldName("value"),
+					new E_BinUp(BinOp.PLUS, pu.getProjExpr("increments", 0, "value", 1), pu.getArg("inc_amnt")));
+			pu.addQueryStatement("increments", increments_DEC_U1);
+		}
+		
+		if (txns.contains("insert_increments")) {
+		/*	pu.addTrnasaction("increments", "inc_id:int", "inc_amnt:int");
+			WHC increments_DEC_S1_WHC = new WHC(new WHC_Constraint(pu.getTableName("table"), pu.getFieldName("key"),
+					BinOp.EQ, pu.getArg("inc_id")));
+			Select_Query increments_DEC_S1 = pu.addSelectQuery("increments", "table", true, increments_DEC_S1_WHC,
+					"name", "value");
+			pu.addQueryStatement("increments", increments_DEC_S1);
+
+			WHC increments_DEC_U1_WHC = new WHC(new WHC_Constraint(pu.getTableName("table"), pu.getFieldName("key"),
+					BinOp.EQ, pu.getArg("inc_id")));
+			Update_Query increments_DEC_U1 = pu.addUpdateQuery("increments", "table", true, increments_DEC_U1_WHC);
+			increments_DEC_U1.addUpdateExp(pu.getFieldName("value"),
+					new E_BinUp(BinOp.PLUS, pu.getProjExpr("increments", 0, "value", 1), pu.getArg("inc_amnt")));
+			pu.addQueryStatement("increments", increments_DEC_U1);
+			*/
+		}
+		
+		
 		return pu.getProgram();
 	}
 
