@@ -97,6 +97,7 @@ public class Program_Utils {
 	}
 
 	public FieldName getIsAliveFieldName(String table_name) {
+		assert (this.fieldNameMap.get(table_name + "_is_alive")!=null) : "something went wrong!";
 		return this.fieldNameMap.get(table_name + "_is_alive");
 	}
 
