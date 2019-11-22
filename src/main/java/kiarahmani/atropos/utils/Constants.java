@@ -17,12 +17,14 @@ public class Constants {
 	public static int _MAX_ARG_INT;
 	public static int _MAX_ARG_STRING;
 	public static int _MAX_EXECUTION_PO;
+	public static int _MAX_VARIABLE_RO;
 
 	public Constants() throws IOException {
 		Properties prop = new Properties();
 		InputStream input = new FileInputStream("src/main/java/kiarahmani/atropos/config.properties");
 		prop.load(input);
 		Constants._MAX_EXECUTION_PO = Integer.parseInt(prop.getProperty("_MAX_EXECUTION_PO"));
+		Constants._MAX_VARIABLE_RO = Integer.parseInt(prop.getProperty("_MAX_VARIABLE_RO"));
 		Constants._MAX_ARG_STRING = Integer.parseInt(prop.getProperty("_MAX_ARG_STRING"));
 		Constants._MAX_ARG_INT = Integer.parseInt(prop.getProperty("_MAX_ARG_INT"));
 		Constants._MAX_FIELD_INT = Integer.parseInt(prop.getProperty("_MAX_FIELD_INT"));

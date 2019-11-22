@@ -70,7 +70,7 @@ public class Encoding_Engine {
 							Z3Driver local_z3_driver = new Z3Driver();
 							// check if it is actualy a valid instance
 							System.out.println("Round# " + iter++ + "");
-							printBaseAnomaly(iter, dai, c1, c2);
+							//printBaseAnomaly(iter, dai, c1, c2);
 							long begin = System.currentTimeMillis();
 							Status status = local_z3_driver.generateDAI(this.program, 4, dai, c1, c2);
 							long end = System.currentTimeMillis();

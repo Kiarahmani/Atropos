@@ -69,7 +69,7 @@ public class Z3Driver {
 		addInitialHeader();
 		addInitialStaticSorts();
 		addNumericEnumSorts("Po", Constants._MAX_EXECUTION_PO);
-		addNumericEnumSorts("Ro", Constants._MAX_ARG_INT);
+		addNumericEnumSorts("Ro", Constants._MAX_VARIABLE_RO);
 		addNumericEnumSorts("Part", Constants._MAX_PARTITION_NUMBER);
 		addEnumSorts("RecType", program.getAllTableNames());
 		addEnumSorts("TxnType", program.getAllTxnNames());
@@ -886,9 +886,10 @@ public class Z3Driver {
 					BoolExpr exists_clause = ctx.mkExists(new Expr[] { order1 }, body2, 1, null, null, null, null);
 					Quantifier where_assertion2 = ctx.mkForall(new Expr[] { txn1, rec1 },
 							ctx.mkImplies(where_body2, exists_clause), 1, null, null, null, null);
-					addAssertion(
-							"if an *alive* record satisfies the where clause, it must be in " + current_var.getName(),
-							where_assertion2);
+					// addAssertion(
+					// "if an *alive* record satisfies the where clause, it must be in " +
+					// current_var.getName(),
+					// where_assertion2);
 				}
 			}
 		}
@@ -1108,7 +1109,7 @@ public class Z3Driver {
 			E_Size s_exp = (E_Size) input_expr;
 			Expr size = ctx.mkApp(objs.getfuncs(txnName + "_var_" + s_exp.v.getName() + "_size"), transaction);
 			Expr size_in_int = ctx.mkApp(objs.getfuncs("ro_to_int"), size);
-			return ctx.mkInt2BV(Constants._MAX_FIELD_INT, (IntExpr) size_in_int); 
+			return ctx.mkInt2BV(Constants._MAX_FIELD_INT, (IntExpr) size_in_int);
 
 		case "E_BinUp":
 			E_BinUp bu_exp = (E_BinUp) input_expr;
