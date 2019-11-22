@@ -216,6 +216,9 @@ public class Program_Utils {
 		Insert_Query result = new Insert_Query(po, update_counts, tableMap.get(tableName),
 				this.getIsAliveFieldName(tableName));
 		result.addPKExp(pks);
+
+		for (WHC_Constraint pk : pks)
+			result.addInsertExp(pk.getFieldName(), pk.getExpression());
 		return result;
 	}
 

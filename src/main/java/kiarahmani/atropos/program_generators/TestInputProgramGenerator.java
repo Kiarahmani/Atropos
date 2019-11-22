@@ -1,0 +1,95 @@
+package kiarahmani.atropos.program_generators;
+
+import java.util.ArrayList;
+
+import kiarahmani.atropos.DDL.F_Type;
+import kiarahmani.atropos.DDL.FieldName;
+import kiarahmani.atropos.DML.expression.BinOp;
+import kiarahmani.atropos.DML.expression.E_BinUp;
+import kiarahmani.atropos.DML.expression.E_UUID;
+import kiarahmani.atropos.DML.expression.Expression;
+import kiarahmani.atropos.DML.expression.constants.E_Const_Num;
+import kiarahmani.atropos.DML.query.Delete_Query;
+import kiarahmani.atropos.DML.query.Insert_Query;
+import kiarahmani.atropos.DML.query.Select_Query;
+import kiarahmani.atropos.DML.query.Update_Query;
+import kiarahmani.atropos.DML.where_clause.WHC;
+import kiarahmani.atropos.DML.where_clause.WHC_Constraint;
+import kiarahmani.atropos.program.Program;
+import kiarahmani.atropos.utils.Program_Utils;
+
+public class TestInputProgramGenerator {
+
+	/*
+	 * 
+	 * 
+	 * UNIT TESTING APPLICATION GENERATOR
+	 * 
+	 * 
+	 */
+	public Program generateUnitTestProgram(String... args) {
+
+		ArrayList<String> txns = new ArrayList<>();
+		for (String txn : args)
+			txns.add(txn);
+
+		Program_Utils pu = new Program_Utils("unit test");
+		String table_name = "accs";
+		pu.addTable(table_name, new FieldName("key", true, true, F_Type.NUM),
+				new FieldName("value", false, false, F_Type.NUM));
+
+		/*
+		 * 
+		 * 
+		 * 
+		 * 
+		 */
+		if (txns.contains("read")) {
+			String txn_name = "read";
+			pu.addTrnasaction(txn_name, "read_id:int");
+			WHC read_condition = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(
+					pu.getTableName(table_name), pu.getFieldName("key"), BinOp.EQ, new E_Const_Num(1)));
+			Select_Query read_query = pu.addSelectQuery(txn_name, table_name, true, read_condition, "value");
+			pu.addQueryStatement(txn_name, read_query);
+		}
+		/*
+		 * 
+		 * 
+		 * 
+		 * 
+		 */
+		if (txns.contains("inc")) {
+			String txn_name = "inc";
+			pu.addTrnasaction(txn_name, "inc_id:int", "inc_amnt:int");
+			WHC increments_DEC_S1_WHC = new WHC(pu.getIsAliveFieldName("accs"),
+					new WHC_Constraint(pu.getTableName("accs"), pu.getFieldName("key"), BinOp.EQ,new E_Const_Num(1)));
+			Select_Query increments_DEC_S1 = pu.addSelectQuery(txn_name, "accs", true, increments_DEC_S1_WHC, "value");
+			pu.addQueryStatement(txn_name, increments_DEC_S1);
+
+			// update
+			//WHC increments_DEC_U1_WHC = new WHC(pu.getIsAliveFieldName("accs"),
+			//		new WHC_Constraint(pu.getTableName("accs"), pu.getFieldName("key"), BinOp.EQ, pu.getArg("inc_id")));
+			//Update_Query increments_DEC_U1 = pu.addUpdateQuery(txn_name, "accs", true, increments_DEC_U1_WHC);
+			//increments_DEC_U1.addUpdateExp(pu.getFieldName("value"), new E_Const_Num(1));
+			// pu.addQueryStatement(txn_name, increments_DEC_U1);
+
+			// delete
+			//WHC increments_DEC_U1_WHC1 = new WHC(pu.getIsAliveFieldName("accs"),
+			//		new WHC_Constraint(pu.getTableName("accs"), pu.getFieldName("key"), BinOp.EQ, pu.getArg("inc_id")));
+			//Delete_Query increments_DEC_U11 = pu.addDeleteQuery(txn_name, "accs", true, increments_DEC_U1_WHC1);
+			// pu.addQueryStatement(txn_name, increments_DEC_U11);
+
+			// insert
+			WHC_Constraint increments_DEC_U1_WHC2 = new WHC_Constraint(pu.getTableName("accs"), pu.getFieldName("key"),
+					BinOp.EQ,new E_Const_Num(1));
+			Insert_Query increments_DEC_U12 = pu.addInsertQuery(txn_name, "accs", true, increments_DEC_U1_WHC2);
+			increments_DEC_U12.addInsertExp(pu.getFieldName("value"),
+			 pu.getArg("inc_amnt"));
+			pu.addQueryStatement(txn_name, increments_DEC_U12);
+
+		}
+
+		return pu.getProgram();
+	}
+
+}

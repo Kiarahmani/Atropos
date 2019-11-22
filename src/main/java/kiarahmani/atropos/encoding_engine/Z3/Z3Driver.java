@@ -736,7 +736,8 @@ public class Z3Driver {
 		BoolExpr more_constraints2 = (BoolExpr)ctx.mkApp(objs.getfuncs("qry_is_executed"), txn2,po2);
 		BoolExpr more_constraints = ctx.mkAnd(more_constraints1,more_constraints2);
 		BoolExpr rhs = (ctx.mkEq(uuid1, uuid2));
-		Quantifier result = ctx.mkForall(new Expr[] { txn1, txn2,po1,po2 }, ctx.mkImplies(more_constraints, ctx.mkImplies(rhs, pre_conditions)), 1, null, null,
+		Quantifier result = ctx.mkForall(new Expr[] { txn1, txn2, po1, po2 },
+				ctx.mkImplies(more_constraints, ctx.mkImplies(rhs, pre_conditions)), 1, null, null,
 				null, null);
 		addAssertion("uuids must be unique", result);
 	}
