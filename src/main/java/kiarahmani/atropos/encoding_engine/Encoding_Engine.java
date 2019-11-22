@@ -80,9 +80,10 @@ public class Encoding_Engine {
 								dai_graph.addDAI(dai);
 								break outer_conflicts;
 							}
+							break;
 							// free up solver's memory for the next iteration
-							local_z3_driver = null;
-							z3logger.reset();
+							//local_z3_driver = null;
+							//z3logger.reset();
 
 						}
 				}
