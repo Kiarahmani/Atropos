@@ -40,8 +40,8 @@ public class Delete_Query extends Query {
 	@Override
 	public String toString() {
 		assert (!update_expressions.isEmpty()) : "No update list specified";
-		String isAtomicString = isAtomic ? "(" + po + ") ATOMIC " : "(" + po + ")        ";
-		return isAtomicString + "DELETE" + this.id + " FROM " + String.format("%-6s", this.tableName) + " WHERE  "
+		String isAtomicString = isAtomic ? "(" + po + ") ATOMIC " : "(" + po + ") ";
+		return isAtomicString + "DELETE" + this.id + " FROM " + String.format("%-10s", this.tableName) + " WHERE "
 				+ this.where_clause;
 	}
 

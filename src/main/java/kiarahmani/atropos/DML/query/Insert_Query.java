@@ -54,7 +54,7 @@ public class Insert_Query extends Query {
 	@Override
 	public String toString() {
 		assert (!insert_expressions.isEmpty()) : "No update list specified";
-		String isAtomicString = isAtomic ? "(" + po + ") ATOMIC " : "(" + po + ")        ";
+		String isAtomicString = isAtomic ? "(" + po + ") ATOMIC " : "(" + po + ") ";
 		String updateTuplesList = "";
 		String delim = "";
 
@@ -65,7 +65,7 @@ public class Insert_Query extends Query {
 				updateTuplesList += delim + /*fn.getName() + "=" + */this.getUpdateExpressionByFieldName(fn);
 			delim = ",";
 		}
-		return isAtomicString + "INSERT" + this.id + " INTO " + String.format("%-6s", this.tableName) + " VALUES ("
+		return isAtomicString + "INSERT" + this.id + " INTO " + String.format("%-10s", this.tableName) + " VALUES ("
 				+ updateTuplesList +")";
 	}
 

@@ -93,6 +93,9 @@ public class Program_Utils {
 	}
 
 	public E_Proj getProjExpr(String txn, int id, String fn, int order) {
+		assert (getVariable(txn, id) != null);
+		assert (getFieldName(fn) != null);
+
 		return new E_Proj(getVariable(txn, id), getFieldName(fn), new E_Const_Num(order));
 	}
 
@@ -101,6 +104,7 @@ public class Program_Utils {
 	}
 
 	public FieldName getFieldName(String fn) {
+		assert (this.fieldNameMap.get(fn) != null) : "something unholy happened on (" + fn + ")";
 		return this.fieldNameMap.get(fn);
 	}
 

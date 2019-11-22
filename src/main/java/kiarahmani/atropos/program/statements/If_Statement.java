@@ -45,9 +45,9 @@ public class If_Statement extends Statement {
 
 	@Override
 	public void printStatemenet(String indent) {
-		System.out.println(indent + "IF" + this.id + " (" + this.condition.toString() + "){");
-		for (Statement stmt : if_statements)
-			stmt.printStatemenet(indent + "   ");
+		System.out.println(indent + "    IF" + this.id + " (" + this.condition.toString() + "){");
+		for (Statement stmt : if_statements) 
+			stmt.printStatemenet(indent + "       ");
 		System.out.println(indent + "}");
 		if (else_statements.size() > 0) {
 			System.out.println(indent + "ELSE {");
@@ -59,9 +59,9 @@ public class If_Statement extends Statement {
 
 	@Override
 	public void printStatemenet() {
-		System.out.println("IF" + this.id + " (" + this.condition.toString() + "){");
+		System.out.println("    IF" + this.id + " (" + this.condition.toString() + "){");
 		for (Statement stmt : if_statements)
-			stmt.printStatemenet("   ");
+			stmt.printStatemenet("       ");
 		System.out.println("}");
 		if (else_statements.size() > 0) {
 			System.out.println("ELSE {");
