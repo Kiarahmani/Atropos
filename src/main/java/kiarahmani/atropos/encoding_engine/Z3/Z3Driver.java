@@ -1111,6 +1111,9 @@ public class Z3Driver {
 			Expr size_in_int = ctx.mkApp(objs.getfuncs("ro_to_int"), size);
 			return ctx.mkInt2BV(Constants._MAX_FIELD_INT, (IntExpr) size_in_int);
 
+		case "E_UUID":
+			assert (false) :"TODO";
+			
 		case "E_BinUp":
 			E_BinUp bu_exp = (E_BinUp) input_expr;
 			switch (bu_exp.op) {

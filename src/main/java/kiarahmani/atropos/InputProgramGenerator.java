@@ -102,7 +102,7 @@ public class InputProgramGenerator {
 					new WHC_Constraint(pu.getTableName("accs"), pu.getFieldName("key"), BinOp.EQ,new E_Const_Num(1)));
 			Update_Query increments_DEC_U1 = pu.addUpdateQuery(txn_name, "accs", true, increments_DEC_U1_WHC);
 			increments_DEC_U1.addUpdateExp(pu.getFieldName("value"), new E_Const_Num(1));
-			pu.addQueryStatement(txn_name, increments_DEC_U1);
+			//pu.addQueryStatement(txn_name, increments_DEC_U1);
 
 			// delete
 			WHC increments_DEC_U1_WHC1 = new WHC(pu.getIsAliveFieldName("accs"),
@@ -119,7 +119,7 @@ public class InputProgramGenerator {
 			// pu.getArg("inc_amnt"));
 			// increments_DEC_U12.addInsertExp(pu.getFieldName("name"), new
 			// E_Const_Text("kia"));
-			// pu.addQueryStatement(txn_name, increments_DEC_U12);
+			pu.addQueryStatement(txn_name, increments_DEC_U12);
 
 		}
 
