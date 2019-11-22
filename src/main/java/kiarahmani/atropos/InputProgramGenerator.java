@@ -95,7 +95,7 @@ public class InputProgramGenerator {
 			WHC increments_DEC_S1_WHC = new WHC(pu.getIsAliveFieldName("accs"), new WHC_Constraint(
 					pu.getTableName("accs"), pu.getFieldName("key"), BinOp.EQ, new E_Const_Num(1)));
 			Select_Query increments_DEC_S1 = pu.addSelectQuery(txn_name, "accs", true, increments_DEC_S1_WHC, "value");
-			pu.addQueryStatement(txn_name, increments_DEC_S1);
+			//pu.addQueryStatement(txn_name, increments_DEC_S1);
 
 			// update
 			WHC increments_DEC_U1_WHC = new WHC(pu.getIsAliveFieldName("accs"),

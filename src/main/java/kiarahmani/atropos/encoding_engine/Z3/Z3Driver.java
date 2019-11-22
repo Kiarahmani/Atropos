@@ -154,7 +154,8 @@ public class Z3Driver {
 							Expression exp = q.getUpdateExpressionByFieldName(fn);
 							String funcname = "written_val_" + t.getTableName().getName() + "_" + fn.getName();
 							Expr written_val = ctx.mkApp(objs.getfuncs(funcname), rec1, txn1, po1);
-							Expr constrained_val = translateExpressionsToZ3Expr(txn.getName(), txn1, exp);
+							Expr current_po = ctx.mkApp(objs.getfuncs("po_from_int"), ctx.mkInt(q.getPo()));
+							Expr constrained_val = translateExpressionsToZ3Expr(txn.getName(), txn1, exp, current_po);
 							Quantifier result = ctx.mkForall(new Expr[] { txn1, po1, rec1 },
 									ctx.mkImplies(pre_condition, ctx.mkEq(written_val, constrained_val)), 1, null, null,
 									null, null);
@@ -831,10 +832,11 @@ public class Z3Driver {
 		Expr expected_txn_type = objs.getEnumConstructor("TxnType", txn.getName());
 		// BoolExpr lhs1 = ctx.mkEq(po1, objs.getEnumConstructor("Po", "po_" +
 		// q.getPo()));
+		Expr current_po = ctx.mkApp(objs.getfuncs("po_from_int"), ctx.mkInt(q.getPo()));
 		BoolExpr lhs2 = ctx.mkEq(ctx.mkApp(objs.getfuncs("txn_type"), txn1), expected_txn_type);
 		BoolExpr rhs = ctx.mkEq(
 				ctx.mkApp(objs.getfuncs("qry_is_executed"), txn1, objs.getEnumConstructor("Po", "po_" + q.getPo())),
-				(BoolExpr) translateExpressionsToZ3Expr(txn.getName(), txn1, q.getPathCondition()));
+				(BoolExpr) translateExpressionsToZ3Expr(txn.getName(), txn1, q.getPathCondition(), current_po));
 		BoolExpr body = ctx.mkImplies(lhs2, rhs);
 		BoolExpr result = ctx.mkForall(new Expr[] { txn1 }, body, 1, null, null, null, null);
 		addAssertion("qry_type_to_is_executed_" + q.getId(), result);
@@ -1085,7 +1087,7 @@ public class Z3Driver {
 		return ctx.mkAnd(result);
 	}
 
-	private Expr translateExpressionsToZ3Expr(String txnName, Expr transaction, Expression input_expr) {
+	private Expr translateExpressionsToZ3Expr(String txnName, Expr transaction, Expression input_expr, Expr po) {
 		switch (input_expr.getClass().getSimpleName()) {
 		case "E_Arg":
 			E_Arg exp = (E_Arg) input_expr;
@@ -1107,13 +1109,13 @@ public class Z3Driver {
 			E_UnOp uo_exp = (E_UnOp) input_expr;
 			switch (uo_exp.un_op) {
 			case NOT:
-				return ctx.mkNot((BoolExpr) translateExpressionsToZ3Expr(txnName, transaction, uo_exp.exp));
+				return ctx.mkNot((BoolExpr) translateExpressionsToZ3Expr(txnName, transaction, uo_exp.exp, po));
 			default:
 				break;
 			}
 		case "E_Proj":
 			E_Proj p_exp = (E_Proj) input_expr;
-			Expr bv2int_val = ctx.mkBV2Int((BitVecExpr) translateExpressionsToZ3Expr(txnName, transaction, p_exp.e),
+			Expr bv2int_val = ctx.mkBV2Int((BitVecExpr) translateExpressionsToZ3Expr(txnName, transaction, p_exp.e, po),
 					false);
 			Expr order = ctx.mkApp(objs.getfuncs("ro_from_int"), bv2int_val);
 
@@ -1128,38 +1130,40 @@ public class Z3Driver {
 			return ctx.mkInt2BV(Constants._MAX_FIELD_INT, (IntExpr) size_in_int);
 
 		case "E_UUID":
-			assert (false) : "TODO";
+			Expr uuid = ctx.mkApp(objs.getfuncs("uuid"), transaction, po);
+			Expr uuid_in_int = ctx.mkApp(objs.getfuncs("uuid_to_int"), uuid);
+			return ctx.mkInt2BV(Constants._MAX_FIELD_INT, (IntExpr) uuid_in_int);
 
 		case "E_BinUp":
 			E_BinUp bu_exp = (E_BinUp) input_expr;
 			switch (bu_exp.op) {
 			case GT:
-				return ctx.mkBVUGT((BitVecExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper1),
-						(BitVecExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper2));
+				return ctx.mkBVUGT((BitVecExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper1, po),
+						(BitVecExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper2, po));
 			case LT:
-				return ctx.mkBVULT((BitVecExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper1),
-						(BitVecExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper2));
+				return ctx.mkBVULT((BitVecExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper1, po),
+						(BitVecExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper2, po));
 			case EQ:
-				return ctx.mkEq(translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper1),
-						translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper2));
+				return ctx.mkEq(translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper1, po),
+						translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper2, po));
 			case MULT:
-				return ctx.mkBVMul((BitVecExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper1),
-						(BitVecExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper2));
+				return ctx.mkBVMul((BitVecExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper1, po),
+						(BitVecExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper2, po));
 			case PLUS:
-				return ctx.mkBVAdd((BitVecExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper1),
-						(BitVecExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper2));
+				return ctx.mkBVAdd((BitVecExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper1, po),
+						(BitVecExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper2, po));
 			case MINUS:
-				return ctx.mkBVSub((BitVecExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper1),
-						(BitVecExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper2));
+				return ctx.mkBVSub((BitVecExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper1, po),
+						(BitVecExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper2, po));
 			case DIV:
-				return ctx.mkBVUDiv((BitVecExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper1),
-						(BitVecExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper2));
+				return ctx.mkBVUDiv((BitVecExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper1, po),
+						(BitVecExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper2, po));
 			case AND:
-				return ctx.mkAnd((BoolExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper1),
-						(BoolExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper2));
+				return ctx.mkAnd((BoolExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper1, po),
+						(BoolExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper2, po));
 			case OR:
-				return ctx.mkOr((BoolExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper1),
-						(BoolExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper2));
+				return ctx.mkOr((BoolExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper1, po),
+						(BoolExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper2, po));
 			default:
 				break;
 			}
@@ -1174,7 +1178,7 @@ public class Z3Driver {
 	private BoolExpr translateWhereConstraintToZ3Expr(String txnName, Expr transaction, WHC_Constraint input_constraint,
 			Expr record, Expr po) {
 		BoolExpr result = null;
-		Expr rhs = translateExpressionsToZ3Expr(txnName, transaction, input_constraint.getExpression());
+		Expr rhs = translateExpressionsToZ3Expr(txnName, transaction, input_constraint.getExpression(), po);
 		String tableName = input_constraint.getTableName().getName();
 		String fieldName = input_constraint.getFieldName().getName();
 		FuncDecl projFunc = objs.getfuncs("proj_" + tableName + "_" + fieldName);
