@@ -730,8 +730,11 @@ public class Z3Driver {
 		BoolExpr pre_condition1 = ctx.mkNot(ctx.mkEq(po1, po2));
 		BoolExpr pre_condition2 = ctx.mkNot(ctx.mkEq(txn1, txn2));
 		BoolExpr pre_conditions = ctx.mkAnd(pre_condition1, pre_condition2);
-		BoolExpr rhs = (ctx.mkEq(ctx.mkApp(uuid, txn1, po1), ctx.mkApp(uuid, txn2, po2)));
-		Quantifier result = ctx.mkForall(new Expr[] { txn1, rec1 }, ctx.mkImplies(rhs, pre_conditions), 1, null, null,
+		Expr uuid1 =  ctx.mkApp(uuid, txn1, po1);
+		Expr uuid2 = ctx.mkApp(uuid, txn2, po2);
+
+		BoolExpr rhs = (ctx.mkEq(uuid1, uuid2));
+		Quantifier result = ctx.mkForall(new Expr[] { txn1, txn2,po1,po2 }, ctx.mkImplies(rhs, pre_conditions), 1, null, null,
 				null, null);
 		addAssertion("uuids must be unique", result);
 	}
