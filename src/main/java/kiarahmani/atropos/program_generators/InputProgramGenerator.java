@@ -1,4 +1,4 @@
-package kiarahmani.atropos;
+package kiarahmani.atropos.program_generators;
 
 import java.util.ArrayList;
 
@@ -6,11 +6,9 @@ import kiarahmani.atropos.DDL.F_Type;
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DML.expression.BinOp;
 import kiarahmani.atropos.DML.expression.E_BinUp;
-import kiarahmani.atropos.DML.expression.E_Size;
 import kiarahmani.atropos.DML.expression.E_UUID;
 import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.expression.constants.E_Const_Num;
-import kiarahmani.atropos.DML.expression.constants.E_Const_Text;
 import kiarahmani.atropos.DML.query.Delete_Query;
 import kiarahmani.atropos.DML.query.Insert_Query;
 import kiarahmani.atropos.DML.query.Select_Query;
@@ -95,7 +93,7 @@ public class InputProgramGenerator {
 			WHC increments_DEC_S1_WHC = new WHC(pu.getIsAliveFieldName("accs"),
 					new WHC_Constraint(pu.getTableName("accs"), pu.getFieldName("key"), BinOp.EQ, new E_Const_Num(1)));
 			Select_Query increments_DEC_S1 = pu.addSelectQuery(txn_name, "accs", true, increments_DEC_S1_WHC, "value");
-			// pu.addQueryStatement(txn_name, increments_DEC_S1);
+			pu.addQueryStatement(txn_name, increments_DEC_S1);
 
 			// update
 			WHC increments_DEC_U1_WHC = new WHC(pu.getIsAliveFieldName("accs"),
