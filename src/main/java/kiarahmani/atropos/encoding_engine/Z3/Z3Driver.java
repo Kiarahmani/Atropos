@@ -69,6 +69,7 @@ public class Z3Driver {
 		addInitialHeader();
 		addInitialStaticSorts();
 		addNumericEnumSorts("Po", Constants._MAX_EXECUTION_PO);
+		addNumericEnumSorts("UUID", Constants._MAX_EXECUTION_PO);
 		addNumericEnumSorts("Ro", Constants._MAX_VARIABLE_RO);
 		addNumericEnumSorts("Part", Constants._MAX_PARTITION_NUMBER);
 		addEnumSorts("RecType", program.getAllTableNames());
@@ -76,6 +77,7 @@ public class Z3Driver {
 		addTypingFuncs();
 		addExecutionFuncs();
 		initializeLocalVariables();
+		addUUIDFunc();
 		addProjFuncsAndBounds(program);
 		this.em = new Expression_Maker(program, ctx, objs);
 		Z3Logger.SubHeaderZ3("Properties of query functions");
@@ -719,6 +721,20 @@ public class Z3Driver {
 
 	}
 
+	private void addUUIDFunc() {
+		Z3Logger.LogZ3(";; uuid related functions");
+		objs.addFunc("uuid",
+				ctx.mkFuncDecl("uuid", new Sort[] { objs.getSort("Txn"), objs.getEnum("Po") }, objs.getEnum("UUID")));
+		FuncDecl uuid = objs.getfuncs("uuid");
+		BoolExpr pre_condition1 = ctx.mkNot(ctx.mkEq(po1, po2));
+		BoolExpr pre_condition2 = ctx.mkNot(ctx.mkEq(txn1, txn2));
+		BoolExpr pre_conditions = ctx.mkOr(pre_condition1, pre_condition2);
+		BoolExpr rhs = ctx.mkNot(ctx.mkEq(ctx.mkApp(uuid, txn1, po1), ctx.mkApp(uuid, txn2, po2)));
+		Quantifier result = ctx.mkForall(new Expr[] { txn1, rec1 }, ctx.mkImplies(pre_conditions, rhs), 1, null, null,
+				null, null);
+		addAssertion("uuids must be unique", result);
+	}
+
 	private void addExecutionFuncs() {
 		Z3Logger.LogZ3(";; query related functions");
 		objs.addFunc("qry_part", ctx.mkFuncDecl("qry_part", new Sort[] { objs.getSort("Txn"), objs.getEnum("Po") },
@@ -1112,8 +1128,8 @@ public class Z3Driver {
 			return ctx.mkInt2BV(Constants._MAX_FIELD_INT, (IntExpr) size_in_int);
 
 		case "E_UUID":
-			assert (false) :"TODO";
-			
+			assert (false) : "TODO";
+
 		case "E_BinUp":
 			E_BinUp bu_exp = (E_BinUp) input_expr;
 			switch (bu_exp.op) {
