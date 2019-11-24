@@ -24,6 +24,7 @@ import kiarahmani.atropos.encoding_engine.Z3.Z3Driver;
 import kiarahmani.atropos.encoding_engine.Z3.Z3Logger;
 import kiarahmani.atropos.program.Program;
 import kiarahmani.atropos.program.Transaction;
+import kiarahmani.atropos.utils.Constants;
 
 public class Encoding_Engine {
 	private static final Logger logger = LogManager.getLogger(Atropos.class);
@@ -79,11 +80,11 @@ public class Encoding_Engine {
 							// if SAT, add the potential DAI to the graph
 							if (status == Status.SATISFIABLE) {
 								dai_graph.addDAI(dai);
-								//break outer_conflicts;
+								if (!Constants._IS_TEST)
+									break outer_conflicts;
 							}
 							// free up solver's memory for the next iteration
 							local_z3_driver = null;
-							
 
 						}
 				}

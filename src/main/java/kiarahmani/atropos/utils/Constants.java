@@ -18,8 +18,10 @@ public class Constants {
 	public static int _MAX_ARG_STRING;
 	public static int _MAX_EXECUTION_PO;
 	public static int _MAX_VARIABLE_RO;
+	public static boolean _IS_TEST;
 
 	public Constants() throws IOException {
+		this._IS_TEST = false;
 		Properties prop = new Properties();
 		InputStream input = new FileInputStream("src/main/java/kiarahmani/atropos/config.properties");
 		prop.load(input);

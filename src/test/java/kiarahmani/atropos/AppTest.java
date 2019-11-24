@@ -26,7 +26,13 @@ import kiarahmani.atropos.utils.Constants;
 
 
 public class AppTest {
-	/*
+	
+	public AppTest() {
+		Constants._IS_TEST = true;
+	}
+	
+	
+	
 	@Test
 	public void select_update_tests() {
 		try {
@@ -110,7 +116,7 @@ public class AppTest {
 		}
 	}
 	
-	*/
+	
 	
 	@Test
 	public void select_delete_tests() {
