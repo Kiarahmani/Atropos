@@ -25,7 +25,7 @@ public class Atropos {
 		}
 		logger.debug("New Constants object initialized");
 		TestInputProgramGenerator ipg = new TestInputProgramGenerator();
-		Program program = ipg.generateUnitTestProgram("inc", "");
+		Program program = ipg.generateUnitTestProgram("select-insert-test-3", "");
 
 		Conflict_Graph cg = new Conflict_Graph(program);
 		Encoding_Engine ee = new Encoding_Engine(program);

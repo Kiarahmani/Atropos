@@ -78,7 +78,7 @@ public class Encoding_Engine {
 							// if SAT, add the potential DAI to the graph
 							if (status == Status.SATISFIABLE) {
 								dai_graph.addDAI(dai);
-								break outer_conflicts;
+								//break outer_conflicts;
 							}
 							// free up solver's memory for the next iteration
 							local_z3_driver = null;
@@ -93,6 +93,8 @@ public class Encoding_Engine {
 
 	private void printResults(Status status, long time) {
 		String status_string = (status == Status.SATISFIABLE) ? "SAT" : "UNSAT";
+		if (status == Status.UNKNOWN)
+			status_string = "UNKNOWN";
 		System.out.println("" + status_string + " (" + (time) + "ms)\n\n");
 		this.printer.append(String.valueOf(time) + "\n");
 		this.printer.flush();
