@@ -69,13 +69,13 @@ public class SmallBankProgramGenerator {
 			Select_Query GetSavings0 = pu.addSelectQuery("Amalgamate", "savings", true, GetSavings0_WHC, "s_bal");
 			pu.addQueryStatement("Amalgamate", GetSavings0);
 
-			// retrieve checking balance of cust1
+			// retrieve checking balance of cust0
 			WHC GetChecking1_WHC = new WHC(pu.getIsAliveFieldName("checking"), new WHC_Constraint(
-					pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ, pu.getArg("am_custId1")));
+					pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ, pu.getArg("am_custId0")));
 			Select_Query GetChecking1 = pu.addSelectQuery("Amalgamate", "checking", true, GetChecking1_WHC, "c_bal");
 			pu.addQueryStatement("Amalgamate", GetChecking1);
 
-			// zero cust0's savings balance
+			// zero cust0's checking balance
 			WHC ZeroCheckingBalance_WHC = new WHC(pu.getIsAliveFieldName("checking"), new WHC_Constraint(
 					pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ, pu.getArg("am_custId0")));
 			Update_Query ZeroCheckingBalance = pu.addUpdateQuery("Amalgamate", "checking", true,
@@ -83,6 +83,15 @@ public class SmallBankProgramGenerator {
 			ZeroCheckingBalance.addUpdateExp(pu.getFieldName("c_bal"), new E_Const_Num(0));
 			pu.addQueryStatement("Amalgamate", ZeroCheckingBalance);
 
+			// zero cust0's savings balance
+			WHC savingsZeroCheckingBalance_WHC = new WHC(pu.getIsAliveFieldName("savings"), new WHC_Constraint(
+					pu.getTableName("savings"), pu.getFieldName("s_custid"), BinOp.EQ, pu.getArg("am_custId0")));
+			Update_Query savingsZeroCheckingBalance = pu.addUpdateQuery("Amalgamate", "savings", true,
+					savingsZeroCheckingBalance_WHC);
+			savingsZeroCheckingBalance.addUpdateExp(pu.getFieldName("s_bal"), new E_Const_Num(0));
+			pu.addQueryStatement("Amalgamate", savingsZeroCheckingBalance);
+			
+			
 			// incremenet cust1's savings balance
 			WHC UpdateSavingsBalance_WHC = new WHC(pu.getIsAliveFieldName("savings"), new WHC_Constraint(
 					pu.getTableName("savings"), pu.getFieldName("s_custid"), BinOp.EQ, pu.getArg("am_custId1")));

@@ -49,7 +49,7 @@ public class CRDTSmallBankProgramGenerator {
 		 */
 		if (txns.contains("Amalgamate")) {
 			pu.addTrnasaction("Amalgamate", "am_custId0:int", "am_custId1:int");
-
+			
 
 		}
 		/*

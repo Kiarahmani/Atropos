@@ -26,9 +26,11 @@ public class Atropos {
 			e.printStackTrace();
 		}
 		logger.debug("New Constants object initialized");
+		//SmallBankProgramGenerator ipg = new SmallBankProgramGenerator();
 		UnifiedSmallBankProgramGenerator ipg = new UnifiedSmallBankProgramGenerator();
-		Program program = ipg.generate("Balance", "Amalgamate", "TransactSavings", "DepositChecking", "SendPayment",
-				"WriteCheck");
+		//CRDTSmallBankProgramGenerator ipg = new CRDTSmallBankProgramGenerator();
+		Program program = ipg.generate("Balance1", "Amalgamate", "TransactSavings1", "DepositChecking1", "SendPayment1",
+				"WriteCheck1");
 
 		Conflict_Graph cg = new Conflict_Graph(program);
 		Encoding_Engine ee = new Encoding_Engine(program);

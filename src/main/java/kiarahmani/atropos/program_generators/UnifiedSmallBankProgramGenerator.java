@@ -49,25 +49,26 @@ public class UnifiedSmallBankProgramGenerator {
 		 */
 		if (txns.contains("Amalgamate")) {
 			pu.addTrnasaction("Amalgamate", "am_custId0:int", "am_custId1:int");
-			// retrieve customer0's daya by id
+			// retrieve customer0's data by id
 			WHC GetAccount0_WHC = new WHC(pu.getIsAliveFieldName("accounts"), new WHC_Constraint(
 					pu.getTableName("accounts"), pu.getFieldName("custid"), BinOp.EQ, pu.getArg("am_custId0")));
 			Select_Query GetAccount0 = pu.addSelectQuery("Amalgamate", "accounts", true, GetAccount0_WHC, "name",
-					"savings");
+					"savings", "checking");
 			pu.addQueryStatement("Amalgamate", GetAccount0);
 			// retrieve customer1's data by id
 			WHC GetAccount1_WHC = new WHC(pu.getIsAliveFieldName("accounts"), new WHC_Constraint(
 					pu.getTableName("accounts"), pu.getFieldName("custid"), BinOp.EQ, pu.getArg("am_custId1")));
 			Select_Query GetAccount1 = pu.addSelectQuery("Amalgamate", "accounts", true, GetAccount1_WHC, "name",
-					"checking");
+					"savings");
 			pu.addQueryStatement("Amalgamate", GetAccount1);
 
-			// zero cust0's savings balance
+			// zero cust0's savings and checking balance
 			WHC ZeroCheckingBalance_WHC = new WHC(pu.getIsAliveFieldName("accounts"), new WHC_Constraint(
 					pu.getTableName("accounts"), pu.getFieldName("custid"), BinOp.EQ, pu.getArg("am_custId0")));
 			Update_Query ZeroCheckingBalance = pu.addUpdateQuery("Amalgamate", "accounts", true,
 					ZeroCheckingBalance_WHC);
 			ZeroCheckingBalance.addUpdateExp(pu.getFieldName("checking"), new E_Const_Num(0));
+			ZeroCheckingBalance.addUpdateExp(pu.getFieldName("savings"), new E_Const_Num(0));
 			pu.addQueryStatement("Amalgamate", ZeroCheckingBalance);
 
 			// incremenet cust1's savings balance
@@ -76,7 +77,7 @@ public class UnifiedSmallBankProgramGenerator {
 			Update_Query UpdateSavingsBalance = pu.addUpdateQuery("Amalgamate", "accounts", true,
 					UpdateSavingsBalance_WHC);
 			UpdateSavingsBalance.addUpdateExp(pu.getFieldName("savings"), new E_BinUp(BinOp.PLUS,
-					pu.getProjExpr("Amalgamate", 0, "savings", 1), pu.getProjExpr("Amalgamate", 1, "checking", 1)));
+					pu.getProjExpr("Amalgamate", 0, "savings", 1), pu.getProjExpr("Amalgamate", 0, "checking", 1)));
 			pu.addQueryStatement("Amalgamate", UpdateSavingsBalance);
 
 		}
