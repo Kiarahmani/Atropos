@@ -4,7 +4,9 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.logging.Logger;
 
+import org.apache.logging.log4j.LogManager;
 import org.junit.Test;
 
 import com.microsoft.z3.Status;
@@ -21,34 +23,49 @@ import kiarahmani.atropos.program.Transaction;
 import kiarahmani.atropos.program_generators.TestInputProgramGenerator;
 import kiarahmani.atropos.utils.Constants;
 
-/**
- * Unit test for simple App.
- */
+
+
 public class AppTest {
 	/*
-	 * @Test public void select_update_tests() { try { new Constants(); } catch
-	 * (IOException e) { e.printStackTrace(); } TestInputProgramGenerator ipg = new
-	 * TestInputProgramGenerator(); Status[] expected_status = new Status[] {
-	 * Status.SATISFIABLE, Status.UNSATISFIABLE, Status.SATISFIABLE,
-	 * Status.SATISFIABLE, Status.UNSATISFIABLE }; int i = 1; for (Status stat :
-	 * expected_status) { String prog_name = "select-update-test-" + i; Program
-	 * program = ipg.generateUnitTestProgram(prog_name, ""); Encoding_Engine ee =
-	 * new Encoding_Engine(program); Conflict_Graph cg = new
-	 * Conflict_Graph(program); Transaction txn = program.getTransactions().get(0);
-	 * program.printProgram(); Query q1 = txn.getAllQueries().get(0); Query q2 =
-	 * txn.getAllQueries().get(1); ArrayList<FieldName> accessed_by_q1 =
-	 * (q1.isWrite()) ? q1.getWrittenFieldNames() : q1.getReadFieldNames();
-	 * ArrayList<FieldName> accessed_by_q2 = (q2.isWrite()) ?
-	 * q2.getWrittenFieldNames() : q2.getReadFieldNames(); DAI dai = new DAI(txn,
-	 * q1, accessed_by_q1, q2, accessed_by_q2); int iter = 0; for (Conflict c1 :
-	 * cg.getConfsFromQuery(q1)) for (Conflict c2 : cg.getConfsFromQuery(q2)) {
-	 * Z3Driver local_z3_driver = new Z3Driver(); System.out.println("Round# " +
-	 * iter++ + ""); printBaseAnomaly(iter, dai, c1, c2); long begin =
-	 * System.currentTimeMillis(); Status status =
-	 * local_z3_driver.generateDAI(program, 4, dai, c1, c2); long end =
-	 * System.currentTimeMillis(); printResults(status, end - begin);
-	 * assertTrue(status == stat); local_z3_driver = null; } i++; } }
-	 */
+	@Test
+	public void select_update_tests() {
+		try {
+			new Constants();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		TestInputProgramGenerator ipg = new TestInputProgramGenerator();
+		Status[] expected_status = new Status[] { Status.SATISFIABLE, Status.UNSATISFIABLE, Status.SATISFIABLE,
+				Status.SATISFIABLE, Status.UNSATISFIABLE };
+		int i = 1;
+		for (Status stat : expected_status) {
+			String prog_name = "select-update-test-" + i;
+			Program program = ipg.generateUnitTestProgram(prog_name, "");
+			Encoding_Engine ee = new Encoding_Engine(program);
+			Conflict_Graph cg = new Conflict_Graph(program);
+			Transaction txn = program.getTransactions().get(0);
+			program.printProgram();
+			Query q1 = txn.getAllQueries().get(0);
+			Query q2 = txn.getAllQueries().get(1);
+			ArrayList<FieldName> accessed_by_q1 = (q1.isWrite()) ? q1.getWrittenFieldNames() : q1.getReadFieldNames();
+			ArrayList<FieldName> accessed_by_q2 = (q2.isWrite()) ? q2.getWrittenFieldNames() : q2.getReadFieldNames();
+			DAI dai = new DAI(txn, q1, accessed_by_q1, q2, accessed_by_q2);
+			int iter = 0;
+			for (Conflict c1 : cg.getConfsFromQuery(q1))
+				for (Conflict c2 : cg.getConfsFromQuery(q2)) {
+					Z3Driver local_z3_driver = new Z3Driver();
+					System.out.println("Round# " + iter++ + "");
+					printBaseAnomaly(iter, dai, c1, c2);
+					long begin = System.currentTimeMillis();
+					Status status = local_z3_driver.generateDAI(program, 4, dai, c1, c2);
+					long end = System.currentTimeMillis();
+					printResults(status, stat, end - begin);
+					assertTrue(status == stat);
+					local_z3_driver = null;
+				}
+			i++;
+		}
+	}
 
 	@Test
 	public void select_insert_tests() {
@@ -59,9 +76,54 @@ public class AppTest {
 		}
 		TestInputProgramGenerator ipg = new TestInputProgramGenerator();
 		Status[] expected_status = new Status[] { Status.SATISFIABLE, Status.SATISFIABLE, Status.SATISFIABLE,
-				Status.SATISFIABLE, Status.SATISFIABLE, Status.UNSATISFIABLE };
+				Status.UNSATISFIABLE, Status.UNSATISFIABLE, Status.UNSATISFIABLE, Status.SATISFIABLE,
+				Status.SATISFIABLE, Status.SATISFIABLE, Status.SATISFIABLE, Status.SATISFIABLE, Status.SATISFIABLE,
+				Status.SATISFIABLE, Status.SATISFIABLE, Status.UNSATISFIABLE, Status.UNSATISFIABLE, Status.SATISFIABLE,
+				Status.SATISFIABLE, Status.UNSATISFIABLE, Status.UNSATISFIABLE, Status.UNSATISFIABLE, Status.UNSATISFIABLE};
+		int prog_iter = 1;
 		for (int i = 0; i < expected_status.length;) {
-			String prog_name = "select-insert-test-" + (i + 2) / 2;
+			String prog_name = "select-insert-test-" + prog_iter++;
+			Program program = ipg.generateUnitTestProgram(prog_name, "");
+			Encoding_Engine ee = new Encoding_Engine(program);
+			Conflict_Graph cg = new Conflict_Graph(program);
+			Transaction txn = program.getTransactions().get(0);
+			program.printProgram();
+			Query q1 = txn.getAllQueries().get(0);
+			Query q2 = txn.getAllQueries().get(1);
+			ArrayList<FieldName> accessed_by_q1 = (q1.isWrite()) ? q1.getWrittenFieldNames() : q1.getReadFieldNames();
+			ArrayList<FieldName> accessed_by_q2 = (q2.isWrite()) ? q2.getWrittenFieldNames() : q2.getReadFieldNames();
+			DAI dai = new DAI(txn, q1, accessed_by_q1, q2, accessed_by_q2);
+			int iter = 0;
+			for (Conflict c1 : cg.getConfsFromQuery(q1))
+				for (Conflict c2 : cg.getConfsFromQuery(q2)) {
+					Z3Driver local_z3_driver = new Z3Driver();
+					System.out.println("Round# " + iter++ + "");
+					printBaseAnomaly(iter, dai, c1, c2);
+					long begin = System.currentTimeMillis();
+					Status status = local_z3_driver.generateDAI(program, 4, dai, c1, c2);
+					long end = System.currentTimeMillis();
+					Status stat = expected_status[i++];
+					printResults(status, stat, end - begin);
+					assertTrue(status == stat);
+					local_z3_driver = null;
+				}
+		}
+	}
+	
+	*/
+	
+	@Test
+	public void select_delete_tests() {
+		try {
+			new Constants();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		TestInputProgramGenerator ipg = new TestInputProgramGenerator();
+		Status[] expected_status = new Status[] { Status.SATISFIABLE,Status.SATISFIABLE,Status.SATISFIABLE,Status.SATISFIABLE,Status.SATISFIABLE,Status.UNSATISFIABLE};
+		int prog_iter = 1;
+		for (int i = 0; i < expected_status.length;) {
+			String prog_name = "select-delete-test-" + prog_iter++;
 			Program program = ipg.generateUnitTestProgram(prog_name, "");
 			Encoding_Engine ee = new Encoding_Engine(program);
 			Conflict_Graph cg = new Conflict_Graph(program);

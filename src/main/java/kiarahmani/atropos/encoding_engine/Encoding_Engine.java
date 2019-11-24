@@ -67,6 +67,7 @@ public class Encoding_Engine {
 					outer_conflicts: for (Conflict c1 : cg.getConfsFromQuery(q1))
 						inner_conflicts: for (Conflict c2 : cg.getConfsFromQuery(q2)) {
 							// the potential DAI:
+							z3logger.reset();
 							Z3Driver local_z3_driver = new Z3Driver();
 							// check if it is actualy a valid instance
 							System.out.println("Round# " + iter++ + "");
@@ -82,7 +83,7 @@ public class Encoding_Engine {
 							}
 							// free up solver's memory for the next iteration
 							local_z3_driver = null;
-							z3logger.reset();
+							
 
 						}
 				}

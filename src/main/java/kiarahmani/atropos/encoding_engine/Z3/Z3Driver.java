@@ -69,7 +69,6 @@ public class Z3Driver {
 		addInitialHeader();
 		addInitialStaticSorts();
 		addNumericEnumSorts("Po", Constants._MAX_EXECUTION_PO);
-		addNumericEnumSorts("UUID",Constants._MAX_EXECUTION_PO);
 		addNumericEnumSorts("Ro", Constants._MAX_VARIABLE_RO);
 		addNumericEnumSorts("Part", Constants._MAX_PARTITION_NUMBER);
 		addEnumSorts("RecType", program.getAllTableNames());
@@ -725,21 +724,20 @@ public class Z3Driver {
 	private void addUUIDFunc() {
 		Z3Logger.LogZ3(";; uuid related functions");
 		objs.addFunc("uuid",
-				ctx.mkFuncDecl("uuid", new Sort[] { objs.getSort("Txn"), objs.getEnum("Po") }, objs.getEnum("UUID")));
+				ctx.mkFuncDecl("uuid", new Sort[] { objs.getSort("Txn"), objs.getEnum("Po") }, objs.getSort("Fld")));
 		FuncDecl uuid = objs.getfuncs("uuid");
 		BoolExpr pre_condition1 = (ctx.mkEq(po1, po2));
 		BoolExpr pre_condition2 = (ctx.mkEq(txn1, txn2));
 		BoolExpr pre_conditions = ctx.mkAnd(pre_condition1, pre_condition2);
-		Expr uuid1 =  ctx.mkApp(uuid, txn1, po1);
-		Expr uuid2 = ctx.mkApp(uuid, txn2, po2);
-		BoolExpr more_constraints1 = (BoolExpr)ctx.mkApp(objs.getfuncs("qry_is_executed"), txn1,po1);
-		BoolExpr more_constraints2 = (BoolExpr)ctx.mkApp(objs.getfuncs("qry_is_executed"), txn2,po2);
-		BoolExpr more_constraints = ctx.mkAnd(more_constraints1,more_constraints2);
-		BoolExpr rhs = (ctx.mkEq(uuid1, uuid2));
-		Quantifier result = ctx.mkForall(new Expr[] { txn1, txn2, po1, po2 },
-				ctx.mkImplies(more_constraints, ctx.mkImplies(rhs, pre_conditions)), 1, null, null,
-				null, null);
-		addAssertion("uuids must be unique", result);
+		BoolExpr more_constraints1 = (BoolExpr) ctx.mkApp(objs.getfuncs("qry_is_executed"), txn1, po1);
+		BoolExpr more_constraints2 = (BoolExpr) ctx.mkApp(objs.getfuncs("qry_is_executed"), txn2, po2);
+		BoolExpr more_constraints = ctx.mkAnd(more_constraints1, more_constraints2);
+		Expr uuid11 = ctx.mkApp(uuid, txn1, po1);
+		Expr uuid21 = ctx.mkApp(uuid, txn2, po2);
+		BoolExpr rhs1 = (ctx.mkEq(uuid11, uuid21));
+		Quantifier result1 = ctx.mkForall(new Expr[] { txn1, txn2, po1, po2 },
+				ctx.mkImplies(more_constraints, ctx.mkImplies(rhs1, pre_conditions)), 1, null, null, null, null);
+		addAssertion("uuids must be unique", result1);
 	}
 
 	private void addExecutionFuncs() {
@@ -802,6 +800,7 @@ public class Z3Driver {
 		for (int i = 0; i < size; i++)
 			addAssertions(ctx.mkEq(ctx.mkApp(objs.getfuncs(from_func_name), ctx.mkInt(i)),
 					objs.getEnum(name).getConsts()[i]));
+	
 	}
 
 	private void initializeLocalVariables() {
@@ -1137,8 +1136,8 @@ public class Z3Driver {
 
 		case "E_UUID":
 			Expr uuid = ctx.mkApp(objs.getfuncs("uuid"), transaction, po);
-			Expr uuid_in_int = ctx.mkApp(objs.getfuncs("uuid_to_int"), uuid);
-			return ctx.mkInt2BV(Constants._MAX_FIELD_INT, (IntExpr) uuid_in_int);
+			//Expr uuid_in_int = ctx.mkApp(objs.getfuncs("uuid_to_int"), uuid);
+			return uuid;//ctx.mkInt2BV(Constants._MAX_FIELD_INT, (IntExpr) uuid_in_int);
 
 		case "E_BinUp":
 			E_BinUp bu_exp = (E_BinUp) input_expr;
