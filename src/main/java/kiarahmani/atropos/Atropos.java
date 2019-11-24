@@ -8,6 +8,8 @@ import org.apache.logging.log4j.Logger;
 import kiarahmani.atropos.dependency.Conflict_Graph;
 import kiarahmani.atropos.encoding_engine.Encoding_Engine;
 import kiarahmani.atropos.program.Program;
+import kiarahmani.atropos.program_generators.CRDTSmallBankProgramGenerator;
+import kiarahmani.atropos.program_generators.SmallBankProgramGenerator;
 import kiarahmani.atropos.program_generators.TestInputProgramGenerator;
 import kiarahmani.atropos.utils.Constants;
 
@@ -23,8 +25,9 @@ public class Atropos {
 			e.printStackTrace();
 		}
 		logger.debug("New Constants object initialized");
-		TestInputProgramGenerator ipg = new TestInputProgramGenerator();
-		Program program = ipg.generateUnitTestProgram("select-delete-test-3", "");
+		CRDTSmallBankProgramGenerator ipg = new CRDTSmallBankProgramGenerator();
+		Program program = ipg.generate("Balance", "Amalgamate", "TransactSavings", "DepositChecking", "SendPayment",
+				"WriteCheck");
 
 		Conflict_Graph cg = new Conflict_Graph(program);
 		Encoding_Engine ee = new Encoding_Engine(program);
