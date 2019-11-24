@@ -39,7 +39,7 @@ public class WHC extends Expression {
 		for (WHC_Constraint whcc : this.whc_constraints)
 			if (whcc.getFieldName() == fn)
 				return whcc;
-		assert (false) : "unexepected field name";
+		assert (false) : "unexepected field name "+fn;
 		return null;
 	}
 
