@@ -11,6 +11,7 @@ import kiarahmani.atropos.program.Program;
 import kiarahmani.atropos.program_generators.CRDTSmallBankProgramGenerator;
 import kiarahmani.atropos.program_generators.SmallBankProgramGenerator;
 import kiarahmani.atropos.program_generators.TestInputProgramGenerator;
+import kiarahmani.atropos.program_generators.UnifiedSmallBankProgramGenerator;
 import kiarahmani.atropos.utils.Constants;
 
 public class Atropos {
@@ -25,7 +26,7 @@ public class Atropos {
 			e.printStackTrace();
 		}
 		logger.debug("New Constants object initialized");
-		CRDTSmallBankProgramGenerator ipg = new CRDTSmallBankProgramGenerator();
+		UnifiedSmallBankProgramGenerator ipg = new UnifiedSmallBankProgramGenerator();
 		Program program = ipg.generate("Balance", "Amalgamate", "TransactSavings", "DepositChecking", "SendPayment",
 				"WriteCheck");
 
