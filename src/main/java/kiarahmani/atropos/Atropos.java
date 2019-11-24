@@ -27,8 +27,8 @@ public class Atropos {
 		}
 		logger.debug("New Constants object initialized");
 		//SmallBankProgramGenerator ipg = new SmallBankProgramGenerator();
-		UnifiedSmallBankProgramGenerator ipg = new UnifiedSmallBankProgramGenerator();
-		//CRDTSmallBankProgramGenerator ipg = new CRDTSmallBankProgramGenerator();
+		//UnifiedSmallBankProgramGenerator ipg = new UnifiedSmallBankProgramGenerator();
+		CRDTSmallBankProgramGenerator ipg = new CRDTSmallBankProgramGenerator();
 		Program program = ipg.generate("Balance1", "Amalgamate", "TransactSavings1", "DepositChecking1", "SendPayment1",
 				"WriteCheck1");
 

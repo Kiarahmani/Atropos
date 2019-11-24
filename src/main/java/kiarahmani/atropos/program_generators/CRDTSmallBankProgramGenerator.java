@@ -39,17 +39,22 @@ public class CRDTSmallBankProgramGenerator {
 			txns.add(txn);
 
 		Program_Utils pu = new Program_Utils("SmallBank");
-		pu.addTable("accounts", new FieldName("custid", true, true, F_Type.NUM),
-				new FieldName("name", false, false, F_Type.TEXT), new FieldName("checking", false, false, F_Type.NUM),
-				new FieldName("savings", false, false, F_Type.NUM));
+		pu.addTable("accounts", new FieldName("a_custid", true, true, F_Type.NUM),
+				new FieldName("a_name", false, false, F_Type.TEXT));
+		pu.addTable("checking", new FieldName("c_custid", true, true, F_Type.NUM),
+				new FieldName("c_uuid", true, false, F_Type.NUM), new FieldName("s_bal", false, false, F_Type.NUM));
+		pu.addTable("savings", new FieldName("s_custid", true, true, F_Type.NUM),
+				new FieldName("s_uuid", true, false, F_Type.NUM), new FieldName("s_bal", false, false, F_Type.NUM));
 		/*
 		 * 
 		 * Amalgamate
 		 * 
 		 */
 		if (txns.contains("Amalgamate")) {
-			pu.addTrnasaction("Amalgamate", "am_custId0:int", "am_custId1:int");
-			
+			String txn_name = "Amalgamate";
+			String arg1 = "am_custId0:int";
+			String arg2 = "am_custId1:int";
+			pu.addTrnasaction(txn_name, arg1, arg2);
 
 		}
 		/*
@@ -61,7 +66,6 @@ public class CRDTSmallBankProgramGenerator {
 		if (txns.contains("Balance")) {
 			pu.addTrnasaction("Balance", "ba_custName:string");
 			// get customer's id based on his/her name
-
 
 		}
 		/*
@@ -99,7 +103,7 @@ public class CRDTSmallBankProgramGenerator {
 		 */
 		if (txns.contains("WriteCheck")) {
 			pu.addTrnasaction("WriteCheck", "wc_custName:string", "wc_amount:int");
-		
+
 		}
 		return pu.getProgram();
 
