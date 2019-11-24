@@ -8,7 +8,6 @@ import org.apache.logging.log4j.Logger;
 import kiarahmani.atropos.dependency.Conflict_Graph;
 import kiarahmani.atropos.encoding_engine.Encoding_Engine;
 import kiarahmani.atropos.program.Program;
-import kiarahmani.atropos.program_generators.InputProgramGenerator;
 import kiarahmani.atropos.program_generators.TestInputProgramGenerator;
 import kiarahmani.atropos.utils.Constants;
 
