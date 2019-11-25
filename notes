@@ -10,4 +10,19 @@ TODO:
  
 
 ====================================================================================================
+IMPROVEMENTS: 
+  - Currently we assume inserts do write in *all* fields. This means that even
+    when a simple increment row is insert into a balance table, it can have
+    conflicts on the id field with other rows. This is unnecessary if we know
+    that inserts are only used to keep records of updates and will not introduce new
+    ids.
+    For instance the below conflict graph is unnecessary. 
 
+    ## TRANSACTIONS:
+    DepositChecking(dc_custName, dc_amount){
+      (0) SELECT0 (a_custid)  FROM accounts   AS DepositChecking_v0 WHERE (a_name=dc_custName ∧ is_alive=true)
+      (1) ATOMIC INSERT0 INTO accounts   VALUES (proj(a_custid,DepositChecking_v0,1),null,uuid,dc_amount,false,true)
+    }
+    ## CONFLICT GRAPH:
+      <DepositChecking.SELECT#0,DepositChecking.INSERT#0,accounts,[a_custid, is_alive]>
+   

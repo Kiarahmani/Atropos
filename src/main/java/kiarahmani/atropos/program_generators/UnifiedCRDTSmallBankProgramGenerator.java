@@ -67,22 +67,6 @@ public class UnifiedCRDTSmallBankProgramGenerator {
 			Select_Query GetAccount1 = pu.addSelectQuery(txn_name, "accounts", true, GetAccount1_WHC, "a_name");
 			pu.addQueryStatement(txn_name, GetAccount1);
 
-			/*
-			 * // retrieve savings balance of cust0 WHC GetSavings0_WHC = new
-			 * WHC(pu.getIsAliveFieldName("savings"), new WHC_Constraint(
-			 * pu.getTableName("savings"), pu.getFieldName("s_custid"), BinOp.EQ,
-			 * pu.getArg("am_custId0"))); Select_Query GetSavings0 =
-			 * pu.addSelectQuery(txn_name, "savings", true, GetSavings0_WHC, "s_bal");
-			 * pu.addQueryStatement(txn_name, GetSavings0);
-			 * 
-			 * // retrieve checking balance of cust0 WHC GetChecking0_WHC = new
-			 * WHC(pu.getIsAliveFieldName("checking"), new WHC_Constraint(
-			 * pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ,
-			 * pu.getArg("am_custId0"))); Select_Query GetChecking0 =
-			 * pu.addSelectQuery(txn_name, "checking", true, GetChecking0_WHC, "c_bal");
-			 * pu.addQueryStatement(txn_name, GetChecking0);
-			 */
-
 			// zero saving of cust0
 			WHC_Constraint ZeroCheckingBalance_WHC_1 = new WHC_Constraint(pu.getTableName("accounts"),
 					pu.getFieldName("a_custid"), BinOp.EQ, pu.getArg("am_custId0"));
@@ -131,6 +115,11 @@ public class UnifiedCRDTSmallBankProgramGenerator {
 		if (txns.contains("Balance")) {
 			pu.addTrnasaction("Balance", "ba_custName:string");
 			// get customer's id based on his/her name
+			WHC Balance_GetAccount0_WHC = new WHC(pu.getIsAliveFieldName("accounts"), new WHC_Constraint(
+					pu.getTableName("accounts"), pu.getFieldName("a_name"), BinOp.EQ, pu.getArg("ba_custName")));
+			Select_Query Balance_GetAccount0 = pu.addSelectQuery("Balance", "accounts", false, Balance_GetAccount0_WHC,
+					"a_custid", "a_bal");
+			pu.addQueryStatement("Balance", Balance_GetAccount0);
 
 		}
 		/*
@@ -139,7 +128,26 @@ public class UnifiedCRDTSmallBankProgramGenerator {
 		 * 
 		 */
 		if (txns.contains("DepositChecking")) {
+			String txn_name = "DepositChecking";
+			pu.addTrnasaction("DepositChecking", "dc_custName:string", "dc_amount:int");
 			// retirve customer's id based on his/her name
+			WHC DepositChecking_GetAccount0_WHC = new WHC(pu.getIsAliveFieldName("accounts"), new WHC_Constraint(
+					pu.getTableName("accounts"), pu.getFieldName("a_name"), BinOp.EQ, pu.getArg("dc_custName")));
+			Select_Query DepositChecking_GetAccount0 = pu.addSelectQuery("DepositChecking", "accounts", false,
+					DepositChecking_GetAccount0_WHC, "a_custid");
+			pu.addQueryStatement("DepositChecking", DepositChecking_GetAccount0);
+
+			// update saving balance of cust1
+			WHC_Constraint ZeroCheckingBalance_WHC_1 = new WHC_Constraint(pu.getTableName("accounts"),
+					pu.getFieldName("a_custid"), BinOp.EQ, pu.getProjExpr(txn_name, 0, "a_custid", 1));
+			WHC_Constraint ZeroCheckingBalance_WHC_2 = new WHC_Constraint(pu.getTableName("accounts"),
+					pu.getFieldName("a_uuid"), BinOp.EQ, new E_UUID());
+			WHC_Constraint ZeroCheckingBalance_WHC_3 = new WHC_Constraint(pu.getTableName("accounts"),
+					pu.getFieldName("is_checking"), BinOp.EQ, new E_Const_Bool(false));
+			Insert_Query ZeroCheckingBalance2 = pu.addInsertQuery(txn_name, "accounts", true, ZeroCheckingBalance_WHC_1,
+					ZeroCheckingBalance_WHC_2, ZeroCheckingBalance_WHC_3);
+			ZeroCheckingBalance2.addInsertExp(pu.getFieldName("a_bal"), pu.getArg("dc_amount"));
+			pu.addQueryStatement(txn_name, ZeroCheckingBalance2);
 
 		}
 		/*
@@ -148,8 +156,46 @@ public class UnifiedCRDTSmallBankProgramGenerator {
 		 * 
 		 */
 		if (txns.contains("SendPayment")) {
-			pu.addTrnasaction("SendPayment", "sp_sendAcct:int", "sp_destAcct:int", "sp_amount:int");
+			String txn_name = "SendPayment";
+			pu.addTrnasaction(txn_name, "sp_sendAcct:int", "sp_destAcct:int", "sp_amount:int");
 			// retrieve sender accounts' data
+			WHC SendPayment_GetAccount_send_WHC = new WHC(pu.getIsAliveFieldName("accounts"),
+					new WHC_Constraint(pu.getTableName("accounts"), pu.getFieldName("a_custid"), BinOp.EQ,
+							pu.getArg("sp_sendAcct")),
+					new WHC_Constraint(pu.getTableName("accounts"), pu.getFieldName("is_checking"), BinOp.EQ,
+							new E_Const_Bool(true)));
+			Select_Query SendPayment_GetAccount_send = pu.addSelectQuery(txn_name, "accounts", true,
+					SendPayment_GetAccount_send_WHC, "a_name", "a_bal");
+			pu.addQueryStatement(txn_name, SendPayment_GetAccount_send);
+
+			// if the sender's checking balance is greater than amount
+			Expression SendPayment_IF1_C = new E_BinUp(BinOp.GT, pu.getProjExpr("SendPayment", 0, "a_bal", 1),
+					pu.getArg("sp_amount"));
+			pu.addIfStatement("SendPayment", SendPayment_IF1_C);
+
+			// update checking balance of sender
+			WHC_Constraint ZeroCheckingBalance_WHC_1 = new WHC_Constraint(pu.getTableName("accounts"),
+					pu.getFieldName("a_custid"), BinOp.EQ, pu.getArg("sp_sendAcct"));
+			WHC_Constraint ZeroCheckingBalance_WHC_2 = new WHC_Constraint(pu.getTableName("accounts"),
+					pu.getFieldName("a_uuid"), BinOp.EQ, new E_UUID());
+			WHC_Constraint ZeroCheckingBalance_WHC_3 = new WHC_Constraint(pu.getTableName("accounts"),
+					pu.getFieldName("is_checking"), BinOp.EQ, new E_Const_Bool(true));
+			Insert_Query SendPayment_U1 = pu.addInsertQuery(txn_name, "accounts", true, ZeroCheckingBalance_WHC_1,
+					ZeroCheckingBalance_WHC_2, ZeroCheckingBalance_WHC_3);
+			SendPayment_U1.addInsertExp(pu.getFieldName("a_bal"), pu.getArg("sp_amount"));
+			pu.addQueryStatementInIf(txn_name, 0, SendPayment_U1);
+
+			// update checking balance of dest
+			WHC_Constraint ZeroCheckingBalance_WHC_1_dest = new WHC_Constraint(pu.getTableName("accounts"),
+					pu.getFieldName("a_custid"), BinOp.EQ, pu.getArg("sp_destAcct"));
+			WHC_Constraint ZeroCheckingBalance_WHC_2_dest = new WHC_Constraint(pu.getTableName("accounts"),
+					pu.getFieldName("a_uuid"), BinOp.EQ, new E_UUID());
+			WHC_Constraint ZeroCheckingBalance_WHC_3_dest = new WHC_Constraint(pu.getTableName("accounts"),
+					pu.getFieldName("is_checking"), BinOp.EQ, new E_Const_Bool(true));
+			Insert_Query SendPayment_U1_dest = pu.addInsertQuery(txn_name, "accounts", true,
+					ZeroCheckingBalance_WHC_1_dest, ZeroCheckingBalance_WHC_2_dest, ZeroCheckingBalance_WHC_3_dest);
+			SendPayment_U1_dest.addInsertExp(pu.getFieldName("a_bal"), pu.getArg("sp_amount"));
+			pu.addQueryStatementInIf(txn_name, 0, SendPayment_U1_dest);
 
 		}
 		/*
@@ -158,7 +204,34 @@ public class UnifiedCRDTSmallBankProgramGenerator {
 		 * 
 		 */
 		if (txns.contains("TransactSavings")) {
-			pu.addTrnasaction("TransactSavings", "ts_custName:string", "ts_amount:int");
+			String txn_name = "TransactSavings";
+			pu.addTrnasaction(txn_name, "ts_custName:string", "ts_amount:int");
+			// retrieve customer's id based on his/her name
+			WHC TransactSavings_GetAccount0_WHC = new WHC(pu.getIsAliveFieldName("accounts"),
+					new WHC_Constraint(pu.getTableName("accounts"), pu.getFieldName("a_name"), BinOp.EQ,
+							pu.getArg("ts_custName")),
+					new WHC_Constraint(pu.getTableName("accounts"), pu.getFieldName("is_checking"), BinOp.EQ,
+							new E_Const_Bool(false)));
+			Select_Query TransactSavings_GetAccount0 = pu.addSelectQuery("TransactSavings", "accounts", false,
+					TransactSavings_GetAccount0_WHC, "a_custid", "a_bal");
+			pu.addQueryStatement("TransactSavings", TransactSavings_GetAccount0);
+
+			// if the balance is larger than amount
+			Expression TransactSavings_IF1_C = new E_BinUp(BinOp.GT, pu.getProjExpr("TransactSavings", 0, "a_bal", 1),
+					pu.getArg("ts_amount"));
+			pu.addIfStatement("TransactSavings", TransactSavings_IF1_C);
+
+			// write customer's new saving's balance
+			WHC_Constraint ZeroCheckingBalance_WHC_1_dest = new WHC_Constraint(pu.getTableName("accounts"),
+					pu.getFieldName("a_custid"), BinOp.EQ, pu.getProjExpr(txn_name, 0, "a_custid", 1));
+			WHC_Constraint ZeroCheckingBalance_WHC_2_dest = new WHC_Constraint(pu.getTableName("accounts"),
+					pu.getFieldName("a_uuid"), BinOp.EQ, new E_UUID());
+			WHC_Constraint ZeroCheckingBalance_WHC_3_dest = new WHC_Constraint(pu.getTableName("accounts"),
+					pu.getFieldName("is_checking"), BinOp.EQ, new E_Const_Bool(false));
+			Insert_Query SendPayment_U1_dest = pu.addInsertQuery(txn_name, "accounts", true,
+					ZeroCheckingBalance_WHC_1_dest, ZeroCheckingBalance_WHC_2_dest, ZeroCheckingBalance_WHC_3_dest);
+			SendPayment_U1_dest.addInsertExp(pu.getFieldName("a_bal"), pu.getArg("ts_amount"));
+			pu.addQueryStatementInIf("TransactSavings", 0, SendPayment_U1_dest);
 
 		}
 		/*
@@ -167,8 +240,44 @@ public class UnifiedCRDTSmallBankProgramGenerator {
 		 * 
 		 */
 		if (txns.contains("WriteCheck")) {
+			String txn_name = "WriteCheck";
 			pu.addTrnasaction("WriteCheck", "wc_custName:string", "wc_amount:int");
+			// retrive customer's id based on his/her name
+			WHC WriteCheck_GetAccount0_WHC = new WHC(pu.getIsAliveFieldName("accounts"), new WHC_Constraint(
+					pu.getTableName("accounts"), pu.getFieldName("a_name"), BinOp.EQ, pu.getArg("wc_custName")));
+			Select_Query WriteCheck_GetAccount0 = pu.addSelectQuery("WriteCheck", "accounts", false,
+					WriteCheck_GetAccount0_WHC, "a_custid", "a_bal");
+			pu.addQueryStatement("WriteCheck", WriteCheck_GetAccount0);
 
+			// if the total of balances is high enough
+			Expression WriteCheck_IF1_C = new E_BinUp(BinOp.GT, pu.getProjExpr("WriteCheck", 0, "a_bal", 1),
+					pu.getArg("wc_amount"));
+			pu.addIfStatement("WriteCheck", WriteCheck_IF1_C);
+			// update their checking
+			WHC_Constraint ZeroCheckingBalance_WHC_1_dest = new WHC_Constraint(pu.getTableName("accounts"),
+					pu.getFieldName("a_custid"), BinOp.EQ, pu.getProjExpr(txn_name, 0, "a_custid", 1));
+			WHC_Constraint ZeroCheckingBalance_WHC_2_dest = new WHC_Constraint(pu.getTableName("accounts"),
+					pu.getFieldName("a_uuid"), BinOp.EQ, new E_UUID());
+			WHC_Constraint ZeroCheckingBalance_WHC_3_dest = new WHC_Constraint(pu.getTableName("accounts"),
+					pu.getFieldName("is_checking"), BinOp.EQ, new E_Const_Bool(true));
+			Insert_Query SendPayment_U1_dest = pu.addInsertQuery(txn_name, "accounts", true,
+					ZeroCheckingBalance_WHC_1_dest, ZeroCheckingBalance_WHC_2_dest, ZeroCheckingBalance_WHC_3_dest);
+			SendPayment_U1_dest.addInsertExp(pu.getFieldName("a_bal"), pu.getArg("wc_amount"));
+			pu.addQueryStatementInIf("WriteCheck", 0, SendPayment_U1_dest);
+
+			// else: update their checking
+			WHC_Constraint ZeroCheckingBalance_WHC_1_dest_else = new WHC_Constraint(pu.getTableName("accounts"),
+					pu.getFieldName("a_custid"), BinOp.EQ, pu.getProjExpr(txn_name, 0, "a_custid", 1));
+			WHC_Constraint ZeroCheckingBalance_WHC_2_dest_else = new WHC_Constraint(pu.getTableName("accounts"),
+					pu.getFieldName("a_uuid"), BinOp.EQ, new E_UUID());
+			WHC_Constraint ZeroCheckingBalance_WHC_3_dest_else = new WHC_Constraint(pu.getTableName("accounts"),
+					pu.getFieldName("is_checking"), BinOp.EQ, new E_Const_Bool(true));
+			Insert_Query SendPayment_U1_dest_else = pu.addInsertQuery(txn_name, "accounts", true,
+					ZeroCheckingBalance_WHC_1_dest_else, ZeroCheckingBalance_WHC_2_dest_else,
+					ZeroCheckingBalance_WHC_3_dest_else);
+			SendPayment_U1_dest_else.addInsertExp(pu.getFieldName("a_bal"),
+					new E_BinUp(BinOp.PLUS, pu.getArg("wc_amount"), new E_Const_Num(1)));
+			pu.addQueryStatementInElse("WriteCheck", 0, SendPayment_U1_dest_else);
 		}
 		return pu.getProgram();
 

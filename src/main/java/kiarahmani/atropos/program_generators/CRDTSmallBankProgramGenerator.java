@@ -121,6 +121,28 @@ public class CRDTSmallBankProgramGenerator {
 		if (txns.contains("Balance")) {
 			pu.addTrnasaction("Balance", "ba_custName:string");
 			// get customer's id based on his/her name
+			// get customer's id based on his/her name
+			WHC Balance_GetAccount0_WHC = new WHC(pu.getIsAliveFieldName("accounts"), new WHC_Constraint(
+					pu.getTableName("accounts"), pu.getFieldName("a_name"), BinOp.EQ, pu.getArg("ba_custName")));
+			Select_Query Balance_GetAccount0 = pu.addSelectQuery("Balance", "accounts", false, Balance_GetAccount0_WHC,
+					"a_custid");
+			pu.addQueryStatement("Balance", Balance_GetAccount0);
+
+			// retrieve customer's savings balance based on the retrieved id
+			WHC Balance_GetSavings_WHC = new WHC(pu.getIsAliveFieldName("savings"),
+					new WHC_Constraint(pu.getTableName("savings"), pu.getFieldName("s_custid"), BinOp.EQ,
+							pu.getProjExpr("Balance", 0, "a_custid", 1)));
+			Select_Query Balance_GetSavings = pu.addSelectQuery("Balance", "savings", true, Balance_GetSavings_WHC,
+					"s_bal");
+			pu.addQueryStatement("Balance", Balance_GetSavings);
+
+			// retrieve customer's checking balance based on the retrieved id
+			WHC Balance_GetChecking_WHC = new WHC(pu.getIsAliveFieldName("checking"),
+					new WHC_Constraint(pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ,
+							pu.getProjExpr("Balance", 0, "a_custid", 1)));
+			Select_Query Balance_GetChecking = pu.addSelectQuery("Balance", "checking", true, Balance_GetChecking_WHC,
+					"c_bal");
+			pu.addQueryStatement("Balance", Balance_GetChecking);
 
 		}
 		/*

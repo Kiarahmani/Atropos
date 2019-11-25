@@ -50,9 +50,9 @@ public class If_Statement extends Statement {
 			stmt.printStatemenet(indent + "       ");
 		System.out.println(indent + "}");
 		if (else_statements.size() > 0) {
-			System.out.println(indent + "ELSE {");
+			System.out.println(indent + "    ELSE {");
 			for (Statement stmt : else_statements)
-				stmt.printStatemenet(indent + "   ");
+				stmt.printStatemenet(indent + "       ");
 			System.out.println(indent + "}");
 		}
 	}
@@ -64,9 +64,9 @@ public class If_Statement extends Statement {
 			stmt.printStatemenet("       ");
 		System.out.println("}");
 		if (else_statements.size() > 0) {
-			System.out.println("ELSE {");
+			System.out.println("    ELSE {");
 			for (Statement stmt : else_statements)
-				stmt.printStatemenet("   ");
+				stmt.printStatemenet("       ");
 			System.out.println("}");
 		}
 
