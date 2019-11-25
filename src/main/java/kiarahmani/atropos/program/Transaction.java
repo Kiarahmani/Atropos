@@ -67,6 +67,10 @@ public class Transaction {
 		this.args.add(a);
 	}
 
+	public boolean hasSameName(Transaction other) {
+		return this.TransactionName.equals(other.getName());
+	}
+
 	public void printTransaction() {
 		System.out.print(TransactionName + "(");
 		String delim = "";

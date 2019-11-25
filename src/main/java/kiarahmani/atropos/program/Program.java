@@ -29,11 +29,11 @@ public class Program {
 		return this.transactions;
 	}
 
-	public ArrayList<Transaction> getInvolvedTransactions() {
+	public ArrayList<Transaction> getIncludedTransactions() {
 		ArrayList<Transaction> result = new ArrayList<>();
-		for (Transaction t : this.transactions)
-			if (t.is_included)
-				result.add(t);
+		for (Transaction txn : this.transactions)
+			if (txn.is_included)
+				result.add(txn);
 		return result;
 	}
 
@@ -52,6 +52,10 @@ public class Program {
 
 	public int numberOfTransactions() {
 		return this.transactions.size();
+	}
+
+	public int numberOfIncludedTransactions() {
+		return getIncludedTransactions().size();
 	}
 
 	public Transaction getTransactions(int i) {
@@ -89,7 +93,8 @@ public class Program {
 		return result.toArray(new String[size]);
 	}
 
-	public String[] getAllInvolvedTxnNames() {
+
+	public String[] getAllIncludedTxnNames() {
 		List<String> result = new ArrayList<String>();
 		int size = 0;
 		for (Transaction t : this.transactions) {

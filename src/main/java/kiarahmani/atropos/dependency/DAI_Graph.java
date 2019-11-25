@@ -25,7 +25,7 @@ public class DAI_Graph {
 	}
 
 	public void printDAIGraph() {
-		System.out.println("## DAI GRAPH");
+		System.out.println("\n## DAI GRAPH");
 		int iter=1;
 		for (DAI dai : this.dais)
 			System.out.println("("+(iter++)+") "+dai);
