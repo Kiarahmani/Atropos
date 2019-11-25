@@ -72,7 +72,7 @@ public class Z3Driver {
 		addNumericEnumSorts("Ro", Constants._MAX_VARIABLE_RO);
 		addNumericEnumSorts("Part", Constants._MAX_PARTITION_NUMBER);
 		addEnumSorts("RecType", program.getAllTableNames());
-		addEnumSorts("TxnType", program.getAllTxnNames());
+		addEnumSorts("TxnType", program.getAllIncludedTxnNames());
 		addTypingFuncs();
 		addExecutionFuncs();
 		initializeLocalVariables();
@@ -136,7 +136,7 @@ public class Z3Driver {
 
 	private void constrainWrittenVals(Program program) {
 		Z3Logger.SubHeaderZ3(";; constraints on written_val_* functions");
-		for (Transaction txn : program.getTransactions()) {
+		for (Transaction txn : program.getIncludedTransactions()) {
 			Z3Logger.LogZ3(";; Queries of txn: " + txn.getName());
 			for (Query q : txn.getAllQueries()) {
 				Z3Logger.LogZ3(";; " + q.getId());
@@ -524,7 +524,7 @@ public class Z3Driver {
 	}
 
 	private void constrainIsExecuted(Program program, Expression_Maker em) {
-		for (Transaction txn : program.getTransactions()) {
+		for (Transaction txn : program.getIncludedTransactions()) {
 			Z3Logger.SubHeaderZ3("is executed? (" + txn.getName() + ")");
 			for (Query q : txn.getAllQueries())
 				addQryTypeToIsExecuted(txn, q);
@@ -600,7 +600,7 @@ public class Z3Driver {
 						ctx.mkImplies(unrelated_body, unrelated_pre_condition1), 1, null, null, null, null);
 				addAssertions(unrelated_result);
 			}
-		for (Transaction txn : program.getTransactions()) {
+		for (Transaction txn : program.getIncludedTransactions()) {
 			Z3Logger.LogZ3(";; Queries of txn: " + txn.getName());
 			for (Query q : txn.getAllQueries()) {
 				Z3Logger.LogZ3(";; " + q.getId());
@@ -678,7 +678,7 @@ public class Z3Driver {
 				addAssertions(unrelated_result);
 			}
 
-		for (Transaction txn : program.getTransactions()) {
+		for (Transaction txn : program.getIncludedTransactions()) {
 			Z3Logger.LogZ3(";; Queries of txn: " + txn.getName());
 			// constrain quries of the related transactions
 			for (Query q : txn.getAllQueries()) {
@@ -854,7 +854,7 @@ public class Z3Driver {
 
 	private void addVariablesFuncs(Program program) {
 		Z3Logger.HeaderZ3(program.getName() + " (Variables)");
-		for (Transaction txn : program.getTransactions()) {
+		for (Transaction txn : program.getIncludedTransactions()) {
 			for (Query q : txn.getAllQueries()) {
 				if (!q.isWrite()) {
 					Variable current_var = ((Select_Query) q).getVariable();
@@ -925,7 +925,7 @@ public class Z3Driver {
 
 	public void addArgsFuncs(Program program) {
 		Z3Logger.HeaderZ3(program.getName() + " (Transactrions Sorts, types and functions)");
-		for (Transaction txn : program.getTransactions()) {
+		for (Transaction txn : program.getIncludedTransactions()) {
 			Z3Logger.SubHeaderZ3("Transaction: " + txn.getName());
 			for (E_Arg arg : txn.getArgs()) {
 				String funcName = txn.getName() + "_arg_" + arg.getName();

@@ -29,6 +29,14 @@ public class Program {
 		return this.transactions;
 	}
 
+	public ArrayList<Transaction> getIncludedTransactions() {
+		ArrayList<Transaction> result = new ArrayList<>();
+		for (Transaction txn : this.transactions)
+			if (txn.is_included)
+				result.add(txn);
+		return result;
+	}
+
 	public void setMaxQueryCount() {
 		int result = -1;
 		for (Transaction txn : this.transactions) {
@@ -44,6 +52,10 @@ public class Program {
 
 	public int numberOfTransactions() {
 		return this.transactions.size();
+	}
+
+	public int numberOfIncludedTransactions() {
+		return getIncludedTransactions().size();
 	}
 
 	public Transaction getTransactions(int i) {
@@ -81,6 +93,18 @@ public class Program {
 		return result.toArray(new String[size]);
 	}
 
+	public String[] getAllIncludedTxnNames() {
+		List<String> result = new ArrayList<String>();
+		int size = 0;
+		for (Transaction t : this.transactions) {
+			if (t.is_included) {
+				result.add(t.getName());
+				size++;
+			}
+		}
+		return result.toArray(new String[size]);
+	}
+
 	public ArrayList<Table> getTables() {
 		return this.tables;
 	}
@@ -111,7 +135,7 @@ public class Program {
 	}
 
 	public void printProgram() {
-		System.out.println("\n\n### " + programName.toUpperCase() );
+		System.out.println("\n\n### " + programName.toUpperCase());
 		System.out.println("## SCHEMA:");
 		for (Table t : tables)
 			System.out.println(t.toString());
