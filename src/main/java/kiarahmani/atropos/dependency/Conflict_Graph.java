@@ -1,6 +1,7 @@
 package kiarahmani.atropos.dependency;
 
 import java.util.ArrayList;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,14 +21,14 @@ public class Conflict_Graph {
 	private ArrayList<Conflict> conflicts;
 	private static final Logger logger = LogManager.getLogger(Atropos.class);
 
-	public ArrayList<Conflict> getConfsFromQuery(Query q) {
+	public ArrayList<Conflict> getConfsFromQuery(Query q, Set<Transaction> involved_txns) {
 		ArrayList<Conflict> result = new ArrayList<>();
 		for (Conflict c : this.conflicts)
-			if (c.getQuery(1) == q)
-				result.add(c);
-			else if (c.getQuery(2) == q)
-				result.add(createReverse(c));
-
+			if (involved_txns.contains(c.getTransaction(1)) && involved_txns.contains(c.getTransaction(2)))
+				if (c.getQuery(1) == q)
+					result.add(c);
+				else if (c.getQuery(2) == q)
+					result.add(createReverse(c));
 		return result;
 	}
 

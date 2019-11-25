@@ -11,11 +11,19 @@ public class Transaction {
 	private String TransactionName;
 	private ArrayList<Statement> statements;
 	private ArrayList<E_Arg> args;
+	public boolean is_included;
 
 	public ArrayList<E_Arg> getArgs() {
 		return this.args;
 	}
 
+	
+	
+	public boolean is_equal (Transaction other) {
+		return this.TransactionName.equals(other.getName());
+	}
+	
+	
 	public String getName() {
 		return this.TransactionName;
 	}
@@ -40,6 +48,9 @@ public class Transaction {
 			result.addAll(stmt.getAllQueries());
 		return result;
 	}
+	
+	
+
 
 	public String[] getAllStmtTypes() {
 		List<String> result = new ArrayList<String>();

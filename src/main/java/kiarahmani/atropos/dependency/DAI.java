@@ -58,4 +58,8 @@ public class DAI {
 		return (this.q1 == other.q1 && this.q2 == other.q2 && this.txn == other.txn && arr1 && arr2);
 	}
 
+	public boolean QsEqul(DAI other) {
+		return (this.q1 == other.q1 && this.q2 == other.q2 && this.txn.equals(other.txn));
+	}
+
 }

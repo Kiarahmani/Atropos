@@ -18,7 +18,7 @@ import kiarahmani.atropos.DML.where_clause.WHC_Constraint;
 import kiarahmani.atropos.program.Program;
 import kiarahmani.atropos.utils.Program_Utils;
 
-public class UnifiedSmallBankProgramGenerator {
+public class UnifiedSmallBankProgramGenerator implements ProgramGenerator {
 
 	/*
 	 * 

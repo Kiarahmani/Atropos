@@ -29,6 +29,14 @@ public class Program {
 		return this.transactions;
 	}
 
+	public ArrayList<Transaction> getInvolvedTransactions() {
+		ArrayList<Transaction> result = new ArrayList<>();
+		for (Transaction t : this.transactions)
+			if (t.is_included)
+				result.add(t);
+		return result;
+	}
+
 	public void setMaxQueryCount() {
 		int result = -1;
 		for (Transaction txn : this.transactions) {
@@ -81,6 +89,18 @@ public class Program {
 		return result.toArray(new String[size]);
 	}
 
+	public String[] getAllInvolvedTxnNames() {
+		List<String> result = new ArrayList<String>();
+		int size = 0;
+		for (Transaction t : this.transactions) {
+			if (t.is_included) {
+				result.add(t.getName());
+				size++;
+			}
+		}
+		return result.toArray(new String[size]);
+	}
+
 	public ArrayList<Table> getTables() {
 		return this.tables;
 	}
@@ -111,7 +131,7 @@ public class Program {
 	}
 
 	public void printProgram() {
-		System.out.println("\n\n### " + programName.toUpperCase() );
+		System.out.println("\n\n### " + programName.toUpperCase());
 		System.out.println("## SCHEMA:");
 		for (Table t : tables)
 			System.out.println(t.toString());

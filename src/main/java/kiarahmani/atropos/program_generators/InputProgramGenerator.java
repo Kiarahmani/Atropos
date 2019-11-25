@@ -9,7 +9,6 @@ import kiarahmani.atropos.DML.expression.E_BinUp;
 import kiarahmani.atropos.DML.expression.E_UUID;
 import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.expression.constants.E_Const_Num;
-import kiarahmani.atropos.DML.query.Delete_Query;
 import kiarahmani.atropos.DML.query.Insert_Query;
 import kiarahmani.atropos.DML.query.Select_Query;
 import kiarahmani.atropos.DML.query.Update_Query;
@@ -18,7 +17,7 @@ import kiarahmani.atropos.DML.where_clause.WHC_Constraint;
 import kiarahmani.atropos.program.Program;
 import kiarahmani.atropos.utils.Program_Utils;
 
-public class InputProgramGenerator {
+public class InputProgramGenerator implements ProgramGenerator {
 
 	/*
 	 * 
@@ -27,7 +26,7 @@ public class InputProgramGenerator {
 	 * 
 	 * 
 	 */
-	public Program generateUnitTestProgram(String... args) {
+	public Program generate(String... args) {
 
 		ArrayList<String> txns = new ArrayList<>();
 		for (String txn : args)
@@ -103,10 +102,10 @@ public class InputProgramGenerator {
 			// pu.addQueryStatement(txn_name, increments_DEC_U1);
 
 			// delete
-			WHC increments_DEC_U1_WHC1 = new WHC(pu.getIsAliveFieldName("accs"),
-					new WHC_Constraint(pu.getTableName("accs"), pu.getFieldName("key"), BinOp.EQ,
-							new E_BinUp(BinOp.PLUS, new E_Const_Num(67), new E_Const_Num(1))));
-			Delete_Query increments_DEC_U11 = pu.addDeleteQuery("increments", "accs", true, increments_DEC_U1_WHC1);
+			//WHC increments_DEC_U1_WHC1 = new WHC(pu.getIsAliveFieldName("accs"),
+			//		new WHC_Constraint(pu.getTableName("accs"), pu.getFieldName("key"), BinOp.EQ,
+			//				new E_BinUp(BinOp.PLUS, new E_Const_Num(67), new E_Const_Num(1))));
+			//Delete_Query increments_DEC_U11 = pu.addDeleteQuery("increments", "accs", true, increments_DEC_U1_WHC1);
 			// pu.addQueryStatement("increments", increments_DEC_U11);
 
 			// insert
@@ -123,4 +122,6 @@ public class InputProgramGenerator {
 
 		return pu.getProgram();
 	}
+
+
 }
