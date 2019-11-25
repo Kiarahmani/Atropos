@@ -147,6 +147,7 @@ public class UnifiedCRDTSmallBankProgramGenerator {
 			Insert_Query ZeroCheckingBalance2 = pu.addInsertQuery(txn_name, "accounts", true, ZeroCheckingBalance_WHC_1,
 					ZeroCheckingBalance_WHC_2, ZeroCheckingBalance_WHC_3);
 			ZeroCheckingBalance2.addInsertExp(pu.getFieldName("a_bal"), pu.getArg("dc_amount"));
+			ZeroCheckingBalance2.addInsertExp(pu.getFieldName("a_name"), pu.getArg("dc_custName"));
 			pu.addQueryStatement(txn_name, ZeroCheckingBalance2);
 
 		}
@@ -231,6 +232,7 @@ public class UnifiedCRDTSmallBankProgramGenerator {
 			Insert_Query SendPayment_U1_dest = pu.addInsertQuery(txn_name, "accounts", true,
 					ZeroCheckingBalance_WHC_1_dest, ZeroCheckingBalance_WHC_2_dest, ZeroCheckingBalance_WHC_3_dest);
 			SendPayment_U1_dest.addInsertExp(pu.getFieldName("a_bal"), pu.getArg("ts_amount"));
+			//SendPayment_U1_dest.addInsertExp(pu.getFieldName("a_name"), pu.getArg("ts_custName"));
 			pu.addQueryStatementInIf("TransactSavings", 0, SendPayment_U1_dest);
 
 		}
