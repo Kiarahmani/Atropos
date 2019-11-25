@@ -32,6 +32,9 @@ public class FieldName {
 	}
 
 	public String toStringWithType() {
-		return "(" + this.name + ":" + this.f_type + ")";
+		if (this.isPK)
+			return "*(" + this.name + ":" + this.f_type + ")*";
+		else
+			return "(" + this.name + ":" + this.f_type + ")";
 	}
 }

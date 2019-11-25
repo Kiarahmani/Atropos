@@ -31,8 +31,8 @@ public class Atropos {
 		//UnifiedSmallBankProgramGenerator ipg = new UnifiedSmallBankProgramGenerator();
 		//CRDTSmallBankProgramGenerator ipg = new CRDTSmallBankProgramGenerator();
 		UnifiedCRDTSmallBankProgramGenerator ipg = new UnifiedCRDTSmallBankProgramGenerator(); 
-		Program program = ipg.generate("Balance", "Amalgamate", "TransactSavings", "DepositChecking", "SendPayment",
-				"WriteCheck");
+		Program program = ipg.generate("Balance1", "Amalgamate1", "TransactSavings", "DepositChecking", "SendPayment1",
+				"WriteCheck1");
 
 		Conflict_Graph cg = new Conflict_Graph(program);
 		Encoding_Engine ee = new Encoding_Engine(program);
