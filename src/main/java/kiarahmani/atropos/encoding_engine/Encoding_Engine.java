@@ -75,12 +75,14 @@ public class Encoding_Engine {
 			logger.debug("begin analysis for DAI: " + pot_dai);
 			for (Conflict c1 : cg.getConfsFromQuery(pot_dai.getQuery(1)))
 				for (Conflict c2 : cg.getConfsFromQuery(pot_dai.getQuery(2))) {
-					Set<Transaction> involved_transactions = new HashSet<>();
-					involved_transactions.add(pot_dai.getTransaction());
-					involved_transactions.add(c1.getTransaction(2));
-					involved_transactions.add(c2.getTransaction(2));
 					logger.debug("involved transactions: " + pot_dai.getTransaction().getName() + "-"
 							+ c1.getTransaction(2).getName() + "-" + c2.getTransaction(2).getName());
+					for (Transaction txn : program.getTransactions())
+						if (txn.hasSameName(pot_dai.getTransaction()) || txn.hasSameName(c1.getTransaction(2))
+								|| txn.hasSameName(c2.getTransaction(2)))
+							txn.is_included = true;
+						else
+							txn.is_included = false;
 					z3logger.reset();
 					Z3Driver local_z3_driver = new Z3Driver();
 					// check if it is actualy a valid instance

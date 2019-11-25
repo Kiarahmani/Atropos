@@ -11,6 +11,7 @@ public class Transaction {
 	private String TransactionName;
 	private ArrayList<Statement> statements;
 	private ArrayList<E_Arg> args;
+	public boolean is_included;
 
 	public ArrayList<E_Arg> getArgs() {
 		return this.args;
@@ -54,6 +55,10 @@ public class Transaction {
 
 	public void addArg(E_Arg a) {
 		this.args.add(a);
+	}
+
+	public boolean hasSameName(Transaction other) {
+		return this.TransactionName.equals(other.getName());
 	}
 
 	public void printTransaction() {
