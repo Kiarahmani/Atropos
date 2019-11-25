@@ -2,9 +2,9 @@
 TODO:
   
   
-  - support for insert and delete
-  - support for determining size of variables
-  - support for aggregating queries
+  - Analyze the encoding engine and figure out why it works so slowly on CRDT
+    version (I don't think it is justified)
+  - (syntactical) support for aggregating queries
   - support for ATOMIC ops and range operations 
   - support for for loops
  

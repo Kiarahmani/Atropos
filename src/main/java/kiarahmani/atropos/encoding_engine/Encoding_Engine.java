@@ -61,6 +61,7 @@ public class Encoding_Engine {
 					potential_dais.add(dai);
 				}
 		}
+		System.out.println("Number of potential DAIs: "+potential_dais.size());
 		int iter = 0;
 		dais_loop: for (DAI pot_dai : potential_dais) {
 			logger.debug("begin analysis for DAI: " + pot_dai);

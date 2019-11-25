@@ -29,7 +29,7 @@ public class Atropos {
 		long time_begin = System.currentTimeMillis();
 		logger.debug("New Constants object initialized");
 
-		ProgramGenerator ipg = new SmallBankProgramGenerator();
+		ProgramGenerator ipg = new UnifiedSmallBankProgramGenerator();
 		Program program = ipg.generate("Balance", "Amalgamate", "TransactSavings", "DepositChecking", "SendPayment",
 				"WriteCheck");
 
