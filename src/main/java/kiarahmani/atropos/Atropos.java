@@ -30,7 +30,7 @@ public class Atropos {
 		//SmallBankProgramGenerator ipg = new SmallBankProgramGenerator();
 		//UnifiedSmallBankProgramGenerator ipg = new UnifiedSmallBankProgramGenerator();
 		//CRDTSmallBankProgramGenerator ipg = new CRDTSmallBankProgramGenerator();
-		UnifiedCRDTSmallBankProgramGenerator ipg = new UnifiedCRDTSmallBankProgramGenerator();
+		UnifiedCRDTSmallBankProgramGenerator ipg = new UnifiedCRDTSmallBankProgramGenerator(); 
 		Program program = ipg.generate("Balance", "Amalgamate", "TransactSavings", "DepositChecking", "SendPayment",
 				"WriteCheck");
 
