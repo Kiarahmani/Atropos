@@ -5,11 +5,14 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.swing.plaf.SliderUI;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.ietf.jgss.Oid;
 
 import com.microsoft.z3.Status;
 
@@ -50,12 +53,12 @@ public class Encoding_Engine {
 
 	public void constructInitialDAIGraph(String program_name, Conflict_Graph cg) {
 		DAI_Graph dai_graph = new DAI_Graph();
-		int iter = 0;
-		System.out.println("\n\n## DAI");
+		ArrayList<DAI> potential_dais = new ArrayList<>();
+		// first find all potential dais
 		for (Transaction txn : program.getTransactions()) {
 			logger.debug("finding potential DAIs in txn:" + txn.getName());
 			ArrayList<Query> all_queries = txn.getAllQueries();
-			for (int i = 0; i < all_queries.size(); i++) {
+			for (int i = 0; i < all_queries.size(); i++)
 				for (int j = i + 1; j < all_queries.size(); j++) {
 					Query q1 = all_queries.get(i);
 					Query q2 = all_queries.get(j);
@@ -64,32 +67,41 @@ public class Encoding_Engine {
 					ArrayList<FieldName> accessed_by_q2 = (q2.isWrite()) ? q2.getWrittenFieldNames()
 							: q2.getReadFieldNames();
 					DAI dai = new DAI(txn, q1, accessed_by_q1, q2, accessed_by_q2);
-					logger.debug("potential DAI: " + dai);
-					outer_conflicts: for (Conflict c1 : cg.getConfsFromQuery(q1))
-						inner_conflicts: for (Conflict c2 : cg.getConfsFromQuery(q2)) {
-							// the potential DAI:
-							z3logger.reset();
-							Z3Driver local_z3_driver = new Z3Driver();
-							// check if it is actualy a valid instance
-							System.out.println("Round# " + iter++ + "");
-							printBaseAnomaly(iter, dai, c1, c2);
-							long begin = System.currentTimeMillis();
-							Status status = local_z3_driver.generateDAI(this.program, 4, dai, c1, c2);
-							long end = System.currentTimeMillis();
-							printResults(status, end - begin);
-							// if SAT, add the potential DAI to the graph
-							if (status == Status.SATISFIABLE) {
-								dai_graph.addDAI(dai);
-								if (!Constants._IS_TEST)
-									break outer_conflicts;
-							}
-							// free up solver's memory for the next iteration
-							local_z3_driver = null;
-
-						}
+					potential_dais.add(dai);
 				}
-			}
 		}
+		int iter = 0;
+		dais_loop: for (DAI pot_dai : potential_dais) {
+			logger.debug("begin analysis for DAI: " + pot_dai);
+			for (Conflict c1 : cg.getConfsFromQuery(pot_dai.getQuery(1)))
+				for (Conflict c2 : cg.getConfsFromQuery(pot_dai.getQuery(2))) {
+					Set<Transaction> involved_transactions = new HashSet<>();
+					involved_transactions.add(pot_dai.getTransaction());
+					involved_transactions.add(c1.getTransaction(2));
+					involved_transactions.add(c2.getTransaction(2));
+					logger.debug("involved transactions: " + pot_dai.getTransaction().getName() + "-"
+							+ c1.getTransaction(2).getName() + "-" + c2.getTransaction(2).getName());
+					z3logger.reset();
+					Z3Driver local_z3_driver = new Z3Driver();
+					// check if it is actualy a valid instance
+					System.out.println("Round# " + iter++ + "");
+					printBaseAnomaly(iter, pot_dai, c1, c2);
+					long begin = System.currentTimeMillis();
+					Status status = local_z3_driver.generateDAI(this.program, 4, pot_dai, c1, c2);
+					long end = System.currentTimeMillis();
+					printResults(status, end - begin);
+					// if SAT, add the potential DAI to the graph
+					// if SAT, add the potential DAI to the graph
+					if (status == Status.SATISFIABLE) {
+						dai_graph.addDAI(pot_dai);
+						if (!Constants._IS_TEST)
+							continue dais_loop;
+					}
+					// free up solver's memory for the next iteration
+					local_z3_driver = null;
+				}
+		}
+		System.out.println("\n\n");
 		dai_graph.printDAIGraph();
 	}
 
