@@ -192,7 +192,7 @@ public class Expression_Maker {
 		// edges[0] = (dependency_length == 4) ? ctx.mkEq(Ts[1], Ts[2]) : edges[0];
 
 		Expr body = ctx.mkAnd(base_txn_type, base_txn_po_1, base_txn_po_2, first_txn_type, first_txn_po_1,
-				last_txn_type, last_txn_po_1, base_edge_1, base_edge_2, ctx.mkAnd(edges), ctx.mkAnd(all_queries_are_on_cycle));
+				last_txn_type, last_txn_po_1, base_edge_1, base_edge_2, ctx.mkAnd(edges));
 		Expr[] result = new Expr[dependency_length + dependency_length - 1];
 		System.arraycopy(Ts, 0, result, 0, dependency_length - 1);
 		System.arraycopy(POs, 0, result, dependency_length - 1, dependency_length);
