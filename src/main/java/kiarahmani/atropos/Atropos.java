@@ -8,11 +8,9 @@ import org.apache.logging.log4j.Logger;
 import kiarahmani.atropos.dependency.Conflict_Graph;
 import kiarahmani.atropos.encoding_engine.Encoding_Engine;
 import kiarahmani.atropos.program.Program;
-import kiarahmani.atropos.program_generators.CRDTSmallBankProgramGenerator;
+import kiarahmani.atropos.program_generators.ProgramGenerator;
 import kiarahmani.atropos.program_generators.SmallBankProgramGenerator;
-import kiarahmani.atropos.program_generators.TestInputProgramGenerator;
 import kiarahmani.atropos.program_generators.UnifiedCRDTSmallBankProgramGenerator;
-import kiarahmani.atropos.program_generators.UnifiedSmallBankProgramGenerator;
 import kiarahmani.atropos.utils.Constants;
 
 public class Atropos {
@@ -26,13 +24,11 @@ public class Atropos {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		long time_begin = System.currentTimeMillis();
 		logger.debug("New Constants object initialized");
-		//SmallBankProgramGenerator ipg = new SmallBankProgramGenerator();
-		//UnifiedSmallBankProgramGenerator ipg = new UnifiedSmallBankProgramGenerator();
-		//CRDTSmallBankProgramGenerator ipg = new CRDTSmallBankProgramGenerator();
-		UnifiedCRDTSmallBankProgramGenerator ipg = new UnifiedCRDTSmallBankProgramGenerator(); 
-		Program program = ipg.generate("Balance1", "Amalgamate1", "TransactSavings", "DepositChecking", "SendPayment1",
-				"WriteCheck1");
+		ProgramGenerator ipg = new SmallBankProgramGenerator();
+		Program program = ipg.generate("Balance", "Amalgamate", "TransactSavings", "DepositChecking", "SendPayment",
+				"WriteCheck");
 
 		Conflict_Graph cg = new Conflict_Graph(program);
 		Encoding_Engine ee = new Encoding_Engine(program);
@@ -40,5 +36,7 @@ public class Atropos {
 		program.printProgram();
 		cg.printGraph();
 		ee.constructInitialDAIGraph(program.getName(), cg);
+		long time_end = System.currentTimeMillis();
+		System.out.println("\nTotal Time: " + (time_end - time_begin) + "ms\n");
 	}
 }

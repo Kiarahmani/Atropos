@@ -18,7 +18,7 @@ import kiarahmani.atropos.DML.where_clause.WHC_Constraint;
 import kiarahmani.atropos.program.Program;
 import kiarahmani.atropos.utils.Program_Utils;
 
-public class InputProgramGenerator {
+public class InputProgramGenerator implements ProgramGenerator {
 
 	/*
 	 * 
@@ -27,7 +27,7 @@ public class InputProgramGenerator {
 	 * 
 	 * 
 	 */
-	public Program generateUnitTestProgram(String... args) {
+	public Program generate(String... args) {
 
 		ArrayList<String> txns = new ArrayList<>();
 		for (String txn : args)
