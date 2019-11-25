@@ -751,8 +751,8 @@ public class Z3Driver {
 				objs.getEnum("Part")));
 		objs.addFunc("qry_is_executed", ctx.mkFuncDecl("qry_is_executed",
 				new Sort[] { objs.getSort("Txn"), objs.getEnum("Po") }, objs.getSort("Bool")));
-		objs.addFunc("qry_is_on_cycle", ctx.mkFuncDecl("qry_is_on_cycle",
-				new Sort[] { objs.getSort("Txn"), objs.getEnum("Po") }, objs.getSort("Bool")));
+	//	objs.addFunc("qry_is_on_cycle", ctx.mkFuncDecl("qry_is_on_cycle",
+	//
 	}
 
 	private void addTypingFuncs() {
