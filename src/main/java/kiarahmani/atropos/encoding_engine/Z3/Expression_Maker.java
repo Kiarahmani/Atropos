@@ -124,12 +124,15 @@ public class Expression_Maker {
 		// declare dependency edges (other then the 3 edge on/from/to the base
 		// transaction
 		BoolExpr[] edges = new BoolExpr[dependency_length - 3];
-		for (int i = 0; i < dependency_length - 3; i++)
+		BoolExpr[] all_queries_are_on_cycle = new BoolExpr[4];
+		for (int i = 0; i < dependency_length - 3; i++) {
 			if (i % 2 == 0) {
 				edges[i] = (BoolExpr) ctx.mkApp(objs.getfuncs("dep_st"), Ts[i + 1], POs[i + 1], Ts[i + 2], POs[i + 2]);
 			} else {
 				edges[i] = (BoolExpr) ctx.mkApp(objs.getfuncs("dep"), Ts[i + 1], POs[i + 1], Ts[i + 2], POs[i + 2]);
 			}
+			//all_queries_are_on_cycle[i] = (BoolExpr) ctx.mkApp(objs.getfuncs("qry_is_on_cycle"), Ts[i + 1], POs[i + 1]);
+		}
 
 		// assertions regarding base transaction
 		BoolExpr base_txn_type = ctx.mkEq(ctx.mkApp(objs.getfuncs("txn_type"), Ts[0]),
@@ -137,17 +140,21 @@ public class Expression_Maker {
 		BoolExpr base_txn_po_1 = ctx.mkEq(POs[0], objs.getEnumConstructor("Po", "po_" + dai.getQuery(1).getPo()));
 		BoolExpr base_txn_po_2 = ctx.mkEq(POs[dependency_length - 1],
 				objs.getEnumConstructor("Po", "po_" + dai.getQuery(2).getPo()));
+		all_queries_are_on_cycle[0] = (BoolExpr) ctx.mkApp(objs.getfuncs("qry_is_on_cycle"), Ts[0], POs[0]);
+		all_queries_are_on_cycle[1]= (BoolExpr) ctx.mkApp(objs.getfuncs("qry_is_on_cycle"), Ts[0], POs[dependency_length - 1]);
 
 		// assertions regarding the first neighbour
 		BoolExpr first_txn_type = ctx.mkEq(ctx.mkApp(objs.getfuncs("txn_type"), Ts[1]),
 				objs.getEnumConstructor("TxnType", c1.getTransaction(2).getName()));
 		BoolExpr first_txn_po_1 = ctx.mkEq(POs[1], objs.getEnumConstructor("Po", "po_" + c1.getQuery(2).getPo()));
+		all_queries_are_on_cycle[2]= (BoolExpr) ctx.mkApp(objs.getfuncs("qry_is_on_cycle"), Ts[1], POs[1]);
 
 		// assertions regarding the last neighbour
 		BoolExpr last_txn_type = ctx.mkEq(ctx.mkApp(objs.getfuncs("txn_type"), Ts[dependency_length - 2]),
 				objs.getEnumConstructor("TxnType", c2.getTransaction(2).getName()));
 		BoolExpr last_txn_po_1 = ctx.mkEq(POs[dependency_length - 2],
 				objs.getEnumConstructor("Po", "po_" + c2.getQuery(2).getPo()));
+		all_queries_are_on_cycle[3]= (BoolExpr) ctx.mkApp(objs.getfuncs("qry_is_on_cycle"), Ts[dependency_length - 2], POs[dependency_length - 2]);
 
 		// constrain the type of dependency for the edge between the base and first
 		// neighbour
@@ -186,7 +193,7 @@ public class Expression_Maker {
 		// edges[0] = (dependency_length == 4) ? ctx.mkEq(Ts[1], Ts[2]) : edges[0];
 
 		Expr body = ctx.mkAnd(base_txn_type, base_txn_po_1, base_txn_po_2, first_txn_type, first_txn_po_1,
-				last_txn_type, last_txn_po_1, base_edge_1, base_edge_2, ctx.mkAnd(edges));
+				last_txn_type, last_txn_po_1, base_edge_1, base_edge_2, ctx.mkAnd(edges), ctx.mkAnd(all_queries_are_on_cycle));
 		Expr[] result = new Expr[dependency_length + dependency_length - 1];
 		System.arraycopy(Ts, 0, result, 0, dependency_length - 1);
 		System.arraycopy(POs, 0, result, dependency_length - 1, dependency_length);
