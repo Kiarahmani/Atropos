@@ -69,7 +69,6 @@ public class SemiUnifiedCRDTSmallBankProgramGenerator implements ProgramGenerato
 					pu.getTableName("accounts"), pu.getFieldName("a_custid"), BinOp.EQ, pu.getArg("am_custId0")));
 			Select_Query GetAccount0 = pu.addSelectQuery(txn_name, "accounts", true, GetAccount0_WHC, "a_bal");
 			pu.addQueryStatement(txn_name, GetAccount0);
-
 			// retrieve customer1's name by id
 			WHC GetAccount1_WHC = new WHC(pu.getIsAliveFieldName("names"), new WHC_Constraint(pu.getTableName("names"),
 					pu.getFieldName("n_custid"), BinOp.EQ, pu.getArg("am_custId1")));

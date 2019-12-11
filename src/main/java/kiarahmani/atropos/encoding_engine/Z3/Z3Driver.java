@@ -680,7 +680,6 @@ public class Z3Driver {
 				addAssertions(unrelated_result);
 			}
 
-
 		for (Transaction txn : program.getIncludedTransactions()) {
 			Z3Logger.LogZ3(";; Queries of txn: " + txn.getName());
 			// constrain quries of the related transactions
@@ -746,6 +745,14 @@ public class Z3Driver {
 		Quantifier result1 = ctx.mkForall(new Expr[] { txn1, txn2, po1, po2 },
 				ctx.mkImplies(more_constraints, ctx.mkImplies(rhs1, pre_conditions)), 1, null, null, null, null);
 		addAssertion("uuids must be unique", result1);
+
+		// constrain the unused uuids
+		BoolExpr condition = (BoolExpr) ctx.mkApp(objs.getfuncs("qry_is_executed"), txn1, po1);
+		uuid11 = ctx.mkApp(uuid, txn1, po1);
+		rhs1 = (ctx.mkEq(uuid11, ctx.mkBV(0, Constants._MAX_ARG_INT)));
+		Quantifier result2 = ctx.mkForall(new Expr[] { txn1, po1 }, ctx.mkImplies(ctx.mkNot(condition), rhs1), 1, null,
+				null, null, null);
+		addAssertion("constrain unused uuids", result2);
 	}
 
 	private void addExecutionFuncs() {
