@@ -13,6 +13,8 @@ import kiarahmani.atropos.program_generators.ProgramGenerator;
 import kiarahmani.atropos.program_generators.SmallBankProgramGenerator;
 import kiarahmani.atropos.program_generators.UnifiedCRDTSmallBankProgramGenerator;
 import kiarahmani.atropos.program_generators.UnifiedSmallBankProgramGenerator;
+import kiarahmani.atropos.program_generators.SemiUnifiedCRDTSmallBankProgramGenerator;
+
 import kiarahmani.atropos.utils.Constants;
 
 public class Atropos {
@@ -29,17 +31,18 @@ public class Atropos {
 		long time_begin = System.currentTimeMillis();
 		logger.debug("New Constants object initialized");
 
-		ProgramGenerator ipg = new UnifiedSmallBankProgramGenerator();
+		ProgramGenerator ipg = new SemiUnifiedCRDTSmallBankProgramGenerator();
 		Program program = ipg.generate("Balance", "Amalgamate", "TransactSavings", "DepositChecking", "SendPayment",
 				"WriteCheck");
+		program.printProgram();
 
 		Conflict_Graph cg = new Conflict_Graph(program);
 		Encoding_Engine ee = new Encoding_Engine(program.getName());
-		DAI_Graph dai_graph = ee.constructInitialDAIGraph(program, cg); // 
+		DAI_Graph dai_graph = ee.constructInitialDAIGraph(program, cg); //
 		long time_end = System.currentTimeMillis();
 		program.printProgram();
 		cg.printGraph();
 		dai_graph.printDAIGraph();
-		System.out.println("\nTotal Time: " + (time_end - time_begin)/1000.0 + " s\n");
+		System.out.println("\nTotal Time: " + (time_end - time_begin) / 1000.0 + " s\n");
 	}
 }
