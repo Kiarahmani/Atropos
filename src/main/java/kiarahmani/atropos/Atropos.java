@@ -35,11 +35,11 @@ public class Atropos {
 
 		Conflict_Graph cg = new Conflict_Graph(program);
 		Encoding_Engine ee = new Encoding_Engine(program.getName());
-		DAI_Graph dai_graph = ee.constructInitialDAIGraph(program, cg);
+		DAI_Graph dai_graph = ee.constructInitialDAIGraph(program, cg); // 
 		long time_end = System.currentTimeMillis();
 		program.printProgram();
 		cg.printGraph();
 		dai_graph.printDAIGraph();
-		System.out.println("\nTotal Time: " + (time_end - time_begin) + "ms\n");
+		System.out.println("\nTotal Time: " + (time_end - time_begin)/1000.0 + " s\n");
 	}
 }

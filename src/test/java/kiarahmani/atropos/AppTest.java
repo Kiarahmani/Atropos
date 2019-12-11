@@ -46,8 +46,7 @@ public class AppTest {
 		int i = 1;
 		for (Status stat : expected_status) {
 			String prog_name = "select-update-test-" + i;
-			Program program = ipg.generateUnitTestProgram(prog_name, "");
-			Encoding_Engine ee = new Encoding_Engine(program);
+			Program program = ipg.generate(prog_name, "");
 			Conflict_Graph cg = new Conflict_Graph(program);
 			Transaction txn = program.getTransactions().get(0);
 			program.printProgram();
@@ -89,8 +88,7 @@ public class AppTest {
 		int prog_iter = 1;
 		for (int i = 0; i < expected_status.length;) {
 			String prog_name = "select-insert-test-" + prog_iter++;
-			Program program = ipg.generateUnitTestProgram(prog_name, "");
-			Encoding_Engine ee = new Encoding_Engine(program);
+			Program program = ipg.generate(prog_name, "");
 			Conflict_Graph cg = new Conflict_Graph(program);
 			Transaction txn = program.getTransactions().get(0);
 			program.printProgram();
@@ -130,8 +128,7 @@ public class AppTest {
 		int prog_iter = 1;
 		for (int i = 0; i < expected_status.length;) {
 			String prog_name = "select-delete-test-" + prog_iter++;
-			Program program = ipg.generateUnitTestProgram(prog_name, "");
-			Encoding_Engine ee = new Encoding_Engine(program);
+			Program program = ipg.generate(prog_name, "");
 			Conflict_Graph cg = new Conflict_Graph(program);
 			Transaction txn = program.getTransactions().get(0);
 			program.printProgram();

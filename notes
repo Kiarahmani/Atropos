@@ -10,7 +10,17 @@ TODO:
  
 
 ====================================================================================================
-IMPROVEMENTS: 
+IMPROVEMENTS:
+  - It seems that we can separate two scenarios where CRDT-like solutions could
+    be utilized:
+      1- classic read-modify case: such is increment a bank account
+      2- direct updates to a value: such as zeroing a bank account (which does
+         not depend on the initial value of the account)
+    We may be able to get rid of some unnecessary anomalies by deploying the
+    latter kind of solution in our search algorithm (imagine a new field where
+    capture if the inserted record is of the first type or the latter)
+
+   
   - Currently we assume inserts do write in *all* fields. This means that even
     when a simple increment row is insert into a balance table, it can have
     conflicts on the id field with other rows. This is unnecessary if we know
