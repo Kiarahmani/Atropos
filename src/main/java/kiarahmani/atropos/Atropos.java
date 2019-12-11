@@ -23,7 +23,7 @@ public class Atropos {
 
 	public static void main(String[] args) {
 		logger.debug("Enter main");
-		try {
+		try { 
 			new Constants();
 		} catch (IOException e) {
 			e.printStackTrace();
