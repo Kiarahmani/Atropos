@@ -61,7 +61,7 @@ public class Encoding_Engine {
 					potential_dais.add(dai);
 				}
 		}
-		System.out.println("Number of potential DAIs: "+potential_dais.size());
+		System.out.println("Number of potential DAIs: " + potential_dais.size());
 		int iter = 0;
 		dais_loop: for (DAI pot_dai : potential_dais) {
 			logger.debug("begin analysis for DAI: " + pot_dai);
@@ -84,7 +84,6 @@ public class Encoding_Engine {
 					Status status = local_z3_driver.generateDAI(program, 4, pot_dai, c1, c2);
 					long end = System.currentTimeMillis();
 					printResults(status, end - begin);
-					// if SAT, add the potential DAI to the graph
 					// if SAT, add the potential DAI to the graph
 					if (status == Status.SATISFIABLE) {
 						dai_graph.addDAI(pot_dai);
