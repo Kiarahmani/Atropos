@@ -85,6 +85,7 @@ public class Z3Driver {
 		addAssertion("bound_on_txn_instances", em.mk_bound_on_txn_instances(dependency_length));
 		constrainPKs(program, em);
 		addArgsFuncs(program);
+		addTxnAssertions(program);
 		addVariablesFuncs(program);
 		constrainIsExecuted(program, em);
 		Z3Logger.HeaderZ3(program.getName() + " reads_from and writes_to functions");
@@ -968,6 +969,20 @@ public class Z3Driver {
 			}
 		}
 	}
+	
+	
+	public void addTxnAssertions (Program program) {
+		Z3Logger.HeaderZ3(program.getName() + " (Assertions specified by users)");
+		for (Transaction txn : program.getIncludedTransactions()) {
+			Z3Logger.SubHeaderZ3("Transaction: " + txn.getName());
+			for (Expression ass: txn.getAssertions()) {
+				Quantifier result2 = ctx.mkForall(new Expr[] { txn1 }, (BoolExpr) translateExpressionsToZ3Expr(txn.getName(), txn1, ass, null), 1, null, null, null, null);
+				addAssertion("kir",result2);
+			}
+		}
+	}
+	
+	
 
 	private void addProjFuncsAndBounds(Program program) {
 		Z3Logger.HeaderZ3(program.getName() + " (/ sorts, types and functions)");

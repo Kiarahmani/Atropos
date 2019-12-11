@@ -7,7 +7,9 @@ import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DML.expression.BinOp;
 import kiarahmani.atropos.DML.expression.E_BinUp;
 import kiarahmani.atropos.DML.expression.E_UUID;
+import kiarahmani.atropos.DML.expression.E_UnOp;
 import kiarahmani.atropos.DML.expression.Expression;
+import kiarahmani.atropos.DML.expression.E_UnOp.UnOp;
 import kiarahmani.atropos.DML.expression.constants.E_Const_Num;
 import kiarahmani.atropos.DML.query.Delete_Query;
 import kiarahmani.atropos.DML.query.Insert_Query;
@@ -52,6 +54,7 @@ public class SmallBankProgramGenerator implements ProgramGenerator{
 		 */
 		if (txns.contains("Amalgamate")) {
 			pu.addTrnasaction("Amalgamate", "am_custId0:int", "am_custId1:int");
+			pu.addAssertion("Amalgamate", new E_UnOp(UnOp.NOT, new E_BinUp(BinOp.EQ, pu.getArg("am_custId1"), pu.getArg("am_custId0"))));
 			// retrieve customer0's name by id
 			WHC GetAccount0_WHC = new WHC(pu.getIsAliveFieldName("accounts"), new WHC_Constraint(
 					pu.getTableName("accounts"), pu.getFieldName("a_custid"), BinOp.EQ, pu.getArg("am_custId0")));
@@ -172,6 +175,7 @@ public class SmallBankProgramGenerator implements ProgramGenerator{
 			// retrieve both accounts' names
 
 			pu.addTrnasaction("SendPayment", "sp_sendAcct:int", "sp_destAcct:int", "sp_amount:int");
+			pu.addAssertion("SendPayment", new E_UnOp(UnOp.NOT, new E_BinUp(BinOp.EQ, pu.getArg("sp_sendAcct"), pu.getArg("sp_destAcct"))));
 			WHC SendPayment_GetAccount_send_WHC = new WHC(pu.getIsAliveFieldName("accounts"), new WHC_Constraint(
 					pu.getTableName("accounts"), pu.getFieldName("a_custid"), BinOp.EQ, pu.getArg("sp_sendAcct")));
 			Select_Query SendPayment_GetAccount_send = pu.addSelectQuery("SendPayment", "accounts", true,

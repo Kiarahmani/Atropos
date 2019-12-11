@@ -126,6 +126,11 @@ public class Program_Utils {
 		return result;
 	}
 
+	public Expression addAssertion(String txn, Expression exp) {
+		this.trasnsactionMap.get(txn).addAssertion(exp);
+		return exp;
+	}
+
 	public Query_Statement addQueryStatementInIf(String txn, int if_id, Query q) {
 		int stmt_counts = (transactionToStatement.containsKey(txn)) ? transactionToStatement.get(txn) : 0;
 		transactionToStatement.put(txn, stmt_counts + 1);

@@ -32,8 +32,8 @@ public class Atropos {
 		logger.debug("New Constants object initialized");
 
 		ProgramGenerator ipg = new SemiUnifiedCRDTSmallBankProgramGenerator();
-		Program program = ipg.generate("Balance1", "Amalgamate1", "TransactSavings1", "DepositChecking1", "SendPayment1",
-				"WriteCheck");
+		Program program = ipg.generate("Balance1", "Amalgamate1", "TransactSavings1", "DepositChecking1", "SendPayment",
+				"WriteCheck1");
 		program.printProgram();
 
 		Conflict_Graph cg = new Conflict_Graph(program);

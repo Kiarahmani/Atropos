@@ -5,10 +5,12 @@ import java.util.List;
 
 import kiarahmani.atropos.DML.Variable;
 import kiarahmani.atropos.DML.expression.E_Arg;
+import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.query.Query;
 
 public class Transaction {
 	private String TransactionName;
+	private ArrayList<Expression> assertions;
 	private ArrayList<Statement> statements;
 	private ArrayList<E_Arg> args;
 	public boolean is_included;
@@ -17,12 +19,17 @@ public class Transaction {
 		return this.args;
 	}
 
-	
-	
-	public boolean is_equal (Transaction other) {
+	public boolean is_equal(Transaction other) {
 		return this.TransactionName.equals(other.getName());
 	}
+
+	public ArrayList<Expression> getAssertions(){
+		return this.assertions;
+	}
 	
+	public void addAssertion(Expression ass) {
+		this.assertions.add(ass);
+	}
 	
 	public String getName() {
 		return this.TransactionName;
@@ -32,6 +39,7 @@ public class Transaction {
 		this.TransactionName = name;
 		this.statements = new ArrayList<>();
 		this.args = new ArrayList<>();
+		this.assertions = new ArrayList<>();
 	}
 
 	public ArrayList<Statement> getStatements() {
@@ -48,9 +56,6 @@ public class Transaction {
 			result.addAll(stmt.getAllQueries());
 		return result;
 	}
-	
-	
-
 
 	public String[] getAllStmtTypes() {
 		List<String> result = new ArrayList<String>();
@@ -79,7 +84,13 @@ public class Transaction {
 			delim = ", ";
 		}
 
-		System.out.println("){");
+		System.out.print("){  [");
+		delim = "";
+		for (Expression exp : this.assertions) {
+			System.out.print(delim+"assert:" + exp);
+			delim = "	";
+		}
+		System.out.println("]");
 		for (Statement stmt : this.statements)
 			stmt.printStatemenet("  ");
 		System.out.println("}");

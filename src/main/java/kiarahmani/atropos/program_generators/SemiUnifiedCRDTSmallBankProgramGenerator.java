@@ -7,6 +7,8 @@ import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DML.expression.BinOp;
 import kiarahmani.atropos.DML.expression.E_BinUp;
 import kiarahmani.atropos.DML.expression.E_UUID;
+import kiarahmani.atropos.DML.expression.E_UnOp;
+import kiarahmani.atropos.DML.expression.E_UnOp.UnOp;
 import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.expression.constants.E_Const_Bool;
 import kiarahmani.atropos.DML.expression.constants.E_Const_Num;
@@ -57,6 +59,7 @@ public class SemiUnifiedCRDTSmallBankProgramGenerator implements ProgramGenerato
 			String arg1 = "am_custId0:int";
 			String arg2 = "am_custId1:int";
 			pu.addTrnasaction(txn_name, arg1, arg2);
+			pu.addAssertion(txn_name, new E_UnOp(UnOp.NOT, new E_BinUp(BinOp.EQ, pu.getArg("am_custId1"), pu.getArg("am_custId0"))));
 
 			// retrieve customer0's name by id
 			WHC GetAccount0_WHC_name = new WHC(pu.getIsAliveFieldName("names"), new WHC_Constraint(
@@ -176,6 +179,7 @@ public class SemiUnifiedCRDTSmallBankProgramGenerator implements ProgramGenerato
 		if (txns.contains("SendPayment")) {
 			String txn_name = "SendPayment";
 			pu.addTrnasaction(txn_name, "sp_sendAcct:int", "sp_destAcct:int", "sp_amount:int");
+			pu.addAssertion(txn_name, new E_UnOp(UnOp.NOT, new E_BinUp(BinOp.EQ, pu.getArg("sp_sendAcct"), pu.getArg("sp_destAcct"))));
 			// retrieve sender accounts' data
 			WHC SendPayment_GetAccount_send_WHC = new WHC(pu.getIsAliveFieldName("accounts"),
 					new WHC_Constraint(pu.getTableName("accounts"), pu.getFieldName("a_custid"), BinOp.EQ,
@@ -231,7 +235,7 @@ public class SemiUnifiedCRDTSmallBankProgramGenerator implements ProgramGenerato
 		if (txns.contains("TransactSavings")) {
 			String txn_name = "TransactSavings";
 			pu.addTrnasaction(txn_name, "ts_custName:string", "ts_amount:int");
-
+			
 			// retrieve customer's id based on his/her name
 			WHC TransactSavings_GetAccount0_WHC_name = new WHC(pu.getIsAliveFieldName("names"), new WHC_Constraint(
 					pu.getTableName("names"), pu.getFieldName("n_name"), BinOp.EQ, pu.getArg("ts_custName")));
