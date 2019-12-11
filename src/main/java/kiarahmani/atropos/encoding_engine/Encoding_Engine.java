@@ -65,8 +65,8 @@ public class Encoding_Engine {
 		int iter = 0;
 		dais_loop: for (DAI pot_dai : potential_dais) {
 			logger.debug("begin analysis for DAI: " + pot_dai);
-			for (Conflict c1 : cg.getConfsFromQuery(pot_dai.getQuery(1)))
-				for (Conflict c2 : cg.getConfsFromQuery(pot_dai.getQuery(2))) {
+			for (Conflict c1 : cg.getConfsFromQuery(pot_dai.getQuery(1), pot_dai.getTransaction()))
+				for (Conflict c2 : cg.getConfsFromQuery(pot_dai.getQuery(2), pot_dai.getTransaction())) {
 					logger.debug("involved transactions: " + pot_dai.getTransaction().getName() + "-"
 							+ c1.getTransaction(2).getName() + "-" + c2.getTransaction(2).getName());
 					for (Transaction txn : program.getTransactions())

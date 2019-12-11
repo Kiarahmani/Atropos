@@ -19,13 +19,26 @@ public class Conflict_Graph {
 	private ArrayList<Conflict> conflicts;
 	private static final Logger logger = LogManager.getLogger(Atropos.class);
 
-	public ArrayList<Conflict> getConfsFromQuery(Query q) {
+	public ArrayList<Conflict> getConfsFromQuery(Query q, Transaction t) {
 		ArrayList<Conflict> result = new ArrayList<>();
+		ArrayList<Conflict> sorted_conflicts = new ArrayList<>();
+		// first add the conflicts related to t
 		for (Conflict c : this.conflicts)
-				if (c.getQuery(1) == q)
-					result.add(c);
-				else if (c.getQuery(2) == q)
-					result.add(createReverse(c));
+			if (c.getTransaction(1).hasSameName(t) && c.getTransaction(2).hasSameName(t))
+				sorted_conflicts.add(c);
+		// then add conflicts not related to t
+		for (Conflict c : this.conflicts)
+			if (!c.getTransaction(1).hasSameName(t) || !c.getTransaction(2).hasSameName(t))
+				sorted_conflicts.add(c);
+
+		//System.out.println("conflicts: "+conflicts);
+		//System.out.println("soret con: "+sorted_conflicts);
+		
+		for (Conflict c : sorted_conflicts)
+			if (c.getQuery(1) == q)
+				result.add(c);
+			else if (c.getQuery(2) == q)
+				result.add(createReverse(c));
 		return result;
 	}
 
