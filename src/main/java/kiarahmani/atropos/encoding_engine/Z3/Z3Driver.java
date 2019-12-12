@@ -156,7 +156,7 @@ public class Z3Driver {
 		constrainArFunc(program);
 		addWRFuncs(program);
 		constrainWRFuncs(program);
-		addRWFuncs(program);
+		addRWFuncs(program); 
 		constrainRWFuncs(program);
 		addWWFuncs(program);
 		constrainWWFuncs(program);
