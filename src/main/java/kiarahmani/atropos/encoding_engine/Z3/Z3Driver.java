@@ -192,7 +192,9 @@ public class Z3Driver {
 			}
 		}
 		return status;
-	}
+
+
+	} 
 
 	private void print_result_header(Status status, long begin, long end) {
 		System.out.println("==================\n" + status + " (" + (end - begin) + "ms)" + "\n==================\n\n");
