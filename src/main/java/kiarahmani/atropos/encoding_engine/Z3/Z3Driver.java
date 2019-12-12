@@ -586,7 +586,7 @@ public class Z3Driver {
 
 	private void constrainIsExecuted(Program program, Expression_Maker em) {
 		for (Transaction txn : program.getIncludedTransactions()) {
-			Z3Logger.SubHeaderZ3("is executed? (" + txn.getName() + ")");
+			Z3Logger.SubHeaderZ3("is executed?  (" + txn.getName() + ")");
 			for (Query q : txn.getAllQueries())
 				addQryTypeToIsExecuted(txn, q);
 			addPoLargerThanQryCntIsNotExecuted(txn);
