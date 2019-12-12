@@ -66,21 +66,23 @@ public class Encoding_Engine {
 		System.out.println("Number of potential DAIs: " + potential_dais.size());
 		int iter = 0;
 		dais_loop: for (DAI pot_dai : potential_dais) {
-			logger.debug("begin analysis for DAI: " + pot_dai);
+			logger.debug(" begin analysis for DAI: " + pot_dai);
 			// pre-analysis on the potential dai
 			z3logger.reset();
 			Z3Driver local_z3_driver = new Z3Driver();
 			for (Transaction txn : program.getTransactions())
 				txn.is_included = true;
 			Status valid = local_z3_driver.validDAI(program, pot_dai);
-			if (valid==Status.UNSATISFIABLE)
+			if (valid==Status.UNSATISFIABLE) {
+				logger.debug(" discarding the potential DAI due to conflicting path conditions");
 				continue dais_loop;
+			}
 			
 			
 			// could not rule out the potential dai: must perform full analysis
-			for (Conflict c1 : cg.getConfsFromQuery(pot_dai.getQuery(1), pot_dai.getTransaction()))
+			for (Conflict c1 : cg.getConfsFromQuery(pot_dai.getQuery(1), pot_dai.getTransaction())) {
 				for (Conflict c2 : cg.getConfsFromQuery(pot_dai.getQuery(2), pot_dai.getTransaction())) {
-					logger.debug("involved transactions: " + pot_dai.getTransaction().getName() + "-"
+					logger.debug(" involved transactions: " + pot_dai.getTransaction().getName() + "-"
 							+ c1.getTransaction(2).getName() + "-" + c2.getTransaction(2).getName());
 					for (Transaction txn : program.getTransactions())
 						if (txn.hasSameName(pot_dai.getTransaction()) || txn.hasSameName(c1.getTransaction(2))
@@ -91,7 +93,8 @@ public class Encoding_Engine {
 					z3logger.reset();
 					local_z3_driver = new Z3Driver();
 					// check if it is actualy a valid instance
-					System.out.println("Round# " + iter++ + "");
+					System.out.println("Round #" + iter++ + "");
+					System.out.println("Number of anomalies found: " + dai_graph.getDAIs().size() + "");
 					printBaseAnomaly(iter, pot_dai, c1, c2);
 					long begin = System.currentTimeMillis();
 					Status status = local_z3_driver.generateDAI(program, 4, pot_dai, c1, c2);
@@ -106,6 +109,8 @@ public class Encoding_Engine {
 					// free up solver's memory for the next iteration
 					local_z3_driver = null;
 				}
+			}
+			logger.debug("end of analysis for DAI: " + pot_dai);
 		}
 		return dai_graph;
 
