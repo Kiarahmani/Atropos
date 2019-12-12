@@ -59,6 +59,64 @@ public class Z3Driver {
 			po3;
 	DeclaredObjects objs;
 
+	public Status validDAI(Program program, DAI dai) {
+		HashMap<String, String> cfg = new HashMap<String, String>();
+		cfg.put("model", "true");
+		cfg.put("unsat_core", "true");
+		ctx = new Context(cfg);
+		objs = new DeclaredObjects();
+		// begin encoding the context
+		slv = ctx.mkSolver();
+		addInitialHeader();
+		addInitialStaticSorts();
+		addNumericEnumSorts("Po", Constants._MAX_EXECUTION_PO);
+		addNumericEnumSorts("Ro", Constants._MAX_VARIABLE_RO);
+		addNumericEnumSorts("Part", Constants._MAX_PARTITION_NUMBER);
+		addEnumSorts("RecType", program.getAllTableNames());
+		addEnumSorts("TxnType", program.getAllIncludedTxnNames());
+		addTypingFuncs();
+		addExecutionFuncs();
+		initializeLocalVariables();
+		addUUIDFunc();
+		addProjFuncsAndBounds(program);
+		this.em = new Expression_Maker(program, ctx, objs);
+		Z3Logger.SubHeaderZ3("Properties of query functions");
+		addAssertion("bound_on_txn_instances", em.mk_bound_on_txn_instances(1));
+		constrainPKs(program, em);
+		addArgsFuncs(program);
+		addTxnAssertions(program);
+		addVariablesFuncs(program);
+		constrainIsExecuted(program, em);
+		Z3Logger.HeaderZ3(program.getName() + " reads_from and writes_to functions");
+		addWritesTo(program);
+		constrainWritesTo(program);
+		addReadsFrom(program);
+		constrainReadsFrom(program);
+		constrainWrittenVals(program);
+		addArFunc(program);
+		constrainArFunc(program);
+		addAssertion("both_queries_are_executed", em.mk_cycle_exists_constrained_1(dai));
+		//addWRFuncs(program);
+		//constrainWRFuncs(program);
+		//addRWFuncs(program);
+		//constrainRWFuncs(program);
+		//addWWFuncs(program);
+		//constrainWWFuncs(program);
+		//addDepFunc(program);
+		//constrainDepFunc(program);
+		//addDepSTFunc(program);
+		//constrainUUIDFunc();
+		//constrainDepSTFunc(program);
+		//
+		// final query
+		//addAssertion("cycle", em.mk_cycle_exists_constrained(dependency_length, dai, c1, c2));
+		//
+		//
+		// check satisfiability
+		Status status = slv.check();
+		return status;
+	}
+
 	public Status generateDAI(Program program, int dependency_length, DAI dai, Conflict c1, Conflict c2) {
 
 		HashMap<String, String> cfg = new HashMap<String, String>();
@@ -745,7 +803,7 @@ public class Z3Driver {
 		BoolExpr rhs1 = (ctx.mkEq(uuid11, uuid21));
 		Quantifier result1 = ctx.mkForall(new Expr[] { txn1, txn2, po1, po2 },
 				ctx.mkImplies(more_constraints, ctx.mkImplies(rhs1, pre_conditions)), 1, null, null, null, null);
-		//addAssertion("uuids must be unique", result1);
+		// addAssertion("uuids must be unique", result1);
 		// TODO understand what the hell is going on here
 
 		// constrain the unused uuids
@@ -970,20 +1028,19 @@ public class Z3Driver {
 			}
 		}
 	}
-	
-	
-	public void addTxnAssertions (Program program) {
+
+	public void addTxnAssertions(Program program) {
 		Z3Logger.HeaderZ3(program.getName() + " (Assertions specified by users)");
 		for (Transaction txn : program.getIncludedTransactions()) {
 			Z3Logger.SubHeaderZ3("Transaction: " + txn.getName());
-			for (Expression ass: txn.getAssertions()) {
-				Quantifier result2 = ctx.mkForall(new Expr[] { txn1 }, (BoolExpr) translateExpressionsToZ3Expr(txn.getName(), txn1, ass, null), 1, null, null, null, null);
-				addAssertion("TxnAssertion",result2);
+			for (Expression ass : txn.getAssertions()) {
+				Quantifier result2 = ctx.mkForall(new Expr[] { txn1 },
+						(BoolExpr) translateExpressionsToZ3Expr(txn.getName(), txn1, ass, null), 1, null, null, null,
+						null);
+				addAssertion("TxnAssertion", result2);
 			}
 		}
 	}
-	
-	
 
 	private void addProjFuncsAndBounds(Program program) {
 		Z3Logger.HeaderZ3(program.getName() + " (/ sorts, types and functions)");

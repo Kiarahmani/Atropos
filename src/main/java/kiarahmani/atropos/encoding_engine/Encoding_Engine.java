@@ -5,6 +5,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.microsoft.z3.Status;
@@ -65,6 +67,17 @@ public class Encoding_Engine {
 		int iter = 0;
 		dais_loop: for (DAI pot_dai : potential_dais) {
 			logger.debug("begin analysis for DAI: " + pot_dai);
+			// pre-analysis on the potential dai
+			z3logger.reset();
+			Z3Driver local_z3_driver = new Z3Driver();
+			for (Transaction txn : program.getTransactions())
+				txn.is_included = true;
+			Status valid = local_z3_driver.validDAI(program, pot_dai);
+			if (valid==Status.UNSATISFIABLE)
+				continue dais_loop;
+			
+			
+			// could not rule out the potential dai: must perform full analysis
 			for (Conflict c1 : cg.getConfsFromQuery(pot_dai.getQuery(1), pot_dai.getTransaction()))
 				for (Conflict c2 : cg.getConfsFromQuery(pot_dai.getQuery(2), pot_dai.getTransaction())) {
 					logger.debug("involved transactions: " + pot_dai.getTransaction().getName() + "-"
@@ -76,7 +89,7 @@ public class Encoding_Engine {
 						else
 							txn.is_included = false;
 					z3logger.reset();
-					Z3Driver local_z3_driver = new Z3Driver();
+					local_z3_driver = new Z3Driver();
 					// check if it is actualy a valid instance
 					System.out.println("Round# " + iter++ + "");
 					printBaseAnomaly(iter, pot_dai, c1, c2);

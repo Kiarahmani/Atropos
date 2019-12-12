@@ -131,7 +131,8 @@ public class Expression_Maker {
 			} else {
 				edges[i] = (BoolExpr) ctx.mkApp(objs.getfuncs("dep"), Ts[i + 1], POs[i + 1], Ts[i + 2], POs[i + 2]);
 			}
-			//all_queries_are_on_cycle[i] = (BoolExpr) ctx.mkApp(objs.getfuncs("qry_is_on_cycle"), Ts[i + 1], POs[i + 1]);
+			// all_queries_are_on_cycle[i] = (BoolExpr)
+			// ctx.mkApp(objs.getfuncs("qry_is_on_cycle"), Ts[i + 1], POs[i + 1]);
 		}
 
 		// assertions regarding base transaction
@@ -151,7 +152,6 @@ public class Expression_Maker {
 				objs.getEnumConstructor("TxnType", c2.getTransaction(2).getName()));
 		BoolExpr last_txn_po_1 = ctx.mkEq(POs[dependency_length - 2],
 				objs.getEnumConstructor("Po", "po_" + c2.getQuery(2).getPo()));
-
 
 		// constrain the type of dependency for the edge between the base and first
 		// neighbour
@@ -195,6 +195,17 @@ public class Expression_Maker {
 		System.arraycopy(Ts, 0, result, 0, dependency_length - 1);
 		System.arraycopy(POs, 0, result, dependency_length - 1, dependency_length);
 		return ctx.mkExists(result, body, 1, null, null, null, null);
+	}
+
+	public Quantifier mk_cycle_exists_constrained_1(DAI dai) {
+		BoolExpr cond1 = ctx.mkEq(ctx.mkApp(objs.getfuncs("txn_type"), txn1),
+				objs.getEnumConstructor("TxnType", dai.getTransaction().getName()));
+		Expr int_of_po1 =  ctx.mkApp(objs.getfuncs("po_from_int"), ctx.mkInt(dai.getQuery(1).getPo()));
+		Expr int_of_po2 =  ctx.mkApp(objs.getfuncs("po_from_int"), ctx.mkInt(dai.getQuery(2).getPo()));
+		BoolExpr cond2 = (BoolExpr) ctx.mkApp(objs.getfuncs("qry_is_executed"), txn1, int_of_po1);
+		BoolExpr cond3 = (BoolExpr) ctx.mkApp(objs.getfuncs("qry_is_executed"), txn1, int_of_po2);
+		BoolExpr body = ctx.mkAnd(cond1, cond2, cond3);
+		return ctx.mkExists(new Expr[] { txn1 }, body, 1, null, null, null, null);
 	}
 
 	public Quantifier mk_qry_time_respects_po() {
