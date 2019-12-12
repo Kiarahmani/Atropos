@@ -75,6 +75,7 @@ public class Z3Driver {
 		addEnumSorts("RecType", program.getAllTableNames());
 		addEnumSorts("TxnType", program.getAllIncludedTxnNames());
 		addTypingFuncs();
+		addUsedFuncs();
 		addExecutionFuncs();
 		initializeLocalVariables();
 		addUUIDFunc();
@@ -96,20 +97,21 @@ public class Z3Driver {
 		addArFunc(program);
 		constrainArFunc(program);
 		addAssertion("both_queries_are_executed", em.mk_cycle_exists_constrained_1(dai));
-		//addWRFuncs(program);
-		//constrainWRFuncs(program);
-		//addRWFuncs(program);
-		//constrainRWFuncs(program);
-		//addWWFuncs(program);
-		//constrainWWFuncs(program);
-		//addDepFunc(program);
-		//constrainDepFunc(program);
-		//addDepSTFunc(program);
-		//constrainUUIDFunc();
-		//constrainDepSTFunc(program);
+		// addWRFuncs(program);
+		// constrainWRFuncs(program);
+		// addRWFuncs(program);
+		// constrainRWFuncs(program);
+		// addWWFuncs(program);
+		// constrainWWFuncs(program);
+		// addDepFunc(program);
+		// constrainDepFunc(program);
+		// addDepSTFunc(program);
+		// constrainUUIDFunc();
+		// constrainDepSTFunc(program);
 		//
 		// final query
-		//addAssertion("cycle", em.mk_cycle_exists_constrained(dependency_length, dai, c1, c2));
+		// addAssertion("cycle", em.mk_cycle_exists_constrained(dependency_length, dai,
+		// c1, c2));
 		//
 		//
 		// check satisfiability
@@ -133,6 +135,7 @@ public class Z3Driver {
 		addNumericEnumSorts("Part", Constants._MAX_PARTITION_NUMBER);
 		addEnumSorts("RecType", program.getAllTableNames());
 		addEnumSorts("TxnType", program.getAllIncludedTxnNames());
+		addUsedFuncs();
 		addTypingFuncs();
 		addExecutionFuncs();
 		initializeLocalVariables();
@@ -156,7 +159,7 @@ public class Z3Driver {
 		constrainArFunc(program);
 		addWRFuncs(program);
 		constrainWRFuncs(program);
-		addRWFuncs(program); 
+		addRWFuncs(program);
 		constrainRWFuncs(program);
 		addWWFuncs(program);
 		constrainWWFuncs(program);
@@ -175,6 +178,7 @@ public class Z3Driver {
 		if (status == Status.SATISFIABLE) {
 			// record the generated model
 			model = slv.getModel();
+			System.out.println("\n~~~> " + model.getSortUniverse(objs.getSort("Rec")).length + "\n");
 			File file = new File("smt2/model.smt2");
 			PrintWriter printer;
 			FileWriter writer;
@@ -188,7 +192,6 @@ public class Z3Driver {
 			}
 		}
 		return status;
-
 	}
 
 	private void print_result_header(Status status, long begin, long end) {
@@ -211,13 +214,35 @@ public class Z3Driver {
 							BoolExpr pre_condition2 = ctx.mkEq(po1, objs.getEnumConstructor("Po", "po_" + q.getPo()));
 							BoolExpr pre_rectype = ctx.mkEq(ctx.mkApp(objs.getfuncs("rec_type"), rec1),
 									objs.getEnumConstructor("RecType", t.getTableName().getName()));
-							BoolExpr pre_condition = ctx.mkAnd(pre_condition1, pre_condition2, pre_rectype);
+							BoolExpr recIsUsed = (BoolExpr) ctx.mkApp(objs.getfuncs("rec_is_used"), rec1);
+							BoolExpr pre_condition = ctx.mkAnd(recIsUsed, pre_condition1, pre_condition2, pre_rectype);
 							Expression exp = q.getUpdateExpressionByFieldName(fn);
 							String funcname = "written_val_" + t.getTableName().getName() + "_" + fn.getName();
 							Expr written_val = ctx.mkApp(objs.getfuncs(funcname), rec1, txn1, po1);
 							Expr current_po = ctx.mkApp(objs.getfuncs("po_from_int"), ctx.mkInt(q.getPo()));
 							Expr constrained_val = translateExpressionsToZ3Expr(txn.getName(), txn1, exp, current_po);
 							Quantifier result = ctx.mkForall(new Expr[] { txn1, po1, rec1 },
+									ctx.mkImplies(pre_condition, ctx.mkEq(written_val, constrained_val)), 1, null, null,
+									null, null);
+							addAssertions(result);
+
+							// assertions for unrelated recs
+							pre_condition = ctx.mkAnd(ctx.mkNot(recIsUsed), pre_rectype);
+							switch (fn.getType()) {
+							case NUM:
+								constrained_val = ctx.mkBV(0, Constants._MAX_ARG_INT);
+								break;
+							case TEXT:
+								constrained_val = ctx.MkString("string-val#0");
+								break;
+							case BOOL:
+								constrained_val = ctx.mkBool(true);
+								break;
+							default:
+								break;
+							}
+
+							result = ctx.mkForall(new Expr[] { txn1, po1, rec1 },
 									ctx.mkImplies(pre_condition, ctx.mkEq(written_val, constrained_val)), 1, null, null,
 									null, null);
 							addAssertions(result);
@@ -330,8 +355,9 @@ public class Z3Driver {
 					BoolExpr q1_is_executed = (BoolExpr) ctx.mkApp(objs.getfuncs("qry_is_executed"), txn1, po1);
 					BoolExpr q2_is_executed = (BoolExpr) ctx.mkApp(objs.getfuncs("qry_is_executed"), txn2, po2);
 					BoolExpr txns_are_different = ctx.mkDistinct(txn1, txn2);
-					BoolExpr exists_a_record = ctx.mkExists(new Expr[] { rec1 }, ctx.mkAnd(writes_to, reads_from), 1,
-							null, null, null, null);
+					BoolExpr recIsUsed = (BoolExpr) ctx.mkApp(objs.getfuncs("rec_is_used"), rec1);
+					BoolExpr exists_a_record = ctx.mkExists(new Expr[] { rec1 },
+							ctx.mkAnd(writes_to, reads_from, recIsUsed), 1, null, null, null, null);
 					BoolExpr exists_func = (BoolExpr) ctx.mkApp(objs.getfuncs(funcName), txn1, po1, txn2, po2);
 					array_ww_t_f[fld_iter++] = exists_func;
 					BoolExpr q1_arbit_q2 = (BoolExpr) ctx.mkApp(objs.getfuncs("arbit"), txn1, po1, txn2, po2);
@@ -385,8 +411,9 @@ public class Z3Driver {
 					BoolExpr q1_is_executed = (BoolExpr) ctx.mkApp(objs.getfuncs("qry_is_executed"), txn1, po1);
 					BoolExpr q2_is_executed = (BoolExpr) ctx.mkApp(objs.getfuncs("qry_is_executed"), txn2, po2);
 					BoolExpr txns_are_different = ctx.mkDistinct(txn1, txn2);
-					BoolExpr exists_a_record = ctx.mkExists(new Expr[] { rec1 }, ctx.mkAnd(writes_to, reads_from), 1,
-							null, null, null, null);
+					BoolExpr recIsUsed = (BoolExpr) ctx.mkApp(objs.getfuncs("rec_is_used"), rec1);
+					BoolExpr exists_a_record = ctx.mkExists(new Expr[] { rec1 },
+							ctx.mkAnd(writes_to, reads_from, recIsUsed), 1, null, null, null, null);
 					BoolExpr exists_func = (BoolExpr) ctx.mkApp(objs.getfuncs(funcName), txn1, po1, txn2, po2);
 					array_rw_t_f[fld_iter++] = exists_func;
 					BoolExpr q1_arbit_q2 = (BoolExpr) ctx.mkApp(objs.getfuncs("arbit"), txn1, po1, txn2, po2);
@@ -446,8 +473,9 @@ public class Z3Driver {
 					BoolExpr q1_is_executed = (BoolExpr) ctx.mkApp(objs.getfuncs("qry_is_executed"), txn1, po1);
 					BoolExpr q2_is_executed = (BoolExpr) ctx.mkApp(objs.getfuncs("qry_is_executed"), txn2, po2);
 					BoolExpr txns_are_different = ctx.mkDistinct(txn1, txn2);
-					BoolExpr exists_a_record = ctx.mkExists(new Expr[] { rec1 }, ctx.mkAnd(writes_to, reads_from), 1,
-							null, null, null, null);
+					BoolExpr recIsUsed = (BoolExpr) ctx.mkApp(objs.getfuncs("rec_is_used"), rec1);
+					BoolExpr exists_a_record = ctx.mkExists(new Expr[] { rec1 },
+							ctx.mkAnd(writes_to, reads_from, recIsUsed), 1, null, null, null, null);
 					BoolExpr exists_func = (BoolExpr) ctx.mkApp(objs.getfuncs(funcName), txn1, po1, txn2, po2);
 					array_wr_t_f[fld_iter++] = exists_func;
 					BoolExpr q1_arbit_q2 = (BoolExpr) ctx.mkApp(objs.getfuncs("arbit"), txn1, po1, txn2, po2);
@@ -821,6 +849,12 @@ public class Z3Driver {
 				objs.getEnum("Part")));
 		objs.addFunc("qry_is_executed", ctx.mkFuncDecl("qry_is_executed",
 				new Sort[] { objs.getSort("Txn"), objs.getEnum("Po") }, objs.getSort("Bool")));
+	}
+
+	private void addUsedFuncs() {
+		Z3Logger.LogZ3(";; record related functions");
+		objs.addFunc("rec_is_used",
+				ctx.mkFuncDecl("rec_is_used", new Sort[] { objs.getSort("Rec") }, objs.getSort("Bool")));
 	}
 
 	private void addTypingFuncs() {
