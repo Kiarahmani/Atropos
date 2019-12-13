@@ -7,7 +7,7 @@ TODO:
   - (syntactical) support for aggregating queries
   - support for ATOMIC ops and range operations 
   - support for for loops
- 
+  - BUG: the true/else path conditions are mistaken discarded
 
 ====================================================================================================
 IMPROVEMENTS:
