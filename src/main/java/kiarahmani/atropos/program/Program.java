@@ -136,7 +136,8 @@ public class Program {
 	}
 
 	public void printProgram() {
-		System.out.println("\n\n### " + programName.toUpperCase());
+		System.out.println("\n\n\n\n##############################################################################################################################");
+		System.out.println("### " + programName.toUpperCase());
 		System.out.println("## SCHEMA:");
 		for (Table t : tables)
 			System.out.println(t.toString());
