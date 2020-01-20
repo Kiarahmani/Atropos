@@ -1,4 +1,4 @@
-package kiarahmani.atropos.program_generators;
+package kiarahmani.atropos.program_generators.SmallBank;
 
 import java.util.ArrayList;
 
@@ -18,6 +18,7 @@ import kiarahmani.atropos.DML.query.Update_Query;
 import kiarahmani.atropos.DML.where_clause.WHC;
 import kiarahmani.atropos.DML.where_clause.WHC_Constraint;
 import kiarahmani.atropos.program.Program;
+import kiarahmani.atropos.program_generators.ProgramGenerator;
 import kiarahmani.atropos.utils.Program_Utils;
 
 public class UnifiedSmallBankProgramGenerator implements ProgramGenerator {

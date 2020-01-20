@@ -7,7 +7,7 @@ import org.apache.logging.log4j.Logger;
 
 import kiarahmani.atropos.program.Program;
 import kiarahmani.atropos.program_generators.ProgramGenerator;
-import kiarahmani.atropos.program_generators.SmallBankProgramGenerator;
+import kiarahmani.atropos.program_generators.SmallBank.SmallBankProgramGenerator;
 import kiarahmani.atropos.refactoring_engine.Delta;
 import kiarahmani.atropos.refactoring_engine.INTRO_R;
 import kiarahmani.atropos.refactoring_engine.Refactoring_Engine;
@@ -36,7 +36,7 @@ public class Atropos {
 
 		Refactoring_Engine re = new Refactoring_Engine(pu);
 		Delta intro_r = new INTRO_R("added");
-		Program refactored_program = re.refactor(program,intro_r);
+		Program refactored_program = re.refactor(program,intro_r); 
 		refactored_program.printProgram();
 		
 		
