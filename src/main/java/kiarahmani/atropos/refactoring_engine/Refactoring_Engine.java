@@ -4,11 +4,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import kiarahmani.atropos.Atropos;
-import kiarahmani.atropos.DDL.F_Type;
-import kiarahmani.atropos.DDL.FieldName;
-import kiarahmani.atropos.DDL.TableName;
 import kiarahmani.atropos.program.Program;
 import kiarahmani.atropos.program.Table;
+import kiarahmani.atropos.refactoring_engine.deltas.Delta;
+import kiarahmani.atropos.refactoring_engine.deltas.INTRO_R;
 import kiarahmani.atropos.utils.Program_Utils;
 
 public class Refactoring_Engine {
@@ -23,15 +22,13 @@ public class Refactoring_Engine {
 		String delta_class = delta.getClass().getSimpleName().toString();
 		switch (delta_class) {
 		case "INTRO_R":
-			INTRO_R delta_cast = (INTRO_R) delta;
-			return apply_intro_r(input_p, delta_cast.getNewTableName());
+			return apply_intro_r(input_p, (INTRO_R) delta);
 		case "ADDPK":
 			return apply_addpk(input_p);
 		case "CHSK":
 			return apply_chsk(input_p);
 		case "INTRO_F":
 			return apply_intro_f(input_p);
-
 		default:
 			assert false : "Case not catched!" + delta_class;
 			break;
@@ -42,9 +39,9 @@ public class Refactoring_Engine {
 	/*
 	 * 
 	 */
-	private Program apply_intro_r(Program input_p, String table_name) {
+	private Program apply_intro_r(Program input_p, INTRO_R intro_r) {
 		logger.debug("applying INTRO_R refactoring");
-		TableName tn = new TableName(table_name);
+		String table_name = intro_r.getNewTableName();
 		Table t = pu.addTable(table_name);
 		input_p.addTable(t);
 		return input_p;

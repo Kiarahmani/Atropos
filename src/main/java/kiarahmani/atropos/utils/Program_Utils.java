@@ -33,6 +33,7 @@ import kiarahmani.atropos.program.statements.If_Statement;
 import kiarahmani.atropos.program.statements.Query_Statement;
 
 public class Program_Utils {
+	// basic program meta data
 	private Program program;
 	private String program_name;
 	private HashMap<String, Transaction> trasnsactionMap;
@@ -49,6 +50,9 @@ public class Program_Utils {
 	private HashMap<String, If_Statement> ifStatementMap;
 	private HashMap<String, Variable> variableMap;
 	private HashMap<String, Integer> transactionToPoCnt;
+	// program meta data for refactoring
+	
+	
 
 	public Program getProgram() {
 		if (this.program == null) {

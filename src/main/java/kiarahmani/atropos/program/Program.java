@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Logger;
 
 import kiarahmani.atropos.Atropos;
 import kiarahmani.atropos.DDL.FieldName;
+import kiarahmani.atropos.refactoring_engine.vc.VC;
 
 public class Program {
 	private static final Logger logger = LogManager.getLogger(Atropos.class);
@@ -16,13 +17,19 @@ public class Program {
 	private String programName;
 	private ArrayList<Transaction> transactions;
 	private ArrayList<Table> tables;
+	private ArrayList<VC> vcs;
 
 	// constructor
 	public Program(String name) {
 		this.transactions = new ArrayList<Transaction>();
+		this.vcs = new ArrayList<VC>();
 		this.programName = name;
 		setMaxQueryCount();
 		this.tables = new ArrayList<>();
+	}
+
+	public void addVC(VC vc) {
+		this.vcs.add(vc);
 	}
 
 	public ArrayList<Transaction> getTransactions() {
@@ -93,7 +100,6 @@ public class Program {
 		return result.toArray(new String[size]);
 	}
 
-
 	public String[] getAllIncludedTxnNames() {
 		List<String> result = new ArrayList<String>();
 		int size = 0;
@@ -136,8 +142,12 @@ public class Program {
 	}
 
 	public void printProgram() {
-		System.out.println("\n\n\n\n##############################################################################################################################");
+		System.out.println(
+				"\n\n\n\n##############################################################################################################################");
 		System.out.println("### " + programName.toUpperCase());
+		System.out.println("## VC:");
+		for (VC v : vcs)
+			System.out.println(v.toString());
 		System.out.println("## SCHEMA:");
 		for (Table t : tables)
 			System.out.println(t.toString());
