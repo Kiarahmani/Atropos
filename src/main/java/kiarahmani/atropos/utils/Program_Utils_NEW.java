@@ -63,7 +63,6 @@ public class Program_Utils_NEW {
 	private HashMap<String, ArrayList<Variable>> transactionToVariableSetMap;
 
 	// Meta data mapping transaction instances the number of components
-	// TODO: update the key to a transaction instance
 	private HashMap<String, Integer> transactionToSelectCount;
 	private HashMap<String, Integer> transactionToUpdateCount;
 	private HashMap<String, Integer> transactionToStatement;
@@ -90,7 +89,6 @@ public class Program_Utils_NEW {
 	 * Constructor
 	 */
 	public Program_Utils_NEW(String pn) {
-
 		// allocate new objects for all data structures
 		this.program_name = pn;
 		this.vcList = new ArrayList<>();
@@ -110,10 +108,41 @@ public class Program_Utils_NEW {
 		variableMap = new HashMap<>();
 	}
 
+	/* Create a new table, store it locally and return it */
+	public Table mkTable(String tn_name, FieldName... fns) {
+		TableName tn = new TableName(tn_name);
+		FieldName is_alive = new FieldName("is_alive", false, false, F_Type.BOOL);
+		this.tableNameMap.put(tn.getName(), tn);
+		Table newTable = new Table(tn, is_alive, fns);
+		this.tableMap.put(tn.getName(), newTable);
+		for (FieldName fn : fns)
+			this.fieldNameMap.put(fn.getName(), fn);
+		this.fieldNameMap.put(tn_name + "_is_alive", is_alive);
+		return newTable;
+	}
+
+	public Table mkBasicTable(String tn_name, String... fns) {
+		TableName tn = new TableName(tn_name);
+		this.tableNameMap.put(tn_name, tn);
+
+		ArrayList<FieldName> fresh_fn_list = new ArrayList<>();
+		boolean isPK = true, isSK = true;
+		for (String fn : fns) {
+			FieldName new_fn = new FieldName(fn, isPK, isSK, F_Type.NUM);
+			fresh_fn_list.add(new_fn);
+			this.fieldNameMap.put(fn, new_fn);
+			isPK = false;
+			isPK = false;
+		}
+		Table newTable = new Table(tn, fresh_fn_list);
+		this.tableMap.put(tn_name, newTable);
+		return newTable;
+	}
+
 	/*
 	 * Create a new VC, store it locally and return it
 	 */
-	public VC addVC(String T_1, String F_1, String T_2, String F_2, VC_Agg vc_agg, VC_Type vc_type,
+	public VC mkVC(String T_1, String F_1, String T_2, String F_2, VC_Agg vc_agg, VC_Type vc_type,
 			VC_Constraint... constraints) {
 		VC vc = new VC(this.getTableName(T_1), this.getFieldName(F_1), this.getTableName(T_2), this.getFieldName(F_2),
 				vc_agg, vc_type);
@@ -124,27 +153,34 @@ public class Program_Utils_NEW {
 	}
 
 	/*
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
+	 * Create a new transaction, store it locally and return it
 	 */
-	public Variable getVariable(String txn, int id) {
-		return variableMap.get(txn + "_v" + id);
+	public Transaction mkTrnasaction(String txn_name, String... args) {
+
+		Transaction txn = new Transaction(txn_name);
+		String transaction_name = txn.getName();
+		this.trasnsactionMap.put(transaction_name, txn);
+		transactionToArgsSetMap.put(transaction_name, new ArrayList<>());
+		transactionToVariableSetMap.put(transaction_name, new ArrayList<>());
+		for (String arg : args) {
+			String[] parts = arg.split(":");
+			E_Arg current_arg = new E_Arg(txn_name, parts[0], F_Type.stringTypeToFType(parts[1]));
+			argsMap.put(parts[0], current_arg);
+			txn.addArg(current_arg);
+			transactionToArgsSetMap.get(transaction_name).add(current_arg);
+		}
+		return txn;
 	}
 
-	public Variable getFreshVariable(String tn, String txn) {
+	public Expression mkAssertion(String txn, Expression exp) {
+		this.trasnsactionMap.get(txn).addAssertion(exp);
+		return exp;
+	}
+
+	/*
+	 * Create a fresh variable, store it and return it
+	 */
+	public Variable mkVariable(String tn, String txn) {
 		String fresh_variable_name = txn + "_v" + transactionToVariableSetMap.get(txn).size();
 		Variable fresh_variable = new Variable(tn, fresh_variable_name);
 		transactionToVariableSetMap.get(txn).add(fresh_variable);
@@ -152,15 +188,33 @@ public class Program_Utils_NEW {
 		return fresh_variable;
 	}
 
-	public E_Proj getProjExpr(String txn, int id, String fn, int order) {
+	/*
+	 * Create fresh expressions based on a variable
+	 */
+	public E_Proj mkProjExpr(String txn, int id, String fn, int order) {
 		assert (getVariable(txn, id) != null);
 		assert (getFieldName(fn) != null);
-
 		return new E_Proj(getVariable(txn, id), getFieldName(fn), new E_Const_Num(order));
 	}
 
-	public E_Size getSizeExpr(String txn, int id) {
+	public E_Size mkSizeExpr(String txn, int id) {
 		return new E_Size(getVariable(txn, id));
+	}
+
+	/*
+	 * Return locally stored objects
+	 */
+	public Variable getVariable(String txn, int id) {
+		return variableMap.get(txn + "_v" + id);
+	}
+
+	public Variable getVariable(String key) {
+		return variableMap.get(key);
+	}
+
+	public TableName getTableName(String tn) {
+		assert (this.tableNameMap.get(tn) != null);
+		return this.tableNameMap.get(tn);
 	}
 
 	public FieldName getFieldName(String fn) {
@@ -169,7 +223,8 @@ public class Program_Utils_NEW {
 	}
 
 	public FieldName getIsAliveFieldName(String table_name) {
-		assert (this.fieldNameMap.get(table_name + "_is_alive") != null) : "something went wrong!";
+		assert (this.fieldNameMap.get(
+				table_name + "_is_alive") != null) : "something went wrong! the table does not contain is_alive field";
 		return this.fieldNameMap.get(table_name + "_is_alive");
 	}
 
@@ -184,11 +239,6 @@ public class Program_Utils_NEW {
 		trasnsactionMap.get(txn).addStatement(result);
 		result.setPathCondition(new E_Const_Bool(true));
 		return result;
-	}
-
-	public Expression addAssertion(String txn, Expression exp) {
-		this.trasnsactionMap.get(txn).addAssertion(exp);
-		return exp;
 	}
 
 	public Query_Statement addQueryStatementInIf(String txn, int if_id, Query q) {
@@ -238,22 +288,23 @@ public class Program_Utils_NEW {
 		return result;
 	}
 
-	// create and add an empty if statement --> the enclosed statements will be
-	// added later
+	/*
+	 * create and add an empty if statement.
+	 */
 	public If_Statement addIfStatement(String txn, Expression c) {
 		int if_stmt_counts = (transactionToIf.containsKey(txn)) ? transactionToIf.get(txn) : 0;
 		transactionToIf.put(txn, if_stmt_counts + 1);
 		If_Statement result = new If_Statement(if_stmt_counts, c, new ArrayList<Statement>());
 		result.setPathCondition(new E_Const_Bool(true));
 		ifStatementMap.put(txn + "-if-" + if_stmt_counts, result);
-		trasnsactionMap.get(txn).addStatement(result);
+		trasnsactionMap.get(txn).addStatement(result);// the enclosed statements will be added later
 		return result;
 	}
 
 	public Select_Query addSelectQuery(String txn, String tableName, boolean isAtomic, WHC whc, String... fieldNames) {
 		int po = transactionToPoCnt.containsKey(txn) ? transactionToPoCnt.get(txn) : 0;
 		transactionToPoCnt.put(txn, po + 1);
-		Variable fresh_variable = getFreshVariable(tableName, txn);
+		Variable fresh_variable = mkVariable(tableName, txn);
 		int select_counts = (transactionToSelectCount.containsKey(txn)) ? transactionToSelectCount.get(txn) : 0;
 		transactionToSelectCount.put(txn, select_counts + 1);
 		ArrayList<FieldName> fresh_field_names = new ArrayList<>();
@@ -297,73 +348,19 @@ public class Program_Utils_NEW {
 		return result;
 	}
 
-	public Transaction addTrnasaction(String txn_name, String... args) {
-		Transaction txn = new Transaction(txn_name);
-		String transaction_name = txn.getName();
-		this.trasnsactionMap.put(transaction_name, txn);
-		transactionToArgsSetMap.put(transaction_name, new ArrayList<>());
-		transactionToVariableSetMap.put(transaction_name, new ArrayList<>());
-		for (String arg : args) {
-			String[] parts = arg.split(":");
-			E_Arg current_arg = new E_Arg(txn_name, parts[0], stringTypeToFType(parts[1]));
-			argsMap.put(parts[0], current_arg);
-			txn.addArg(current_arg);
-			transactionToArgsSetMap.get(transaction_name).add(current_arg);
-		}
-		return txn;
-	}
-
-	private F_Type stringTypeToFType(String tp) {
-		switch (tp.toLowerCase()) {
-		case "int":
-			return F_Type.NUM;
-		case "string":
-			return F_Type.TEXT;
-		case "bool":
-			return F_Type.BOOL;
-		default:
-			assert (false) : "unhandled string type";
-			return null;
-		}
-	}
-
-	public Table addTable(String tn_name, FieldName... fns) {
-		TableName tn = new TableName(tn_name);
-		FieldName is_alive = new FieldName("is_alive", false, false, F_Type.BOOL);
-		this.tableNameMap.put(tn.getName(), tn);
-		Table newTable = new Table(tn, is_alive, fns);
-		this.tableMap.put(tn.getName(), newTable);
-		for (FieldName fn : fns)
-			this.fieldNameMap.put(fn.getName(), fn);
-		this.fieldNameMap.put(tn_name + "_is_alive", is_alive);
-		return newTable;
-	}
-
-	/*
-	 * add a table with default values for SK, PK and types
-	 */
-
-	public TableName getTableName(String tn) {
-		assert (this.tableNameMap.get(tn) != null);
-		return this.tableNameMap.get(tn);
-	}
-
-	public Table addBasicTable(String tn_name, String... fns) {
-		TableName tn = new TableName(tn_name);
-		this.tableNameMap.put(tn_name, tn);
-
-		ArrayList<FieldName> fresh_fn_list = new ArrayList<>();
-		boolean isPK = true, isSK = true;
-		for (String fn : fns) {
-			FieldName new_fn = new FieldName(fn, isPK, isSK, F_Type.NUM);
-			fresh_fn_list.add(new_fn);
-			this.fieldNameMap.put(fn, new_fn);
-			isPK = false;
-			isPK = false;
-		}
-		Table newTable = new Table(tn, fresh_fn_list);
-		this.tableMap.put(tn_name, newTable);
-		return newTable;
-	}
-
+	
+	
+	
+	
+//	public boolean swapQueries()
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 }

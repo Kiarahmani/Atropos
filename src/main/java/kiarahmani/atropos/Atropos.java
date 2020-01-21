@@ -51,7 +51,7 @@ public class Atropos {
 
 		// test value correspondece
 		// introduce VC between ids of tables
-		pu.addVC("checking", "c_custid", "accounts", "a_custid", VC_Agg.VC_ID, VC_Type.VC_OTO,
+		pu.mkVC("checking", "c_custid", "accounts", "a_custid", VC_Agg.VC_ID, VC_Type.VC_OTO,
 				new VC_Constraint(pu.getFieldName("a_custid"), pu.getFieldName("c_custid")));
 		Program refactored_program_after_vc = pu.generateProgram();
 		refactored_program_after_vc.printProgram();
@@ -82,7 +82,7 @@ public class Atropos {
 		// Encoding_Engine ee = new Encoding_Engine(program.getName());
 		// DAI_Graph dai_graph = ee.constructInitialDAIGraph(program, cg); //
 		long time_end = System.currentTimeMillis();
-		//program.printProgram();
+		// program.printProgram();
 		// cg.printGraph();
 		// dai_graph.printDAIGraph();
 		System.out.println("\nTotal Time: " + (time_end - time_begin) / 1000.0 + " s\n");

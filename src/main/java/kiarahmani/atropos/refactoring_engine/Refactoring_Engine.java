@@ -44,7 +44,7 @@ public class Refactoring_Engine {
 	private Program_Utils_NEW apply_intro_r(Program_Utils_NEW input_pu, INTRO_R intro_r) {
 		logger.debug("applying INTRO_R refactoring");
 		String table_name = intro_r.getNewTableName();
-		input_pu.addTable(table_name);
+		input_pu.mkTable(table_name);
 		return input_pu;
 	}
 
