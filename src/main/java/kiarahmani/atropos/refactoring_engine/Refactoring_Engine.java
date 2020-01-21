@@ -9,66 +9,67 @@ import kiarahmani.atropos.program.Table;
 import kiarahmani.atropos.refactoring_engine.deltas.Delta;
 import kiarahmani.atropos.refactoring_engine.deltas.INTRO_R;
 import kiarahmani.atropos.utils.Program_Utils;
+import kiarahmani.atropos.utils.Program_Utils_NEW;
 
 public class Refactoring_Engine {
 	private static final Logger logger = LogManager.getLogger(Atropos.class);
-	private Program_Utils pu;
 
-	public Refactoring_Engine(Program_Utils pu) {
-		this.pu = pu;
+	/*
+	 * Constructor
+	 */
+	public Refactoring_Engine() {
 	}
 
-	public Program refactor(Program input_p, Delta delta) {
+	public Program_Utils_NEW refactor(Program_Utils_NEW input_pu, Delta delta) {
 		String delta_class = delta.getClass().getSimpleName().toString();
 		switch (delta_class) {
 		case "INTRO_R":
-			return apply_intro_r(input_p, (INTRO_R) delta);
+			return apply_intro_r(input_pu, (INTRO_R) delta);
 		case "ADDPK":
-			return apply_addpk(input_p);
+			return apply_addpk(input_pu);
 		case "CHSK":
-			return apply_chsk(input_p);
+			return apply_chsk(input_pu);
 		case "INTRO_F":
-			return apply_intro_f(input_p);
+			return apply_intro_f(input_pu);
 		default:
 			assert false : "Case not catched!" + delta_class;
 			break;
 		}
-		return input_p;
+		return input_pu;
 	}
 
 	/*
 	 * 
 	 */
-	private Program apply_intro_r(Program input_p, INTRO_R intro_r) {
+	private Program_Utils_NEW apply_intro_r(Program_Utils_NEW input_pu, INTRO_R intro_r) {
 		logger.debug("applying INTRO_R refactoring");
 		String table_name = intro_r.getNewTableName();
-		Table t = pu.addTable(table_name);
-		input_p.addTable(t);
-		return input_p;
+		input_pu.addTable(table_name);
+		return input_pu;
 	}
 
 	/*
 	 * 
 	 */
-	private Program apply_intro_f(Program input_p) {
+	private Program_Utils_NEW apply_intro_f(Program_Utils_NEW input_pu) {
 		logger.debug("applying INTRO_F refactoring");
-		return input_p;
+		return input_pu;
 	}
 
 	/*
 	 * 
 	 */
-	private Program apply_addpk(Program input_p) {
+	private Program_Utils_NEW apply_addpk(Program_Utils_NEW input_pu) {
 		logger.debug("applying ADDPK refactoring");
-		return input_p;
+		return input_pu;
 	}
 
 	/*
 	 * 
 	 */
-	private Program apply_chsk(Program input_p) {
+	private Program_Utils_NEW apply_chsk(Program_Utils_NEW input_pu) {
 		logger.debug("applying CHSK refactoring");
-		return input_p;
+		return input_pu;
 	}
 
 	/**

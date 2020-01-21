@@ -17,6 +17,7 @@ import kiarahmani.atropos.DML.where_clause.WHC_Constraint;
 import kiarahmani.atropos.program.Program;
 import kiarahmani.atropos.program_generators.ProgramGenerator;
 import kiarahmani.atropos.utils.Program_Utils;
+import kiarahmani.atropos.utils.Program_Utils_NEW;
 
 public class SmallBankProgramGenerator implements ProgramGenerator {
 
@@ -28,10 +29,10 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 	 * 
 	 */
 
-	private Program_Utils pu;
+	private Program_Utils_NEW pu;
 
-	public SmallBankProgramGenerator(Program_Utils pu) {
-		this.pu = pu;
+	public SmallBankProgramGenerator(Program_Utils_NEW pu2) {
+		this.pu = pu2;
 	}
 
 	public Program generate(String... args) {
@@ -319,6 +320,6 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 					new E_BinUp(BinOp.MINUS, pu.getProjExpr("WriteCheck", 1, "c_bal", 1), penalty));
 			pu.addQueryStatementInElse("WriteCheck", 0, WriteCheck_U1_dest_else);
 		}
-		return pu.getProgram();
+		return pu.generateProgram();
 	}
 }
