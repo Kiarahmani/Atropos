@@ -25,7 +25,7 @@ public class Atropos {
 	public static void main(String[] args) {
 		logger.debug("Enter main");
 		try {
-			new Constants(); 
+			new Constants();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -38,15 +38,29 @@ public class Atropos {
 				"WriteCheck1");
 		program.printProgram();
 
+		// create new refactoring engine
 		Refactoring_Engine re = new Refactoring_Engine(pu);
 		Delta intro_r = new INTRO_R("added");
+		// apply refactoring on the program
 		Program refactored_program = re.refactor(program, intro_r);
+		//
+		// test value correspondece
+		// introduce two VC between ids of tables
 		VC vc = new VC(pu.getTableName("accounts"), pu.getFieldName("a_custid"), pu.getTableName("checking"),
 				pu.getFieldName("c_custid"), VC_Agg.VC_ID, VC_Type.VC_OTO);
 		vc.addConstraint(new VC_Constraint(pu.getFieldName("a_custid"), pu.getFieldName("c_custid")));
+		VC vc1 = new VC(pu.getTableName("accounts"), pu.getFieldName("a_custid"), pu.getTableName("savings"),
+				pu.getFieldName("s_custid"), VC_Agg.VC_ID, VC_Type.VC_OTO);
+		vc1.addConstraint(new VC_Constraint(pu.getFieldName("a_custid"), pu.getFieldName("s_custid")));
 		refactored_program.addVC(vc);
+		refactored_program.addVC(vc1);
 		refactored_program.printProgram();
-
+		// test operation replacement
+		Program refactored_program_2 = re.shrink(refactored_program);
+		refactored_program_2.printProgram();
+		
+		
+		
 		// Conflict_Graph cg = new Conflict_Graph(program);
 		// Encoding_Engine ee = new Encoding_Engine(program.getName());
 		// DAI_Graph dai_graph = ee.constructInitialDAIGraph(program, cg); //

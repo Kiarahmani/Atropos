@@ -145,12 +145,12 @@ public class Program {
 		System.out.println(
 				"\n\n\n\n##############################################################################################################################");
 		System.out.println("### " + programName.toUpperCase());
-		System.out.println("## VC:");
-		for (VC v : vcs)
-			System.out.println(v.toString());
 		System.out.println("## SCHEMA:");
 		for (Table t : tables)
 			System.out.println(t.toString());
+		System.out.println("\n## VC:");
+		for (VC v : vcs)
+			System.out.println(v.toString());
 		System.out.println("\n\n## TRANSACTIONS:");
 		for (Transaction txn : this.transactions)
 			txn.printTransaction();

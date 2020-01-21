@@ -71,4 +71,13 @@ public class Refactoring_Engine {
 		return input_p;
 	}
 
+	/**
+	 * @param refactored_program
+	 * @return
+	 */
+	public Program shrink(Program refactored_program) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }
