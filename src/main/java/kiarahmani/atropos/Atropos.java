@@ -38,8 +38,10 @@ public class Atropos {
 
 		Program_Utils_NEW pu = new Program_Utils_NEW("SmallBank");
 		ProgramGenerator ipg = new SmallBankProgramGenerator(pu);
-		Program program = ipg.generate("Balance1", "Amalgamate1", "TransactSavings1", "DepositChecking1", "SendPayment",
-				"WriteCheck1");
+		String test_string = "WriteCheck";
+		
+		Program program = ipg.generate("Balance1", "Amalgamate1", "TransactSavings1", "DepositChecking1", "SendPaymen1",
+				"WriteCheck1",test_string);
 		program.printProgram();
 
 		// create new refactoring engine
@@ -48,7 +50,7 @@ public class Atropos {
 		// apply refactoring on the program
 		pu.mkVC("checking", "c_custid", "accounts", "a_custid", VC_Agg.VC_ID, VC_Type.VC_OTO,
 				new VC_Constraint(pu.getFieldName("a_custid"), pu.getFieldName("c_custid")));
-		System.out.println("Swap result: "+pu.swapQueries("SendPayment", 0, 2));
+		System.out.println("Swap result: "+pu.swapQueries(test_string, 1, 2));
 		Program refactored_program = re.refactor(pu, intro_r).generateProgram();
 		refactored_program.printProgram();
 
