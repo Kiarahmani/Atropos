@@ -9,7 +9,7 @@ import kiarahmani.atropos.program.Table;
 import kiarahmani.atropos.refactoring_engine.deltas.Delta;
 import kiarahmani.atropos.refactoring_engine.deltas.INTRO_R;
 import kiarahmani.atropos.utils.Program_Utils;
-import kiarahmani.atropos.utils.Program_Utils_NEW;
+import kiarahmani.atropos.utils.Program_Utils;
 
 public class Refactoring_Engine {
 	private static final Logger logger = LogManager.getLogger(Atropos.class);
@@ -20,7 +20,7 @@ public class Refactoring_Engine {
 	public Refactoring_Engine() {
 	}
 
-	public Program_Utils_NEW refactor(Program_Utils_NEW input_pu, Delta delta) {
+	public Program_Utils refactor(Program_Utils input_pu, Delta delta) {
 		String delta_class = delta.getClass().getSimpleName().toString();
 		switch (delta_class) {
 		case "INTRO_R":
@@ -41,7 +41,7 @@ public class Refactoring_Engine {
 	/*
 	 * 
 	 */
-	private Program_Utils_NEW apply_intro_r(Program_Utils_NEW input_pu, INTRO_R intro_r) {
+	private Program_Utils apply_intro_r(Program_Utils input_pu, INTRO_R intro_r) {
 		logger.debug("applying INTRO_R refactoring");
 		String table_name = intro_r.getNewTableName();
 		input_pu.mkTable(table_name);
@@ -51,7 +51,7 @@ public class Refactoring_Engine {
 	/*
 	 * 
 	 */
-	private Program_Utils_NEW apply_intro_f(Program_Utils_NEW input_pu) {
+	private Program_Utils apply_intro_f(Program_Utils input_pu) {
 		logger.debug("applying INTRO_F refactoring");
 		return input_pu;
 	}
@@ -59,7 +59,7 @@ public class Refactoring_Engine {
 	/*
 	 * 
 	 */
-	private Program_Utils_NEW apply_addpk(Program_Utils_NEW input_pu) {
+	private Program_Utils apply_addpk(Program_Utils input_pu) {
 		logger.debug("applying ADDPK refactoring");
 		return input_pu;
 	}
@@ -67,7 +67,7 @@ public class Refactoring_Engine {
 	/*
 	 * 
 	 */
-	private Program_Utils_NEW apply_chsk(Program_Utils_NEW input_pu) {
+	private Program_Utils apply_chsk(Program_Utils input_pu) {
 		logger.debug("applying CHSK refactoring");
 		return input_pu;
 	}

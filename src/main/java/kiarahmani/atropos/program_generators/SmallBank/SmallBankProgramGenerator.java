@@ -17,7 +17,7 @@ import kiarahmani.atropos.DML.where_clause.WHC_Constraint;
 import kiarahmani.atropos.program.Program;
 import kiarahmani.atropos.program_generators.ProgramGenerator;
 import kiarahmani.atropos.utils.Program_Utils;
-import kiarahmani.atropos.utils.Program_Utils_NEW;
+import kiarahmani.atropos.utils.Program_Utils;
 
 public class SmallBankProgramGenerator implements ProgramGenerator {
 
@@ -29,9 +29,9 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 	 * 
 	 */
 
-	private Program_Utils_NEW pu;
+	private Program_Utils pu;
 
-	public SmallBankProgramGenerator(Program_Utils_NEW pu2) {
+	public SmallBankProgramGenerator(Program_Utils pu2) {
 		this.pu = pu2;
 	}
 

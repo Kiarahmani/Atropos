@@ -20,7 +20,7 @@ import kiarahmani.atropos.refactoring_engine.vc.VC.VC_Type;
 import kiarahmani.atropos.refactoring_engine.vc.VC_Constraint;
 import kiarahmani.atropos.utils.Constants;
 import kiarahmani.atropos.utils.Program_Utils;
-import kiarahmani.atropos.utils.Program_Utils_NEW;
+import kiarahmani.atropos.utils.Program_Utils;
 
 public class Atropos {
 
@@ -36,7 +36,7 @@ public class Atropos {
 		long time_begin = System.currentTimeMillis();
 		logger.debug("New Constants object initialized");
 
-		Program_Utils_NEW pu = new Program_Utils_NEW("SmallBank");
+		Program_Utils pu = new Program_Utils("SmallBank");
 		ProgramGenerator ipg = new SmallBankProgramGenerator(pu);
 		String test_string = "WriteCheck";
 		
