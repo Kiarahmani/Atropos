@@ -1,6 +1,7 @@
 package kiarahmani.atropos.utils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import kiarahmani.atropos.DDL.F_Type;
 import kiarahmani.atropos.DDL.FieldName;
@@ -348,19 +349,44 @@ public class Program_Utils_NEW {
 		return result;
 	}
 
-	
-	
-	
-	
-//	public boolean swapQueries()
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+	public boolean swapQueries(String txnName, int q1_po, int q2_po) {
+		assert (q1_po < q2_po) : "invalid args: first po must be less  than the second";
+		Transaction txn = this.trasnsactionMap.get(txnName);
+		swapQueries_rec(txn.getStatements(), q1_po, q2_po);
+		return true;
+	}
+
+	public void swapQueries_rec(ArrayList<Statement> inputList, int q1_po, int q2_po) {
+		int iter = 0;
+		int index_po1 = -1, index_po2 = -1;
+		for (Statement stmt : inputList) {
+			switch (stmt.getClass().getSimpleName()) {
+			case "Query_Statement":
+				Query_Statement qry_stmt = (Query_Statement) stmt;
+				Query qry = qry_stmt.getQuery();
+				if (qry.getPo() == q1_po) {
+					qry.updatePO(q2_po);
+					index_po1 = iter;
+					break;
+				}
+				if (qry.getPo() == q2_po) {
+					qry.updatePO(q1_po);
+					index_po2 = iter;
+					break;
+				}
+				break;
+			case "If_Statement":
+				If_Statement if_stmt = (If_Statement) stmt;
+				swapQueries_rec(if_stmt.getIfStatements(), q1_po, q2_po);
+				swapQueries_rec(if_stmt.getElseStatements(), q1_po, q2_po);
+				break;
+			default:
+				break;
+			}
+			iter++;
+		}
+		if (index_po1 != -1 && index_po2 != -1)
+			Collections.swap(inputList, index_po1, index_po2);
+	}
+
 }

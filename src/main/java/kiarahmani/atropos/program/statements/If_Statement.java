@@ -77,7 +77,7 @@ public class If_Statement extends Statement {
 	}
 
 	public ArrayList<Statement> getElseStatements() {
-		assert (else_statements.size() > 0) : "cannot return empty list";
+		//assert (else_statements.size() > 0) : "cannot return empty list";
 		return this.else_statements;
 	}
 

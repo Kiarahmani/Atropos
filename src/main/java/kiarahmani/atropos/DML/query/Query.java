@@ -19,6 +19,10 @@ public abstract class Query {
 	protected int id;
 	protected int po;
 
+	public void updatePO(int newPO) {
+		this.po = newPO;
+	}
+
 	public abstract Expression getUpdateExpressionByFieldName(FieldName fn);
 
 	public abstract void setPathCondition(Expression path_condition);

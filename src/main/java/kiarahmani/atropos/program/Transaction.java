@@ -76,6 +76,9 @@ public class Transaction {
 		return this.TransactionName.equals(other.getName());
 	}
 
+		
+	
+	
 	public void printTransaction() {
 		System.out.print(TransactionName + "(");
 		String delim = "";
@@ -95,5 +98,4 @@ public class Transaction {
 			stmt.printStatemenet("  ");
 		System.out.println("}");
 	}
-
 }

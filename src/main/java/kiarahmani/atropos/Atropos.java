@@ -38,7 +38,7 @@ public class Atropos {
 
 		Program_Utils_NEW pu = new Program_Utils_NEW("SmallBank");
 		ProgramGenerator ipg = new SmallBankProgramGenerator(pu);
-		Program program = ipg.generate("Balance", "Amalgamate1", "TransactSavings1", "DepositChecking1", "SendPayment1",
+		Program program = ipg.generate("Balance1", "Amalgamate1", "TransactSavings1", "DepositChecking1", "SendPayment",
 				"WriteCheck1");
 		program.printProgram();
 
@@ -46,45 +46,19 @@ public class Atropos {
 		Refactoring_Engine re = new Refactoring_Engine();
 		Delta intro_r = new INTRO_R("added");
 		// apply refactoring on the program
+		pu.mkVC("checking", "c_custid", "accounts", "a_custid", VC_Agg.VC_ID, VC_Type.VC_OTO,
+				new VC_Constraint(pu.getFieldName("a_custid"), pu.getFieldName("c_custid")));
+		pu.swapQueries("SendPayment", 4, 5);
 		Program refactored_program = re.refactor(pu, intro_r).generateProgram();
 		refactored_program.printProgram();
 
-		// test value correspondece
-		// introduce VC between ids of tables
-		pu.mkVC("checking", "c_custid", "accounts", "a_custid", VC_Agg.VC_ID, VC_Type.VC_OTO,
-				new VC_Constraint(pu.getFieldName("a_custid"), pu.getFieldName("c_custid")));
-		Program refactored_program_after_vc = pu.generateProgram();
-		refactored_program_after_vc.printProgram();
-
-		//
-
-		// test value correspondece
-		// introduce two VC between ids of tables
-		// VC vc = new VC(pu.getTableName("accounts"), pu.getFieldName("a_custid"),
-		// pu.getTableName("checking"),
-		// pu.getFieldName("c_custid"), VC_Agg.VC_ID, VC_Type.VC_OTO);
-
-		// vc.addConstraint(new VC_Constraint(pu.getFieldName("a_custid"),
-		// pu.getFieldName("c_custid")));
-		// VC vc1 = new VC(pu.getTableName("accounts"), pu.getFieldName("a_custid"),
-		// pu.getTableName("savings"),
-		// pu.getFieldName("s_custid"), VC_Agg.VC_ID, VC_Type.VC_OTO);
-		// vc1.addConstraint(new VC_Constraint(pu.getFieldName("a_custid"),
-		// pu.getFieldName("s_custid")));
-		// refactored_program.addVC(vc);
-		// refactored_program.addVC(vc1);
-
-		// test operation replacement
-		// Program refactored_program_2 = re.shrink(refactored_program);
-		// refactored_program_2.printProgram();
-
-		// Conflict_Graph cg = new Conflict_Graph(program);
-		// Encoding_Engine ee = new Encoding_Engine(program.getName());
-		// DAI_Graph dai_graph = ee.constructInitialDAIGraph(program, cg); //
+		//Conflict_Graph cg = new Conflict_Graph(program);
+		Encoding_Engine ee = new Encoding_Engine(program.getName());
+		//DAI_Graph dai_graph = ee.constructInitialDAIGraph(program, cg); //
 		long time_end = System.currentTimeMillis();
 		// program.printProgram();
 		// cg.printGraph();
-		// dai_graph.printDAIGraph();
+		//dai_graph.printDAIGraph();
 		System.out.println("\nTotal Time: " + (time_end - time_begin) / 1000.0 + " s\n");
 	}
 }
