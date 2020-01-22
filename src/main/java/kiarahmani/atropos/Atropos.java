@@ -5,6 +5,9 @@ import java.io.IOException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import kiarahmani.atropos.DDL.vc.*;
+import kiarahmani.atropos.DDL.vc.VC.VC_Agg;
+import kiarahmani.atropos.DDL.vc.VC.VC_Type;
 import kiarahmani.atropos.dependency.Conflict_Graph;
 import kiarahmani.atropos.dependency.DAI_Graph;
 import kiarahmani.atropos.encoding_engine.Encoding_Engine;
@@ -14,12 +17,7 @@ import kiarahmani.atropos.program_generators.SmallBank.SmallBankProgramGenerator
 import kiarahmani.atropos.refactoring_engine.Refactoring_Engine;
 import kiarahmani.atropos.refactoring_engine.deltas.Delta;
 import kiarahmani.atropos.refactoring_engine.deltas.INTRO_R;
-import kiarahmani.atropos.refactoring_engine.vc.VC;
-import kiarahmani.atropos.refactoring_engine.vc.VC.VC_Agg;
-import kiarahmani.atropos.refactoring_engine.vc.VC.VC_Type;
-import kiarahmani.atropos.refactoring_engine.vc.VC_Constraint;
 import kiarahmani.atropos.utils.Constants;
-import kiarahmani.atropos.utils.Program_Utils;
 import kiarahmani.atropos.utils.Program_Utils;
 
 public class Atropos {

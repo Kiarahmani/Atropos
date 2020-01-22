@@ -8,6 +8,10 @@ import java.util.HashSet;
 import kiarahmani.atropos.DDL.F_Type;
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DDL.TableName;
+import kiarahmani.atropos.DDL.vc.VC;
+import kiarahmani.atropos.DDL.vc.VC.VC_Agg;
+import kiarahmani.atropos.DDL.vc.VC.VC_Type;
+import kiarahmani.atropos.DDL.vc.VC_Constraint;
 import kiarahmani.atropos.DML.Variable;
 import kiarahmani.atropos.DML.expression.BinOp;
 import kiarahmani.atropos.DML.expression.E_Arg;
@@ -33,10 +37,6 @@ import kiarahmani.atropos.program.Table;
 import kiarahmani.atropos.program.Transaction;
 import kiarahmani.atropos.program.statements.If_Statement;
 import kiarahmani.atropos.program.statements.Query_Statement;
-import kiarahmani.atropos.refactoring_engine.vc.VC;
-import kiarahmani.atropos.refactoring_engine.vc.VC_Constraint;
-import kiarahmani.atropos.refactoring_engine.vc.VC.VC_Agg;
-import kiarahmani.atropos.refactoring_engine.vc.VC.VC_Type;
 
 public class Program_Utils {
 	// basic program meta data
@@ -362,6 +362,7 @@ public class Program_Utils {
 		return result;
 	}
 
+	/*****************************************************************************************************************/
 	/*
 	 * perform a swap in the requested transaction
 	 */
@@ -380,7 +381,7 @@ public class Program_Utils {
 	 * Helping function used in swapQueries. It recusrsively checks continous blocks
 	 * of statements
 	 */
-	public void swapQueries_rec(ArrayList<Statement> inputList, int q1_po, int q2_po) {
+	private void swapQueries_rec(ArrayList<Statement> inputList, int q1_po, int q2_po) {
 		int iter = 0;
 		int index_po1 = -1, index_po2 = -1;
 		loop_label: for (Statement stmt : inputList) {
@@ -494,5 +495,20 @@ public class Program_Utils {
 			// the second query has a reference to the variable created by the first one
 		}
 		return false;
+	}
+
+	/*****************************************************************************************************************/
+
+	public boolean redirectQuery(String txnName, int q_po, String tableName) {
+		if(!redirectIsValid())
+			return false;
+		
+		
+		
+		return true;
+	}
+	
+	private boolean redirectIsValid(){
+		return true;
 	}
 }

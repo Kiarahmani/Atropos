@@ -3,7 +3,7 @@
  * Copyright (C) Kia Rahmani, 2020 - All Rights Reserved
  *
  **/
-package kiarahmani.atropos.refactoring_engine.vc;
+package kiarahmani.atropos.DDL.vc;
 
 import java.util.ArrayList;
 
@@ -17,7 +17,7 @@ public class VC {
 	public enum VC_Type {
 		VC_OTO /* one to one */, VC_OTM /* one to many */;
 	}
-
+   
 	public enum VC_Agg {
 		VC_SUM /* sum */, VC_ID /* id */;
 		public String toString() {

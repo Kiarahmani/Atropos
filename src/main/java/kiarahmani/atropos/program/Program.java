@@ -8,7 +8,7 @@ import org.apache.logging.log4j.Logger;
 
 import kiarahmani.atropos.Atropos;
 import kiarahmani.atropos.DDL.FieldName;
-import kiarahmani.atropos.refactoring_engine.vc.VC;
+import kiarahmani.atropos.DDL.vc.VC;
 
 public class Program {
 	private static final Logger logger = LogManager.getLogger(Atropos.class);

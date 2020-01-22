@@ -1,4 +1,4 @@
-package kiarahmani.atropos.refactoring_engine.vc;
+package kiarahmani.atropos.DDL.vc;
 
 import kiarahmani.atropos.DDL.FieldName;
 
