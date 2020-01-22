@@ -37,28 +37,31 @@ public class Atropos {
 		Program_Utils pu = new Program_Utils("SmallBank");
 		ProgramGenerator ipg = new SmallBankProgramGenerator(pu);
 		String test_string = "WriteCheck";
-		
+
 		Program program = ipg.generate("Balance1", "Amalgamate1", "TransactSavings1", "DepositChecking1", "SendPaymen1",
-				"WriteCheck1",test_string);
+				"WriteCheck1", test_string);
 		program.printProgram();
 
 		// create new refactoring engine
 		Refactoring_Engine re = new Refactoring_Engine();
 		Delta intro_r = new INTRO_R("added");
 		// apply refactoring on the program
-		pu.mkVC("checking", "c_custid", "accounts", "a_custid", VC_Agg.VC_ID, VC_Type.VC_OTO,
+		pu.mkVC("checking", "accounts", VC_Agg.VC_ID, VC_Type.VC_OTO,
 				new VC_Constraint(pu.getFieldName("a_custid"), pu.getFieldName("c_custid")));
-		System.out.println("Swap result: "+pu.swapQueries(test_string, 1, 2));
+
+		pu.addFieldTupleToVC("vc_0", "c_custid", "a_custid");
+
+		System.out.println("Swap result: " + pu.swapQueries(test_string, 1, 2));
 		Program refactored_program = re.refactor(pu, intro_r).generateProgram();
 		refactored_program.printProgram();
 
-		//Conflict_Graph cg = new Conflict_Graph(program);
+		// Conflict_Graph cg = new Conflict_Graph(program);
 		Encoding_Engine ee = new Encoding_Engine(program.getName());
-		//DAI_Graph dai_graph = ee.constructInitialDAIGraph(program, cg); //
+		// DAI_Graph dai_graph = ee.constructInitialDAIGraph(program, cg); //
 		long time_end = System.currentTimeMillis();
 		// program.printProgram();
 		// cg.printGraph();
-		//dai_graph.printDAIGraph();
+		// dai_graph.printDAIGraph();
 		System.out.println("\nTotal Time: " + (time_end - time_begin) / 1000.0 + " s\n");
 	}
 }

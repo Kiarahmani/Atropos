@@ -56,7 +56,7 @@ public class Program_Utils {
 	/*
 	 * Value Corresponce
 	 */
-	private ArrayList<VC> vcList;
+	private HashMap<String, VC> vcMap;
 
 	/*
 	 * Variables to Proj Expressions Mapping
@@ -86,7 +86,7 @@ public class Program_Utils {
 			program.addTable(t);
 		for (Transaction t : trasnsactionMap.values())
 			program.addTransaction(t);
-		for (VC vc : vcList)
+		for (VC vc : vcMap.values())
 			program.addVC(vc);
 		program.setMaxQueryCount();
 		return program;
@@ -98,7 +98,7 @@ public class Program_Utils {
 	public Program_Utils(String pn) {
 		// allocate new objects for all data structures
 		this.program_name = pn;
-		this.vcList = new ArrayList<>();
+		this.vcMap = new HashMap<>();
 		trasnsactionMap = new HashMap<>();
 		tableMap = new HashMap<>();
 		tableNameMap = new HashMap<>();
@@ -150,14 +150,18 @@ public class Program_Utils {
 	/*
 	 * Create a new VC, store it locally and return it
 	 */
-	public VC mkVC(String T_1, String F_1, String T_2, String F_2, VC_Agg vc_agg, VC_Type vc_type,
-			VC_Constraint... constraints) {
-		VC vc = new VC(this.getTableName(T_1), this.getFieldName(F_1), this.getTableName(T_2), this.getFieldName(F_2),
-				vc_agg, vc_type);
+	public VC mkVC(String T_1, String T_2, VC_Agg vc_agg, VC_Type vc_type, VC_Constraint... constraints) {
+		String name = "vc_" + this.vcMap.size();
+		VC vc = new VC(name, this.getTableName(T_1), this.getTableName(T_2), vc_agg, vc_type);
 		for (VC_Constraint vcc : constraints)
 			vc.addConstraint(vcc);
-		this.vcList.add(vc);
+		this.vcMap.put(name, vc);
 		return vc;
+	}
+
+	public void addFieldTupleToVC(String vcName, String F_1, String F_2) {
+		assert (this.vcMap.get(vcName) != null) : "cannot add tuple to a non-existing VC";
+		this.vcMap.get(vcName).addFieldTuple(getFieldName(F_1), getFieldName(F_2));
 	}
 
 	/*
@@ -500,15 +504,13 @@ public class Program_Utils {
 	/*****************************************************************************************************************/
 
 	public boolean redirectQuery(String txnName, int q_po, String tableName) {
-		if(!redirectIsValid())
+		if (!redirectIsValid())
 			return false;
-		
-		
-		
+
 		return true;
 	}
-	
-	private boolean redirectIsValid(){
+
+	private boolean redirectIsValid() {
 		return true;
 	}
 }
