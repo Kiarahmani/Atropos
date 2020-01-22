@@ -9,6 +9,11 @@ TODO:
   - support for for loops
   - BUG: the true/else path conditions are mistaken discarded
 
+** refactoring tasks
+  - Generalize aggregate functions (currently we only have sum and size)
+
+
+
 ====================================================================================================
 IMPROVEMENTS:
   - It seems that we can separate two scenarios where CRDT-like solutions could
