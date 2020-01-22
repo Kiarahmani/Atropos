@@ -1,9 +1,11 @@
 package kiarahmani.atropos.DML.query;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DDL.TableName;
+import kiarahmani.atropos.DML.Variable;
 import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.query.Query.Kind;
 import kiarahmani.atropos.DML.where_clause.WHC;
@@ -111,6 +113,21 @@ public class Update_Query extends Query {
 		ArrayList<FieldName> result = new ArrayList<>();
 		for (FieldName fn : this.where_clause.getAccessedFieldNames())
 			result.add(fn);
+		return result;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see kiarahmani.atropos.DML.query.Query#getAllRefferencedVars()
+	 */
+	@Override
+	public HashSet<Variable> getAllRefferencedVars() {
+		// TODO Auto-generated method stub
+		HashSet<Variable> result = new HashSet<>();
+		result.addAll(this.where_clause.getAllRefferencedVars());
+		for (Tuple<FieldName, Expression> exp : this.update_expressions)
+			result.addAll(exp.y.getAllRefferencedVars());
 		return result;
 	}
 }

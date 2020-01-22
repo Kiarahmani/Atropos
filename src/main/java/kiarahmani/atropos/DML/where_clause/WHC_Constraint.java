@@ -1,7 +1,10 @@
 package kiarahmani.atropos.DML.where_clause;
 
+import java.util.HashSet;
+
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DDL.TableName;
+import kiarahmani.atropos.DML.Variable;
 import kiarahmani.atropos.DML.expression.BinOp;
 import kiarahmani.atropos.DML.expression.Expression;
 
@@ -37,6 +40,10 @@ public class WHC_Constraint {
 	@Override
 	public String toString() {
 		return this.f + BinOp.BinOpToString(op) + exp.toString();
+	}
+
+	public HashSet<Variable> getAllRefferencedVars() {
+		return this.exp.getAllRefferencedVars();
 	}
 
 }

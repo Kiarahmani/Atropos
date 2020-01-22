@@ -1,9 +1,11 @@
 package kiarahmani.atropos.DML.query;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DDL.TableName;
+import kiarahmani.atropos.DML.Variable;
 import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.where_clause.WHC;
 
@@ -48,5 +50,7 @@ public abstract class Query {
 	public abstract ArrayList<FieldName> getWrittenFieldNames();
 
 	public abstract ArrayList<FieldName> getReadFieldNames();
+
+	public abstract HashSet<Variable> getAllRefferencedVars();
 
 }

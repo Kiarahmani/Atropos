@@ -20,6 +20,7 @@ import kiarahmani.atropos.DML.expression.constants.E_Const_Num;
 import kiarahmani.atropos.DML.query.Delete_Query;
 import kiarahmani.atropos.DML.query.Insert_Query;
 import kiarahmani.atropos.DML.query.Query;
+import kiarahmani.atropos.DML.query.Query.Kind;
 import kiarahmani.atropos.DML.query.Select_Query;
 import kiarahmani.atropos.DML.query.Update_Query;
 import kiarahmani.atropos.DML.where_clause.WHC;
@@ -56,11 +57,9 @@ public class Program_Utils_NEW {
 	private ArrayList<VC> vcList;
 
 	// Transaction to Args Mapping
-	// TODO: update the key to a transaction instance
 	private HashMap<String, ArrayList<E_Arg>> transactionToArgsSetMap;
 
 	// Transaction to Variables Mapping
-	// TODO: update the key to a transaction instance
 	private HashMap<String, ArrayList<Variable>> transactionToVariableSetMap;
 
 	// Meta data mapping transaction instances the number of components
@@ -349,17 +348,28 @@ public class Program_Utils_NEW {
 		return result;
 	}
 
+	/*
+	 * perform a swap in the requested transaction
+	 */
 	public boolean swapQueries(String txnName, int q1_po, int q2_po) {
 		assert (q1_po < q2_po) : "invalid args: first po must be less  than the second";
 		Transaction txn = this.trasnsactionMap.get(txnName);
+		assert (txn != null) : "swap request is made on a transaction that does not exist";
+		// guard the swaps from invalid requests
+		if (!swapChecks(txn, q1_po, q2_po))
+			return false;
 		swapQueries_rec(txn.getStatements(), q1_po, q2_po);
 		return true;
 	}
 
+	/*
+	 * Helping function used in swapQueries. It recusrsively checks continous blocks
+	 * of statements
+	 */
 	public void swapQueries_rec(ArrayList<Statement> inputList, int q1_po, int q2_po) {
 		int iter = 0;
 		int index_po1 = -1, index_po2 = -1;
-		for (Statement stmt : inputList) {
+		loop_label: for (Statement stmt : inputList) {
 			switch (stmt.getClass().getSimpleName()) {
 			case "Query_Statement":
 				Query_Statement qry_stmt = (Query_Statement) stmt;
@@ -370,9 +380,11 @@ public class Program_Utils_NEW {
 					break;
 				}
 				if (qry.getPo() == q2_po) {
+					assert (index_po1 != -1) : "unexpected state: q2 is found in the current block but"
+							+ " q1 belongs to another (possibly outer) block";
 					qry.updatePO(q1_po);
 					index_po2 = iter;
-					break;
+					break loop_label;
 				}
 				break;
 			case "If_Statement":
@@ -389,4 +401,84 @@ public class Program_Utils_NEW {
 			Collections.swap(inputList, index_po1, index_po2);
 	}
 
+	/*
+	 * Check if the requested swap is valid or not
+	 */
+	private boolean swapChecks(Transaction txn, int q1_po, int q2_po) {
+		if (q1_po > q2_po)
+			return false;
+		Boolean result = swapChecks_rec(txn.getStatements(), q1_po, q2_po);
+		assert (result != null) : "the requested swap is invalid and cannot be checked";
+		return result;
+	}
+
+	/*
+	 * Helping function used in swapChecks. Recursively analyzes the contineous
+	 * blocks of statements
+	 */
+	private Boolean swapChecks_rec(ArrayList<Statement> inputList, int q1_po, int q2_po) {
+		ArrayList<Query> pot_dep_qries = new ArrayList<>();
+		Query qry1 = null;
+		Query qry2 = null;
+		boolean q1_seen_flag = false;
+		loop_label: for (Statement stmt : inputList) {
+			switch (stmt.getClass().getSimpleName()) {
+			case "Query_Statement":
+				Query_Statement qry_stmt = (Query_Statement) stmt;
+				Query qry = qry_stmt.getQuery();
+				if (qry.getPo() == q1_po) {
+					q1_seen_flag = true;
+					qry1 = qry;
+					pot_dep_qries.add(qry);
+					break;
+				}
+				if (qry.getPo() == q2_po) {
+					assert (q1_seen_flag) : "unexpected state: q2 is found in the current block but"
+							+ " q1 belongs to another (possibly outer) block";
+					qry2 = qry;
+					break loop_label;
+				}
+				if (q1_seen_flag && qryAreDep(qry1, qry))
+					pot_dep_qries.add(qry);
+				break;
+			case "If_Statement":
+				If_Statement if_stmt = (If_Statement) stmt;
+				Boolean if_result = swapChecks_rec(if_stmt.getIfStatements(), q1_po, q2_po);
+				if (if_result != null)
+					return if_result;
+				Boolean else_result = swapChecks_rec(if_stmt.getElseStatements(), q1_po, q2_po);
+				if (else_result != null)
+					return else_result;
+				break;
+			default:
+				break;
+			}
+		}
+		if (q1_seen_flag) {
+			assert (qry2 != null) : "unexpected state: qry2 is not set although qry1 has been found in the current block";
+			for (Query q : pot_dep_qries)
+				if (qryAreDep(q, qry2))
+					return false;
+			return true;
+		} else
+			return null;
+	}
+
+	/*
+	 * check if two queries are dependent on each other or not
+	 */
+	private boolean qryAreDep(Query qry1, Query qry2) {
+		assert (qry1.getPo() < qry2
+				.getPo()) : "unexpected state: algorithm assumes this function is only called for po1<po2 -> po1:"
+						+ qry1.getPo() + " po2:" + qry2.getPo();
+		if (qry1.getKind() == Kind.SELECT) {
+			Select_Query slct_qry = (Select_Query) qry1;
+			Variable var1 = slct_qry.getVariable();
+			return qry2.getAllRefferencedVars().contains(var1);
+			// the only case where true (identifying a dependency) is returned is when the
+			// first query is a select and
+			// the second query has a reference to the variable created by the first one
+		}
+		return false;
+	}
 }

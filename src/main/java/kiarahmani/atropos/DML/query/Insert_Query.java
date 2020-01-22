@@ -1,9 +1,11 @@
 package kiarahmani.atropos.DML.query;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DDL.TableName;
+import kiarahmani.atropos.DML.Variable;
 import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.expression.constants.E_Const_Bool;
 import kiarahmani.atropos.DML.query.Query.Kind;
@@ -62,11 +64,11 @@ public class Insert_Query extends Query {
 			if (fn.isPK())
 				updateTuplesList += delim + this.where_clause.getConstraintByFieldName(fn).getExpression();
 			else
-				updateTuplesList += delim + /*fn.getName() + "=" + */this.getUpdateExpressionByFieldName(fn);
+				updateTuplesList += delim + /* fn.getName() + "=" + */this.getUpdateExpressionByFieldName(fn);
 			delim = ",";
 		}
 		return isAtomicString + "INSERT" + this.id + " INTO " + String.format("%-10s", this.tableName) + " VALUES ("
-				+ updateTuplesList +")";
+				+ updateTuplesList + ")";
 	}
 
 	@Override
@@ -138,4 +140,18 @@ public class Insert_Query extends Query {
 				return tp.y;
 		return null;
 	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see kiarahmani.atropos.DML.query.Query#getAllRefferencedVars()
+	 */
+	@Override
+	public HashSet<Variable> getAllRefferencedVars() {
+		HashSet<Variable> result = new HashSet<>();
+		for (Tuple<FieldName, Expression> exp : this.insert_expressions)
+			result.addAll(exp.y.getAllRefferencedVars());
+		return result;
+	}
+
 }

@@ -1,6 +1,7 @@
 package kiarahmani.atropos.DML.query;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DDL.TableName;
@@ -38,7 +39,8 @@ public class Select_Query extends Query {
 		for (FieldName fn : fieldNames) {
 			fieldNamesString += delim + fn.toString();
 			delim = ",";
-		}fieldNamesString+=")";
+		}
+		fieldNamesString += ")";
 		String isAtomicString = isAtomic ? "(" + po + ") ATOMIC " : "(" + po + ") ";
 		return isAtomicString + "SELECT" + this.id + " (" + String.format("%-10s", fieldNamesString) + " FROM "
 				+ String.format("%-10s", this.tableName) + " AS " + this.variable + " WHERE " + this.where_clause;
@@ -109,4 +111,15 @@ public class Select_Query extends Query {
 	public Expression getUpdateExpressionByFieldName(FieldName fn) {
 		return null;
 	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see kiarahmani.atropos.DML.query.Query#getAllRefferencedVars()
+	 */
+	@Override
+	public HashSet<Variable> getAllRefferencedVars() {
+		return where_clause.getAllRefferencedVars();
+	}
+
 }

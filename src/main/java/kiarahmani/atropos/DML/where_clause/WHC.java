@@ -1,8 +1,10 @@
 package kiarahmani.atropos.DML.where_clause;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import kiarahmani.atropos.DDL.FieldName;
+import kiarahmani.atropos.DML.Variable;
 import kiarahmani.atropos.DML.expression.BinOp;
 import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.expression.constants.E_Const_Bool;
@@ -39,7 +41,7 @@ public class WHC extends Expression {
 		for (WHC_Constraint whcc : this.whc_constraints)
 			if (whcc.getFieldName() == fn)
 				return whcc;
-		assert (false) : "unexepected field name "+fn;
+		assert (false) : "unexepected field name " + fn;
 		return null;
 	}
 
@@ -61,4 +63,12 @@ public class WHC extends Expression {
 		constraintsList = (constraintsList.equals("")) ? "true" : constraintsList; // no constraint means true
 		return "(" + constraintsList + ")";
 	}
+
+	public HashSet<Variable> getAllRefferencedVars() {
+		HashSet<Variable> result = new HashSet<>();
+		for (WHC_Constraint whcc : this.whc_constraints)
+			result.addAll(whcc.getAllRefferencedVars());
+		return result;
+	}
+
 }

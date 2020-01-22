@@ -1,6 +1,9 @@
 package kiarahmani.atropos.DML.expression;
 
+import java.util.HashSet;
+
 import kiarahmani.atropos.DDL.F_Type;
+import kiarahmani.atropos.DML.Variable;
 
 public class E_Arg extends Expression {
 	private String arg_name;
@@ -12,7 +15,7 @@ public class E_Arg extends Expression {
 		this.arg_type = arg_type;
 		this.transactionName = transactionName;
 	}
-	
+
 	public String getTransactionName() {
 		return this.transactionName;
 	}
@@ -28,6 +31,11 @@ public class E_Arg extends Expression {
 	@Override
 	public String toString() {
 		return "" + this.arg_name;
+	}
+
+	@Override
+	public HashSet<Variable> getAllRefferencedVars() {
+		return new HashSet<>();
 	}
 
 }

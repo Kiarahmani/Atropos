@@ -48,7 +48,7 @@ public class Atropos {
 		// apply refactoring on the program
 		pu.mkVC("checking", "c_custid", "accounts", "a_custid", VC_Agg.VC_ID, VC_Type.VC_OTO,
 				new VC_Constraint(pu.getFieldName("a_custid"), pu.getFieldName("c_custid")));
-		pu.swapQueries("SendPayment", 4, 5);
+		System.out.println("Swap result: "+pu.swapQueries("SendPayment", 0, 2));
 		Program refactored_program = re.refactor(pu, intro_r).generateProgram();
 		refactored_program.printProgram();
 

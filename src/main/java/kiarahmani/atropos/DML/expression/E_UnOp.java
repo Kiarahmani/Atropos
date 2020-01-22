@@ -1,5 +1,9 @@
 package kiarahmani.atropos.DML.expression;
 
+import java.util.HashSet;
+
+import kiarahmani.atropos.DML.Variable;
+
 public class E_UnOp extends Expression {
 	public enum UnOp {
 		NOT
@@ -27,4 +31,9 @@ public class E_UnOp extends Expression {
 		}
 		return "";
 	}
+	
+	@Override
+	public HashSet<Variable> getAllRefferencedVars() {
+		return exp.getAllRefferencedVars();
+	};
 }
