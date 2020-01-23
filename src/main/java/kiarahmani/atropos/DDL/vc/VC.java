@@ -34,6 +34,19 @@ public class VC {
 	private ArrayList<VC_Constraint> vc_constraints;
 	private String name;
 
+	public TableName getTableName(int i) {
+		switch (i) {
+		case 1:
+			return this.T_1;
+		case 2:
+			return this.T_2;
+		default:
+			break;
+		}
+		assert (false) : "input must be either 1 or 2";
+		return null;
+	}
+
 	public VC(String name, TableName T_1, TableName T_2, VC_Agg vc_agg, VC_Type vc_type) {
 		this.vc_constraints = new ArrayList<VC_Constraint>();
 		this.name = name;

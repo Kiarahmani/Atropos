@@ -4,7 +4,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.stream.Collectors;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import kiarahmani.atropos.Atropos;
 import kiarahmani.atropos.DDL.F_Type;
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DDL.TableName;
@@ -39,6 +44,7 @@ import kiarahmani.atropos.program.statements.If_Statement;
 import kiarahmani.atropos.program.statements.Query_Statement;
 
 public class Program_Utils {
+	private static final Logger logger = LogManager.getLogger(Atropos.class);
 	// basic program meta data
 	private String program_name;
 	/*
@@ -504,13 +510,46 @@ public class Program_Utils {
 	/*****************************************************************************************************************/
 
 	public boolean redirectQuery(String txnName, int q_po, String tableName) {
-		if (!redirectIsValid())
+		Transaction txn = this.trasnsactionMap.get(txnName);
+		Query query = getQueryByPo(txnName, q_po);
+		Table target_table = this.tableMap.get(tableName);
+		Table source_table = this.tableMap.get(query.getTableName().getName());
+		logger.debug("Redirecting Query: " + query.getId() + " in txn " + txn.getName());
+		logger.debug("source table: " + source_table);
+		logger.debug("target table: " + target_table);
+		if (!redirectIsValid()) {
+			logger.debug("Redirect is invalid. Will return false");
 			return false;
+		}
+		logger.debug("Redirect is valid. Will proceed.");
+		ArrayList<VC> vcs = getVCsByTables(target_table, source_table);
+		logger.debug("VCs related to the requested redirect: " + vcs);
 
 		return true;
 	}
 
 	private boolean redirectIsValid() {
+		// TODO: make sure that *all* selected fields are in a VC with the target table
 		return true;
 	}
+
+	/*****************************************************************************************************************/
+	public Query getQueryByPo(String txnName, int q_po) {
+		Transaction txn = this.trasnsactionMap.get(txnName);
+		ArrayList<Query> allQ = txn.getAllQueries();
+		assert (allQ.size() >= q_po) : "requested PO out of range";
+		for (Query q : txn.getAllQueries())
+			if (q.getPo() == q_po)
+				return q;
+		return null;
+	}
+
+	public ArrayList<VC> getVCsByTables(Table T1, Table T2) {
+		TableName TN1 = T1.getTableName();
+		TableName TN2 = T2.getTableName();
+		return (ArrayList<VC>) this.vcMap.values().stream()
+				.filter(vc -> (vc.getTableName(1).equals(TN1)) && (vc.getTableName(2).equals(TN2)))
+				.collect(Collectors.toList());
+	}
+
 }

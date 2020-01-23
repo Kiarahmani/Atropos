@@ -36,7 +36,7 @@ public class Atropos {
 
 		Program_Utils pu = new Program_Utils("SmallBank");
 		ProgramGenerator ipg = new SmallBankProgramGenerator(pu);
-		String test_string = "WriteCheck";
+		String test_string = "Balance";
 
 		Program program = ipg.generate("Balance1", "Amalgamate1", "TransactSavings1", "DepositChecking1", "SendPaymen1",
 				"WriteCheck1", test_string);
@@ -51,7 +51,7 @@ public class Atropos {
 
 		pu.addFieldTupleToVC("vc_0", "c_custid", "a_custid");
 
-		System.out.println("Swap result: " + pu.swapQueries(test_string, 1, 2));
+		System.out.println("Swap result: " + pu.swapQueries(test_string, 0, 1));
 		Program refactored_program = re.refactor(pu, intro_r).generateProgram();
 		refactored_program.printProgram();
 
@@ -63,5 +63,8 @@ public class Atropos {
 		// cg.printGraph();
 		// dai_graph.printDAIGraph();
 		System.out.println("\nTotal Time: " + (time_end - time_begin) / 1000.0 + " s\n");
+
+		System.out.println("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+		pu.redirectQuery(test_string, 1, "accounts");
 	}
 }

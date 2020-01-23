@@ -15,4 +15,8 @@ public class TableName {
 	public String toString() {
 		return this.name;
 	}
+
+	public boolean equals(TableName other) {
+		return this.name.equalsIgnoreCase(other.getName());
+	}
 }
