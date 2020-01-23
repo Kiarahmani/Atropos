@@ -7,6 +7,7 @@ import kiarahmani.atropos.Atropos;
 import kiarahmani.atropos.program.Program;
 import kiarahmani.atropos.program.Table;
 import kiarahmani.atropos.refactoring_engine.deltas.Delta;
+import kiarahmani.atropos.refactoring_engine.deltas.INTRO_F;
 import kiarahmani.atropos.refactoring_engine.deltas.INTRO_R;
 import kiarahmani.atropos.utils.Program_Utils;
 import kiarahmani.atropos.utils.Program_Utils;
@@ -30,7 +31,7 @@ public class Refactoring_Engine {
 		case "CHSK":
 			return apply_chsk(input_pu);
 		case "INTRO_F":
-			return apply_intro_f(input_pu);
+			return apply_intro_f(input_pu, (INTRO_F) delta);
 		default:
 			assert false : "Case not catched!" + delta_class;
 			break;
@@ -51,8 +52,9 @@ public class Refactoring_Engine {
 	/*
 	 * 
 	 */
-	private Program_Utils apply_intro_f(Program_Utils input_pu) {
+	private Program_Utils apply_intro_f(Program_Utils input_pu, INTRO_F intro_f) {
 		logger.debug("applying INTRO_F refactoring");
+		input_pu.addFieldNameToTable(intro_f.getTableName(), intro_f.getNewName());
 		return input_pu;
 	}
 

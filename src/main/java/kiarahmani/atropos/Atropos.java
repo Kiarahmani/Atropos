@@ -5,6 +5,7 @@ import java.io.IOException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import kiarahmani.atropos.DDL.F_Type;
 import kiarahmani.atropos.DDL.vc.*;
 import kiarahmani.atropos.DDL.vc.VC.VC_Agg;
 import kiarahmani.atropos.DDL.vc.VC.VC_Type;
@@ -16,6 +17,7 @@ import kiarahmani.atropos.program_generators.ProgramGenerator;
 import kiarahmani.atropos.program_generators.SmallBank.SmallBankProgramGenerator;
 import kiarahmani.atropos.refactoring_engine.Refactoring_Engine;
 import kiarahmani.atropos.refactoring_engine.deltas.Delta;
+import kiarahmani.atropos.refactoring_engine.deltas.INTRO_F;
 import kiarahmani.atropos.refactoring_engine.deltas.INTRO_R;
 import kiarahmani.atropos.utils.Constants;
 import kiarahmani.atropos.utils.Program_Utils;
@@ -44,19 +46,18 @@ public class Atropos {
 
 		// create new refactoring engine
 		Refactoring_Engine re = new Refactoring_Engine();
-		Delta intro_r = new INTRO_R("added");
-		// apply refactoring on the program
-		pu.mkVC("checking", "accounts", VC_Agg.VC_ID, VC_Type.VC_OTO,
-				new VC_Constraint(pu.getFieldName("a_custid"), pu.getFieldName("c_custid")));
 
-		pu.addFieldTupleToVC("vc_0", "c_custid", "a_custid");
+		Delta intro_f = new INTRO_F("accounts", "a_check_bal", F_Type.NUM);
 
-		System.out.println("Swap result: " + pu.swapQueries(test_string, 0, 1));
-		Program refactored_program = re.refactor(pu, intro_r).generateProgram();
+		// pu.mkVC("checking", "accounts", VC_Agg.VC_ID, VC_Type.VC_OTO,
+		// new VC_Constraint(pu.getFieldName("a_custid"), pu.getFieldName("c_custid")));
+		// pu.addFieldTupleToVC("vc_0", "c_custid", "a_custid");
+
+		Program refactored_program = re.refactor(pu, intro_f).generateProgram();
 		refactored_program.printProgram();
 
 		// Conflict_Graph cg = new Conflict_Graph(program);
-		Encoding_Engine ee = new Encoding_Engine(program.getName());
+		// Encoding_Engine ee = new Encoding_Engine(program.getName());
 		// DAI_Graph dai_graph = ee.constructInitialDAIGraph(program, cg); //
 		long time_end = System.currentTimeMillis();
 		// program.printProgram();
@@ -64,7 +65,8 @@ public class Atropos {
 		// dai_graph.printDAIGraph();
 		System.out.println("\nTotal Time: " + (time_end - time_begin) / 1000.0 + " s\n");
 
-		System.out.println("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
-		pu.redirectQuery(test_string, 1, "accounts");
+		// System.out.println("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+		// pu.redirectQuery(test_string, 1, "accounts");
+
 	}
 }

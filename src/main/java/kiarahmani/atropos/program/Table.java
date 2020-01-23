@@ -24,6 +24,10 @@ public class Table {
 
 	}
 
+	public void addFieldName(FieldName fn) {
+		this.fieldNames.add(fn);
+	}
+
 	public ArrayList<FieldName> getFieldNames() {
 		return this.fieldNames;
 	}

@@ -552,4 +552,14 @@ public class Program_Utils {
 				.collect(Collectors.toList());
 	}
 
+	/**
+	 * @param tableName
+	 * @param newName
+	 */
+	public void addFieldNameToTable(String tableName, FieldName fn) {
+		Table table = this.tableMap.get(tableName);
+		table.addFieldName(fn);
+		this.fieldNameMap.put(fn.getName(), fn);
+	}
+
 }
