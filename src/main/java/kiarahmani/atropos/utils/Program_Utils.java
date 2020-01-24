@@ -430,10 +430,20 @@ public class Program_Utils {
 
 	/*****************************************************************************************************************/
 	/*
+	 * Examine if a where clause entails atomicity of the query or not
+	 */
+
+	public boolean whcIsAtomic(WHC whc) {
+		return true;
+	}
+
+	/*****************************************************************************************************************/
+	/*
 	 * Testing functions
 	 */
 
-	public Query_Statement mkTestQryStmt(int id) {
+	public Query_Statement mkTestQryStmt(String txnName) {
+		int id = getNewSelectId(txnName);
 		Variable v = new Variable("accounts", "v_test_" + id);
 		WHC GetAccount0_WHC = new WHC(getIsAliveFieldName("accounts"),
 				new WHC_Constraint(getTableName("accounts"), getFieldName("a_custid"), BinOp.EQ, new E_Const_Num(69)));

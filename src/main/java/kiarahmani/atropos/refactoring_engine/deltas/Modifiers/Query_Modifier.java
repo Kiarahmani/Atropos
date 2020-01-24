@@ -6,6 +6,7 @@
 package kiarahmani.atropos.refactoring_engine.deltas.Modifiers;
 
 import kiarahmani.atropos.DML.query.Query;
+import kiarahmani.atropos.program.Statement;
 
 /**
  * @author Kiarash
@@ -22,5 +23,9 @@ public abstract class Query_Modifier {
 		return this.is_set;
 	}
 
-	public abstract Query modify_single(Query input_query);
+	// update a single targeted query
+	public abstract Query atIndexModification(Query input_query);
+
+	// update all subsequent queries
+	public abstract Statement propagatedModification(Statement input_stmt);
 }

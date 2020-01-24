@@ -67,22 +67,29 @@ public class Atropos {
 		// dai_graph.printDAIGraph();
 		System.out.println("\nTotal Time: " + (time_end - time_begin) / 1000.0 + " s\n");
 
-		System.out.println("\n\n\n\n\n\n\n\n");
-		//pu.redirectQuery(test_string, 2, "accounts");
-		//re.deleteQuery(pu, 2, test_string);
-		//re.InsertQueriesAtPO(pu, test_string, 0, new Query_Statement[] {pu.mkTestQryStmt(10),pu.mkTestQryStmt(11),pu.mkTestQryStmt(12)});
-		//refactored_program = pu.generateProgram();
-		//refactored_program.printProgram();
 		
-		Query_Redirector qry_red = new Query_Redirector();
-		qry_red.set(pu,test_string,"accounts");
-		re.applyAtIndex(pu, qry_red, 2, test_string);
+		// pu.redirectQuery(test_string, 2, "accounts");
+		// re.deleteQuery(pu, 2, test_string);
+		re.InsertQueriesAtPO(pu, test_string, 3, new Query_Statement[] { pu.mkTestQryStmt(test_string),
+				pu.mkTestQryStmt(test_string), pu.mkTestQryStmt(test_string) });
+
+		
 		refactored_program = pu.generateProgram();
 		refactored_program.printProgram();
+
+		System.out.println("\n\n\n\n\n\n\n\n");
 		
-		//re.deleteQuery(pu, 2, test_string);
-		//refactored_program = pu.generateProgram();
-		//refactored_program.printProgram();
+		Query_Redirector qry_red = new Query_Redirector();
+		qry_red.set(pu, test_string, "accounts");
+		re.applyAndPropagate(pu, qry_red, 1, test_string);
+
+
+		refactored_program = pu.generateProgram();
+		refactored_program.printProgram();
+
+		// re.deleteQuery(pu, 2, test_string);
+		// refactored_program = pu.generateProgram();
+		// refactored_program.printProgram();
 
 	}
 }

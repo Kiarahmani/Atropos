@@ -229,15 +229,71 @@ public class Refactoring_Engine {
 	// Update Queries in the statement lists
 	/*****************************************************************************************************************/
 
+	public Program_Utils applyAndPropagate(Program_Utils input_pu, Query_Modifier modifier, int apply_at_po,
+			String txnName) {
+		applyAtIndex(input_pu, modifier, apply_at_po, txnName);
+		propagateToRange(input_pu, modifier, apply_at_po, txnName);
+		return input_pu;
+	}
+
 	public Program_Utils applyAtIndex(Program_Utils input_pu, Query_Modifier modifier, int apply_at_po,
 			String txnName) {
 		assert (modifier.isSet()) : "cannot apply the modifier since it is not set";
 		logger.debug("applying the modifer " + modifier + " at index: " + apply_at_po);
 		Query old_qry = input_pu.getQueryByPo(txnName, apply_at_po);
-		Query new_qry = modifier.modify_single(old_qry);
+		Query new_qry = modifier.atIndexModification(old_qry);
 		deleteQuery(input_pu, apply_at_po, txnName);
 		InsertQueriesAtPO(input_pu, txnName, apply_at_po, new Query_Statement(apply_at_po, new_qry));
 		return input_pu;
+	}
+
+	/*
+	 * 
+	 * Applies the given modifier's propagate function on all statements starting
+	 * with the first statement after po=first_po_to_apply
+	 * 
+	 */
+	public Program_Utils propagateToRange(Program_Utils input_pu, Query_Modifier modifier, int po_to_apply_after,
+			String txnName) {
+		Transaction txn = (Transaction) input_pu.getTrasnsactionMap().get(txnName);
+		propagateToRange_rec(input_pu, modifier, po_to_apply_after, txn.getStatements());
+		return input_pu;
+	}
+
+	private void propagateToRange_rec(Program_Utils input_pu, Query_Modifier modifier, int po_to_apply_after,
+			ArrayList<Statement> inputList) {
+		boolean found_flag = false;
+		logger.debug("input list sze: " + inputList.size());
+		logger.debug("input list: " + inputList);
+
+		// for (Statement stmt : inputList) {
+		for (int index = 0; index < inputList.size(); index++) {
+			Statement stmt = inputList.get(index);
+			switch (stmt.getClass().getSimpleName()) {
+			case "Query_Statement":
+				Query_Statement qry_stmt = (Query_Statement) stmt;
+				logger.debug("current query statement: " + qry_stmt.getQuery().getId());
+				if (found_flag) {
+					inputList.remove(index);
+					inputList.add(index, modifier.propagatedModification(qry_stmt));
+				}
+
+				if (qry_stmt.getQuery().getPo() == po_to_apply_after)
+					found_flag = true;
+
+				break;
+			case "If_Statement":
+				If_Statement if_stmt = (If_Statement) stmt;
+				logger.debug("current if statement: " + if_stmt);
+				if (found_flag) {
+					inputList.remove(index);
+					inputList.add(index, modifier.propagatedModification(if_stmt));
+				}
+				propagateToRange_rec(input_pu, modifier, po_to_apply_after, if_stmt.getIfStatements());
+				propagateToRange_rec(input_pu, modifier, po_to_apply_after, if_stmt.getElseStatements());
+				break;
+			}
+		}
 	}
 
 	/*

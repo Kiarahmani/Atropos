@@ -10,6 +10,10 @@ public class Query_Statement extends Statement {
 	private Query query;
 	private int id;
 
+	public int getIdInt() {
+		return this.id;
+	}
+
 	public Query_Statement(int id, Query q) {
 		this.query = q;
 		this.id = id;
