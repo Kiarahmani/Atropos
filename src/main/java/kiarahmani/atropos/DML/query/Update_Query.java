@@ -123,7 +123,6 @@ public class Update_Query extends Query {
 	 */
 	@Override
 	public HashSet<Variable> getAllRefferencedVars() {
-		// TODO Auto-generated method stub
 		HashSet<Variable> result = new HashSet<>();
 		result.addAll(this.where_clause.getAllRefferencedVars());
 		for (Tuple<FieldName, Expression> exp : this.update_expressions)

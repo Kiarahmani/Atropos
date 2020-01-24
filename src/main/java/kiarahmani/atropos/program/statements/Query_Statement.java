@@ -30,6 +30,10 @@ public class Query_Statement extends Statement {
 		return "Q_Stmt#" + this.id;
 	}
 
+	public void updatePO(int newPO) {
+		this.query.updatePO(newPO);
+	}
+
 	public Query getQuery() {
 		return this.query;
 	}

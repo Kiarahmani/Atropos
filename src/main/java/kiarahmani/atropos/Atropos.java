@@ -13,12 +13,14 @@ import kiarahmani.atropos.dependency.Conflict_Graph;
 import kiarahmani.atropos.dependency.DAI_Graph;
 import kiarahmani.atropos.encoding_engine.Encoding_Engine;
 import kiarahmani.atropos.program.Program;
+import kiarahmani.atropos.program.statements.Query_Statement;
 import kiarahmani.atropos.program_generators.ProgramGenerator;
 import kiarahmani.atropos.program_generators.SmallBank.SmallBankProgramGenerator;
 import kiarahmani.atropos.refactoring_engine.Refactoring_Engine;
 import kiarahmani.atropos.refactoring_engine.deltas.Delta;
 import kiarahmani.atropos.refactoring_engine.deltas.INTRO_F;
 import kiarahmani.atropos.refactoring_engine.deltas.INTRO_R;
+import kiarahmani.atropos.refactoring_engine.deltas.Modifiers.Query_Redirector;
 import kiarahmani.atropos.utils.Constants;
 import kiarahmani.atropos.utils.Program_Utils;
 
@@ -48,11 +50,11 @@ public class Atropos {
 		Refactoring_Engine re = new Refactoring_Engine();
 
 		Delta intro_f = new INTRO_F("accounts", "a_check_bal", F_Type.NUM);
-
-		// pu.mkVC("checking", "accounts", VC_Agg.VC_ID, VC_Type.VC_OTO,
-		// new VC_Constraint(pu.getFieldName("a_custid"), pu.getFieldName("c_custid")));
-		// pu.addFieldTupleToVC("vc_0", "c_custid", "a_custid");
-
+		re.refactor(pu, intro_f);
+		pu.mkVC("checking", "accounts", VC_Agg.VC_ID, VC_Type.VC_OTO,
+				new VC_Constraint(pu.getFieldName("a_custid"), pu.getFieldName("c_custid")));
+		pu.addFieldTupleToVC("vc_0", "c_custid", "a_custid");
+		pu.addFieldTupleToVC("vc_0", "c_bal", "a_check_bal");
 		Program refactored_program = re.refactor(pu, intro_f).generateProgram();
 		refactored_program.printProgram();
 
@@ -65,8 +67,22 @@ public class Atropos {
 		// dai_graph.printDAIGraph();
 		System.out.println("\nTotal Time: " + (time_end - time_begin) / 1000.0 + " s\n");
 
-		// System.out.println("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
-		// pu.redirectQuery(test_string, 1, "accounts");
+		System.out.println("\n\n\n\n\n\n\n\n");
+		//pu.redirectQuery(test_string, 2, "accounts");
+		//re.deleteQuery(pu, 2, test_string);
+		//re.InsertQueriesAtPO(pu, test_string, 0, new Query_Statement[] {pu.mkTestQryStmt(10),pu.mkTestQryStmt(11),pu.mkTestQryStmt(12)});
+		//refactored_program = pu.generateProgram();
+		//refactored_program.printProgram();
+		
+		Query_Redirector qry_red = new Query_Redirector();
+		qry_red.set(pu,test_string,"accounts");
+		re.applyAtIndex(pu, qry_red, 2, test_string);
+		refactored_program = pu.generateProgram();
+		refactored_program.printProgram();
+		
+		//re.deleteQuery(pu, 2, test_string);
+		//refactored_program = pu.generateProgram();
+		//refactored_program.printProgram();
 
 	}
 }

@@ -13,6 +13,11 @@ TODO:
   - Generalize aggregate functions (currently we only have sum and size)
 
 
+====================================================================================================
+ASSUMPTIONS:
+  - only one VC between each pair of tables
+
+
 
 ====================================================================================================
 IMPROVEMENTS:

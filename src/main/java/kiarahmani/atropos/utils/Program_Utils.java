@@ -4,10 +4,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import com.sun.org.apache.xpath.internal.functions.Function;
 
 import kiarahmani.atropos.Atropos;
 import kiarahmani.atropos.DDL.F_Type;
@@ -82,6 +85,18 @@ public class Program_Utils {
 	private HashMap<String, Integer> transactionToIf;
 	private HashMap<String, Integer> transactionToPoCnt;
 
+	public int getNewSelectId(String txnName) {
+		int result = this.transactionToSelectCount.get(txnName);
+		this.transactionToSelectCount.put(txnName, result + 1);
+		return result;
+	}
+
+	public int getNewUpdateId(String txnName) {
+		int result = this.transactionToUpdateCount.get(txnName);
+		this.transactionToUpdateCount.put(txnName, result + 1);
+		return result;
+	}
+
 	/*
 	 * Generate and return a program from the meta-data. Note that a program object
 	 * is simply a packaging for currently stored meta-data
@@ -90,7 +105,7 @@ public class Program_Utils {
 		Program program = new Program(program_name);
 		for (Table t : tableMap.values())
 			program.addTable(t);
-		for (Transaction t : trasnsactionMap.values())
+		for (Transaction t : getTrasnsactionMap().values())
 			program.addTransaction(t);
 		for (VC vc : vcMap.values())
 			program.addVC(vc);
@@ -105,11 +120,11 @@ public class Program_Utils {
 		// allocate new objects for all data structures
 		this.program_name = pn;
 		this.vcMap = new HashMap<>();
-		trasnsactionMap = new HashMap<>();
 		tableMap = new HashMap<>();
 		tableNameMap = new HashMap<>();
 		fieldNameMap = new HashMap<>();
 		argsMap = new HashMap<>();
+		trasnsactionMap = new HashMap<>();
 		transactionToVariableSetMap = new HashMap<>();
 		transactionToArgsSetMap = new HashMap<>();
 		transactionToSelectCount = new HashMap<>();
@@ -177,7 +192,7 @@ public class Program_Utils {
 
 		Transaction txn = new Transaction(txn_name);
 		String transaction_name = txn.getName();
-		this.trasnsactionMap.put(transaction_name, txn);
+		this.getTrasnsactionMap().put(transaction_name, txn);
 		transactionToArgsSetMap.put(transaction_name, new ArrayList<>());
 		transactionToVariableSetMap.put(transaction_name, new ArrayList<>());
 		for (String arg : args) {
@@ -191,7 +206,7 @@ public class Program_Utils {
 	}
 
 	public Expression mkAssertion(String txn, Expression exp) {
-		this.trasnsactionMap.get(txn).addAssertion(exp);
+		this.getTrasnsactionMap().get(txn).addAssertion(exp);
 		return exp;
 	}
 
@@ -260,7 +275,7 @@ public class Program_Utils {
 		int stmt_counts = (transactionToStatement.containsKey(txn)) ? transactionToStatement.get(txn) : 0;
 		transactionToStatement.put(txn, stmt_counts + 1);
 		Query_Statement result = new Query_Statement(stmt_counts, q);
-		trasnsactionMap.get(txn).addStatement(result);
+		getTrasnsactionMap().get(txn).addStatement(result);
 		result.setPathCondition(new E_Const_Bool(true));
 		return result;
 	}
@@ -321,7 +336,7 @@ public class Program_Utils {
 		If_Statement result = new If_Statement(if_stmt_counts, c, new ArrayList<Statement>());
 		result.setPathCondition(new E_Const_Bool(true));
 		ifStatementMap.put(txn + "-if-" + if_stmt_counts, result);
-		trasnsactionMap.get(txn).addStatement(result);// the enclosed statements will be added later
+		getTrasnsactionMap().get(txn).addStatement(result);// the enclosed statements will be added later
 		return result;
 	}
 
@@ -372,194 +387,60 @@ public class Program_Utils {
 		return result;
 	}
 
-	/*****************************************************************************************************************/
 	/*
-	 * perform a swap in the requested transaction
-	 */
-	public boolean swapQueries(String txnName, int q1_po, int q2_po) {
-		assert (q1_po < q2_po) : "invalid args: first po must be less  than the second";
-		Transaction txn = this.trasnsactionMap.get(txnName);
-		assert (txn != null) : "swap request is made on a transaction that does not exist";
-		// guard the swaps from invalid requests
-		if (!swapChecks(txn, q1_po, q2_po))
-			return false;
-		swapQueries_rec(txn.getStatements(), q1_po, q2_po);
-		return true;
-	}
-
-	/*
-	 * Helping function used in swapQueries. It recusrsively checks continous blocks
-	 * of statements
-	 */
-	private void swapQueries_rec(ArrayList<Statement> inputList, int q1_po, int q2_po) {
-		int iter = 0;
-		int index_po1 = -1, index_po2 = -1;
-		loop_label: for (Statement stmt : inputList) {
-			switch (stmt.getClass().getSimpleName()) {
-			case "Query_Statement":
-				Query_Statement qry_stmt = (Query_Statement) stmt;
-				Query qry = qry_stmt.getQuery();
-				if (qry.getPo() == q1_po) {
-					qry.updatePO(q2_po);
-					index_po1 = iter;
-					break;
-				}
-				if (qry.getPo() == q2_po) {
-					assert (index_po1 != -1) : "unexpected state: q2 is found in the current block but"
-							+ " q1 belongs to another (possibly outer) block";
-					qry.updatePO(q1_po);
-					index_po2 = iter;
-					break loop_label;
-				}
-				break;
-			case "If_Statement":
-				If_Statement if_stmt = (If_Statement) stmt;
-				swapQueries_rec(if_stmt.getIfStatements(), q1_po, q2_po);
-				swapQueries_rec(if_stmt.getElseStatements(), q1_po, q2_po);
-				break;
-			default:
-				break;
-			}
-			iter++;
-		}
-		if (index_po1 != -1 && index_po2 != -1)
-			Collections.swap(inputList, index_po1, index_po2);
-	}
-
-	/*
-	 * Check if the requested swap is valid or not
-	 */
-	private boolean swapChecks(Transaction txn, int q1_po, int q2_po) {
-		if (q1_po > q2_po)
-			return false;
-		Boolean result = swapChecks_rec(txn.getStatements(), q1_po, q2_po);
-		assert (result != null) : "the requested swap is invalid and cannot be checked";
-		return result;
-	}
-
-	/*
-	 * Helping function used in swapChecks. Recursively analyzes the contineous
-	 * blocks of statements
-	 */
-	private Boolean swapChecks_rec(ArrayList<Statement> inputList, int q1_po, int q2_po) {
-		ArrayList<Query> pot_dep_qries = new ArrayList<>();
-		Query qry1 = null;
-		Query qry2 = null;
-		boolean q1_seen_flag = false;
-		loop_label: for (Statement stmt : inputList) {
-			switch (stmt.getClass().getSimpleName()) {
-			case "Query_Statement":
-				Query_Statement qry_stmt = (Query_Statement) stmt;
-				Query qry = qry_stmt.getQuery();
-				if (qry.getPo() == q1_po) {
-					q1_seen_flag = true;
-					qry1 = qry;
-					pot_dep_qries.add(qry);
-					break;
-				}
-				if (qry.getPo() == q2_po) {
-					assert (q1_seen_flag) : "unexpected state: q2 is found in the current block but"
-							+ " q1 belongs to another (possibly outer) block";
-					qry2 = qry;
-					break loop_label;
-				}
-				if (q1_seen_flag && qryAreDep(qry1, qry))
-					pot_dep_qries.add(qry);
-				break;
-			case "If_Statement":
-				If_Statement if_stmt = (If_Statement) stmt;
-				Boolean if_result = swapChecks_rec(if_stmt.getIfStatements(), q1_po, q2_po);
-				if (if_result != null)
-					return if_result;
-				Boolean else_result = swapChecks_rec(if_stmt.getElseStatements(), q1_po, q2_po);
-				if (else_result != null)
-					return else_result;
-				break;
-			default:
-				break;
-			}
-		}
-		if (q1_seen_flag) {
-			assert (qry2 != null) : "unexpected state: qry2 is not set although qry1 has been found in the current block";
-			for (Query q : pot_dep_qries)
-				if (qryAreDep(q, qry2))
-					return false;
-			return true;
-		} else
-			return null;
-	}
-
-	/*
-	 * check if two queries are dependent on each other or not
-	 */
-	private boolean qryAreDep(Query qry1, Query qry2) {
-		assert (qry1.getPo() < qry2
-				.getPo()) : "unexpected state: algorithm assumes this function is only called for po1<po2 -> po1:"
-						+ qry1.getPo() + " po2:" + qry2.getPo();
-		if (qry1.getKind() == Kind.SELECT) {
-			Select_Query slct_qry = (Select_Query) qry1;
-			Variable var1 = slct_qry.getVariable();
-			return qry2.getAllRefferencedVars().contains(var1);
-			// the only case where true (identifying a dependency) is returned is when the
-			// first query is a select and
-			// the second query has a reference to the variable created by the first one
-		}
-		return false;
-	}
-
-	/*****************************************************************************************************************/
-
-	public boolean redirectQuery(String txnName, int q_po, String tableName) {
-		Transaction txn = this.trasnsactionMap.get(txnName);
-		Query query = getQueryByPo(txnName, q_po);
-		Table target_table = this.tableMap.get(tableName);
-		Table source_table = this.tableMap.get(query.getTableName().getName());
-		logger.debug("Redirecting Query: " + query.getId() + " in txn " + txn.getName());
-		logger.debug("source table: " + source_table);
-		logger.debug("target table: " + target_table);
-		if (!redirectIsValid()) {
-			logger.debug("Redirect is invalid. Will return false");
-			return false;
-		}
-		logger.debug("Redirect is valid. Will proceed.");
-		ArrayList<VC> vcs = getVCsByTables(target_table, source_table);
-		logger.debug("VCs related to the requested redirect: " + vcs);
-
-		return true;
-	}
-
-	private boolean redirectIsValid() {
-		// TODO: make sure that *all* selected fields are in a VC with the target table
-		return true;
-	}
-
-	/*****************************************************************************************************************/
-	public Query getQueryByPo(String txnName, int q_po) {
-		Transaction txn = this.trasnsactionMap.get(txnName);
-		ArrayList<Query> allQ = txn.getAllQueries();
-		assert (allQ.size() >= q_po) : "requested PO out of range";
-		for (Query q : txn.getAllQueries())
-			if (q.getPo() == q_po)
-				return q;
-		return null;
-	}
-
-	public ArrayList<VC> getVCsByTables(Table T1, Table T2) {
-		TableName TN1 = T1.getTableName();
-		TableName TN2 = T2.getTableName();
-		return (ArrayList<VC>) this.vcMap.values().stream()
-				.filter(vc -> (vc.getTableName(1).equals(TN1)) && (vc.getTableName(2).equals(TN2)))
-				.collect(Collectors.toList());
-	}
-
-	/**
-	 * @param tableName
-	 * @param newName
+	 * Update a table
 	 */
 	public void addFieldNameToTable(String tableName, FieldName fn) {
 		Table table = this.tableMap.get(tableName);
 		table.addFieldName(fn);
 		this.fieldNameMap.put(fn.getName(), fn);
+	}
+
+	/*
+	 * 
+	 * Getters
+	 * 
+	 */
+
+	public HashMap<String, Transaction> getTrasnsactionMap() {
+		return trasnsactionMap;
+	}
+
+	public VC getVCByTables(Table T1, Table T2) {
+		TableName TN1 = T1.getTableName();
+		TableName TN2 = T2.getTableName();
+		return this.vcMap.values().stream()
+				.filter(vc -> ((vc.getTableName(1).equals(TN1)) && (vc.getTableName(2).equals(TN2))
+						|| ((vc.getTableName(1).equals(TN2)) && (vc.getTableName(2).equals(TN1)))))
+				.collect(Collectors.toList()).get(0);
+	}
+
+	public Table getTable(String tableName) {
+		return this.tableMap.get(tableName);
+	}
+
+	public Query getQueryByPo(String txnName, int po) {
+		Transaction txn = getTrasnsactionMap().get(txnName);
+		for (Query q : txn.getAllQueries())
+			if (q.getPo() == po)
+				return q;
+		logger.debug("no query was found in txn: " + txnName + " at po: " + po);
+		return null;
+	}
+
+	/*****************************************************************************************************************/
+	/*
+	 * Testing functions
+	 */
+
+	public Query_Statement mkTestQryStmt(int id) {
+		Variable v = new Variable("accounts", "v_test_" + id);
+		WHC GetAccount0_WHC = new WHC(getIsAliveFieldName("accounts"),
+				new WHC_Constraint(getTableName("accounts"), getFieldName("a_custid"), BinOp.EQ, new E_Const_Num(69)));
+		ArrayList<FieldName> fns = new ArrayList<>();
+		fns.add(getFieldName("a_custid"));
+		Select_Query q = new Select_Query(-1, id, true, getTableName("accounts"), fns, v, GetAccount0_WHC);
+		return new Query_Statement(-1, q);
 	}
 
 }

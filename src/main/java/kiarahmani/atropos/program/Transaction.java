@@ -23,14 +23,14 @@ public class Transaction {
 		return this.TransactionName.equals(other.getName());
 	}
 
-	public ArrayList<Expression> getAssertions(){
+	public ArrayList<Expression> getAssertions() {
 		return this.assertions;
 	}
-	
+
 	public void addAssertion(Expression ass) {
 		this.assertions.add(ass);
 	}
-	
+
 	public String getName() {
 		return this.TransactionName;
 	}
@@ -76,9 +76,16 @@ public class Transaction {
 		return this.TransactionName.equals(other.getName());
 	}
 
-		
-	
-	
+	/*
+	 * Returns the query with requested PO
+	 */
+	public Query getQueryByPo(int q_po) {
+		for (Query q : this.getAllQueries())
+			if (q.getPo() == q_po)
+				return q;
+		return null;
+	}
+
 	public void printTransaction() {
 		System.out.print(TransactionName + "(");
 		String delim = "";
@@ -90,7 +97,7 @@ public class Transaction {
 		System.out.print("){  [");
 		delim = "";
 		for (Expression exp : this.assertions) {
-			System.out.print(delim+"assert:" + exp);
+			System.out.print(delim + "assert:" + exp);
 			delim = "	";
 		}
 		System.out.println("]");
