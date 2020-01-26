@@ -141,10 +141,10 @@ public class Program {
 		this.transactions.add(txn);
 	}
 
-	public void printProgram() {
+	public void printProgram(int print_cnt) {
 		System.out.println(
 				"\n\n\n\n##############################################################################################################################");
-		System.out.println("### " + programName.toUpperCase());
+		System.out.println("### " + programName.toUpperCase() + "(" + print_cnt + ")");
 		System.out.println("## SCHEMA:");
 		for (Table t : tables)
 			System.out.println(t.toString());

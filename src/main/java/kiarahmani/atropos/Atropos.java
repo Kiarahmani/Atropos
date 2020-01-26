@@ -35,6 +35,7 @@ public class Atropos {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		int printed_program_cnt = 0;
 		long time_begin = System.currentTimeMillis();
 		logger.debug("New Constants object initialized");
 
@@ -44,7 +45,7 @@ public class Atropos {
 
 		Program program = ipg.generate("Balance1", "Amalgamate1", "TransactSavings1", "DepositChecking1", "SendPaymen1",
 				"WriteCheck1", test_string);
-		program.printProgram();
+		program.printProgram(++printed_program_cnt);
 
 		// create new refactoring engine
 		Refactoring_Engine re = new Refactoring_Engine();
@@ -56,7 +57,7 @@ public class Atropos {
 		pu.addFieldTupleToVC("vc_0", "c_custid", "a_custid");
 		pu.addFieldTupleToVC("vc_0", "c_bal", "a_check_bal");
 		Program refactored_program = re.refactor(pu, intro_f).generateProgram();
-		refactored_program.printProgram();
+		refactored_program.printProgram(++printed_program_cnt);
 
 		// Conflict_Graph cg = new Conflict_Graph(program);
 		// Encoding_Engine ee = new Encoding_Engine(program.getName());
@@ -67,25 +68,22 @@ public class Atropos {
 		// dai_graph.printDAIGraph();
 		System.out.println("\nTotal Time: " + (time_end - time_begin) / 1000.0 + " s\n");
 
-		
 		// pu.redirectQuery(test_string, 2, "accounts");
 		// re.deleteQuery(pu, 2, test_string);
 		re.InsertQueriesAtPO(pu, test_string, 3, new Query_Statement[] { pu.mkTestQryStmt(test_string),
 				pu.mkTestQryStmt(test_string), pu.mkTestQryStmt(test_string) });
 
-		
 		refactored_program = pu.generateProgram();
-		refactored_program.printProgram();
+		refactored_program.printProgram(++printed_program_cnt);
 
 		System.out.println("\n\n\n\n\n\n\n\n");
-		
+
 		Query_Redirector qry_red = new Query_Redirector();
 		qry_red.set(pu, test_string, "accounts");
 		re.applyAndPropagate(pu, qry_red, 1, test_string);
 
-
 		refactored_program = pu.generateProgram();
-		refactored_program.printProgram();
+		refactored_program.printProgram(++printed_program_cnt);
 
 		// re.deleteQuery(pu, 2, test_string);
 		// refactored_program = pu.generateProgram();
