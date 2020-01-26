@@ -306,7 +306,7 @@ public class Program_Utils {
 	public If_Statement addIfStatementInIf(String txn, int if_id, Expression c) {
 		int if_stmt_counts = (transactionToIf.containsKey(txn)) ? transactionToIf.get(txn) : 0;
 		transactionToIf.put(txn, if_stmt_counts + 1);
-		If_Statement result = new If_Statement(if_stmt_counts, c, new ArrayList<Statement>());
+		If_Statement result = new If_Statement(if_stmt_counts, c);
 		Expression old_path_condition = ifStatementMap.get(txn + "-if-" + if_id).getPathCondition();
 		Expression old_condition = ifStatementMap.get(txn + "-if-" + if_id).getCondition();
 		result.setPathCondition(new E_BinUp(BinOp.AND, old_path_condition, old_condition));
@@ -318,7 +318,7 @@ public class Program_Utils {
 	public If_Statement addIfStatementInElse(String txn, int if_id, Expression c) {
 		int if_stmt_counts = (transactionToIf.containsKey(txn)) ? transactionToIf.get(txn) : 0;
 		transactionToIf.put(txn, if_stmt_counts + 1);
-		If_Statement result = new If_Statement(if_stmt_counts, c, new ArrayList<Statement>());
+		If_Statement result = new If_Statement(if_stmt_counts, c);
 		Expression old_path_condition = ifStatementMap.get(txn + "-if-" + if_id).getPathCondition();
 		Expression old_condition = ifStatementMap.get(txn + "-if-" + if_id).getCondition();
 		result.setPathCondition(new E_BinUp(BinOp.AND, old_path_condition, new E_UnOp(UnOp.NOT, old_condition)));
@@ -333,7 +333,7 @@ public class Program_Utils {
 	public If_Statement addIfStatement(String txn, Expression c) {
 		int if_stmt_counts = (transactionToIf.containsKey(txn)) ? transactionToIf.get(txn) : 0;
 		transactionToIf.put(txn, if_stmt_counts + 1);
-		If_Statement result = new If_Statement(if_stmt_counts, c, new ArrayList<Statement>());
+		If_Statement result = new If_Statement(if_stmt_counts, c);
 		result.setPathCondition(new E_Const_Bool(true));
 		ifStatementMap.put(txn + "-if-" + if_stmt_counts, result);
 		getTrasnsactionMap().get(txn).addStatement(result);// the enclosed statements will be added later

@@ -25,13 +25,14 @@ public class If_Statement extends Statement {
 		this.else_statements = else_s;
 	}
 
-	public If_Statement(int id, Expression c, ArrayList<Statement> if_s) {
+	public If_Statement(int id, Expression c) {
 		assert (c != null);
-		assert (if_s != null);
+		// assert (if_s != null);
 
 		this.id = id;
 		this.condition = c;
-		this.if_statements = if_s;
+		// this.if_statements = if_s;
+		this.if_statements = new ArrayList<>();
 		this.else_statements = new ArrayList<>();
 	}
 
