@@ -235,7 +235,7 @@ public class Refactoring_Engine {
 	public Program_Utils applyAndPropagate(Program_Utils input_pu, Query_Modifier modifier, int apply_at_po,
 			String txnName) {
 		applyAtIndex(input_pu, modifier, apply_at_po, txnName);
-		// propagateToRange(input_pu, modifier, apply_at_po, txnName);
+		propagateToRange(input_pu, modifier, apply_at_po, txnName);
 		return input_pu;
 	}
 
@@ -245,9 +245,8 @@ public class Refactoring_Engine {
 		logger.debug("applying the modifer " + modifier + " at index: " + apply_at_po);
 		Query old_qry = input_pu.getQueryByPo(txnName, apply_at_po);
 		Query new_qry = modifier.atIndexModification(old_qry);
-		deleteQuery(input_pu, apply_at_po, txnName);
-		InsertQueriesAtPO(new Block(BlockType.IF, 1, 0), input_pu, txnName, apply_at_po,
-				new Query_Statement(apply_at_po, new_qry));
+		Block orig_block = deleteQuery(input_pu, apply_at_po, txnName);
+		InsertQueriesAtPO(orig_block, input_pu, txnName, apply_at_po, new Query_Statement(apply_at_po, new_qry));
 		return input_pu;
 	}
 
@@ -330,17 +329,21 @@ public class Refactoring_Engine {
 	 * updated
 	 */
 
-	public Program_Utils deleteQuery(Program_Utils input_pu, int to_be_deleted_qry_po, String txnName) {
+	public Block deleteQuery(Program_Utils input_pu, int to_be_deleted_qry_po, String txnName) {
 		Transaction txn = (Transaction) input_pu.getTrasnsactionMap().get(txnName);
-		deleteQuery_rec(false, input_pu, to_be_deleted_qry_po, txn.getStatements());
-		return input_pu;
+		Block result = deleteQuery_rec(new Block(BlockType.INIT, 0, -1), false, input_pu, to_be_deleted_qry_po,
+				txn.getStatements());
+		return result;
+
 	}
 
-	private void deleteQuery_rec(boolean is_found, Program_Utils input_pu, int to_be_deleted_qry_po,
-			ArrayList<Statement> inputList) {
+	private Block deleteQuery_rec(Block current_block, boolean is_found, Program_Utils input_pu,
+			int to_be_deleted_qry_po, ArrayList<Statement> inputList) {
+		logger.debug("deleteQuery_rec: current block: " + current_block);
 		boolean deleted_flag = false;
 		int index = 0;
 		int remove_index = 0;
+		Block result = null;
 		logger.debug("input list size: " + inputList.size());
 		for (Statement stmt : inputList) {
 			switch (stmt.getClass().getSimpleName()) {
@@ -358,19 +361,33 @@ public class Refactoring_Engine {
 					remove_index = index;
 					deleted_flag = true;
 					is_found = true;
+					result = current_block;
 				}
 				break;
 			case "If_Statement":
 				If_Statement if_stmt = (If_Statement) stmt;
-				deleteQuery_rec(is_found, input_pu, to_be_deleted_qry_po, if_stmt.getIfStatements());
-				deleteQuery_rec(is_found, input_pu, to_be_deleted_qry_po, if_stmt.getElseStatements());
+				Block if_result = deleteQuery_rec(
+						new Block(BlockType.IF, current_block.getDepth() + 1, if_stmt.getIntId()), is_found, input_pu,
+						to_be_deleted_qry_po, if_stmt.getIfStatements());
+				Block else_result = result = deleteQuery_rec(
+						new Block(BlockType.ELSE, current_block.getDepth() + 1, if_stmt.getIntId()), is_found, input_pu,
+						to_be_deleted_qry_po, if_stmt.getElseStatements());
+
+				if (if_result != null && else_result == null)
+					result = if_result;
+				if (if_result == null && else_result != null)
+					result = else_result;
+				if (if_result == null && else_result==null)
+					result=current_block;
 				break;
 			}
 			index++;
 		}
-		if (deleted_flag)
-			inputList.remove(remove_index);
 
+		if (deleted_flag) {
+			inputList.remove(remove_index);
+		}
+		return result;
 	}
 
 	/*
