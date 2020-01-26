@@ -444,12 +444,23 @@ public class Program_Utils {
 
 	public Query_Statement mkTestQryStmt(String txnName) {
 		int id = getNewSelectId(txnName);
-		Variable v = new Variable("accounts", "v_test_" + id);
+		Variable v = new Variable("accounts", "v_test_" + 999);
 		WHC GetAccount0_WHC = new WHC(getIsAliveFieldName("accounts"),
-				new WHC_Constraint(getTableName("accounts"), getFieldName("a_custid"), BinOp.EQ, new E_Const_Num(69)));
+				new WHC_Constraint(getTableName("accounts"), getFieldName("a_custid"), BinOp.EQ, new E_Const_Num(999)));
 		ArrayList<FieldName> fns = new ArrayList<>();
 		fns.add(getFieldName("a_custid"));
-		Select_Query q = new Select_Query(-1, id, true, getTableName("accounts"), fns, v, GetAccount0_WHC);
+		Select_Query q = new Select_Query(9, 999, true, getTableName("accounts"), fns, v, GetAccount0_WHC);
+		return new Query_Statement(-1, q);
+	}
+	
+	public Query_Statement mkTestQryStmt_6(String txnName) {
+		int id = getNewSelectId(txnName);
+		Variable v = new Variable("accounts", "v_test_" + 666);
+		WHC GetAccount0_WHC = new WHC(getIsAliveFieldName("accounts"),
+				new WHC_Constraint(getTableName("accounts"), getFieldName("a_custid"), BinOp.EQ, new E_Const_Num(666)));
+		ArrayList<FieldName> fns = new ArrayList<>();
+		fns.add(getFieldName("a_custid"));
+		Select_Query q = new Select_Query(6, 666, true, getTableName("accounts"), fns, v, GetAccount0_WHC);
 		return new Query_Statement(-1, q);
 	}
 

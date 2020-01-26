@@ -46,7 +46,7 @@ public class If_Statement extends Statement {
 	@Override
 	public void printStatemenet(String indent) {
 		System.out.println(indent + "    IF" + this.id + " (" + this.condition.toString() + "){");
-		for (Statement stmt : if_statements) 
+		for (Statement stmt : if_statements)
 			stmt.printStatemenet(indent + "       ");
 		System.out.println(indent + "}");
 		if (else_statements.size() > 0) {
@@ -77,7 +77,7 @@ public class If_Statement extends Statement {
 	}
 
 	public ArrayList<Statement> getElseStatements() {
-		//assert (else_statements.size() > 0) : "cannot return empty list";
+		// assert (else_statements.size() > 0) : "cannot return empty list";
 		return this.else_statements;
 	}
 
@@ -95,6 +95,10 @@ public class If_Statement extends Statement {
 	@Override
 	public String getId() {
 		return "If_Stmt#" + this.id;
+	}
+
+	public int getIntId() {
+		return this.id;
 	}
 
 	@Override
@@ -131,7 +135,7 @@ public class If_Statement extends Statement {
 
 	@Override
 	public Expression getPathCondition() {
-		assert (this.path_condition!=null) : "cannot return null";
+		assert (this.path_condition != null) : "cannot return null";
 		return this.path_condition;
 	}
 

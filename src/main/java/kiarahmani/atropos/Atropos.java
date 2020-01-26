@@ -21,6 +21,7 @@ import kiarahmani.atropos.refactoring_engine.deltas.Delta;
 import kiarahmani.atropos.refactoring_engine.deltas.INTRO_F;
 import kiarahmani.atropos.refactoring_engine.deltas.INTRO_R;
 import kiarahmani.atropos.refactoring_engine.deltas.Modifiers.Query_Redirector;
+import kiarahmani.atropos.refactoring_engine.deltas.Modifiers.Test_Modifier;
 import kiarahmani.atropos.utils.Constants;
 import kiarahmani.atropos.utils.Program_Utils;
 
@@ -41,7 +42,7 @@ public class Atropos {
 
 		Program_Utils pu = new Program_Utils("SmallBank");
 		ProgramGenerator ipg = new SmallBankProgramGenerator(pu);
-		String test_string = "Balance";
+		String test_string = "TransactSavings";
 
 		Program program = ipg.generate("Balance1", "Amalgamate1", "TransactSavings1", "DepositChecking1", "SendPaymen1",
 				"WriteCheck1", test_string);
@@ -68,19 +69,9 @@ public class Atropos {
 		// dai_graph.printDAIGraph();
 		System.out.println("\nTotal Time: " + (time_end - time_begin) / 1000.0 + " s\n");
 
-		// pu.redirectQuery(test_string, 2, "accounts");
-		// re.deleteQuery(pu, 2, test_string);
-		re.InsertQueriesAtPO(pu, test_string, 3, new Query_Statement[] { pu.mkTestQryStmt(test_string),
-				pu.mkTestQryStmt(test_string), pu.mkTestQryStmt(test_string) });
-
-		refactored_program = pu.generateProgram();
-		refactored_program.printProgram(++printed_program_cnt);
-
-		System.out.println("\n\n\n\n\n\n\n\n");
-
-		Query_Redirector qry_red = new Query_Redirector();
-		qry_red.set(pu, test_string, "accounts");
-		re.applyAndPropagate(pu, qry_red, 1, test_string);
+		Test_Modifier qry_red = new Test_Modifier();
+		qry_red.set(pu, test_string);
+		re.applyAndPropagate(pu, qry_red, 0, test_string);
 
 		refactored_program = pu.generateProgram();
 		refactored_program.printProgram(++printed_program_cnt);

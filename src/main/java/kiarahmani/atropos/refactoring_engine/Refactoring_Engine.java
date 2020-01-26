@@ -263,7 +263,7 @@ public class Refactoring_Engine {
 	private void propagateToRange_rec(Program_Utils input_pu, Query_Modifier modifier, int po_to_apply_after,
 			ArrayList<Statement> inputList) {
 		boolean found_flag = false;
-		logger.debug("input list sze: " + inputList.size());
+		logger.debug("input list size: " + inputList.size());
 		logger.debug("input list: " + inputList);
 
 		// for (Statement stmt : inputList) {
@@ -288,9 +288,15 @@ public class Refactoring_Engine {
 				if (found_flag) {
 					inputList.remove(index);
 					inputList.add(index, modifier.propagatedModification(if_stmt));
+					
+					///
+					//If_Statement new_if_stmt = new If_Statement(if_stmt.getIntId(), c, if_s);
+					
+					///
 				}
 				propagateToRange_rec(input_pu, modifier, po_to_apply_after, if_stmt.getIfStatements());
 				propagateToRange_rec(input_pu, modifier, po_to_apply_after, if_stmt.getElseStatements());
+				
 				break;
 			}
 		}
