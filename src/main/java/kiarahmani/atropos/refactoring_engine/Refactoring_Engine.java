@@ -12,10 +12,12 @@ import kiarahmani.atropos.DML.Variable;
 import kiarahmani.atropos.DML.query.Query;
 import kiarahmani.atropos.DML.query.Select_Query;
 import kiarahmani.atropos.DML.query.Query.Kind;
+import kiarahmani.atropos.program.Block;
 import kiarahmani.atropos.program.Program;
 import kiarahmani.atropos.program.Statement;
 import kiarahmani.atropos.program.Table;
 import kiarahmani.atropos.program.Transaction;
+import kiarahmani.atropos.program.Block.BlockType;
 import kiarahmani.atropos.program.statements.If_Statement;
 import kiarahmani.atropos.program.statements.Query_Statement;
 import kiarahmani.atropos.refactoring_engine.deltas.Delta;
@@ -244,7 +246,8 @@ public class Refactoring_Engine {
 		Query old_qry = input_pu.getQueryByPo(txnName, apply_at_po);
 		Query new_qry = modifier.atIndexModification(old_qry);
 		deleteQuery(input_pu, apply_at_po, txnName);
-		InsertQueriesAtPO(input_pu, txnName, apply_at_po, new Query_Statement(apply_at_po, new_qry));
+		InsertQueriesAtPO(new Block(BlockType.IF, 1, 0), input_pu, txnName, apply_at_po,
+				new Query_Statement(apply_at_po, new_qry));
 		return input_pu;
 	}
 
@@ -375,79 +378,54 @@ public class Refactoring_Engine {
 	 * insert_index_po specifies the final PO assigned to the first newly added
 	 * query
 	 */
-	public Program_Utils InsertQueriesAtPO(Program_Utils input_pu, String txnName, int insert_index_po,
-			Query_Statement... newQueryStatements) {
+	public Program_Utils InsertQueriesAtPO(Block desired_block, Program_Utils input_pu, String txnName,
+			int insert_index_po, Query_Statement... newQueryStatements) {
 		Transaction txn = (Transaction) input_pu.getTrasnsactionMap().get(txnName);
-		InsertQueriesAtPO_rec(1,3, false, 1, 0, false, input_pu, txn.getStatements(), insert_index_po,
-				newQueryStatements);
+		InsertQueriesAtPO_rec((insert_index_po == 0), desired_block, new Block(BlockType.INIT, 0, -1),
+				txn.getStatements(), input_pu, insert_index_po, newQueryStatements);
 		return input_pu;
 	}
 
-	private boolean InsertQueriesAtPO_rec(int if_or_else, int current_if_or_else /* 1 means in if */, boolean add_to_current_block,
-			int desired_depth, int depth, boolean is_found, Program_Utils input_pu, ArrayList<Statement> inputList,
-			int insert_index_po, Query_Statement... newQueryStatements) {
-		if (insert_index_po == 0) {
-			int new_qry_cnt = newQueryStatements.length;
-			assert (new_qry_cnt > 0) : "cannot insert an empty array";
-
-			for (Statement stmt : inputList) {
-				switch (stmt.getClass().getSimpleName()) {
-				case "Query_Statement":
-					Query_Statement qry_stmt = (Query_Statement) stmt;
+	private boolean InsertQueriesAtPO_rec(boolean must_inc_po, Block desired_block, Block current_block,
+			ArrayList<Statement> inputList, Program_Utils input_pu, int insert_index_po,
+			Query_Statement... newQueryStatements) {
+		int new_qry_cnt = newQueryStatements.length;
+		assert (new_qry_cnt > 0) : "cannot insert an empty array";
+		int found_index = 0;
+		for (int index = 0; index < inputList.size(); index++) {
+			Statement stmt = inputList.get(index);
+			switch (stmt.getClass().getSimpleName()) {
+			case "Query_Statement":
+				Query_Statement qry_stmt = (Query_Statement) stmt;
+				Query qry = qry_stmt.getQuery();
+				if (must_inc_po)
 					qry_stmt.updatePO(qry_stmt.getQuery().getPo() + new_qry_cnt);
-					break;
-				case "If_Statement":
-					If_Statement if_stmt = (If_Statement) stmt;
-					InsertQueriesAtPO_rec(if_or_else, current_if_or_else, add_to_current_block, desired_depth, depth, true, input_pu,
-							if_stmt.getIfStatements(), insert_index_po, newQueryStatements);
-					InsertQueriesAtPO_rec(if_or_else, current_if_or_else, add_to_current_block, desired_depth, depth, true, input_pu,
-							if_stmt.getElseStatements(), insert_index_po, newQueryStatements);
-					break;
-				}
-			}
-			int iter = 0;
-			if (!is_found)
-				for (Query_Statement stmt : newQueryStatements) {
-					stmt.updatePO(insert_index_po + iter);
-					inputList.add(iter++, stmt);
-				}
-		} else {
-			int new_qry_cnt = newQueryStatements.length;
-			assert (new_qry_cnt > 0) : "cannot insert an empty array";
-			int found_index = 0;
-			for (int index = 0; index < inputList.size(); index++) {
-				Statement stmt = inputList.get(index);
-				switch (stmt.getClass().getSimpleName()) {
-				case "Query_Statement":
-					Query_Statement qry_stmt = (Query_Statement) stmt;
-					Query qry = qry_stmt.getQuery();
-					if (is_found) {
-						qry_stmt.updatePO(qry_stmt.getQuery().getPo() + new_qry_cnt);
-					}
-					if (qry.getPo() == insert_index_po - 1) {
-						add_to_current_block = true;
-						is_found = true;
-						found_index = index + 1;
-					}
 
-					break;
-				case "If_Statement":
-					If_Statement if_stmt = (If_Statement) stmt;
-					InsertQueriesAtPO_rec(if_or_else, 1, add_to_current_block, desired_depth, depth + 1, is_found,
-							input_pu, if_stmt.getIfStatements(), insert_index_po, newQueryStatements);
-					InsertQueriesAtPO_rec(if_or_else, 0, add_to_current_block, desired_depth, depth + 1, is_found,
-							input_pu, if_stmt.getElseStatements(), insert_index_po, newQueryStatements);
-					break;
+				if (qry.getPo() == insert_index_po - 1) {
+					must_inc_po = true;
+					found_index = index + 1;
 				}
-			}
-			if (add_to_current_block && desired_depth == depth && current_if_or_else == if_or_else) {
-				int iter = 0;
-				for (Query_Statement stmt : newQueryStatements) {
-					stmt.updatePO(insert_index_po + iter);
-					inputList.add(found_index + (iter++), stmt);
-				}
+				break;
+			case "If_Statement":
+				If_Statement if_stmt = (If_Statement) stmt;
+				InsertQueriesAtPO_rec(must_inc_po, desired_block,
+						new Block(BlockType.IF, current_block.getDepth() + 1, if_stmt.getIntId()),
+						if_stmt.getIfStatements(), input_pu, insert_index_po, newQueryStatements);
+				InsertQueriesAtPO_rec(must_inc_po, desired_block,
+						new Block(BlockType.ELSE, current_block.getDepth() + 1, if_stmt.getIntId()),
+						if_stmt.getElseStatements(), input_pu, insert_index_po, newQueryStatements);
+
+				break;
 			}
 		}
-		return is_found;
+
+		if (current_block.isEqual(desired_block)) {
+			int iter = 0;
+			for (Query_Statement stmt : newQueryStatements) {
+				stmt.updatePO(insert_index_po + iter);
+				inputList.add(found_index + (iter++), stmt);
+			}
+		}
+		return false;
 	}
 }
