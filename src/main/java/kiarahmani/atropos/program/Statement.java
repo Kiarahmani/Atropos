@@ -12,6 +12,8 @@ public abstract class Statement {
 
 	public abstract String getId();
 
+	public abstract String getSimpleName();
+
 	public abstract String[] getAllQueryIds();
 
 	public abstract ArrayList<Query> getAllQueries();

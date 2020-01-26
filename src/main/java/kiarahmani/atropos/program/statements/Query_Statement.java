@@ -66,4 +66,14 @@ public class Query_Statement extends Statement {
 		return this.path_condition;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see kiarahmani.atropos.program.Statement#getSimpleName()
+	 */
+	@Override
+	public String getSimpleName() {
+		return this.query.getId();
+	}
+
 }

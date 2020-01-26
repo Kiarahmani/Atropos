@@ -71,7 +71,7 @@ public class Atropos {
 
 		Test_Modifier qry_red = new Test_Modifier();
 		qry_red.set(pu, test_string);
-		re.applyAndPropagate(pu, qry_red, 0, test_string);
+		re.applyAndPropagate(pu, qry_red, 2, test_string);
 
 		refactored_program = pu.generateProgram();
 		refactored_program.printProgram(++printed_program_cnt);

@@ -5,6 +5,7 @@
  **/
 package kiarahmani.atropos.refactoring_engine.deltas.Modifiers;
 
+import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.query.Query;
 import kiarahmani.atropos.program.Statement;
 import kiarahmani.atropos.program.statements.If_Statement;
@@ -42,18 +43,24 @@ public class Test_Modifier extends Query_Modifier {
 	 * (non-Javadoc)
 	 * 
 	 * @see kiarahmani.atropos.refactoring_engine.deltas.Modifiers.Query_Modifier#
-	 * propagatedModification(kiarahmani.atropos.program.Statement)
+	 * propagatedExpModification(kiarahmani.atropos.DML.expression.Expression)
 	 */
 	@Override
-	public Statement propagatedModification(Statement input_stmt) {
-		switch (input_stmt.getClass().getSimpleName()) {
-		case "If_Statement":
-			return input_stmt;
-		case "Query_Statement":
-			Query_Statement q_stmt = pu.mkTestQryStmt_6(txnName);
-			return q_stmt;
-		}
-		return null;
+	public Expression propagatedExpModification(Expression input_exp) {
+		return input_exp;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see kiarahmani.atropos.refactoring_engine.deltas.Modifiers.Query_Modifier#
+	 * propagatedQueryModification(kiarahmani.atropos.program.statements.
+	 * Query_Statement)
+	 */
+	@Override
+	public Query_Statement propagatedQueryModification(Query_Statement input_exp) {
+		Query_Statement q_stmt = pu.mkTestQryStmt_6(txnName);
+		return q_stmt;
 	}
 
 }

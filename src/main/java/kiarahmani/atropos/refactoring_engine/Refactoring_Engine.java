@@ -2,6 +2,7 @@ package kiarahmani.atropos.refactoring_engine;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -232,7 +233,7 @@ public class Refactoring_Engine {
 	public Program_Utils applyAndPropagate(Program_Utils input_pu, Query_Modifier modifier, int apply_at_po,
 			String txnName) {
 		applyAtIndex(input_pu, modifier, apply_at_po, txnName);
-		propagateToRange(input_pu, modifier, apply_at_po, txnName);
+		// propagateToRange(input_pu, modifier, apply_at_po, txnName);
 		return input_pu;
 	}
 
@@ -263,8 +264,9 @@ public class Refactoring_Engine {
 	private void propagateToRange_rec(Program_Utils input_pu, Query_Modifier modifier, int po_to_apply_after,
 			ArrayList<Statement> inputList) {
 		boolean found_flag = false;
-		logger.debug("input list size: " + inputList.size());
-		logger.debug("input list: " + inputList);
+		logger.debug("propagateToRange_rec: input list size: " + inputList.size());
+		logger.debug("propagateToRange_rec: input list: "
+				+ inputList.stream().map(stmt -> stmt.getSimpleName()).collect(Collectors.toList()));
 
 		// for (Statement stmt : inputList) {
 		for (int index = 0; index < inputList.size(); index++) {
@@ -272,31 +274,49 @@ public class Refactoring_Engine {
 			switch (stmt.getClass().getSimpleName()) {
 			case "Query_Statement":
 				Query_Statement qry_stmt = (Query_Statement) stmt;
-				logger.debug("current query statement: " + qry_stmt.getQuery().getId());
-				if (found_flag) {
+				logger.debug("propagateToRange_rec: current query statement: " + qry_stmt.getQuery().getId());
+				if (qry_stmt.getQuery().getPo() > po_to_apply_after) {
+					logger.debug("propagateToRange_rec: Current query must be updated");
 					inputList.remove(index);
-					inputList.add(index, modifier.propagatedModification(qry_stmt));
-				}
-
-				if (qry_stmt.getQuery().getPo() == po_to_apply_after)
+					Query_Statement new_query = modifier.propagatedQueryModification(qry_stmt);
+					inputList.add(index, new_query);
+					logger.debug("propagateToRange_rec: updated query: " + new_query.getQuery().getId());
 					found_flag = true;
+				} else {
+					logger.debug("propagateToRange_rec: Current query was not affected");
+				}
 
 				break;
 			case "If_Statement":
 				If_Statement if_stmt = (If_Statement) stmt;
-				logger.debug("current if statement: " + if_stmt);
-				if (found_flag) {
+				logger.debug("propagateToRange_rec: Current if statement: " + if_stmt.getSimpleName());
+				if (!found_flag) {
+					logger.debug("propagateToRange_rec: found_flag=false: "
+							+ "simply calling the rec function on if statements of size: "
+							+ if_stmt.getIfStatements().size());
+
+					propagateToRange_rec(input_pu, modifier, po_to_apply_after, if_stmt.getIfStatements());
+					logger.debug("propagateToRange_rec: found_flag=false: "
+							+ "simply calling the rec function on else statements of size: "
+							+ if_stmt.getElseStatements().size());
+					propagateToRange_rec(input_pu, modifier, po_to_apply_after, if_stmt.getElseStatements());
+				} else {
+					logger.debug("propagateToRange_rec: found_flag=true: "
+							+ "calling the rec function on if statements of size: " + if_stmt.getIfStatements().size());
+					propagateToRange_rec(input_pu, modifier, po_to_apply_after, if_stmt.getIfStatements());
+					logger.debug("propagateToRange_rec: found_flag=true: "
+							+ "calling the rec function on else statements of size: "
+							+ if_stmt.getElseStatements().size());
+					propagateToRange_rec(input_pu, modifier, po_to_apply_after, if_stmt.getElseStatements());
 					inputList.remove(index);
-					inputList.add(index, modifier.propagatedModification(if_stmt));
-					
-					///
-					//If_Statement new_if_stmt = new If_Statement(if_stmt.getIntId(), c, if_s);
-					
-					///
+					If_Statement new_if_stmt = new If_Statement(if_stmt.getIntId(),
+							modifier.propagatedExpModification(if_stmt.getCondition()));
+					for (Statement updated_stmt : if_stmt.getIfStatements())
+						new_if_stmt.addStatementInIf(updated_stmt);
+					for (Statement updated_stmt : if_stmt.getElseStatements())
+						new_if_stmt.addStatementInElse(updated_stmt);
+					inputList.add(index, new_if_stmt);
 				}
-				propagateToRange_rec(input_pu, modifier, po_to_apply_after, if_stmt.getIfStatements());
-				propagateToRange_rec(input_pu, modifier, po_to_apply_after, if_stmt.getElseStatements());
-				
 				break;
 			}
 		}
@@ -309,11 +329,12 @@ public class Refactoring_Engine {
 
 	public Program_Utils deleteQuery(Program_Utils input_pu, int to_be_deleted_qry_po, String txnName) {
 		Transaction txn = (Transaction) input_pu.getTrasnsactionMap().get(txnName);
-		deleteQuery_rec(input_pu, to_be_deleted_qry_po, txn.getStatements());
+		deleteQuery_rec(false, input_pu, to_be_deleted_qry_po, txn.getStatements());
 		return input_pu;
 	}
 
-	private void deleteQuery_rec(Program_Utils input_pu, int to_be_deleted_qry_po, ArrayList<Statement> inputList) {
+	private void deleteQuery_rec(boolean is_found, Program_Utils input_pu, int to_be_deleted_qry_po,
+			ArrayList<Statement> inputList) {
 		boolean deleted_flag = false;
 		int index = 0;
 		int remove_index = 0;
@@ -324,21 +345,22 @@ public class Refactoring_Engine {
 				Query_Statement qry_stmt = (Query_Statement) stmt;
 				Query qry = qry_stmt.getQuery();
 				logger.debug("analyzing query: " + qry.getId());
-				if (deleted_flag) {
+				if (is_found) {
 					// update PO (because one query has been removed)
 					qry_stmt.updatePO(qry.getPo() - 1);
 				}
-				if (!deleted_flag && qry.getPo() == to_be_deleted_qry_po) {
+				if (!is_found && !deleted_flag && qry.getPo() == to_be_deleted_qry_po) {
 					// remove the query from the list
 					logger.debug("query to be deleted is found at index: " + index);
 					remove_index = index;
 					deleted_flag = true;
+					is_found = true;
 				}
 				break;
 			case "If_Statement":
 				If_Statement if_stmt = (If_Statement) stmt;
-				deleteQuery_rec(input_pu, to_be_deleted_qry_po, if_stmt.getIfStatements());
-				deleteQuery_rec(input_pu, to_be_deleted_qry_po, if_stmt.getElseStatements());
+				deleteQuery_rec(is_found, input_pu, to_be_deleted_qry_po, if_stmt.getIfStatements());
+				deleteQuery_rec(is_found, input_pu, to_be_deleted_qry_po, if_stmt.getElseStatements());
 				break;
 			}
 			index++;
@@ -356,45 +378,76 @@ public class Refactoring_Engine {
 	public Program_Utils InsertQueriesAtPO(Program_Utils input_pu, String txnName, int insert_index_po,
 			Query_Statement... newQueryStatements) {
 		Transaction txn = (Transaction) input_pu.getTrasnsactionMap().get(txnName);
-		InsertQueriesAtPO_rec(input_pu, txn.getStatements(), insert_index_po, newQueryStatements);
+		InsertQueriesAtPO_rec(1,3, false, 1, 0, false, input_pu, txn.getStatements(), insert_index_po,
+				newQueryStatements);
 		return input_pu;
 	}
 
-	private Program_Utils InsertQueriesAtPO_rec(Program_Utils input_pu, ArrayList<Statement> inputList,
+	private boolean InsertQueriesAtPO_rec(int if_or_else, int current_if_or_else /* 1 means in if */, boolean add_to_current_block,
+			int desired_depth, int depth, boolean is_found, Program_Utils input_pu, ArrayList<Statement> inputList,
 			int insert_index_po, Query_Statement... newQueryStatements) {
-		int index = 0;
-		boolean found_flag = (insert_index_po == 0) ? true : false;
-		int found_index = 0;
-		int speca_fix = (insert_index_po == 0) ? 0 : 1;
-		int new_qry_cnt = newQueryStatements.length;
-		assert (new_qry_cnt > 0) : "cannot insert an empty array";
-		loop_label: for (Statement stmt : inputList) {
-			switch (stmt.getClass().getSimpleName()) {
-			case "Query_Statement":
-				Query_Statement qry_stmt = (Query_Statement) stmt;
-				Query qry = qry_stmt.getQuery();
-				if (found_flag) {
-					qry_stmt.updatePO(qry_stmt.getQuery().getPo() + new_qry_cnt);
-				} else if (qry.getPo() >= insert_index_po - 1) {
-					found_flag = true;
-					found_index = index;
-				}
-				break;
-			case "If_Statement":
-				If_Statement if_stmt = (If_Statement) stmt;
-				InsertQueriesAtPO_rec(input_pu, if_stmt.getIfStatements(), insert_index_po, newQueryStatements);
-				InsertQueriesAtPO_rec(input_pu, if_stmt.getElseStatements(), insert_index_po, newQueryStatements);
-				break;
-			}
-			index++;
-		}
-		int iter = 0;
-		if (found_flag)
-			for (Query_Statement stmt : newQueryStatements) {
-				stmt.updatePO(insert_index_po + iter);
-				inputList.add(found_index + (iter++) + speca_fix, stmt);
-			}
-		return input_pu;
-	}
+		if (insert_index_po == 0) {
+			int new_qry_cnt = newQueryStatements.length;
+			assert (new_qry_cnt > 0) : "cannot insert an empty array";
 
+			for (Statement stmt : inputList) {
+				switch (stmt.getClass().getSimpleName()) {
+				case "Query_Statement":
+					Query_Statement qry_stmt = (Query_Statement) stmt;
+					qry_stmt.updatePO(qry_stmt.getQuery().getPo() + new_qry_cnt);
+					break;
+				case "If_Statement":
+					If_Statement if_stmt = (If_Statement) stmt;
+					InsertQueriesAtPO_rec(if_or_else, current_if_or_else, add_to_current_block, desired_depth, depth, true, input_pu,
+							if_stmt.getIfStatements(), insert_index_po, newQueryStatements);
+					InsertQueriesAtPO_rec(if_or_else, current_if_or_else, add_to_current_block, desired_depth, depth, true, input_pu,
+							if_stmt.getElseStatements(), insert_index_po, newQueryStatements);
+					break;
+				}
+			}
+			int iter = 0;
+			if (!is_found)
+				for (Query_Statement stmt : newQueryStatements) {
+					stmt.updatePO(insert_index_po + iter);
+					inputList.add(iter++, stmt);
+				}
+		} else {
+			int new_qry_cnt = newQueryStatements.length;
+			assert (new_qry_cnt > 0) : "cannot insert an empty array";
+			int found_index = 0;
+			for (int index = 0; index < inputList.size(); index++) {
+				Statement stmt = inputList.get(index);
+				switch (stmt.getClass().getSimpleName()) {
+				case "Query_Statement":
+					Query_Statement qry_stmt = (Query_Statement) stmt;
+					Query qry = qry_stmt.getQuery();
+					if (is_found) {
+						qry_stmt.updatePO(qry_stmt.getQuery().getPo() + new_qry_cnt);
+					}
+					if (qry.getPo() == insert_index_po - 1) {
+						add_to_current_block = true;
+						is_found = true;
+						found_index = index + 1;
+					}
+
+					break;
+				case "If_Statement":
+					If_Statement if_stmt = (If_Statement) stmt;
+					InsertQueriesAtPO_rec(if_or_else, 1, add_to_current_block, desired_depth, depth + 1, is_found,
+							input_pu, if_stmt.getIfStatements(), insert_index_po, newQueryStatements);
+					InsertQueriesAtPO_rec(if_or_else, 0, add_to_current_block, desired_depth, depth + 1, is_found,
+							input_pu, if_stmt.getElseStatements(), insert_index_po, newQueryStatements);
+					break;
+				}
+			}
+			if (add_to_current_block && desired_depth == depth && current_if_or_else == if_or_else) {
+				int iter = 0;
+				for (Query_Statement stmt : newQueryStatements) {
+					stmt.updatePO(insert_index_po + iter);
+					inputList.add(found_index + (iter++), stmt);
+				}
+			}
+		}
+		return is_found;
+	}
 }

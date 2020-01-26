@@ -144,4 +144,14 @@ public class If_Statement extends Statement {
 		return this.condition;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see kiarahmani.atropos.program.Statement#getSimpleName()
+	 */
+	@Override
+	public String getSimpleName() {
+		return "IF-" + this.getIntId();
+	}
+
 }

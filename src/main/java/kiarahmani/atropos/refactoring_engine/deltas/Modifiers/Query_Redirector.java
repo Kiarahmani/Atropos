@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DML.Variable;
 import kiarahmani.atropos.DML.expression.BinOp;
+import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.expression.constants.E_Const_Num;
 import kiarahmani.atropos.DML.query.Query;
 import kiarahmani.atropos.DML.query.Select_Query;
@@ -58,9 +59,9 @@ public class Query_Redirector extends Query_Modifier {
 	 * modify_propagate(kiarahmani.atropos.program.Statement)
 	 */
 	@Override
-	public Statement propagatedModification(Statement input_stmt) {
+	public Expression propagatedModification(Expression input_exp) {
 		// TODO Auto-generated method stub
-		return input_stmt;
+		return input_exp;
 	}
 
 }
