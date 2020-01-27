@@ -36,7 +36,6 @@ public class Atropos {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		int printed_program_cnt = 0;
 		long time_begin = System.currentTimeMillis();
 		logger.debug("New Constants object initialized");
 
@@ -46,7 +45,7 @@ public class Atropos {
 
 		Program program = ipg.generate("Balance1", "Amalgamate1", "TransactSavings1", "DepositChecking1", "SendPaymen1",
 				"WriteCheck1", test_string);
-		program.printProgram(++printed_program_cnt);
+		program.printProgram();
 
 		// create new refactoring engine
 		Refactoring_Engine re = new Refactoring_Engine();
@@ -74,8 +73,8 @@ public class Atropos {
 		re.applyAndPropagate(pu, qry_red, 0, test_string);
 
 		Program redirected_program = pu.generateProgram();
-		refactored_program.printProgram(++printed_program_cnt);
-		redirected_program.printProgram(++printed_program_cnt);
+		refactored_program.printProgram();
+		redirected_program.printProgram();
 
 		// re.deleteQuery(pu, 2, test_string);
 		// refactored_program = pu.generateProgram();

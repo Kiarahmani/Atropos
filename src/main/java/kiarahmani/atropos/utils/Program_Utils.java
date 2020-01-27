@@ -52,6 +52,7 @@ public class Program_Utils {
 	private static final Logger logger = LogManager.getLogger(Atropos.class);
 	// basic program meta data
 	private String program_name;
+	private int version;
 	/*
 	 * string to object mappings
 	 */
@@ -104,7 +105,7 @@ public class Program_Utils {
 	 * is simply a packaging for currently stored meta-data
 	 */
 	public Program generateProgram() {
-		Program program = new Program(program_name);
+		Program program = new Program(program_name, version++);
 		for (Table t : tableMap.values())
 			program.addTable(t);
 		for (Transaction t : getTrasnsactionMap().values())

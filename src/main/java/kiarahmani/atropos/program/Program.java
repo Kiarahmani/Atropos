@@ -18,14 +18,16 @@ public class Program {
 	private ArrayList<Transaction> transactions;
 	private ArrayList<Table> tables;
 	private ArrayList<VC> vcs;
+	private int version;
 
 	// constructor
-	public Program(String name) {
+	public Program(String name, int version) {
 		this.transactions = new ArrayList<Transaction>();
 		this.vcs = new ArrayList<VC>();
 		this.programName = name;
 		setMaxQueryCount();
 		this.tables = new ArrayList<>();
+		this.version = version;
 	}
 
 	public void addVC(VC vc) {
@@ -141,10 +143,10 @@ public class Program {
 		this.transactions.add(txn);
 	}
 
-	public void printProgram(int print_cnt) {
+	public void printProgram() {
 		System.out.println(
 				"\n\n\n\n##############################################################################################################################");
-		System.out.println("### " + programName.toUpperCase() + "(" + print_cnt + ")");
+		System.out.println("### " + programName.toUpperCase() + "(" + version + ")");
 		System.out.println("## SCHEMA:");
 		for (Table t : tables)
 			System.out.println(t.toString());
