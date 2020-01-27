@@ -73,7 +73,7 @@ public class Query_Statement extends Statement {
 	 */
 	@Override
 	public String getSimpleName() {
-		return this.query.getId();
+		return this.query.getId() + "(po:" + this.query.getPo() + ")";
 	}
 
 }

@@ -39,10 +39,12 @@ import kiarahmani.atropos.DML.query.Select_Query;
 import kiarahmani.atropos.DML.query.Update_Query;
 import kiarahmani.atropos.DML.where_clause.WHC;
 import kiarahmani.atropos.DML.where_clause.WHC_Constraint;
+import kiarahmani.atropos.program.Block;
 import kiarahmani.atropos.program.Program;
 import kiarahmani.atropos.program.Statement;
 import kiarahmani.atropos.program.Table;
 import kiarahmani.atropos.program.Transaction;
+import kiarahmani.atropos.program.Block.BlockType;
 import kiarahmani.atropos.program.statements.If_Statement;
 import kiarahmani.atropos.program.statements.Query_Statement;
 
@@ -452,7 +454,7 @@ public class Program_Utils {
 		Select_Query q = new Select_Query(9, 999, true, getTableName("accounts"), fns, v, GetAccount0_WHC);
 		return new Query_Statement(-1, q);
 	}
-	
+
 	public Query_Statement mkTestQryStmt_6(String txnName) {
 		int id = getNewSelectId(txnName);
 		Variable v = new Variable("accounts", "v_test_" + 666);
@@ -462,6 +464,43 @@ public class Program_Utils {
 		fns.add(getFieldName("a_custid"));
 		Select_Query q = new Select_Query(6, 666, true, getTableName("accounts"), fns, v, GetAccount0_WHC);
 		return new Query_Statement(-1, q);
+	}
+
+	public Block getBlockByPo(String txnName, int po) {
+		Transaction txn = getTrasnsactionMap().get(txnName);
+		return getBlockByPo_rec(new Block(BlockType.INIT, 0, -1), txnName, po, txn.getStatements());
+	}
+
+	public Block getBlockByPo_rec(Block current_block, String txnName, int po, ArrayList<Statement> inputList) {
+		Block result = null;
+		for (Statement stmt : inputList) {
+			switch (stmt.getClass().getSimpleName()) {
+			case "Query_Statement":
+				Query_Statement qry_stmt = (Query_Statement) stmt;
+				Query qry = qry_stmt.getQuery();
+				if (qry.getPo() == po) {
+					return current_block;
+				}
+				break;
+			case "If_Statement":
+				If_Statement if_stmt = (If_Statement) stmt;
+				Block if_result = getBlockByPo_rec(
+						new Block(BlockType.IF, current_block.getDepth() + 1, if_stmt.getIntId()), txnName, po,
+						if_stmt.getIfStatements());
+				Block else_result = getBlockByPo_rec(
+						new Block(BlockType.ELSE, current_block.getDepth() + 1, if_stmt.getIntId()), txnName, po,
+						if_stmt.getElseStatements());
+
+				if (if_result != null && else_result == null)
+					result = if_result;
+				if (if_result == null && else_result != null)
+					result = else_result;
+				if (if_result == null && else_result == null)
+					result = current_block;
+				break;
+			}
+		}
+		return result;
 	}
 
 }

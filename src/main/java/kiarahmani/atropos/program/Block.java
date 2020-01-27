@@ -42,7 +42,7 @@ public class Block {
 	}
 
 	public String toString() {
-		return "B(if: " + this.enclosing_if_id + " depth: " + this.depth + ")";
+		return "B(type: " + type + " if: " + this.enclosing_if_id + " depth: " + this.depth + ")";
 	}
 
 }

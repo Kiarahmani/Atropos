@@ -234,7 +234,10 @@ public class Refactoring_Engine {
 
 	public Program_Utils applyAndPropagate(Program_Utils input_pu, Query_Modifier modifier, int apply_at_po,
 			String txnName) {
+		logger.debug("applyAndPropagate: First calling applyAtIndex to apply the desired modification at index");
 		applyAtIndex(input_pu, modifier, apply_at_po, txnName);
+		logger.debug(
+				"applyAndPropagate: Now calling propagateToRange to apply the deisred modifications at all subsequent statements");
 		propagateToRange(input_pu, modifier, apply_at_po, txnName);
 		return input_pu;
 	}
@@ -242,10 +245,16 @@ public class Refactoring_Engine {
 	public Program_Utils applyAtIndex(Program_Utils input_pu, Query_Modifier modifier, int apply_at_po,
 			String txnName) {
 		assert (modifier.isSet()) : "cannot apply the modifier since it is not set";
-		logger.debug("applying the modifer " + modifier + " at index: " + apply_at_po);
+		logger.debug("applyAtIndex: Applying the modifer " + modifier + " at index: " + apply_at_po);
 		Query old_qry = input_pu.getQueryByPo(txnName, apply_at_po);
 		Query new_qry = modifier.atIndexModification(old_qry);
-		Block orig_block = deleteQuery(input_pu, apply_at_po, txnName);
+		logger.debug("applyAtIndex: old query (" + old_qry.getId() + ") is going to be replaced with new query ("
+				+ new_qry.getId() + ")");
+		Block orig_block = input_pu.getBlockByPo(txnName, apply_at_po);
+		logger.debug("applyAtIndex: the old query was found in block: " + orig_block);
+		logger.debug("applyAtIndex: new Calling deleteQuery to remove the old query from the transaction");
+		deleteQuery(input_pu, apply_at_po, txnName);
+		logger.debug("applyAtIndex: new Calling InsertQueriesAtPO to add the new query to the transaction");
 		InsertQueriesAtPO(orig_block, input_pu, txnName, apply_at_po, new Query_Statement(apply_at_po, new_qry));
 		return input_pu;
 	}
@@ -266,57 +275,62 @@ public class Refactoring_Engine {
 	private void propagateToRange_rec(Program_Utils input_pu, Query_Modifier modifier, int po_to_apply_after,
 			ArrayList<Statement> inputList) {
 		boolean found_flag = false;
-		logger.debug("propagateToRange_rec: input list size: " + inputList.size());
 		logger.debug("propagateToRange_rec: input list: "
 				+ inputList.stream().map(stmt -> stmt.getSimpleName()).collect(Collectors.toList()));
-
-		// for (Statement stmt : inputList) {
 		for (int index = 0; index < inputList.size(); index++) {
 			Statement stmt = inputList.get(index);
 			switch (stmt.getClass().getSimpleName()) {
 			case "Query_Statement":
 				Query_Statement qry_stmt = (Query_Statement) stmt;
-				logger.debug("propagateToRange_rec: current query statement: " + qry_stmt.getQuery().getId());
+				logger.debug("propagateToRange_rec: analyzing query statement: " + qry_stmt.getSimpleName());
 				if (qry_stmt.getQuery().getPo() > po_to_apply_after) {
 					logger.debug("propagateToRange_rec: Current query must be updated");
 					inputList.remove(index);
 					Query_Statement new_query = modifier.propagatedQueryModification(qry_stmt);
+					new_query.updatePO(qry_stmt.getQuery().getPo());
 					inputList.add(index, new_query);
-					logger.debug("propagateToRange_rec: updated query: " + new_query.getQuery().getId());
+					logger.debug("propagateToRange_rec: updated query: " + new_query.getSimpleName());
 					found_flag = true;
 				} else {
 					logger.debug("propagateToRange_rec: Current query was not affected");
 				}
+				if (qry_stmt.getQuery().getPo() == po_to_apply_after)
+					found_flag = true;
 
 				break;
 			case "If_Statement":
 				If_Statement if_stmt = (If_Statement) stmt;
 				logger.debug("propagateToRange_rec: Current if statement: " + if_stmt.getSimpleName());
 				if (!found_flag) {
-					logger.debug("propagateToRange_rec: found_flag=false: "
-							+ "simply calling the rec function on if statements of size: "
-							+ if_stmt.getIfStatements().size());
+					logger.debug("propagateToRange_rec: found_flag=false: " + "calling self on if statements (of size: "
+							+ if_stmt.getIfStatements().size() + ")");
 
 					propagateToRange_rec(input_pu, modifier, po_to_apply_after, if_stmt.getIfStatements());
 					logger.debug("propagateToRange_rec: found_flag=false: "
-							+ "simply calling the rec function on else statements of size: "
-							+ if_stmt.getElseStatements().size());
+							+ "calling self on else statements *of size: " + if_stmt.getElseStatements().size() + ")");
 					propagateToRange_rec(input_pu, modifier, po_to_apply_after, if_stmt.getElseStatements());
 				} else {
-					logger.debug("propagateToRange_rec: found_flag=true: "
-							+ "calling the rec function on if statements of size: " + if_stmt.getIfStatements().size());
+					logger.debug("propagateToRange_rec: found_flag=true: the if condition must be updated: "
+							+ "first calling self on if statements of size: " + if_stmt.getIfStatements().size());
 					propagateToRange_rec(input_pu, modifier, po_to_apply_after, if_stmt.getIfStatements());
 					logger.debug("propagateToRange_rec: found_flag=true: "
-							+ "calling the rec function on else statements of size: "
-							+ if_stmt.getElseStatements().size());
+							+ "first calling self on else statements of size: " + if_stmt.getElseStatements().size());
 					propagateToRange_rec(input_pu, modifier, po_to_apply_after, if_stmt.getElseStatements());
+					logger.debug("propagateToRange_rec: now removing old if statement");
 					inputList.remove(index);
 					If_Statement new_if_stmt = new If_Statement(if_stmt.getIntId(),
 							modifier.propagatedExpModification(if_stmt.getCondition()));
-					for (Statement updated_stmt : if_stmt.getIfStatements())
+					logger.debug("propagateToRange_rec: new if statement is created: " + new_if_stmt.getSimpleName());
+					for (Statement updated_stmt : if_stmt.getIfStatements()) {
+						logger.debug("propagateToRange_rec: adding statement (" + updated_stmt.getSimpleName()
+								+ ") in new if");
 						new_if_stmt.addStatementInIf(updated_stmt);
-					for (Statement updated_stmt : if_stmt.getElseStatements())
+					}
+					for (Statement updated_stmt : if_stmt.getElseStatements()) {
+						logger.debug("propagateToRange_rec: adding statement (" + updated_stmt.getSimpleName()
+								+ ") in new else");
 						new_if_stmt.addStatementInElse(updated_stmt);
+					}
 					inputList.add(index, new_if_stmt);
 				}
 				break;
@@ -329,65 +343,53 @@ public class Refactoring_Engine {
 	 * updated
 	 */
 
-	public Block deleteQuery(Program_Utils input_pu, int to_be_deleted_qry_po, String txnName) {
+	public void deleteQuery(Program_Utils input_pu, int to_be_deleted_qry_po, String txnName) {
 		Transaction txn = (Transaction) input_pu.getTrasnsactionMap().get(txnName);
-		Block result = deleteQuery_rec(new Block(BlockType.INIT, 0, -1), false, input_pu, to_be_deleted_qry_po,
-				txn.getStatements());
-		return result;
+		deleteQuery_rec(new Block(BlockType.INIT, 0, -1), false, input_pu, to_be_deleted_qry_po, txn.getStatements());
 
 	}
 
-	private Block deleteQuery_rec(Block current_block, boolean is_found, Program_Utils input_pu,
+	private void deleteQuery_rec(Block current_block, boolean is_found, Program_Utils input_pu,
 			int to_be_deleted_qry_po, ArrayList<Statement> inputList) {
 		logger.debug("deleteQuery_rec: current block: " + current_block);
 		boolean deleted_flag = false;
 		int index = 0;
 		int remove_index = 0;
-		Block result = null;
-		logger.debug("input list size: " + inputList.size());
+		logger.debug("deleteQuery_rec:  input list size: " + inputList.size());
 		for (Statement stmt : inputList) {
 			switch (stmt.getClass().getSimpleName()) {
 			case "Query_Statement":
 				Query_Statement qry_stmt = (Query_Statement) stmt;
 				Query qry = qry_stmt.getQuery();
-				logger.debug("analyzing query: " + qry.getId());
 				if (is_found) {
 					// update PO (because one query has been removed)
+					logger.debug("deleteQuery_rec: analyzing query: " + qry.getId() + "(po:" + qry.getPo() + ")"
+							+ "---> po will be decremented since the deleted query has already been found");
 					qry_stmt.updatePO(qry.getPo() - 1);
+					logger.debug("deleteQuery_rec: new PO: " + qry.getPo());
 				}
 				if (!is_found && !deleted_flag && qry.getPo() == to_be_deleted_qry_po) {
 					// remove the query from the list
-					logger.debug("query to be deleted is found at index: " + index);
+					logger.debug(
+							"deleteQuery_rec: query to be deleted (" + qry.getId() + ") is found at index: " + index);
 					remove_index = index;
 					deleted_flag = true;
 					is_found = true;
-					result = current_block;
 				}
 				break;
 			case "If_Statement":
 				If_Statement if_stmt = (If_Statement) stmt;
-				Block if_result = deleteQuery_rec(
-						new Block(BlockType.IF, current_block.getDepth() + 1, if_stmt.getIntId()), is_found, input_pu,
-						to_be_deleted_qry_po, if_stmt.getIfStatements());
-				Block else_result = result = deleteQuery_rec(
-						new Block(BlockType.ELSE, current_block.getDepth() + 1, if_stmt.getIntId()), is_found, input_pu,
-						to_be_deleted_qry_po, if_stmt.getElseStatements());
-
-				if (if_result != null && else_result == null)
-					result = if_result;
-				if (if_result == null && else_result != null)
-					result = else_result;
-				if (if_result == null && else_result==null)
-					result=current_block;
+				logger.debug("deleteQuery_rec: analyzing if: " + if_stmt.getSimpleName());
+				deleteQuery_rec(new Block(BlockType.IF, current_block.getDepth() + 1, if_stmt.getIntId()), is_found,
+						input_pu, to_be_deleted_qry_po, if_stmt.getIfStatements());
+				deleteQuery_rec(new Block(BlockType.ELSE, current_block.getDepth() + 1, if_stmt.getIntId()), is_found,
+						input_pu, to_be_deleted_qry_po, if_stmt.getElseStatements());
 				break;
 			}
 			index++;
 		}
-
-		if (deleted_flag) {
+		if (deleted_flag)
 			inputList.remove(remove_index);
-		}
-		return result;
 	}
 
 	/*
@@ -406,7 +408,10 @@ public class Refactoring_Engine {
 	private boolean InsertQueriesAtPO_rec(boolean must_inc_po, Block desired_block, Block current_block,
 			ArrayList<Statement> inputList, Program_Utils input_pu, int insert_index_po,
 			Query_Statement... newQueryStatements) {
+		logger.debug("InsertQueriesAtPO_rec: input list: "
+				+ inputList.stream().map(stmt -> stmt.getSimpleName()).collect(Collectors.toList()));
 		int new_qry_cnt = newQueryStatements.length;
+		logger.debug("InsertQueriesAtPO_rec: new query count: " + new_qry_cnt);
 		assert (new_qry_cnt > 0) : "cannot insert an empty array";
 		int found_index = 0;
 		for (int index = 0; index < inputList.size(); index++) {
@@ -415,10 +420,17 @@ public class Refactoring_Engine {
 			case "Query_Statement":
 				Query_Statement qry_stmt = (Query_Statement) stmt;
 				Query qry = qry_stmt.getQuery();
-				if (must_inc_po)
-					qry_stmt.updatePO(qry_stmt.getQuery().getPo() + new_qry_cnt);
 
+				if (must_inc_po) {
+					logger.debug("InsertQueriesAtPO_rec: analyzing query: " + qry.getId() + "(po:" + qry.getPo() + ")"
+							+ "---> po will be increased since insert has already been occured");
+					qry_stmt.updatePO(qry_stmt.getQuery().getPo() + new_qry_cnt);
+					logger.debug("InsertQueriesAtPO_rec: new PO:" + qry.getPo());
+				}
 				if (qry.getPo() == insert_index_po - 1) {
+					logger.debug(
+							"InsertQueriesAtPO_rec: found the query right before where the new queries will be added: "
+									+ qry.getId());
 					must_inc_po = true;
 					found_index = index + 1;
 				}
@@ -437,6 +449,7 @@ public class Refactoring_Engine {
 		}
 
 		if (current_block.isEqual(desired_block)) {
+			logger.debug("InsertQueriesAtPO_rec: injecting the new queries to the current list of statements");
 			int iter = 0;
 			for (Query_Statement stmt : newQueryStatements) {
 				stmt.updatePO(insert_index_po + iter);

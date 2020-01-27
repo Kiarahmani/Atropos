@@ -42,7 +42,7 @@ public class Atropos {
 
 		Program_Utils pu = new Program_Utils("SmallBank");
 		ProgramGenerator ipg = new SmallBankProgramGenerator(pu);
-		String test_string = "TransactSavings";
+		String test_string = "WriteCheck";
 
 		Program program = ipg.generate("Balance1", "Amalgamate1", "TransactSavings1", "DepositChecking1", "SendPaymen1",
 				"WriteCheck1", test_string);
@@ -71,7 +71,7 @@ public class Atropos {
 
 		Test_Modifier qry_red = new Test_Modifier();
 		qry_red.set(pu, test_string);
-		re.applyAndPropagate(pu, qry_red, 2, test_string);
+		re.applyAndPropagate(pu, qry_red, 0, test_string);
 
 		refactored_program = pu.generateProgram();
 		refactored_program.printProgram(++printed_program_cnt);
