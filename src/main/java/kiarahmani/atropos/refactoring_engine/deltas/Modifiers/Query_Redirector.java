@@ -29,24 +29,34 @@ import kiarahmani.atropos.utils.Program_Utils;
  */
 public class Query_Redirector extends Query_Modifier {
 	private static final Logger logger = LogManager.getLogger(Atropos.class);
-	Program_Utils pu;
-	Table targetTable;
-	String txnName;
-	VC vc;
+	private Program_Utils pu;
+	private Table targetTable;
+	private Table sourceTable;
+	private String txnName;
+	private VC vc;
+	private Redirection_Type type;
+
+	private enum Redirection_Type {
+		T1_TO_T2, T2_TO_T1;
+	}
 
 	/*
 	 * Set the stage before modifying. Function set must be called before calling
 	 * modify each time.
 	 */
-	public void set(Program_Utils pu, String txnName, String targetTableName) {
+	public void set(Program_Utils pu, String txnName, String sourceTableName, String targetTableName) {
 		this.pu = pu;
 		this.txnName = txnName;
 		this.targetTable = pu.getTable(targetTableName);
+		this.sourceTable = pu.getTable(sourceTableName);
+		this.vc = pu.getVCByTables(sourceTable.getTableName(), targetTable.getTableName());
+		logger.debug("Appropriate VC between old and new tables: " + vc);
+		this.type = get_redirection_type();
+		logger.debug("Redirection type: " + this.type + " -- " + vc.getType());
 		super.set();
 	}
 
 	public Query atIndexModification(Query input_query) {
-		assert (modificationIsValid(input_query)) : "requested modification cannot be done";
 		// extract old query's details
 		Select_Query old_select = (Select_Query) input_query;
 		int old_po = old_select.getPo();
@@ -55,9 +65,8 @@ public class Query_Redirector extends Query_Modifier {
 		Variable old_var = old_select.getVariable();
 		WHC old_whc = old_select.getWHC();
 
-		// find appropriate VC between tables
-		this.vc = pu.getVCByTables(old_tableName, targetTable.getTableName());
-		logger.debug("appropriate VC between old and new tables: " + vc);
+		// make sure the redirection is possible
+		assert (modificationIsValid(old_select, vc)) : "requested modification cannot be done";
 
 		// create new query's details
 		int new_select_id = pu.getNewSelectId(txnName);
@@ -80,6 +89,7 @@ public class Query_Redirector extends Query_Modifier {
 	}
 
 	private ArrayList<FieldName> updateFNs(TableName old_table, ArrayList<FieldName> old_fns) {
+		// TODO
 		return old_fns;
 	}
 
@@ -93,9 +103,16 @@ public class Query_Redirector extends Query_Modifier {
 		return old_var;
 	}
 
-	private boolean modificationIsValid(Query input_query) {
+	private boolean modificationIsValid(Select_Query input_query, VC vc) {
 		// TODO
 		return true;
+	}
+
+	private Redirection_Type get_redirection_type() {
+		if (this.vc.getTableName(1).equals(this.sourceTable.getTableName()))
+			return Redirection_Type.T1_TO_T2;
+		else
+			return Redirection_Type.T2_TO_T1;
 	}
 
 	/*

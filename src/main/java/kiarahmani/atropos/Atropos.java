@@ -66,13 +66,11 @@ public class Atropos {
 
 		// Instantiate a new modifier and apply it
 		Query_Redirector qry_red = new Query_Redirector();
-		qry_red.set(pu, test_txn, "accounts");
+		qry_red.set(pu, test_txn, "savings", "accounts");
 		re.applyAndPropagate(pu, qry_red, 1, test_txn);
 		Program redirected_program = pu.generateProgram();
 		redirected_program.printProgram();
-		
-		
-		
+
 		// Print Running Time
 		long time_end = System.currentTimeMillis();
 		System.out.println("\nTotal Time: " + (time_end - time_begin) / 1000.0 + " s\n");

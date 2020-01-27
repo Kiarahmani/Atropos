@@ -47,6 +47,10 @@ public class VC {
 		return null;
 	}
 
+	public VC_Type getType() {
+		return this.vc_type;
+	}
+
 	public VC(String name, TableName T_1, TableName T_2, VC_Agg vc_agg, VC_Type vc_type) {
 		this.vc_constraints = new ArrayList<VC_Constraint>();
 		this.name = name;
@@ -82,6 +86,7 @@ public class VC {
 		}
 		String init_string = name + ": " + T_1.getName() + ".{" + F_1 + "}=" + this.vc_agg + "(" + T_2.getName() + ".{"
 				+ F_2 + "})";
-		return init_string + " <<" + constraintsList + ">>";
+		String final_string = " (" + this.vc_type + ")";
+		return init_string + " <<" + constraintsList + ">>" + final_string;
 	}
 }
