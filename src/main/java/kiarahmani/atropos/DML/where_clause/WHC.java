@@ -8,7 +8,6 @@ import kiarahmani.atropos.DML.Variable;
 import kiarahmani.atropos.DML.expression.BinOp;
 import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.expression.constants.E_Const_Bool;
-import kiarahmani.atropos.program.Table;
 
 public class WHC extends Expression {
 	public enum WHC_Type {
@@ -24,6 +23,13 @@ public class WHC extends Expression {
 			whc_constraints.add(whcc);
 		// all where cluases included a special constraint on is_alive
 		whc_constraints.add(new WHC_Constraint(whccs[0].getTableName(), is_alive, BinOp.EQ, new E_Const_Bool(true)));
+	}
+
+	public WHC(FieldName is_alive, ArrayList<WHC_Constraint> whccs) {
+		this.whc_constraints = whccs;
+		// all where cluases included a special constraint on is_alive
+		whc_constraints
+				.add(new WHC_Constraint(whccs.get(0).getTableName(), is_alive, BinOp.EQ, new E_Const_Bool(true)));
 	}
 
 	public WHC(WHC_Constraint... whccs) {

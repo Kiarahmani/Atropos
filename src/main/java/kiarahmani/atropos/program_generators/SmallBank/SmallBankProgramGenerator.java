@@ -138,6 +138,16 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 			Select_Query Balance_GetChecking = pu.addSelectQuery("Balance", "checking", true, Balance_GetChecking_WHC,
 					"c_bal");
 			pu.addQueryStatement("Balance", Balance_GetChecking);
+
+			// write customer's new checking balance
+			WHC DepositChecking_WHC = new WHC(pu.getIsAliveFieldName("checking"),
+					new WHC_Constraint(pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ,
+							pu.mkProjExpr("Balance", 0, "a_custid", 1)));
+			Update_Query DepositChecking = pu.addUpdateQuery("Balance", "checking", true, DepositChecking_WHC);
+			DepositChecking.addUpdateExp(pu.getFieldName("c_bal"),
+					new E_BinUp(BinOp.PLUS, pu.mkProjExpr("Balance", 1, "s_bal", 1), new E_Const_Num(1)));
+			pu.addQueryStatement("Balance", DepositChecking);
+
 		}
 		/*
 		 * 

@@ -8,4 +8,7 @@ public abstract class Expression {
 	public abstract String toString();
 
 	public abstract HashSet<Variable> getAllRefferencedVars();
+
+	public abstract void substituteVar(Variable oldVar, Variable newVar);
+
 }

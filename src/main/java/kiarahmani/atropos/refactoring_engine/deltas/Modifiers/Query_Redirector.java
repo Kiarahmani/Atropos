@@ -19,6 +19,7 @@ import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.query.Query;
 import kiarahmani.atropos.DML.query.Select_Query;
 import kiarahmani.atropos.DML.where_clause.WHC;
+import kiarahmani.atropos.DML.where_clause.WHC_Constraint;
 import kiarahmani.atropos.program.Table;
 import kiarahmani.atropos.program.statements.Query_Statement;
 import kiarahmani.atropos.utils.Program_Utils;
@@ -88,26 +89,6 @@ public class Query_Redirector extends Query_Modifier {
 		return new_select;
 	}
 
-	private ArrayList<FieldName> updateFNs(TableName old_table, ArrayList<FieldName> old_fns) {
-		// TODO
-		return old_fns;
-	}
-
-	private WHC updateWHC(WHC old_whc) {
-		// TODO
-		return old_whc;
-	}
-
-	private Variable updateVar(Variable old_var) {
-		// TODO
-		return old_var;
-	}
-
-	private boolean modificationIsValid(Select_Query input_query, VC vc) {
-		// TODO
-		return true;
-	}
-
 	private Redirection_Type get_redirection_type() {
 		if (this.vc.getTableName(1).equals(this.sourceTable.getTableName()))
 			return Redirection_Type.T1_TO_T2;
@@ -115,11 +96,78 @@ public class Query_Redirector extends Query_Modifier {
 			return Redirection_Type.T2_TO_T1;
 	}
 
+	private ArrayList<FieldName> updateFNs(TableName old_table, ArrayList<FieldName> old_fns) {
+		ArrayList<FieldName> result = new ArrayList<>();
+		for (FieldName old_fn : old_fns)
+			result.add(vc.getCorrespondingFN(old_fn));
+		return result;
+	}
+
+	private WHC updateWHC(WHC old_whc) {
+		ArrayList<WHC_Constraint> new_whccs = new ArrayList<>();
+		for (WHC_Constraint old_whcc : old_whc.getConstraints())
+			if (!old_whcc.getFieldName().getName().contains("alive"))
+				new_whccs.add(updateWHCC(old_whcc));
+		WHC new_whc = new WHC(targetTable.getIsAliveFN(), new_whccs);
+		return new_whc;
+	}
+
+	private WHC_Constraint updateWHCC(WHC_Constraint old_whcc) {
+		WHC_Constraint result = null;
+		switch (vc.getType()) {
+		case VC_OTO:
+			/*
+			 * here we make an assumption that all fns in old_whcc are constrained by the vc
+			 */
+			result = new WHC_Constraint(targetTable.getTableName(), vc.getCorrespondingKey(old_whcc.getFieldName()),
+					old_whcc.getOp(), old_whcc.getExpression());
+			break;
+		case VC_OTM:
+			switch (vc.get_agg()) {
+			case VC_ID:
+				switch (this.type) {
+				case T1_TO_T2:
+					result = new WHC_Constraint(targetTable.getTableName(),
+							vc.getCorrespondingKey(old_whcc.getFieldName()), old_whcc.getOp(),
+							old_whcc.getExpression());
+					break;
+				case T2_TO_T1:
+					assert (false) : "for now we only allow full-pk selects from T1 to T2";
+					break;
+				}
+				break;
+			case VC_SUM:
+				switch (this.type) {
+				case T1_TO_T2: // TODO
+					break;
+				case T2_TO_T1:
+					assert (false) : "for now we only allow full-pk selects from T1 to T2";
+					break;
+				}
+				break;
+			}
+			break;
+		}
+		return result;
+	}
+
+	private Variable updateVar(Variable old_var) {
+		return new Variable(targetTable.getTableName().getName(), pu.getFreshVariableName(txnName));
+	}
+
+	private boolean modificationIsValid(Select_Query input_query, VC vc) {
+		// TODO
+		// assumption: only redirections are accepted that there exists a VC between
+		// *all* selected fields, otherwise the select must be splitted before callig
+		// redirect
+		// another assumption: all fns in old_select_whc are constrained by the vc
+		// another assumption: for now, we assume the redirecting SELECT is a full-pk
+		// operation
+		return true;
+	}
+
 	/*
 	 * This function will perform the variable substitution(non-Javadoc)
-	 * 
-	 * @see kiarahmani.atropos.refactoring_engine.deltas.Modifiers.Query_Modifier#
-	 * modify_propagate(kiarahmani.atropos.program.Statement)
 	 */
 	@Override
 	public Expression propagatedExpModification(Expression input_exp) {
@@ -127,13 +175,6 @@ public class Query_Redirector extends Query_Modifier {
 		return input_exp;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see kiarahmani.atropos.refactoring_engine.deltas.Modifiers.Query_Modifier#
-	 * propagatedQueryModification(kiarahmani.atropos.program.statements.
-	 * Query_Statement)
-	 */
 	@Override
 	public Query_Statement propagatedQueryModification(Query_Statement input_exp) {
 		// TODO Auto-generated method stub

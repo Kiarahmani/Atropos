@@ -43,6 +43,14 @@ public class Table {
 			this.fieldNames.add(fn);
 	}
 
+	public FieldName getIsAliveFN() {
+		for (FieldName fn : fieldNames)
+			if (fn.getName().contains("alive"))
+				return fn;
+		assert (false) : "unexpected state: table does not include an is_alive field";
+		return null;
+	}
+
 	@Override
 	public String toString() {
 		String result = "", delim = "";

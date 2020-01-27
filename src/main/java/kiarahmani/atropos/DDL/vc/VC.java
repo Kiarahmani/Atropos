@@ -34,6 +34,24 @@ public class VC {
 	private ArrayList<VC_Constraint> vc_constraints;
 	private String name;
 
+	public FieldName getCorrespondingFN(FieldName input_fn) {
+		for (Tuple<FieldName, FieldName> fnt : this.fieldTuples)
+			if (fnt.x.equals(input_fn))
+				return fnt.y;
+			else if (fnt.y.equals(input_fn))
+				return fnt.x;
+		return null;
+	}
+
+	public FieldName getCorrespondingKey(FieldName input_key) {
+		for (VC_Constraint vcc : this.vc_constraints)
+			if (vcc.getF_1().equals(input_key))
+				return vcc.getF_2();
+			else if (vcc.getF_2().equals(input_key))
+				return vcc.getF_1();
+		return null;
+	}
+
 	public TableName getTableName(int i) {
 		switch (i) {
 		case 1:
@@ -49,6 +67,10 @@ public class VC {
 
 	public VC_Type getType() {
 		return this.vc_type;
+	}
+
+	public VC_Agg get_agg() {
+		return this.vc_agg;
 	}
 
 	public VC(String name, TableName T_1, TableName T_2, VC_Agg vc_agg, VC_Type vc_type) {

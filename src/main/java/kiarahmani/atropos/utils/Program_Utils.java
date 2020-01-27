@@ -225,6 +225,10 @@ public class Program_Utils {
 		return fresh_variable;
 	}
 
+	public String getFreshVariableName(String txn) {
+		return txn + "_v" + transactionToVariableSetMap.get(txn).size();
+	}
+
 	/*
 	 * Create fresh expressions based on a variable
 	 */
