@@ -409,9 +409,7 @@ public class Program_Utils {
 		return trasnsactionMap;
 	}
 
-	public VC getVCByTables(Table T1, Table T2) {
-		TableName TN1 = T1.getTableName();
-		TableName TN2 = T2.getTableName();
+	public VC getVCByTables(TableName TN1, TableName TN2) {
 		return this.vcMap.values().stream()
 				.filter(vc -> ((vc.getTableName(1).equals(TN1)) && (vc.getTableName(2).equals(TN2))
 						|| ((vc.getTableName(1).equals(TN2)) && (vc.getTableName(2).equals(TN1)))))

@@ -7,8 +7,13 @@ package kiarahmani.atropos.refactoring_engine.deltas.Modifiers;
 
 import java.util.ArrayList;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import kiarahmani.atropos.Atropos;
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DDL.TableName;
+import kiarahmani.atropos.DDL.vc.VC;
 import kiarahmani.atropos.DML.Variable;
 import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.query.Query;
@@ -23,10 +28,11 @@ import kiarahmani.atropos.utils.Program_Utils;
  *
  */
 public class Query_Redirector extends Query_Modifier {
-
+	private static final Logger logger = LogManager.getLogger(Atropos.class);
 	Program_Utils pu;
 	Table targetTable;
 	String txnName;
+	VC vc;
 
 	/*
 	 * Set the stage before modifying. Function set must be called before calling
@@ -44,20 +50,31 @@ public class Query_Redirector extends Query_Modifier {
 		// extract old query's details
 		Select_Query old_select = (Select_Query) input_query;
 		int old_po = old_select.getPo();
-		boolean old_isAtomic = old_select.isAtomic();
 		TableName old_tableName = old_select.getTableName();
 		ArrayList<FieldName> old_selected_fieldNames = old_select.getSelectedFieldNames();
 		Variable old_var = old_select.getVariable();
 		WHC old_whc = old_select.getWHC();
+
+		// find appropriate VC between tables
+		this.vc = pu.getVCByTables(old_tableName, targetTable.getTableName());
+		logger.debug("appropriate VC between old and new tables: " + vc);
+
 		// create new query's details
 		int new_select_id = pu.getNewSelectId(txnName);
+		logger.debug("new select id: " + new_select_id);
 		WHC new_whc = updateWHC(old_whc);
+		logger.debug("new where clause: " + new_whc);
 		boolean new_isAtomic = pu.whcIsAtomic(new_whc);
+		logger.debug("new is atomic: " + new_isAtomic);
 		Variable new_var = updateVar(old_var);
+		logger.debug("new variable: " + new_var);
 		ArrayList<FieldName> new_selected_fieldNames = updateFNs(old_tableName, old_selected_fieldNames);
+		logger.debug("new selected field names: " + new_selected_fieldNames);
+
 		// create new query
 		Select_Query new_select = new Select_Query(old_po, new_select_id, new_isAtomic, targetTable.getTableName(),
 				new_selected_fieldNames, new_var, new_whc);
+		logger.debug("final select query to return: " + new_select);
 		// return
 		return new_select;
 	}
