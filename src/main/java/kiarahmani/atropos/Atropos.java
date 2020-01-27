@@ -58,7 +58,7 @@ public class Atropos {
 		pu.addFieldTupleToVC("vc_0", "c_custid", "a_custid");
 		pu.addFieldTupleToVC("vc_0", "c_bal", "a_check_bal");
 		Program refactored_program = re.refactor(pu, intro_f).generateProgram();
-		refactored_program.printProgram(++printed_program_cnt);
+		
 
 		// Conflict_Graph cg = new Conflict_Graph(program);
 		// Encoding_Engine ee = new Encoding_Engine(program.getName());
@@ -73,8 +73,9 @@ public class Atropos {
 		qry_red.set(pu, test_string);
 		re.applyAndPropagate(pu, qry_red, 0, test_string);
 
-		refactored_program = pu.generateProgram();
+		Program redirected_program = pu.generateProgram();
 		refactored_program.printProgram(++printed_program_cnt);
+		redirected_program.printProgram(++printed_program_cnt);
 
 		// re.deleteQuery(pu, 2, test_string);
 		// refactored_program = pu.generateProgram();
