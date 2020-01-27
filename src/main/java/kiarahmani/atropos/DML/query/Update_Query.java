@@ -129,4 +129,18 @@ public class Update_Query extends Query {
 			result.addAll(exp.y.getAllRefferencedVars());
 		return result;
 	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see kiarahmani.atropos.DML.query.Query#redirectProjs(kiarahmani.atropos.DML.
+	 * Variable, kiarahmani.atropos.DDL.FieldName, kiarahmani.atropos.DML.Variable,
+	 * kiarahmani.atropos.DDL.FieldName)
+	 */
+	@Override
+	public void redirectProjs(Variable oldVar, FieldName oldFn, Variable newVar, FieldName newFn) {
+		for (Tuple<FieldName, Expression> fn_exp : update_expressions)
+			fn_exp.y.redirectProjs(oldVar, oldFn, newVar, newFn);
+		this.where_clause.redirectProjs(oldVar, oldFn, newVar, newFn);
+	}
 }

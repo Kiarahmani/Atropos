@@ -46,4 +46,8 @@ public class WHC_Constraint {
 		return this.exp.getAllRefferencedVars();
 	}
 
+	public void redirectProjs(Variable oldVar, FieldName oldFn, Variable newVar, FieldName newFn) {
+		this.exp.redirectProjs(oldVar, oldFn, newVar, newFn);
+	}
+
 }

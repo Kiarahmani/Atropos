@@ -154,4 +154,16 @@ public class Insert_Query extends Query {
 		return result;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see kiarahmani.atropos.DML.query.Query#redirectProjs(kiarahmani.atropos.DML.
+	 * Variable, kiarahmani.atropos.DDL.FieldName, kiarahmani.atropos.DML.Variable,
+	 * kiarahmani.atropos.DDL.FieldName)
+	 */
+	@Override
+	public void redirectProjs(Variable oldVar, FieldName oldFn, Variable newVar, FieldName newFn) {
+		for (Tuple<FieldName, Expression> t : this.insert_expressions)
+			t.y.redirectProjs(newVar, newFn, newVar, newFn);
+	}
 }

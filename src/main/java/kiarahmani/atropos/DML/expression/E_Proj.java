@@ -21,12 +21,28 @@ public class E_Proj extends Expression {
 	public String toString() {
 		return "proj(" + f + "," + v + "," + e + ")";
 	}
-	
+
 	@Override
 	public HashSet<Variable> getAllRefferencedVars() {
 		HashSet<Variable> result = new HashSet<>();
 		result.add(this.v);
 		return result;
-	};
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * kiarahmani.atropos.DML.expression.Expression#redirectProjs(kiarahmani.atropos
+	 * .DML.Variable, kiarahmani.atropos.DML.Variable,
+	 * kiarahmani.atropos.DDL.FieldName)
+	 */
+	@Override
+	public void redirectProjs(Variable oldVar, FieldName oldFn, Variable newVar, FieldName newFn) {
+		if (this.v.equals(oldVar) && this.f.equals(oldFn)) {
+			this.f = newFn;
+			this.v = newVar;
+		}
+	}
 
 }

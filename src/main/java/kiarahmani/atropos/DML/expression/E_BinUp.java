@@ -2,6 +2,7 @@ package kiarahmani.atropos.DML.expression;
 
 import java.util.HashSet;
 
+import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DML.Variable;
 
 public class E_BinUp extends Expression {
@@ -34,6 +35,21 @@ public class E_BinUp extends Expression {
 		result.addAll(oper1.getAllRefferencedVars());
 		result.addAll(oper2.getAllRefferencedVars());
 		return result;
-	};
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * kiarahmani.atropos.DML.expression.Expression#redirectProjs(kiarahmani.atropos
+	 * .DML.Variable, kiarahmani.atropos.DML.Variable,
+	 * kiarahmani.atropos.DDL.FieldName)
+	 */
+	@Override
+	public void redirectProjs(Variable oldVar, FieldName oldFn, Variable newVar, FieldName newFn) {
+		oper1.redirectProjs(oldVar, oldFn, newVar, newFn);
+		oper2.redirectProjs(oldVar, oldFn, newVar, newFn);
+
+	}
 
 }

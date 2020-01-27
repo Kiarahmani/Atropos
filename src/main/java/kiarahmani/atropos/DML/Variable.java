@@ -21,4 +21,8 @@ public class Variable {
 	public String toString() {
 		return this.name;
 	}
+
+	public boolean equals(Variable other) {
+		return this.name.contains(other.getName());
+	}
 }

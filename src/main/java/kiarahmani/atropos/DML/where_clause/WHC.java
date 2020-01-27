@@ -77,4 +77,17 @@ public class WHC extends Expression {
 		return result;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * kiarahmani.atropos.DML.expression.Expression#redirectProjs(kiarahmani.atropos
+	 * .DML.Variable, kiarahmani.atropos.DDL.FieldName,
+	 * kiarahmani.atropos.DML.Variable, kiarahmani.atropos.DDL.FieldName)
+	 */
+	@Override
+	public void redirectProjs(Variable oldVar, FieldName oldFn, Variable newVar, FieldName newFn) {
+		for (WHC_Constraint whcc : whc_constraints)
+			whcc.redirectProjs(newVar, newFn, newVar, newFn);
+	}
 }

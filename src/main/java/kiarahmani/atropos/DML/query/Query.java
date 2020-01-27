@@ -53,4 +53,6 @@ public abstract class Query {
 
 	public abstract HashSet<Variable> getAllRefferencedVars();
 
+	public abstract void redirectProjs(Variable oldVar, FieldName oldFn, Variable newVar, FieldName newFn);
+
 }

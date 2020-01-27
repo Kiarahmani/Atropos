@@ -36,6 +36,8 @@ public class Query_Redirector extends Query_Modifier {
 	private String txnName;
 	private VC vc;
 	private Redirection_Type type;
+	private Select_Query old_select;
+	private Variable new_var;
 
 	private enum Redirection_Type {
 		T1_TO_T2, T2_TO_T1;
@@ -59,7 +61,7 @@ public class Query_Redirector extends Query_Modifier {
 
 	public Query atIndexModification(Query input_query) {
 		// extract old query's details
-		Select_Query old_select = (Select_Query) input_query;
+		old_select = (Select_Query) input_query;
 		int old_po = old_select.getPo();
 		TableName old_tableName = old_select.getTableName();
 		ArrayList<FieldName> old_selected_fieldNames = old_select.getSelectedFieldNames();
@@ -76,7 +78,7 @@ public class Query_Redirector extends Query_Modifier {
 		logger.debug("new where clause: " + new_whc);
 		boolean new_isAtomic = pu.whcIsAtomic(new_whc);
 		logger.debug("new is atomic: " + new_isAtomic);
-		Variable new_var = updateVar(old_var);
+		new_var = updateVar(old_var);
 		logger.debug("new variable: " + new_var);
 		ArrayList<FieldName> new_selected_fieldNames = updateFNs(old_tableName, old_selected_fieldNames);
 		logger.debug("new selected field names: " + new_selected_fieldNames);
@@ -171,14 +173,17 @@ public class Query_Redirector extends Query_Modifier {
 	 */
 	@Override
 	public Expression propagatedExpModification(Expression input_exp) {
-		// TODO Auto-generated method stub
+		for (FieldName old_fn : old_select.getSelectedFieldNames())
+			input_exp.redirectProjs(old_select.getVariable(), old_fn, new_var, vc.getCorrespondingFN(old_fn));
 		return input_exp;
 	}
 
 	@Override
-	public Query_Statement propagatedQueryModification(Query_Statement input_exp) {
-		// TODO Auto-generated method stub
-		return input_exp;
+	public Query_Statement propagatedQueryModification(Query_Statement input_qry) {
+		for (FieldName old_fn : old_select.getSelectedFieldNames())
+			input_qry.getQuery().redirectProjs(old_select.getVariable(), old_fn, new_var,
+					vc.getCorrespondingFN(old_fn));
+		return input_qry;
 	}
 
 }

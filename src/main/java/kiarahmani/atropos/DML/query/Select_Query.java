@@ -130,4 +130,12 @@ public class Select_Query extends Query {
 		return where_clause.getAllRefferencedVars();
 	}
 
+	/* (non-Javadoc)
+	 * @see kiarahmani.atropos.DML.query.Query#redirectProjs(kiarahmani.atropos.DML.Variable, kiarahmani.atropos.DDL.FieldName, kiarahmani.atropos.DML.Variable, kiarahmani.atropos.DDL.FieldName)
+	 */
+	@Override
+	public void redirectProjs(Variable oldVar, FieldName oldFn, Variable newVar, FieldName newFn) {	
+		this.where_clause.redirectProjs(oldVar, oldFn, newVar, newFn);
+	}
+
 }

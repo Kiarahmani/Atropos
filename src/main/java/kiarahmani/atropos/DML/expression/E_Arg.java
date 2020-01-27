@@ -3,6 +3,7 @@ package kiarahmani.atropos.DML.expression;
 import java.util.HashSet;
 
 import kiarahmani.atropos.DDL.F_Type;
+import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DML.Variable;
 
 public class E_Arg extends Expression {
@@ -36,6 +37,20 @@ public class E_Arg extends Expression {
 	@Override
 	public HashSet<Variable> getAllRefferencedVars() {
 		return new HashSet<>();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * kiarahmani.atropos.DML.expression.Expression#redirectProjs(kiarahmani.atropos
+	 * .DML.Variable, kiarahmani.atropos.DML.Variable,
+	 * kiarahmani.atropos.DDL.FieldName)
+	 */
+	@Override
+	public void redirectProjs(Variable oldVar, FieldName oldFn, Variable newVar, FieldName newFn) {
+		// TODO Auto-generated method stub
+
 	}
 
 }
