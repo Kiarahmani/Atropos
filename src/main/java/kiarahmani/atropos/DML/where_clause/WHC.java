@@ -77,6 +77,14 @@ public class WHC extends Expression {
 		return result;
 	}
 
+	public boolean isAtomic(FieldName SK) {
+		for (WHC_Constraint whcc : whc_constraints)
+			if (whcc.getOp() == BinOp.EQ && (whcc.getFieldName().equals(SK))) {
+				return true;
+			}
+		return false;
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -88,6 +96,6 @@ public class WHC extends Expression {
 	@Override
 	public void redirectProjs(Variable oldVar, FieldName oldFn, Variable newVar, FieldName newFn) {
 		for (WHC_Constraint whcc : whc_constraints)
-			whcc.redirectProjs(newVar, newFn, newVar, newFn);
+			whcc.redirectProjs(oldVar, oldFn, newVar, newFn);
 	}
 }

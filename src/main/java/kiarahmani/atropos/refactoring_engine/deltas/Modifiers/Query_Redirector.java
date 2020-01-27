@@ -76,7 +76,7 @@ public class Query_Redirector extends Query_Modifier {
 		logger.debug("new select id: " + new_select_id);
 		WHC new_whc = updateWHC(old_whc);
 		logger.debug("new where clause: " + new_whc);
-		boolean new_isAtomic = pu.whcIsAtomic(new_whc);
+		boolean new_isAtomic = new_whc.isAtomic(targetTable.getShardKey());
 		logger.debug("new is atomic: " + new_isAtomic);
 		new_var = updateVar(old_var);
 		logger.debug("new variable: " + new_var);

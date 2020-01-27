@@ -11,6 +11,10 @@ public class FieldName {
 		return this.isPK;
 	}
 
+	public boolean isSK() {
+		return this.isSK;
+	}
+
 	public F_Type getType() {
 		return this.f_type;
 	}

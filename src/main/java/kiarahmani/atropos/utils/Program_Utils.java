@@ -435,16 +435,6 @@ public class Program_Utils {
 
 	/*****************************************************************************************************************/
 	/*
-	 * Examine if a where clause entails atomicity of the query or not
-	 */
-
-	public boolean whcIsAtomic(WHC whc) {
-		// TODO: implement whcIsAtomic
-		return false;
-	}
-
-	/*****************************************************************************************************************/
-	/*
 	 * Testing functions
 	 */
 

@@ -51,6 +51,14 @@ public class Table {
 		return null;
 	}
 
+	public FieldName getShardKey() {
+		for (FieldName fn : fieldNames)
+			if (fn.isSK())
+				return fn;
+		assert (false) : "unexpected state: table does not include a shard key";
+		return null;
+	}
+
 	@Override
 	public String toString() {
 		String result = "", delim = "";

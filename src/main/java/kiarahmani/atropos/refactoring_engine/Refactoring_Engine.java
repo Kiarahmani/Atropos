@@ -236,8 +236,7 @@ public class Refactoring_Engine {
 			String txnName) {
 		logger.debug("First calling applyAtIndex to apply the desired modification at index");
 		applyAtIndex(input_pu, modifier, apply_at_po, txnName);
-		logger.debug(
-				"Now calling propagateToRange to apply the deisred modifications at all subsequent statements");
+		logger.debug("Now calling propagateToRange to apply the deisred modifications at all subsequent statements");
 		propagateToRange(input_pu, modifier, apply_at_po, txnName);
 		return input_pu;
 	}
@@ -248,8 +247,8 @@ public class Refactoring_Engine {
 		logger.debug("Applying the modifer " + modifier + " at index: " + apply_at_po);
 		Query old_qry = input_pu.getQueryByPo(txnName, apply_at_po);
 		Query new_qry = modifier.atIndexModification(old_qry);
-		logger.debug("old query (" + old_qry.getId() + ") is going to be replaced with new query ("
-				+ new_qry.getId() + ")");
+		logger.debug(
+				"old query (" + old_qry.getId() + ") is going to be replaced with new query (" + new_qry.getId() + ")");
 		Block orig_block = input_pu.getBlockByPo(txnName, apply_at_po);
 		logger.debug("the old query was found in block: " + orig_block);
 		logger.debug("applyAtIndex: new Calling deleteQuery to remove the old query from the transaction");
@@ -306,15 +305,15 @@ public class Refactoring_Engine {
 							+ if_stmt.getIfStatements().size() + ")");
 
 					propagateToRange_rec(input_pu, modifier, po_to_apply_after, if_stmt.getIfStatements());
-					logger.debug("found_flag=false: "
-							+ "calling self on else statements *of size: " + if_stmt.getElseStatements().size() + ")");
+					logger.debug("found_flag=false: " + "calling self on else statements *of size: "
+							+ if_stmt.getElseStatements().size() + ")");
 					propagateToRange_rec(input_pu, modifier, po_to_apply_after, if_stmt.getElseStatements());
 				} else {
 					logger.debug("found_flag=true: the if condition must be updated: "
 							+ "first calling self on if statements of size: " + if_stmt.getIfStatements().size());
 					propagateToRange_rec(input_pu, modifier, po_to_apply_after, if_stmt.getIfStatements());
-					logger.debug("found_flag=true: "
-							+ "first calling self on else statements of size: " + if_stmt.getElseStatements().size());
+					logger.debug("found_flag=true: " + "first calling self on else statements of size: "
+							+ if_stmt.getElseStatements().size());
 					propagateToRange_rec(input_pu, modifier, po_to_apply_after, if_stmt.getElseStatements());
 					logger.debug("now removing old if statement");
 					inputList.remove(index);
@@ -322,13 +321,11 @@ public class Refactoring_Engine {
 							modifier.propagatedExpModification(if_stmt.getCondition()));
 					logger.debug("new if statement is created: " + new_if_stmt.getSimpleName());
 					for (Statement updated_stmt : if_stmt.getIfStatements()) {
-						logger.debug("adding statement (" + updated_stmt.getSimpleName()
-								+ ") in new if");
+						logger.debug("adding statement (" + updated_stmt.getSimpleName() + ") in new if");
 						new_if_stmt.addStatementInIf(updated_stmt);
 					}
 					for (Statement updated_stmt : if_stmt.getElseStatements()) {
-						logger.debug("adding statement (" + updated_stmt.getSimpleName()
-								+ ") in new else");
+						logger.debug("adding statement (" + updated_stmt.getSimpleName() + ") in new else");
 						new_if_stmt.addStatementInElse(updated_stmt);
 					}
 					inputList.add(index, new_if_stmt);
@@ -370,8 +367,7 @@ public class Refactoring_Engine {
 				}
 				if (!is_found && !deleted_flag && qry.getPo() == to_be_deleted_qry_po) {
 					// remove the query from the list
-					logger.debug(
-							"query to be deleted (" + qry.getId() + ") is found at index: " + index);
+					logger.debug("query to be deleted (" + qry.getId() + ") is found at index: " + index);
 					remove_index = index;
 					deleted_flag = true;
 					is_found = true;
@@ -408,8 +404,8 @@ public class Refactoring_Engine {
 	private boolean InsertQueriesAtPO_rec(boolean must_inc_po, Block desired_block, Block current_block,
 			ArrayList<Statement> inputList, Program_Utils input_pu, int insert_index_po,
 			Query_Statement... newQueryStatements) {
-		logger.debug("input list: "
-				+ inputList.stream().map(stmt -> stmt.getSimpleName()).collect(Collectors.toList()));
+		logger.debug(
+				"input list: " + inputList.stream().map(stmt -> stmt.getSimpleName()).collect(Collectors.toList()));
 		int new_qry_cnt = newQueryStatements.length;
 		logger.debug("new query count: " + new_qry_cnt);
 		assert (new_qry_cnt > 0) : "cannot insert an empty array";
@@ -428,9 +424,7 @@ public class Refactoring_Engine {
 					logger.debug("new PO:" + qry.getPo());
 				}
 				if (qry.getPo() == insert_index_po - 1) {
-					logger.debug(
-							"found the query right before where the new queries will be added: "
-									+ qry.getId());
+					logger.debug("found the query right before where the new queries will be added: " + qry.getId());
 					must_inc_po = true;
 					found_index = index + 1;
 				}
