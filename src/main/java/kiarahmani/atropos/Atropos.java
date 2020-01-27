@@ -41,44 +41,38 @@ public class Atropos {
 
 		Program_Utils pu = new Program_Utils("SmallBank");
 		ProgramGenerator ipg = new SmallBankProgramGenerator(pu);
-		String test_string = "WriteCheck";
+		String test_txn = "Balance";
 
-		Program program = ipg.generate("Balance1", "Amalgamate1", "TransactSavings1", "DepositChecking1", "SendPaymen1",
-				"WriteCheck1", test_string);
-		program.printProgram();
+		Program base_program = ipg.generate("Balance1", "Amalgamate1", "TransactSavings1", "DepositChecking1",
+				"SendPaymen1", "WriteCheck1", test_txn);
+		base_program.printProgram();
 
 		// create new refactoring engine
 		Refactoring_Engine re = new Refactoring_Engine();
 
+		// add a new field
 		Delta intro_f = new INTRO_F("accounts", "a_check_bal", F_Type.NUM);
 		re.refactor(pu, intro_f);
+		Program new_field_program = pu.generateProgram();
+		new_field_program.printProgram();
+
+		// add a new vc
 		pu.mkVC("checking", "accounts", VC_Agg.VC_ID, VC_Type.VC_OTO,
 				new VC_Constraint(pu.getFieldName("a_custid"), pu.getFieldName("c_custid")));
 		pu.addFieldTupleToVC("vc_0", "c_custid", "a_custid");
 		pu.addFieldTupleToVC("vc_0", "c_bal", "a_check_bal");
-		Program refactored_program = re.refactor(pu, intro_f).generateProgram();
-		
-
-		// Conflict_Graph cg = new Conflict_Graph(program);
-		// Encoding_Engine ee = new Encoding_Engine(program.getName());
-		// DAI_Graph dai_graph = ee.constructInitialDAIGraph(program, cg); //
-		long time_end = System.currentTimeMillis();
-		// program.printProgram();
-		// cg.printGraph();
-		// dai_graph.printDAIGraph();
-		System.out.println("\nTotal Time: " + (time_end - time_begin) / 1000.0 + " s\n");
-
-		Test_Modifier qry_red = new Test_Modifier();
-		qry_red.set(pu, test_string);
-		re.applyAndPropagate(pu, qry_red, 0, test_string);
-
-		Program redirected_program = pu.generateProgram();
+		Program refactored_program = pu.generateProgram();
 		refactored_program.printProgram();
+
+		// instantiate a new modifier and apply it
+		Test_Modifier qry_red = new Test_Modifier();
+		qry_red.set(pu, test_txn);
+		re.applyAndPropagate(pu, qry_red, 0, test_txn);
+		Program redirected_program = pu.generateProgram();
 		redirected_program.printProgram();
 
-		// re.deleteQuery(pu, 2, test_string);
-		// refactored_program = pu.generateProgram();
-		// refactored_program.printProgram();
+		long time_end = System.currentTimeMillis();
+		System.out.println("\nTotal Time: " + (time_end - time_begin) / 1000.0 + " s\n");
 
 	}
 }
