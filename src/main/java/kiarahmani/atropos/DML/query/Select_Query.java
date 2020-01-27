@@ -32,6 +32,10 @@ public class Select_Query extends Query {
 		return this.kind.toString() + "#" + this.id;
 	}
 
+	public boolean isAtomic() {
+		return this.isAtomic;
+	}
+
 	@Override
 	public String toString() {
 		String fieldNamesString = "";
@@ -58,6 +62,10 @@ public class Select_Query extends Query {
 
 	public Variable getVariable() {
 		return this.variable;
+	}
+
+	public ArrayList<FieldName> getSelectedFieldNames() {
+		return this.fieldNames;
 	}
 
 	@Override

@@ -47,30 +47,33 @@ public class Atropos {
 				"SendPaymen1", "WriteCheck1", test_txn);
 		base_program.printProgram();
 
-		// create new refactoring engine
+		// Create new refactoring engine
 		Refactoring_Engine re = new Refactoring_Engine();
 
-		// add a new field
-		Delta intro_f = new INTRO_F("accounts", "a_check_bal", F_Type.NUM);
+		// Add a new field
+		Delta intro_f = new INTRO_F("accounts", "a_sav_bal", F_Type.NUM);
 		re.refactor(pu, intro_f);
 		Program new_field_program = pu.generateProgram();
 		new_field_program.printProgram();
 
-		// add a new vc
-		pu.mkVC("checking", "accounts", VC_Agg.VC_ID, VC_Type.VC_OTO,
-				new VC_Constraint(pu.getFieldName("a_custid"), pu.getFieldName("c_custid")));
-		pu.addFieldTupleToVC("vc_0", "c_custid", "a_custid");
-		pu.addFieldTupleToVC("vc_0", "c_bal", "a_check_bal");
+		// Add a new vc
+		pu.mkVC("savings", "accounts", VC_Agg.VC_ID, VC_Type.VC_OTO,
+				new VC_Constraint(pu.getFieldName("a_custid"), pu.getFieldName("s_custid")));
+		pu.addFieldTupleToVC("vc_0", "s_custid", "a_custid");
+		pu.addFieldTupleToVC("vc_0", "s_bal", "a_sav_bal");
 		Program refactored_program = pu.generateProgram();
 		refactored_program.printProgram();
 
-		// instantiate a new modifier and apply it
-		Test_Modifier qry_red = new Test_Modifier();
-		qry_red.set(pu, test_txn);
-		re.applyAndPropagate(pu, qry_red, 0, test_txn);
+		// Instantiate a new modifier and apply it
+		Query_Redirector qry_red = new Query_Redirector();
+		qry_red.set(pu, test_txn, "accounts");
+		re.applyAndPropagate(pu, qry_red, 1, test_txn);
 		Program redirected_program = pu.generateProgram();
 		redirected_program.printProgram();
-
+		
+		
+		
+		// Print Running Time
 		long time_end = System.currentTimeMillis();
 		System.out.println("\nTotal Time: " + (time_end - time_begin) / 1000.0 + " s\n");
 

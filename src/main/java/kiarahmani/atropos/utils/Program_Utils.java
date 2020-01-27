@@ -437,7 +437,8 @@ public class Program_Utils {
 	 */
 
 	public boolean whcIsAtomic(WHC whc) {
-		return true;
+		// TODO: implement whcIsAtomic
+		return false;
 	}
 
 	/*****************************************************************************************************************/
