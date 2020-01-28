@@ -11,6 +11,10 @@ public class E_Proj extends Expression {
 	public FieldName f;
 	public Expression e;
 
+	public Expression getOrderExp() {
+		return this.e;
+	}
+
 	public E_Proj(Variable v, FieldName f, Expression e) {
 		this.f = f;
 		this.e = e;
@@ -45,4 +49,10 @@ public class E_Proj extends Expression {
 		}
 	}
 
+	@Override
+	public HashSet<E_Proj> getAllProjExps() {
+		HashSet<E_Proj> result = new HashSet<>();
+		result.add(this);
+		return result;
+	}
 }

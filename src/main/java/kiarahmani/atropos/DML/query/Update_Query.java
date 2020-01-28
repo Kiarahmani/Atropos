@@ -6,6 +6,7 @@ import java.util.HashSet;
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DDL.TableName;
 import kiarahmani.atropos.DML.Variable;
+import kiarahmani.atropos.DML.expression.E_Proj;
 import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.query.Query.Kind;
 import kiarahmani.atropos.DML.where_clause.WHC;
@@ -116,11 +117,7 @@ public class Update_Query extends Query {
 		return result;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see kiarahmani.atropos.DML.query.Query#getAllRefferencedVars()
-	 */
+
 	@Override
 	public HashSet<Variable> getAllRefferencedVars() {
 		HashSet<Variable> result = new HashSet<>();
@@ -129,14 +126,16 @@ public class Update_Query extends Query {
 			result.addAll(exp.y.getAllRefferencedVars());
 		return result;
 	}
+	
+	@Override
+	public HashSet<E_Proj> getAllProjExps() {
+		HashSet<E_Proj> result = new HashSet<>();
+		result.addAll(this.where_clause.getAllProjExps());
+		for (Tuple<FieldName, Expression> exp : this.update_expressions)
+			result.addAll(exp.y.getAllProjExps());
+		return result;
+	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see kiarahmani.atropos.DML.query.Query#redirectProjs(kiarahmani.atropos.DML.
-	 * Variable, kiarahmani.atropos.DDL.FieldName, kiarahmani.atropos.DML.Variable,
-	 * kiarahmani.atropos.DDL.FieldName)
-	 */
 	@Override
 	public void redirectProjs(Variable oldVar, FieldName oldFn, Variable newVar, FieldName newFn) {
 		for (Tuple<FieldName, Expression> fn_exp : update_expressions)

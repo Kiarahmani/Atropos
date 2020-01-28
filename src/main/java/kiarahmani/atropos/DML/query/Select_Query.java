@@ -6,6 +6,7 @@ import java.util.HashSet;
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DDL.TableName;
 import kiarahmani.atropos.DML.Variable;
+import kiarahmani.atropos.DML.expression.E_Proj;
 import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.where_clause.WHC;
 
@@ -130,12 +131,26 @@ public class Select_Query extends Query {
 		return where_clause.getAllRefferencedVars();
 	}
 
-	/* (non-Javadoc)
-	 * @see kiarahmani.atropos.DML.query.Query#redirectProjs(kiarahmani.atropos.DML.Variable, kiarahmani.atropos.DDL.FieldName, kiarahmani.atropos.DML.Variable, kiarahmani.atropos.DDL.FieldName)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see kiarahmani.atropos.DML.query.Query#redirectProjs(kiarahmani.atropos.DML.
+	 * Variable, kiarahmani.atropos.DDL.FieldName, kiarahmani.atropos.DML.Variable,
+	 * kiarahmani.atropos.DDL.FieldName)
 	 */
 	@Override
-	public void redirectProjs(Variable oldVar, FieldName oldFn, Variable newVar, FieldName newFn) {	
+	public void redirectProjs(Variable oldVar, FieldName oldFn, Variable newVar, FieldName newFn) {
 		this.where_clause.redirectProjs(oldVar, oldFn, newVar, newFn);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see kiarahmani.atropos.DML.query.Query#getAllProjExps()
+	 */
+	@Override
+	public HashSet<E_Proj> getAllProjExps() {
+		return this.where_clause.getAllProjExps();
 	}
 
 }

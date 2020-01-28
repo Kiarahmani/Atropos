@@ -37,6 +37,14 @@ public class E_BinUp extends Expression {
 		return result;
 	}
 
+	@Override
+	public HashSet<E_Proj> getAllProjExps() {
+		HashSet<E_Proj> result = new HashSet<>();
+		result.addAll(oper1.getAllProjExps());
+		result.addAll(oper2.getAllProjExps());
+		return result;
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 

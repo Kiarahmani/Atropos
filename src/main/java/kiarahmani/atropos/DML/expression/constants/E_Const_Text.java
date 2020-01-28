@@ -5,6 +5,7 @@ import java.util.HashSet;
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DML.Variable;
 import kiarahmani.atropos.DML.expression.E_Const;
+import kiarahmani.atropos.DML.expression.E_Proj;
 
 public class E_Const_Text extends E_Const {
 	public String val;
@@ -36,4 +37,18 @@ public class E_Const_Text extends E_Const {
 
 	}
 
+	@Override
+	public HashSet<E_Proj> getAllProjExps() {
+		return new HashSet<>();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see kiarahmani.atropos.DML.expression.E_Const#equals(kiarahmani.atropos.DML.
+	 * expression.E_Const)
+	 */
+	public boolean equals(E_Const_Text other) {
+		return this.val.equals(other.val);
+	}
 }

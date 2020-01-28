@@ -15,7 +15,7 @@
     </Appenders>
     <Loggers>
         <Logger name="com.jcg" level="info" />
-        <Root level="error">
+        <Root level="debug">
             <AppenderRef ref="STDOUT" />
             <!-- AppenderRef ref="FILE" -->
         </Root>

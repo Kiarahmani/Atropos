@@ -14,13 +14,17 @@ import kiarahmani.atropos.Atropos;
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DDL.TableName;
 import kiarahmani.atropos.DDL.vc.VC;
+import kiarahmani.atropos.DDL.vc.VC.VC_Type;
 import kiarahmani.atropos.DML.Variable;
+import kiarahmani.atropos.DML.expression.E_Proj;
 import kiarahmani.atropos.DML.expression.Expression;
+import kiarahmani.atropos.DML.expression.constants.E_Const_Num;
 import kiarahmani.atropos.DML.query.Query;
 import kiarahmani.atropos.DML.query.Select_Query;
 import kiarahmani.atropos.DML.where_clause.WHC;
 import kiarahmani.atropos.DML.where_clause.WHC_Constraint;
 import kiarahmani.atropos.program.Table;
+import kiarahmani.atropos.program.Transaction;
 import kiarahmani.atropos.program.statements.Query_Statement;
 import kiarahmani.atropos.utils.Program_Utils;
 
@@ -91,6 +95,50 @@ public class Query_Redirector extends Query_Modifier {
 		return new_select;
 	}
 
+	/*
+	 * This function will perform the variable substitution(non-Javadoc)
+	 */
+	@Override
+	public Expression propagatedExpModification(Expression input_exp) {
+		for (FieldName old_fn : old_select.getSelectedFieldNames())
+			input_exp.redirectProjs(old_select.getVariable(), old_fn, new_var, vc.getCorrespondingFN(old_fn));
+		return input_exp;
+	}
+
+	@Override
+	public Query_Statement propagatedQueryModification(Query_Statement input_qry) {
+		for (FieldName old_fn : old_select.getSelectedFieldNames())
+			input_qry.getQuery().redirectProjs(old_select.getVariable(), old_fn, new_var,
+					vc.getCorrespondingFN(old_fn));
+		return input_qry;
+	}
+
+	private boolean modificationIsValid(Select_Query input_query, VC vc) {
+		// all keys used as the WHC of redirecting SELECT must be constrained by vc
+		boolean assumption1 = vc.containsWHC(input_query.getWHC());
+
+		// there must be a correspondence from old table to new table, for every field
+		// selected by the redirecting SELCET
+		boolean assumption2 = vc.corresponsAllFns(input_query.getTableName(), input_query.getSelectedFieldNames());
+
+		// redirecting SELECTS's where clause has only = (and not other comparison
+		// binary operations)
+		boolean assumption3 = input_query.getWHC().hasOnlyEq();
+
+		// if the redirecting SELECT is a range query on T2 (which may be replaced with
+		// a single-row select on T1), we have to make sure that no project is called on
+		// it's variable which accesses k'th row where k>1
+		Transaction txn = pu.getTrasnsactionMap().get(txnName);
+		boolean assumption4 = true;
+		if (get_redirection_type() == Redirection_Type.T2_TO_T1 && vc.getType() == VC_Type.VC_OTM) {
+			for (E_Proj exp : txn.getAllProjExps()) {
+				assumption4 &= (!exp.getOrderExp().equals(new E_Const_Num(1)));
+				logger.debug("E_Proj " + exp + " = 1?  " + assumption4);
+			}
+		}
+		return assumption1 && assumption2 && assumption3 && assumption4;
+	}
+
 	private Redirection_Type get_redirection_type() {
 		if (this.vc.getTableName(1).equals(this.sourceTable.getTableName()))
 			return Redirection_Type.T1_TO_T2;
@@ -108,7 +156,7 @@ public class Query_Redirector extends Query_Modifier {
 	private WHC updateWHC(WHC old_whc) {
 		ArrayList<WHC_Constraint> new_whccs = new ArrayList<>();
 		for (WHC_Constraint old_whcc : old_whc.getConstraints())
-			if (!old_whcc.getFieldName().getName().contains("alive"))
+			if (!old_whcc.isAliveConstraint())
 				new_whccs.add(updateWHCC(old_whcc));
 		WHC new_whc = new WHC(targetTable.getIsAliveFN(), new_whccs);
 		return new_whc;
@@ -118,35 +166,21 @@ public class Query_Redirector extends Query_Modifier {
 		WHC_Constraint result = null;
 		switch (vc.getType()) {
 		case VC_OTO:
-			/*
-			 * here we make an assumption that all fns in old_whcc are constrained by the vc
-			 */
 			result = new WHC_Constraint(targetTable.getTableName(), vc.getCorrespondingKey(old_whcc.getFieldName()),
 					old_whcc.getOp(), old_whcc.getExpression());
 			break;
 		case VC_OTM:
 			switch (vc.get_agg()) {
 			case VC_ID:
-				switch (this.type) {
-				case T1_TO_T2:
-					result = new WHC_Constraint(targetTable.getTableName(),
-							vc.getCorrespondingKey(old_whcc.getFieldName()), old_whcc.getOp(),
-							old_whcc.getExpression());
-					break;
-				case T2_TO_T1:
-					assert (false) : "for now we only allow full-pk selects from T1 to T2";
-					break;
-				}
+				result = new WHC_Constraint(targetTable.getTableName(), vc.getCorrespondingKey(old_whcc.getFieldName()),
+						old_whcc.getOp(), old_whcc.getExpression());
 				break;
 			case VC_SUM:
-				switch (this.type) {
-				case T1_TO_T2: // TODO
-					break;
-				case T2_TO_T1:
-					assert (false) : "for now we only allow full-pk selects from T1 to T2";
-					break;
-				}
+				result = new WHC_Constraint(targetTable.getTableName(), vc.getCorrespondingKey(old_whcc.getFieldName()),
+						old_whcc.getOp(), old_whcc.getExpression());
 				break;
+			default:
+				assert (false) : "unhandled agg function";
 			}
 			break;
 		}
@@ -155,35 +189,6 @@ public class Query_Redirector extends Query_Modifier {
 
 	private Variable updateVar(Variable old_var) {
 		return new Variable(targetTable.getTableName().getName(), pu.getFreshVariableName(txnName));
-	}
-
-	private boolean modificationIsValid(Select_Query input_query, VC vc) {
-		// TODO
-		// assumption: only redirections are accepted that there exists a VC between
-		// *all* selected fields, otherwise the select must be splitted before callig
-		// redirect
-		// another assumption: all fns in old_select_whc are constrained by the vc
-		// another assumption: for now, we assume the redirecting SELECT is a full-pk
-		// operation
-		return true;
-	}
-
-	/*
-	 * This function will perform the variable substitution(non-Javadoc)
-	 */
-	@Override
-	public Expression propagatedExpModification(Expression input_exp) {
-		for (FieldName old_fn : old_select.getSelectedFieldNames())
-			input_exp.redirectProjs(old_select.getVariable(), old_fn, new_var, vc.getCorrespondingFN(old_fn));
-		return input_exp;
-	}
-
-	@Override
-	public Query_Statement propagatedQueryModification(Query_Statement input_qry) {
-		for (FieldName old_fn : old_select.getSelectedFieldNames())
-			input_qry.getQuery().redirectProjs(old_select.getVariable(), old_fn, new_var,
-					vc.getCorrespondingFN(old_fn));
-		return input_qry;
 	}
 
 }

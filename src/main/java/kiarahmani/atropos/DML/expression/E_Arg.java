@@ -49,8 +49,11 @@ public class E_Arg extends Expression {
 	 */
 	@Override
 	public void redirectProjs(Variable oldVar, FieldName oldFn, Variable newVar, FieldName newFn) {
-		// TODO Auto-generated method stub
 
 	}
 
+	@Override
+	public HashSet<E_Proj> getAllProjExps() {
+		return new HashSet<>();
+	}
 }

@@ -30,6 +30,10 @@ public class FieldName {
 		return this.name;
 	}
 
+	public boolean equals(FieldName other) {
+		return this.name.contains(other.getName());
+	}
+
 	@Override
 	public String toString() {
 		return this.name;

@@ -12,4 +12,9 @@ public abstract class Expression {
 
 	public abstract void redirectProjs(Variable oldVar, FieldName oldFn, Variable newVar, FieldName newFn);
 
+	/**
+	 * @return
+	 */
+	public abstract HashSet<E_Proj> getAllProjExps();
+
 }

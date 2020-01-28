@@ -39,4 +39,9 @@ public class E_Size extends Expression {
 			this.v = newVar;
 		}
 	};
+
+	@Override
+	public HashSet<E_Proj> getAllProjExps() {
+		return new HashSet<>();
+	}
 }

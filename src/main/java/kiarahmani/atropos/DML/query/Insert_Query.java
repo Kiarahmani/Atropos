@@ -6,6 +6,7 @@ import java.util.HashSet;
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DDL.TableName;
 import kiarahmani.atropos.DML.Variable;
+import kiarahmani.atropos.DML.expression.E_Proj;
 import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.expression.constants.E_Const_Bool;
 import kiarahmani.atropos.DML.query.Query.Kind;
@@ -151,6 +152,16 @@ public class Insert_Query extends Query {
 		HashSet<Variable> result = new HashSet<>();
 		for (Tuple<FieldName, Expression> exp : this.insert_expressions)
 			result.addAll(exp.y.getAllRefferencedVars());
+		return result;
+	}
+	
+	
+	
+	@Override
+	public HashSet<E_Proj> getAllProjExps() {
+		HashSet<E_Proj> result = new HashSet<>();
+		for (Tuple<FieldName, Expression> exp : this.insert_expressions)
+			result.addAll(exp.y.getAllProjExps());
 		return result;
 	}
 

@@ -1,10 +1,12 @@
 package kiarahmani.atropos.program;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 import kiarahmani.atropos.DML.Variable;
 import kiarahmani.atropos.DML.expression.E_Arg;
+import kiarahmani.atropos.DML.expression.E_Proj;
 import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.query.Query;
 
@@ -54,6 +56,13 @@ public class Transaction {
 		ArrayList<Query> result = new ArrayList<>();
 		for (Statement stmt : getStatements())
 			result.addAll(stmt.getAllQueries());
+		return result;
+	}
+
+	public HashSet<E_Proj> getAllProjExps() {
+		HashSet<E_Proj> result = new HashSet<>();
+		for (Query q : this.getAllQueries())
+			result.addAll(q.getAllProjExps());
 		return result;
 	}
 

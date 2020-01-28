@@ -6,6 +6,7 @@ import java.util.HashSet;
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DML.Variable;
 import kiarahmani.atropos.DML.expression.BinOp;
+import kiarahmani.atropos.DML.expression.E_Proj;
 import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.expression.constants.E_Const_Bool;
 
@@ -76,6 +77,17 @@ public class WHC extends Expression {
 			result.addAll(whcc.getAllRefferencedVars());
 		return result;
 	}
+	
+	
+	
+	public HashSet<E_Proj> getAllProjExps() {
+		HashSet<E_Proj> result = new HashSet<>();
+		for (WHC_Constraint whcc : this.whc_constraints)
+			result.addAll(whcc.getAllProjExps());
+		return result;
+	}
+	
+	
 
 	public boolean isAtomic(FieldName SK) {
 		for (WHC_Constraint whcc : whc_constraints)
@@ -83,6 +95,13 @@ public class WHC extends Expression {
 				return true;
 			}
 		return false;
+	}
+
+	public boolean hasOnlyEq() {
+		for (WHC_Constraint whcc : whc_constraints)
+			if (whcc.getOp() != BinOp.EQ) 
+				return false;
+		return true;
 	}
 
 	/*

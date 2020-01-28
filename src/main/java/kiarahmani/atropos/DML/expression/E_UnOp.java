@@ -50,4 +50,9 @@ public class E_UnOp extends Expression {
 	public void redirectProjs(Variable oldVar, FieldName oldFn, Variable newVar, FieldName newFn) {
 		exp.redirectProjs(oldVar, oldFn, newVar, newFn);
 	}
+
+	@Override
+	public HashSet<E_Proj> getAllProjExps() {
+		return this.exp.getAllProjExps();
+	}
 }

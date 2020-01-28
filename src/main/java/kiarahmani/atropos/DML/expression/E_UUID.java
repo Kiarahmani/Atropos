@@ -30,4 +30,8 @@ public class E_UUID extends Expression {
 
 	}
 
+	@Override
+	public HashSet<E_Proj> getAllProjExps() {
+		return new HashSet<>();
+	}
 }

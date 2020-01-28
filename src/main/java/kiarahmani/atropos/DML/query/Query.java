@@ -6,6 +6,7 @@ import java.util.HashSet;
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DDL.TableName;
 import kiarahmani.atropos.DML.Variable;
+import kiarahmani.atropos.DML.expression.E_Proj;
 import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.where_clause.WHC;
 
@@ -53,6 +54,13 @@ public abstract class Query {
 
 	public abstract HashSet<Variable> getAllRefferencedVars();
 
+	public abstract  HashSet<E_Proj> getAllProjExps();
+
+	/*
+	 * 
+	 * REFACTORING OPERATIONS
+	 * 
+	 */
 	public abstract void redirectProjs(Variable oldVar, FieldName oldFn, Variable newVar, FieldName newFn);
 
 }

@@ -6,6 +6,7 @@ import java.util.HashSet;
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DDL.TableName;
 import kiarahmani.atropos.DML.Variable;
+import kiarahmani.atropos.DML.expression.E_Proj;
 import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.expression.constants.E_Const_Bool;
 import kiarahmani.atropos.DML.query.Query.Kind;
@@ -117,6 +118,12 @@ public class Delete_Query extends Query {
 		return this.where_clause.getAllRefferencedVars();
 	}
 
+	@Override
+	public HashSet<E_Proj> getAllProjExps() {
+		return this.where_clause.getAllProjExps();
+	}
+	
+	
 	/*
 	 * (non-Javadoc)
 	 * 

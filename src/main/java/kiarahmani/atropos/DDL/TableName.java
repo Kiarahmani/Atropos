@@ -16,7 +16,8 @@ public class TableName {
 		return this.name;
 	}
 
-	public boolean equals(TableName other) {
+	public boolean equalsWith(TableName other) {
 		return this.name.equalsIgnoreCase(other.getName());
 	}
+	
 }
