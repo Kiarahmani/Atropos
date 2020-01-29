@@ -16,11 +16,9 @@ import kiarahmani.atropos.program.statements.Query_Statement;
  */
 public abstract class Query_Modifier {
 	private boolean is_set;
-	public QM_TYPE type;
+	public QM_Type type;
 
-	public enum QM_TYPE {
-		OTO, OTT, TTO
-	}
+
 
 	public void set() {
 		this.is_set = true;

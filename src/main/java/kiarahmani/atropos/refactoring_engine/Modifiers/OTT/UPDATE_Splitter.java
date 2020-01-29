@@ -38,7 +38,7 @@ public class UPDATE_Splitter extends One_to_Two_Query_Modifier {
 	 * modify each time.
 	 */
 	public void set(Program_Utils pu, String txnName, ArrayList<FieldName> excluded_fns) {
-		logger.debug("setting the SELECT_Splitter");
+		logger.debug("setting the UPDATE_Splitter");
 		this.pu = pu;
 		this.txnName = txnName;
 		this.excluded_fns = excluded_fns;

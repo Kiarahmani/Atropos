@@ -13,9 +13,7 @@ import kiarahmani.atropos.DML.query.Query;
 import kiarahmani.atropos.DML.query.Select_Query;
 import kiarahmani.atropos.DML.query.Query.Kind;
 import kiarahmani.atropos.program.Block;
-import kiarahmani.atropos.program.Program;
 import kiarahmani.atropos.program.Statement;
-import kiarahmani.atropos.program.Table;
 import kiarahmani.atropos.program.Transaction;
 import kiarahmani.atropos.program.Block.BlockType;
 import kiarahmani.atropos.program.statements.If_Statement;
@@ -237,6 +235,7 @@ public class Refactoring_Engine {
 
 	public Program_Utils applyAndPropagate(Program_Utils input_pu, Query_Modifier modifier, int apply_at_po,
 			String txnName) {
+		System.out.println(modifier.type);
 		switch (modifier.type) {
 		case OTO:
 			One_to_One_Query_Modifier otoqm = (One_to_One_Query_Modifier) modifier;
@@ -263,9 +262,9 @@ public class Refactoring_Engine {
 			logger.debug(
 					"Now calling propagateToRange to apply the deisred modifications at all subsequent statements");
 			propagateToRange(input_pu, modifier, apply_at_po, txnName);
-
+			break;
 		default:
-			assert (false) : "unexpected state: Query_Modifier has an unknown type: " + modifier.getClass().toString();
+			assert (false) : "unexpected state: Query_Modifier has an unknown type: " + modifier.type;
 			break;
 		}
 
@@ -321,7 +320,12 @@ public class Refactoring_Engine {
 
 		logger.debug("now calling deleteQuery (twice) to remove the old queries from the transaction");
 		deleteQuery(input_pu, apply_at_po_fst, txnName);
-		deleteQuery(input_pu, apply_at_po_sec, txnName);
+		logger.debug("po=" + apply_at_po_fst + " is removed");
+		deleteQuery(input_pu, apply_at_po_fst, txnName); // XXX BE CAREFUL! SINCE apply_at_po_fst is already deleted,
+															// now what used to be at apply_at_po_sec resides at
+															// po=apply_at_po_fst and hence the function is called on
+															// apply_at_po_fst again
+		logger.debug("po=" + apply_at_po_sec + " is removed");
 
 		logger.debug("now calling InsertQueriesAtPO to add the new query to the transaction");
 		InsertQueriesAtPO(fst_block, input_pu, txnName, apply_at_po_fst, new Query_Statement(apply_at_po_fst, new_qry));
