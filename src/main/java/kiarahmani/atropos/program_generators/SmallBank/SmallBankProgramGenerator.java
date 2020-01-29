@@ -50,7 +50,7 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 		pu.mkTable("savings", new FieldName("s_custid", true, true, F_Type.NUM),
 				new FieldName("s_bal", false, false, F_Type.NUM));
 		pu.mkTable("checking", new FieldName("c_custid", true, true, F_Type.NUM),
-				new FieldName("c_bal", false, false, F_Type.NUM));
+				new FieldName("c_bal", false, false, F_Type.NUM), new FieldName("c_score", false, false, F_Type.NUM));
 		/*
 		 * 
 		 * Amalgamate
@@ -111,7 +111,7 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 
 		/*
 		 * 
-		 * Balance
+		 * TEST
 		 * 
 		 */
 
@@ -121,13 +121,14 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 
 			WHC Balance_GetAccount0_WHC1 = new WHC(pu.getIsAliveFieldName("accounts"), new WHC_Constraint(
 					pu.getTableName("accounts"), pu.getFieldName("a_custid"), BinOp.EQ, new E_Const_Num(69)));
-			Select_Query Balance_GetAccount01 = pu.addSelectQuery("test", "accounts", false,
-					Balance_GetAccount0_WHC1, "a_custid", "a_name");
+			Select_Query Balance_GetAccount01 = pu.addSelectQuery("test", "accounts", false, Balance_GetAccount0_WHC1,
+					"a_custid", "a_name");
 			pu.addQueryStatement("test", Balance_GetAccount01);
 
 			// get customer's id based on his/her name
-			WHC Balance_GetAccount0_WHC = new WHC(pu.getIsAliveFieldName("accounts"), new WHC_Constraint(
-					pu.getTableName("accounts"), pu.getFieldName("a_name"), BinOp.EQ, pu.mkProjExpr("test", 0, "a_name", 1)));
+			WHC Balance_GetAccount0_WHC = new WHC(pu.getIsAliveFieldName("accounts"),
+					new WHC_Constraint(pu.getTableName("accounts"), pu.getFieldName("a_name"), BinOp.EQ,
+							pu.mkProjExpr("test", 0, "a_name", 1)));
 			Select_Query Balance_GetAccount0 = pu.addSelectQuery("test", "accounts", false, Balance_GetAccount0_WHC,
 					"a_custid");
 			pu.addQueryStatement("test", Balance_GetAccount0);
@@ -149,16 +150,15 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 			pu.addQueryStatement("test", Balance_GetChecking);
 
 			// write customer's new checking balance
-			// WHC DepositChecking_WHC = new WHC(pu.getIsAliveFieldName("checking"),
-			// new WHC_Constraint(pu.getTableName("checking"), pu.getFieldName("c_custid"),
-			// BinOp.EQ,
-			// pu.mkProjExpr("Balance", 1, "s_bal", 1)));
-			// Update_Query DepositChecking = pu.addUpdateQuery("Balance", "checking", true,
-			// DepositChecking_WHC);
-			// DepositChecking.addUpdateExp(pu.getFieldName("c_bal"),
-			// new E_BinUp(BinOp.PLUS, pu.mkProjExpr("Balance", 1, "s_bal", 1), new
-			// E_Const_Num(1)));
-			// pu.addQueryStatement("Balance", DepositChecking);
+			WHC DepositChecking_WHC = new WHC(pu.getIsAliveFieldName("checking"),
+					new WHC_Constraint(pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ,
+							pu.mkProjExpr("test", 1, "s_bal", 1)));
+			Update_Query DepositChecking = pu.addUpdateQuery("test", "checking", true, DepositChecking_WHC);
+			DepositChecking.addUpdateExp(pu.getFieldName("c_bal"),
+					new E_BinUp(BinOp.PLUS, pu.mkProjExpr("test", 1, "s_bal", 1), new E_Const_Num(1)));
+			DepositChecking.addUpdateExp(pu.getFieldName("c_score"),
+					new E_BinUp(BinOp.PLUS, pu.mkProjExpr("test", 0, "a_custid", 1), new E_Const_Num(69)));
+			pu.addQueryStatement("test", DepositChecking);
 
 		}
 

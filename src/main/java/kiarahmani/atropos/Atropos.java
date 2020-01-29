@@ -19,6 +19,7 @@ import kiarahmani.atropos.refactoring_engine.deltas.Delta;
 import kiarahmani.atropos.refactoring_engine.deltas.INTRO_F;
 import kiarahmani.atropos.refactoring_engine.deltas.Modifiers.Query_Redirector;
 import kiarahmani.atropos.refactoring_engine.deltas.Modifiers.SELECT_Splitter;
+import kiarahmani.atropos.refactoring_engine.deltas.Modifiers.UPDATE_Splitter;
 import kiarahmani.atropos.utils.Constants;
 import kiarahmani.atropos.utils.Program_Utils;
 
@@ -68,7 +69,7 @@ public class Atropos {
 		Program redirected_program = pu.generateProgram();
 		redirected_program.printProgram();
 
-		// Instantiate a new modifier (redirector) and apply it
+		// Instantiate a new modifier (splitter) and apply it
 		SELECT_Splitter qry_splt = new SELECT_Splitter();
 		ArrayList<FieldName> excluded_fns = new ArrayList<>();
 		excluded_fns.add(pu.getFieldName("a_name"));
@@ -76,6 +77,15 @@ public class Atropos {
 		re.applyAndPropagate(pu, qry_splt, 0, test_txn);
 		Program splitted_program = pu.generateProgram();
 		splitted_program.printProgram();
+
+		// Instantiate a new modifier (splitter) and apply it
+		UPDATE_Splitter upd_splt = new UPDATE_Splitter();
+		ArrayList<FieldName> excluded_fns_upd = new ArrayList<>();
+		excluded_fns_upd.add(pu.getFieldName("c_bal"));
+		upd_splt.set(pu, test_txn, excluded_fns_upd);
+		re.applyAndPropagate(pu, upd_splt, 5, test_txn);
+		Program splitted_program_upd = pu.generateProgram();
+		splitted_program_upd.printProgram();
 
 		// Print Running Time
 		long time_end = System.currentTimeMillis();

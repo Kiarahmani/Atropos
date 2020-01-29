@@ -11,7 +11,8 @@ TODO:
 
 ** refactoring tasks
   - Generalize aggregate functions (currently we only have sum and size)
-
+  - Make sure there is no problem in carrying path conditions to the new
+    (modified) queries -- right now I think I am not doing anything about it
 
 ====================================================================================================
 ASSUMPTIONS:

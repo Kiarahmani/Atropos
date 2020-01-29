@@ -33,6 +33,14 @@ public class Update_Query extends Query {
 		return null;
 	}
 
+	public boolean isAtomic() {
+		return this.isAtomic;
+	}
+
+	public ArrayList<Tuple<FieldName, Expression>> getUpdateExps() {
+		return this.update_expressions;
+	}
+
 	public String getId() {
 		return this.kind.toString() + "#" + this.id;
 	}
@@ -117,7 +125,6 @@ public class Update_Query extends Query {
 		return result;
 	}
 
-
 	@Override
 	public HashSet<Variable> getAllRefferencedVars() {
 		HashSet<Variable> result = new HashSet<>();
@@ -126,7 +133,7 @@ public class Update_Query extends Query {
 			result.addAll(exp.y.getAllRefferencedVars());
 		return result;
 	}
-	
+
 	@Override
 	public HashSet<E_Proj> getAllProjExps() {
 		HashSet<E_Proj> result = new HashSet<>();
