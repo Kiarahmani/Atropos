@@ -11,20 +11,14 @@ import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DDL.vc.*;
 import kiarahmani.atropos.DDL.vc.VC.VC_Agg;
 import kiarahmani.atropos.DDL.vc.VC.VC_Type;
-import kiarahmani.atropos.dependency.Conflict_Graph;
-import kiarahmani.atropos.dependency.DAI_Graph;
-import kiarahmani.atropos.encoding_engine.Encoding_Engine;
 import kiarahmani.atropos.program.Program;
-import kiarahmani.atropos.program.statements.Query_Statement;
 import kiarahmani.atropos.program_generators.ProgramGenerator;
 import kiarahmani.atropos.program_generators.SmallBank.SmallBankProgramGenerator;
 import kiarahmani.atropos.refactoring_engine.Refactoring_Engine;
 import kiarahmani.atropos.refactoring_engine.deltas.Delta;
 import kiarahmani.atropos.refactoring_engine.deltas.INTRO_F;
-import kiarahmani.atropos.refactoring_engine.deltas.INTRO_R;
 import kiarahmani.atropos.refactoring_engine.deltas.Modifiers.Query_Redirector;
 import kiarahmani.atropos.refactoring_engine.deltas.Modifiers.SELECT_Splitter;
-import kiarahmani.atropos.refactoring_engine.deltas.Modifiers.Test_Modifier;
 import kiarahmani.atropos.utils.Constants;
 import kiarahmani.atropos.utils.Program_Utils;
 
@@ -44,7 +38,7 @@ public class Atropos {
 
 		Program_Utils pu = new Program_Utils("SmallBank");
 		ProgramGenerator ipg = new SmallBankProgramGenerator(pu);
-		String test_txn = "Balance";
+		String test_txn = "test";
 
 		Program base_program = ipg.generate("Balance1", "Amalgamate1", "TransactSavings1", "DepositChecking1",
 				"SendPaymen1", "WriteCheck1", test_txn);
@@ -77,7 +71,7 @@ public class Atropos {
 		// Instantiate a new modifier (redirector) and apply it
 		SELECT_Splitter qry_splt = new SELECT_Splitter();
 		ArrayList<FieldName> excluded_fns = new ArrayList<>();
-		excluded_fns.add(pu.getFieldName("a_custid"));
+		excluded_fns.add(pu.getFieldName("a_name"));
 		qry_splt.set(pu, test_txn, excluded_fns);
 		re.applyAndPropagate(pu, qry_splt, 0, test_txn);
 		Program splitted_program = pu.generateProgram();
