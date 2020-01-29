@@ -23,8 +23,11 @@ import kiarahmani.atropos.program.statements.Query_Statement;
 import kiarahmani.atropos.refactoring_engine.deltas.Delta;
 import kiarahmani.atropos.refactoring_engine.deltas.INTRO_F;
 import kiarahmani.atropos.refactoring_engine.deltas.INTRO_R;
+import kiarahmani.atropos.refactoring_engine.deltas.Modifiers.One_to_One_Query_Modifier;
+import kiarahmani.atropos.refactoring_engine.deltas.Modifiers.One_to_Two_Query_Modifier;
 import kiarahmani.atropos.refactoring_engine.deltas.Modifiers.Query_Modifier;
 import kiarahmani.atropos.utils.Program_Utils;
+import kiarahmani.atropos.utils.Tuple;
 import kiarahmani.atropos.utils.Program_Utils;
 
 public class Refactoring_Engine {
@@ -234,14 +237,40 @@ public class Refactoring_Engine {
 
 	public Program_Utils applyAndPropagate(Program_Utils input_pu, Query_Modifier modifier, int apply_at_po,
 			String txnName) {
-		logger.debug("First calling applyAtIndex to apply the desired modification at index");
-		applyAtIndex(input_pu, modifier, apply_at_po, txnName);
-		logger.debug("Now calling propagateToRange to apply the deisred modifications at all subsequent statements");
-		propagateToRange(input_pu, modifier, apply_at_po, txnName);
+		switch (modifier.type) {
+		case OTO:
+			One_to_One_Query_Modifier otoqm = (One_to_One_Query_Modifier) modifier;
+			logger.debug("First calling applyAtIndex to apply the desired modification at index");
+			applyAtIndex(input_pu, otoqm, apply_at_po, txnName);
+			logger.debug(
+					"Now calling propagateToRange to apply the deisred modifications at all subsequent statements");
+			propagateToRange(input_pu, modifier, apply_at_po, txnName);
+			break;
+
+		case OTT:
+			One_to_Two_Query_Modifier ottqm = (One_to_Two_Query_Modifier) modifier;
+			logger.debug("First calling applyAtIndex to apply the desired modification at index");
+			applyAtIndex(input_pu, ottqm, apply_at_po, txnName);
+			logger.debug(
+					"Now calling propagateToRange to apply the deisred modifications at all subsequent statements");
+			propagateToRange(input_pu, modifier, apply_at_po, txnName);
+			break;
+
+		default:
+			assert (false) : "unexpected state: Query_Modifier has an unknown type: " + modifier.getClass().toString();
+			break;
+		}
+
 		return input_pu;
 	}
 
-	public Program_Utils applyAtIndex(Program_Utils input_pu, Query_Modifier modifier, int apply_at_po,
+	/*
+	 * 
+	 * 1-1 At Index Modifications
+	 * 
+	 */
+
+	public Program_Utils applyAtIndex(Program_Utils input_pu, One_to_One_Query_Modifier modifier, int apply_at_po,
 			String txnName) {
 		assert (modifier.isSet()) : "cannot apply the modifier since it is not set";
 		logger.debug("Applying the modifer " + modifier + " at index: " + apply_at_po);
@@ -255,6 +284,31 @@ public class Refactoring_Engine {
 		deleteQuery(input_pu, apply_at_po, txnName);
 		logger.debug("new Calling InsertQueriesAtPO to add the new query to the transaction");
 		InsertQueriesAtPO(orig_block, input_pu, txnName, apply_at_po, new Query_Statement(apply_at_po, new_qry));
+		return input_pu;
+	}
+
+	/*
+	 * 
+	 * 1-2 At Index Modifications
+	 * 
+	 */
+
+	public Program_Utils applyAtIndex(Program_Utils input_pu, One_to_Two_Query_Modifier modifier, int apply_at_po,
+			String txnName) {
+		assert (modifier.isSet()) : "cannot apply the modifier since it is not set";
+		logger.debug("Applying the modifer " + modifier + " at index: " + apply_at_po);
+		Query old_qry = input_pu.getQueryByPo(txnName, apply_at_po);
+		Tuple<Query, Query> new_qry_tuple = modifier.atIndexModification(old_qry);
+		logger.debug("old query (" + old_qry.getId() + ") is going to be replaced with new queries ("
+				+ new_qry_tuple.x.getId() + ") and (" + new_qry_tuple.y.getId() + ")");
+		Block orig_block = input_pu.getBlockByPo(txnName, apply_at_po);
+		logger.debug("the old query was found in block: " + orig_block);
+		logger.debug("applyAtIndex: new Calling deleteQuery to remove the old query from the transaction");
+		deleteQuery(input_pu, apply_at_po, txnName);
+		logger.debug("new Calling InsertQueriesAtPO to add the new query to the transaction");
+		InsertQueriesAtPO(orig_block, input_pu, txnName, apply_at_po, new Query_Statement(apply_at_po, new_qry_tuple.x),
+				new Query_Statement(apply_at_po, new_qry_tuple.y));
+
 		return input_pu;
 	}
 

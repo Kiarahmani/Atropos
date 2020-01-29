@@ -32,7 +32,7 @@ import kiarahmani.atropos.utils.Program_Utils;
  * @author Kiarash
  *
  */
-public class Query_Redirector extends Query_Modifier {
+public class Query_Redirector extends One_to_One_Query_Modifier {
 	private static final Logger logger = LogManager.getLogger(Atropos.class);
 	private Program_Utils pu;
 	private Table targetTable;
@@ -188,7 +188,7 @@ public class Query_Redirector extends Query_Modifier {
 	}
 
 	private Variable updateVar(Variable old_var) {
-		return new Variable(targetTable.getTableName().getName(), pu.getFreshVariableName(txnName));
+		return pu.mkVariable(targetTable.getTableName().getName(), txnName);
 	}
 
 }

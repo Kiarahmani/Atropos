@@ -16,7 +16,7 @@ import kiarahmani.atropos.utils.Program_Utils;
  * @author Kiarash
  *
  */
-public class Test_Modifier extends Query_Modifier {
+public class Test_Modifier extends One_to_One_Query_Modifier {
 
 	Program_Utils pu;
 	String txnName;

@@ -1,11 +1,13 @@
 package kiarahmani.atropos;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import kiarahmani.atropos.DDL.F_Type;
+import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DDL.vc.*;
 import kiarahmani.atropos.DDL.vc.VC.VC_Agg;
 import kiarahmani.atropos.DDL.vc.VC.VC_Type;
@@ -21,6 +23,7 @@ import kiarahmani.atropos.refactoring_engine.deltas.Delta;
 import kiarahmani.atropos.refactoring_engine.deltas.INTRO_F;
 import kiarahmani.atropos.refactoring_engine.deltas.INTRO_R;
 import kiarahmani.atropos.refactoring_engine.deltas.Modifiers.Query_Redirector;
+import kiarahmani.atropos.refactoring_engine.deltas.Modifiers.SELECT_Splitter;
 import kiarahmani.atropos.refactoring_engine.deltas.Modifiers.Test_Modifier;
 import kiarahmani.atropos.utils.Constants;
 import kiarahmani.atropos.utils.Program_Utils;
@@ -64,12 +67,21 @@ public class Atropos {
 		Program refactored_program = pu.generateProgram();
 		refactored_program.printProgram();
 
-		// Instantiate a new modifier and apply it
+		// Instantiate a new modifier (redirector) and apply it
 		Query_Redirector qry_red = new Query_Redirector();
 		qry_red.set(pu, test_txn, "savings", "accounts");
-		re.applyAndPropagate(pu, qry_red, 1, test_txn);
+		re.applyAndPropagate(pu, qry_red, 2, test_txn);
 		Program redirected_program = pu.generateProgram();
 		redirected_program.printProgram();
+
+		// Instantiate a new modifier (redirector) and apply it
+		SELECT_Splitter qry_splt = new SELECT_Splitter();
+		ArrayList<FieldName> excluded_fns = new ArrayList<>();
+		excluded_fns.add(pu.getFieldName("a_custid"));
+		qry_splt.set(pu, test_txn, excluded_fns);
+		re.applyAndPropagate(pu, qry_splt, 0, test_txn);
+		Program splitted_program = pu.generateProgram();
+		splitted_program.printProgram();
 
 		// Print Running Time
 		long time_end = System.currentTimeMillis();
