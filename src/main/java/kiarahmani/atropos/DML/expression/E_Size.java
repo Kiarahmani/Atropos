@@ -44,4 +44,12 @@ public class E_Size extends Expression {
 	public HashSet<E_Proj> getAllProjExps() {
 		return new HashSet<>();
 	}
+	
+	@Override
+	public boolean isEqual(Expression other) {
+		if (other instanceof E_Size)
+			return v.equals(((E_Size) other).v);
+		else
+			return false;
+	}
 }

@@ -3,18 +3,22 @@ package kiarahmani.atropos.DML.where_clause;
 import java.util.ArrayList;
 import java.util.HashSet;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import kiarahmani.atropos.Atropos;
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DML.Variable;
 import kiarahmani.atropos.DML.expression.BinOp;
 import kiarahmani.atropos.DML.expression.E_Proj;
-import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.expression.constants.E_Const_Bool;
 
-public class WHC extends Expression {
+public class WHC {
 	public enum WHC_Type {
 		PK_SINGLE, PK_RANGE, NPK_RANGE;
 	}
 
+	private static final Logger logger = LogManager.getLogger(Atropos.class);
 	private WHC_Type whc_type;
 	private ArrayList<WHC_Constraint> whc_constraints;
 
@@ -77,17 +81,47 @@ public class WHC extends Expression {
 			result.addAll(whcc.getAllRefferencedVars());
 		return result;
 	}
-	
-	
-	
+
 	public HashSet<E_Proj> getAllProjExps() {
 		HashSet<E_Proj> result = new HashSet<>();
 		for (WHC_Constraint whcc : this.whc_constraints)
 			result.addAll(whcc.getAllProjExps());
 		return result;
 	}
-	
-	
+
+	/*
+	 * make sure all whcc in the other whc is contained by this object
+	 */
+	public boolean containsWHC(WHC other) {
+		logger.debug("begin containsWHC");
+		for (WHC_Constraint other_whcc : other.whc_constraints) {
+			if (other_whcc.isAliveConstraint()) {
+				logger.debug("skip: do not do the analysis for isAlive fieldNames");
+				continue;
+			}
+			if (!containsConstraint(other_whcc)) {
+				logger.debug(this + " Does NOT Constain (" + other_whcc + ")");
+				return false;
+			}
+			logger.debug(this + " Constains (" + other_whcc + ")");
+		}
+		return true;
+	}
+
+	/*
+	 * make sure at least one of whcc in this object is equal to the other whcc
+	 */
+	public boolean containsConstraint(WHC_Constraint other_whcc) {
+
+		for (WHC_Constraint whcc : this.whc_constraints) {
+			if (other_whcc.isEqual(whcc)) {
+				logger.debug(whcc + "  is equal to" + other_whcc);
+				return true;
+			}
+			logger.debug(whcc + "  is NOT equal to" + other_whcc);
+		}
+		return false;
+	}
 
 	public boolean isAtomic(FieldName SK) {
 		for (WHC_Constraint whcc : whc_constraints)
@@ -99,20 +133,11 @@ public class WHC extends Expression {
 
 	public boolean hasOnlyEq() {
 		for (WHC_Constraint whcc : whc_constraints)
-			if (whcc.getOp() != BinOp.EQ) 
+			if (whcc.getOp() != BinOp.EQ)
 				return false;
 		return true;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * kiarahmani.atropos.DML.expression.Expression#redirectProjs(kiarahmani.atropos
-	 * .DML.Variable, kiarahmani.atropos.DDL.FieldName,
-	 * kiarahmani.atropos.DML.Variable, kiarahmani.atropos.DDL.FieldName)
-	 */
-	@Override
 	public void redirectProjs(Variable oldVar, FieldName oldFn, Variable newVar, FieldName newFn) {
 		for (WHC_Constraint whcc : whc_constraints)
 			whcc.redirectProjs(oldVar, oldFn, newVar, newFn);

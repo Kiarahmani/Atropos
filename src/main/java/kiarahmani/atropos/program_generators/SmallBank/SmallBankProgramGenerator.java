@@ -50,7 +50,8 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 		pu.mkTable("savings", new FieldName("s_custid", true, true, F_Type.NUM),
 				new FieldName("s_bal", false, false, F_Type.NUM));
 		pu.mkTable("checking", new FieldName("c_custid", true, true, F_Type.NUM),
-				new FieldName("c_bal", false, false, F_Type.NUM), new FieldName("c_score", false, false, F_Type.NUM));
+				new FieldName("c_bal", false, false, F_Type.NUM), new FieldName("c_score", false, false, F_Type.NUM),
+				new FieldName("c_age", false, false, F_Type.NUM));
 		/*
 		 * 
 		 * Amalgamate
@@ -150,15 +151,28 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 			pu.addQueryStatement("test", Balance_GetChecking);
 
 			// write customer's new checking balance
-			WHC DepositChecking_WHC = new WHC(pu.getIsAliveFieldName("checking"),
-					new WHC_Constraint(pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ,
-							pu.mkProjExpr("test", 1, "s_bal", 1)));
+			WHC DepositChecking_WHC = new WHC(pu.getIsAliveFieldName("checking"), new WHC_Constraint(
+					pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ,
+					new E_BinUp(BinOp.PLUS,
+							new E_BinUp(BinOp.MULT, (pu.mkProjExpr("test", 1, "s_bal", 1)), new E_Const_Num(11)),
+							new E_Const_Num(1))));
 			Update_Query DepositChecking = pu.addUpdateQuery("test", "checking", true, DepositChecking_WHC);
 			DepositChecking.addUpdateExp(pu.getFieldName("c_bal"),
 					new E_BinUp(BinOp.PLUS, pu.mkProjExpr("test", 1, "s_bal", 1), new E_Const_Num(1)));
 			DepositChecking.addUpdateExp(pu.getFieldName("c_score"),
 					new E_BinUp(BinOp.PLUS, pu.mkProjExpr("test", 0, "a_custid", 1), new E_Const_Num(69)));
 			pu.addQueryStatement("test", DepositChecking);
+
+			// write customer's new checking balance
+			WHC DepositChecking_WHC11 = new WHC(pu.getIsAliveFieldName("checking"),
+					new WHC_Constraint(pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ,
+							new E_BinUp(BinOp.PLUS, new E_Const_Num(1),
+									new E_BinUp(BinOp.MULT, new E_Const_Num(11), (pu.mkProjExpr("test", 1, "s_bal", 1)))
+
+							)));
+			Update_Query DepositChecking11 = pu.addUpdateQuery("test", "checking", true, DepositChecking_WHC11);
+			DepositChecking11.addUpdateExp(pu.getFieldName("c_age"), new E_Const_Num(69));
+			pu.addQueryStatement("test", DepositChecking11);
 
 		}
 

@@ -34,4 +34,16 @@ public class E_UUID extends Expression {
 	public HashSet<E_Proj> getAllProjExps() {
 		return new HashSet<>();
 	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * kiarahmani.atropos.DML.expression.Expression#isEqual(kiarahmani.atropos.DML.
+	 * expression.Expression)
+	 */
+	@Override
+	public boolean isEqual(Expression other) {
+		return false;
+	}
 }

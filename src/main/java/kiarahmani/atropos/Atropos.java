@@ -94,6 +94,11 @@ public class Atropos {
 		re.applyAndPropagate(pu, upd_merger, 5, test_txn);
 		Program merged_program_upd = pu.generateProgram();
 		merged_program_upd.printProgram();
+		
+		// DO it again
+		re.applyAndPropagate(pu, upd_merger, 5, test_txn);
+		merged_program_upd = pu.generateProgram();
+		merged_program_upd.printProgram();
 
 		// Print Running Time
 		long time_end = System.currentTimeMillis();

@@ -55,4 +55,19 @@ public class E_UnOp extends Expression {
 	public HashSet<E_Proj> getAllProjExps() {
 		return this.exp.getAllProjExps();
 	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * kiarahmani.atropos.DML.expression.Expression#isEqual(kiarahmani.atropos.DML.
+	 * expression.Expression)
+	 */
+	@Override
+	public boolean isEqual(Expression other) {
+		if (other instanceof E_UnOp)
+			return exp.isEqual(((E_UnOp) other).exp);
+		else
+			return false;
+	}
 }

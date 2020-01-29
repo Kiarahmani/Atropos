@@ -57,6 +57,8 @@ public class UPDATE_Merger extends Two_to_One_Query_Modifier {
 	public Query atIndexModification(Query input_query_1, Query input_query_2) {
 		old_update1 = (Update_Query) input_query_1;
 		old_update2 = (Update_Query) input_query_2;
+		logger.debug("whc1: " + old_update1.getWHC());
+		logger.debug("whc2: " + old_update2.getWHC());
 		Table old_table = pu.getTable(old_update1.getTableName().getName()); // this is stupid XXX
 		WHC new_whc = mergeWHCs(old_update1.getWHC(), old_update2.getWHC());
 		assert (new_whc != null && modificationIsValid()) : "requested modification cannot be done on: "
@@ -77,7 +79,13 @@ public class UPDATE_Merger extends Two_to_One_Query_Modifier {
 	}
 
 	WHC mergeWHCs(WHC whc1, WHC whc2) {
-		return whc2;
+		logger.debug("Does whc1 contain whc2?");
+		boolean contains1 = whc1.containsWHC(whc2);
+		boolean contains2 = whc2.containsWHC(whc1);
+		if (contains1 && contains2)
+			return whc1;
+		else
+			return null;
 	}
 
 	/*

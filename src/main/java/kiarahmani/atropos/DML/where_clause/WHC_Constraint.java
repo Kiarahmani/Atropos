@@ -1,8 +1,11 @@
 package kiarahmani.atropos.DML.where_clause;
 
-import java.util.Collection;
 import java.util.HashSet;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import kiarahmani.atropos.Atropos;
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DDL.TableName;
 import kiarahmani.atropos.DML.Variable;
@@ -16,6 +19,7 @@ public class WHC_Constraint {
 	private BinOp op;
 	private Expression exp;
 	private boolean alive_constraint;
+	private static final Logger logger = LogManager.getLogger(Atropos.class);
 
 	public WHC_Constraint(TableName tn, FieldName f, BinOp op, Expression exp) {
 		this.tn = tn;
@@ -43,6 +47,14 @@ public class WHC_Constraint {
 
 	public FieldName getFieldName() {
 		return this.f;
+	}
+
+	public boolean isEqual(WHC_Constraint other) {
+		logger.debug(this.f + " =? " + other.f + "   (" + this.f.equals(other.f) + ")");
+		logger.debug(this.op + " =? " + other.op + "   (" + (this.op == other.op) + ")");
+		logger.debug(this.exp + " =? " + other.exp + "    (" + this.exp.isEqual(other.exp) + ")");
+		return this.f.equals(other.f) && this.op == other.op && this.exp.isEqual(other.exp);
+
 	}
 
 	@Override

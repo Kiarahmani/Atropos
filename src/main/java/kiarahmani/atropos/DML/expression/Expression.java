@@ -17,4 +17,6 @@ public abstract class Expression {
 	 */
 	public abstract HashSet<E_Proj> getAllProjExps();
 
+	public abstract boolean isEqual(Expression other);
+
 }

@@ -55,4 +55,14 @@ public class E_Proj extends Expression {
 		result.add(this);
 		return result;
 	}
+
+	@Override
+	public boolean isEqual(Expression other) {
+		if (other instanceof E_Proj) {
+			E_Proj other_e_proj = (E_Proj) other;
+			return (v.equals(other_e_proj.v)) && (f.equals(other_e_proj.f)) && (e.isEqual(other_e_proj.e));
+		} else
+			return false;
+	}
+
 }

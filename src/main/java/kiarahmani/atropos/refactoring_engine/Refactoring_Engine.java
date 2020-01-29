@@ -235,7 +235,6 @@ public class Refactoring_Engine {
 
 	public Program_Utils applyAndPropagate(Program_Utils input_pu, Query_Modifier modifier, int apply_at_po,
 			String txnName) {
-		System.out.println(modifier.type);
 		switch (modifier.type) {
 		case OTO:
 			One_to_One_Query_Modifier otoqm = (One_to_One_Query_Modifier) modifier;

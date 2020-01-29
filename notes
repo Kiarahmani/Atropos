@@ -1,7 +1,7 @@
 ====================================================================================================
 TODO:
   
-  
+  - Add a comment section to each program to capture its refactoring history 
   - Analyze the encoding engine and figure out why it works so slowly on CRDT
     version (I don't think it is justified)
   - (syntactical) support for aggregating queries

@@ -56,4 +56,14 @@ public class E_Arg extends Expression {
 	public HashSet<E_Proj> getAllProjExps() {
 		return new HashSet<>();
 	}
+
+	@Override
+	public boolean isEqual(Expression other) {
+		if (other instanceof E_Arg) {
+			E_Arg other_e_arg = (E_Arg) other;
+			return this.arg_name.equals(other_e_arg.arg_name)
+					&& this.transactionName.equals(other_e_arg.transactionName);
+		} else
+			return false; // exp is of a different sub class
+	}
 }
