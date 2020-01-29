@@ -3,7 +3,7 @@
  * Copyright (C) Kia Rahmani, 2020 - All Rights Reserved
  *
  **/
-package kiarahmani.atropos.refactoring_engine.deltas.Modifiers;
+package kiarahmani.atropos.refactoring_engine.Modifiers.OTT;
 
 import java.util.ArrayList;
 

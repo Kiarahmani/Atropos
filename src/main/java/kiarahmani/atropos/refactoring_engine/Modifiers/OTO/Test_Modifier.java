@@ -3,7 +3,7 @@
  * Copyright (C) Kia Rahmani, 2020 - All Rights Reserved
  *
  **/
-package kiarahmani.atropos.refactoring_engine.deltas.Modifiers;
+package kiarahmani.atropos.refactoring_engine.Modifiers.OTO;
 
 import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.query.Query;

@@ -3,12 +3,13 @@
  * Copyright (C) Kia Rahmani, 2020 - All Rights Reserved
  *
  **/
-package kiarahmani.atropos.refactoring_engine.deltas.Modifiers;
+package kiarahmani.atropos.refactoring_engine.Modifiers.OTT;
 
 import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.query.Query;
 import kiarahmani.atropos.program.Statement;
 import kiarahmani.atropos.program.statements.Query_Statement;
+import kiarahmani.atropos.refactoring_engine.Modifiers.Query_Modifier;
 import kiarahmani.atropos.refactoring_engine.deltas.Modifiers.Query_Modifier.QM_TYPE;
 import kiarahmani.atropos.utils.Tuple;
 

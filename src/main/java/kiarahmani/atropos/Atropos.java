@@ -15,11 +15,11 @@ import kiarahmani.atropos.program.Program;
 import kiarahmani.atropos.program_generators.ProgramGenerator;
 import kiarahmani.atropos.program_generators.SmallBank.SmallBankProgramGenerator;
 import kiarahmani.atropos.refactoring_engine.Refactoring_Engine;
+import kiarahmani.atropos.refactoring_engine.Modifiers.OTO.Query_Redirector;
+import kiarahmani.atropos.refactoring_engine.Modifiers.OTT.SELECT_Splitter;
+import kiarahmani.atropos.refactoring_engine.Modifiers.OTT.UPDATE_Splitter;
 import kiarahmani.atropos.refactoring_engine.deltas.Delta;
 import kiarahmani.atropos.refactoring_engine.deltas.INTRO_F;
-import kiarahmani.atropos.refactoring_engine.deltas.Modifiers.Query_Redirector;
-import kiarahmani.atropos.refactoring_engine.deltas.Modifiers.SELECT_Splitter;
-import kiarahmani.atropos.refactoring_engine.deltas.Modifiers.UPDATE_Splitter;
 import kiarahmani.atropos.utils.Constants;
 import kiarahmani.atropos.utils.Program_Utils;
 

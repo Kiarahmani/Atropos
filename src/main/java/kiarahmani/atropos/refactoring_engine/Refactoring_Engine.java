@@ -20,15 +20,15 @@ import kiarahmani.atropos.program.Transaction;
 import kiarahmani.atropos.program.Block.BlockType;
 import kiarahmani.atropos.program.statements.If_Statement;
 import kiarahmani.atropos.program.statements.Query_Statement;
+import kiarahmani.atropos.refactoring_engine.Modifiers.Query_Modifier;
+import kiarahmani.atropos.refactoring_engine.Modifiers.OTO.One_to_One_Query_Modifier;
+import kiarahmani.atropos.refactoring_engine.Modifiers.OTT.One_to_Two_Query_Modifier;
+import kiarahmani.atropos.refactoring_engine.Modifiers.TTO.Two_to_One_Query_Modifier;
 import kiarahmani.atropos.refactoring_engine.deltas.Delta;
 import kiarahmani.atropos.refactoring_engine.deltas.INTRO_F;
 import kiarahmani.atropos.refactoring_engine.deltas.INTRO_R;
-import kiarahmani.atropos.refactoring_engine.deltas.Modifiers.One_to_One_Query_Modifier;
-import kiarahmani.atropos.refactoring_engine.deltas.Modifiers.One_to_Two_Query_Modifier;
-import kiarahmani.atropos.refactoring_engine.deltas.Modifiers.Query_Modifier;
 import kiarahmani.atropos.utils.Program_Utils;
 import kiarahmani.atropos.utils.Tuple;
-import kiarahmani.atropos.utils.Program_Utils;
 
 public class Refactoring_Engine {
 	private static final Logger logger = LogManager.getLogger(Atropos.class);
@@ -256,6 +256,14 @@ public class Refactoring_Engine {
 			propagateToRange(input_pu, modifier, apply_at_po, txnName);
 			break;
 
+		case TTO:
+			Two_to_One_Query_Modifier ttoqm = (Two_to_One_Query_Modifier) modifier;
+			logger.debug("First calling applyAtIndex to apply the desired modification at index");
+			applyAtIndex(input_pu, ttoqm, apply_at_po, apply_at_po + 1, txnName);
+			logger.debug(
+					"Now calling propagateToRange to apply the deisred modifications at all subsequent statements");
+			propagateToRange(input_pu, modifier, apply_at_po, txnName);
+
 		default:
 			assert (false) : "unexpected state: Query_Modifier has an unknown type: " + modifier.getClass().toString();
 			break;
@@ -284,6 +292,41 @@ public class Refactoring_Engine {
 		deleteQuery(input_pu, apply_at_po, txnName);
 		logger.debug("new Calling InsertQueriesAtPO to add the new query to the transaction");
 		InsertQueriesAtPO(orig_block, input_pu, txnName, apply_at_po, new Query_Statement(apply_at_po, new_qry));
+		return input_pu;
+	}
+
+	/*
+	 * 
+	 * 2-1 At Index Modifications
+	 * 
+	 */
+
+	public Program_Utils applyAtIndex(Program_Utils input_pu, Two_to_One_Query_Modifier modifier, int apply_at_po_fst,
+			int apply_at_po_sec, String txnName) {
+		assert (apply_at_po_sec == apply_at_po_fst + 1) : "can only apply TTO modifiers on adjacent queries";
+		assert (modifier.isSet()) : "cannot apply the modifier since it is not set";
+		Block fst_block = input_pu.getBlockByPo(txnName, apply_at_po_fst);
+		Block sec_block = input_pu.getBlockByPo(txnName, apply_at_po_sec);
+		assert (fst_block.isEqual(sec_block)) : "can only apply TTO modifiers on queries in the same block";
+		logger.debug("the original queries are found in block: " + fst_block);
+
+		logger.debug(
+				"Applying the modifer " + modifier + " at indexes: " + apply_at_po_fst + " and " + apply_at_po_sec);
+		Query fst_qry = input_pu.getQueryByPo(txnName, apply_at_po_fst);
+		Query sec_qry = input_pu.getQueryByPo(txnName, apply_at_po_sec);
+		// define new query
+		Query new_qry = modifier.atIndexModification(fst_qry, sec_qry);
+		logger.debug("old queries (" + fst_qry.getId() + ") and (" + sec_qry.getId()
+				+ ") are going to be replaced with new query (" + new_qry.getId() + ")");
+
+		logger.debug("now calling deleteQuery (twice) to remove the old queries from the transaction");
+		deleteQuery(input_pu, apply_at_po_fst, txnName);
+		deleteQuery(input_pu, apply_at_po_sec, txnName);
+
+		logger.debug("now calling InsertQueriesAtPO to add the new query to the transaction");
+		InsertQueriesAtPO(fst_block, input_pu, txnName, apply_at_po_fst, new Query_Statement(apply_at_po_fst, new_qry));
+
+		// return
 		return input_pu;
 	}
 
