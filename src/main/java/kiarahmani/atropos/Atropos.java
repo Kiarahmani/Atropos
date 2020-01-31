@@ -11,6 +11,11 @@ import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DDL.vc.*;
 import kiarahmani.atropos.DDL.vc.VC.VC_Agg;
 import kiarahmani.atropos.DDL.vc.VC.VC_Type;
+import kiarahmani.atropos.DML.expression.BinOp;
+import kiarahmani.atropos.DML.expression.constants.E_Const_Num;
+import kiarahmani.atropos.DML.query.Update_Query;
+import kiarahmani.atropos.DML.where_clause.WHC;
+import kiarahmani.atropos.DML.where_clause.WHC_Constraint;
 import kiarahmani.atropos.program.Program;
 import kiarahmani.atropos.program_generators.ProgramGenerator;
 import kiarahmani.atropos.program_generators.SmallBank.SmallBankProgramGenerator;
@@ -151,6 +156,23 @@ public class Atropos {
 
 		merged_program_upd = pu.generateProgram();
 		merged_program_upd.printProgram();
+
+		// do it again on makers
+		qry_dup = new UPDATE_Duplicator();
+		qry_dup.set(pu, test_txn, "makers", "car");
+		re.applyAndPropagate(pu, qry_dup, 7, test_txn);
+
+		merged_program_upd = pu.generateProgram();
+		merged_program_upd.printProgram();
+
+
+		// do it again
+		qry_dup = new UPDATE_Duplicator();
+		qry_dup.set(pu, test_txn, "car", "makers");
+		 re.applyAndPropagate(pu, qry_dup, 8, test_txn);
+
+		 merged_program_upd = pu.generateProgram();
+		 merged_program_upd.printProgram();
 
 		// Print Running Time
 		long time_end = System.currentTimeMillis();

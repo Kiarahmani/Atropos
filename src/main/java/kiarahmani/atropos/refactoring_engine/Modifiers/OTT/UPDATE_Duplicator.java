@@ -76,8 +76,8 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 
 	private ArrayList<Tuple<FieldName, Expression>> updateUE(ArrayList<Tuple<FieldName, Expression>> old_ue) {
 		ArrayList<Tuple<FieldName, Expression>> result = new ArrayList<>();
-		for (Tuple<FieldName, Expression> fe: old_ue)
-			result.add(new Tuple<FieldName, Expression>(vc.getCorrespondingFN(fe.x),fe.y));
+		for (Tuple<FieldName, Expression> fe : old_ue)
+			result.add(new Tuple<FieldName, Expression>(vc.getCorrespondingFN(fe.x), fe.y));
 		return result;
 	}
 
