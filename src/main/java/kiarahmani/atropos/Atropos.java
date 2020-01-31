@@ -165,14 +165,26 @@ public class Atropos {
 		merged_program_upd = pu.generateProgram();
 		merged_program_upd.printProgram();
 
-
 		// do it again
 		qry_dup = new UPDATE_Duplicator();
 		qry_dup.set(pu, test_txn, "car", "makers");
-		 re.applyAndPropagate(pu, qry_dup, 8, test_txn);
+		re.applyAndPropagate(pu, qry_dup, 8, test_txn);
 
-		 merged_program_upd = pu.generateProgram();
-		 merged_program_upd.printProgram();
+		merged_program_upd = pu.generateProgram();
+		merged_program_upd.printProgram();
+
+		// Add vc between makers table and a CRDT table to hold maker's budget
+		pu.mkVC("makers", "makers_budget_crdt", VC_Agg.VC_SUM, VC_Type.VC_OTM,
+				new VC_Constraint(pu.getFieldName("maker_id"), pu.getFieldName("mbc_maker_id")));
+
+		pu.addFieldTupleToVC("vc_2", "maker_budget", "mbc_amnt");
+
+		// redirect select on makers to the CRDT copy in makers_budget_crdt table
+		qry_red.set(pu, test_txn, "makers", "makers_budget_crdt");
+		re.applyAndPropagate(pu, qry_red, 10, test_txn);
+
+		merged_program_upd = pu.generateProgram();
+		merged_program_upd.printProgram();
 
 		// Print Running Time
 		long time_end = System.currentTimeMillis();
