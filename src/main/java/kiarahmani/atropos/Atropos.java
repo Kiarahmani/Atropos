@@ -17,6 +17,7 @@ import kiarahmani.atropos.program_generators.SmallBank.SmallBankProgramGenerator
 import kiarahmani.atropos.refactoring_engine.Refactoring_Engine;
 import kiarahmani.atropos.refactoring_engine.Modifiers.OTO.Query_Redirector;
 import kiarahmani.atropos.refactoring_engine.Modifiers.OTT.SELECT_Splitter;
+import kiarahmani.atropos.refactoring_engine.Modifiers.OTT.UPDATE_Duplicator;
 import kiarahmani.atropos.refactoring_engine.Modifiers.OTT.UPDATE_Splitter;
 import kiarahmani.atropos.refactoring_engine.Modifiers.TTO.SELECT_Merger;
 import kiarahmani.atropos.refactoring_engine.Modifiers.TTO.UPDATE_Merger;
@@ -131,20 +132,21 @@ public class Atropos {
 
 		new_field_program = pu.generateProgram();
 		new_field_program.printProgram();
-		
-		
-		
+
 		// redirect select on makers to the copies in car table
 		qry_red.set(pu, test_txn, "makers", "car");
 		re.applyAndPropagate(pu, qry_red, 5, test_txn);
 		redirected_program = pu.generateProgram();
 		redirected_program.printProgram();
-		
+
 		// merge two consecutive selects on (now) car
 		re.applyAndPropagate(pu, select_merger, 4, test_txn);
 		merged_program_upd = pu.generateProgram();
 		merged_program_upd.printProgram();
 
+		// duplicate an update operation
+		UPDATE_Duplicator qry_dup = new UPDATE_Duplicator();
+		qry_dup.set(pu, test_txn, "savings", "accounts");
 
 		// Print Running Time
 		long time_end = System.currentTimeMillis();

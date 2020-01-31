@@ -201,6 +201,13 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 					"maker_budget", "maker_country");
 			pu.addQueryStatement("test", select_2);
 
+			// a write on savings (which will be used to test basic duplication)
+			WHC DepositChecking_WHC111 = new WHC(pu.getIsAliveFieldName("savings"),
+					new WHC_Constraint(pu.getTableName("savings"), pu.getFieldName("s_custid"), BinOp.EQ, new E_Const_Num(96)));
+			Update_Query DepositChecking111 = pu.addUpdateQuery("test", "savings", true, DepositChecking_WHC111);
+			DepositChecking111.addUpdateExp(pu.getFieldName("s_bal"), new E_Const_Num(69));
+			pu.addQueryStatement("test", DepositChecking111);
+
 		}
 
 		/*
