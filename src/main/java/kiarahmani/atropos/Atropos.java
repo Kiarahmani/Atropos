@@ -147,6 +147,10 @@ public class Atropos {
 		// duplicate an update operation
 		UPDATE_Duplicator qry_dup = new UPDATE_Duplicator();
 		qry_dup.set(pu, test_txn, "savings", "accounts");
+		re.applyAndPropagate(pu, qry_dup, 5, test_txn);
+
+		merged_program_upd = pu.generateProgram();
+		merged_program_upd.printProgram();
 
 		// Print Running Time
 		long time_end = System.currentTimeMillis();
