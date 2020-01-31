@@ -320,7 +320,7 @@ public class Refactoring_Engine {
 		logger.debug("now calling deleteQuery (twice) to remove the old queries from the transaction");
 		deleteQuery(input_pu, apply_at_po_fst, txnName);
 		logger.debug("po=" + apply_at_po_fst + " is removed");
-		deleteQuery(input_pu, apply_at_po_fst, txnName); // XXX BE CAREFUL! SINCE apply_at_po_fst is already deleted,
+		deleteQuery(input_pu, apply_at_po_fst, txnName); // BE CAREFUL! SINCE apply_at_po_fst is already deleted,
 															// now what used to be at apply_at_po_sec resides at
 															// po=apply_at_po_fst and hence the function is called on
 															// apply_at_po_fst again

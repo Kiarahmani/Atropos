@@ -18,6 +18,7 @@ import kiarahmani.atropos.refactoring_engine.Refactoring_Engine;
 import kiarahmani.atropos.refactoring_engine.Modifiers.OTO.Query_Redirector;
 import kiarahmani.atropos.refactoring_engine.Modifiers.OTT.SELECT_Splitter;
 import kiarahmani.atropos.refactoring_engine.Modifiers.OTT.UPDATE_Splitter;
+import kiarahmani.atropos.refactoring_engine.Modifiers.TTO.SELECT_Merger;
 import kiarahmani.atropos.refactoring_engine.Modifiers.TTO.UPDATE_Merger;
 import kiarahmani.atropos.refactoring_engine.deltas.Delta;
 import kiarahmani.atropos.refactoring_engine.deltas.INTRO_F;
@@ -88,17 +89,62 @@ public class Atropos {
 		Program splitted_program_upd = pu.generateProgram();
 		splitted_program_upd.printProgram();
 
-		// Instantiate a new modifier (splitter) and apply it
+		// Instantiate a new modifier (update merger) and apply it
 		UPDATE_Merger upd_merger = new UPDATE_Merger();
 		upd_merger.set(pu, test_txn);
 		re.applyAndPropagate(pu, upd_merger, 5, test_txn);
 		Program merged_program_upd = pu.generateProgram();
 		merged_program_upd.printProgram();
-		
+
 		// DO it again
 		re.applyAndPropagate(pu, upd_merger, 5, test_txn);
 		merged_program_upd = pu.generateProgram();
 		merged_program_upd.printProgram();
+
+		// Instantiate a new modifier (select merger) and apply it
+		SELECT_Merger select_merger = new SELECT_Merger();
+		select_merger.set(pu, test_txn);
+		re.applyAndPropagate(pu, select_merger, 0, test_txn);
+		merged_program_upd = pu.generateProgram();
+		merged_program_upd.printProgram();
+
+		// DO it again
+		re.applyAndPropagate(pu, select_merger, 0, test_txn);
+		merged_program_upd = pu.generateProgram();
+		merged_program_upd.printProgram();
+
+		// add new columns in car table
+		Delta intro_car = new INTRO_F("car", "car_maker_name", F_Type.NUM);
+		re.refactor(pu, intro_car);
+		intro_car = new INTRO_F("car", "car_maker_budget", F_Type.NUM);
+		re.refactor(pu, intro_car);
+		intro_car = new INTRO_F("car", "car_maker_country", F_Type.NUM);
+		re.refactor(pu, intro_car);
+
+		// Add a new vc
+		pu.mkVC("makers", "car", VC_Agg.VC_ID, VC_Type.VC_OTM,
+				new VC_Constraint(pu.getFieldName("maker_id"), pu.getFieldName("car_maker")));
+
+		pu.addFieldTupleToVC("vc_1", "maker_name", "car_maker_name");
+		pu.addFieldTupleToVC("vc_1", "maker_budget", "car_maker_budget");
+		pu.addFieldTupleToVC("vc_1", "maker_country", "car_maker_country");
+
+		new_field_program = pu.generateProgram();
+		new_field_program.printProgram();
+		
+		
+		
+		// redirect select on makers to the copies in car table
+		qry_red.set(pu, test_txn, "makers", "car");
+		re.applyAndPropagate(pu, qry_red, 5, test_txn);
+		redirected_program = pu.generateProgram();
+		redirected_program.printProgram();
+		
+		// merge two consecutive selects on (now) car
+		re.applyAndPropagate(pu, select_merger, 4, test_txn);
+		merged_program_upd = pu.generateProgram();
+		merged_program_upd.printProgram();
+
 
 		// Print Running Time
 		long time_end = System.currentTimeMillis();

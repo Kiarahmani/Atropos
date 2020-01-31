@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
@@ -413,11 +414,16 @@ public class Program_Utils {
 		return trasnsactionMap;
 	}
 
+	// returns null if no VC is found
 	public VC getVCByTables(TableName TN1, TableName TN2) {
-		return this.vcMap.values().stream()
+		List<VC> result = this.vcMap.values().stream()
 				.filter(vc -> ((vc.getTableName(1).equals(TN1)) && (vc.getTableName(2).equals(TN2))
 						|| ((vc.getTableName(1).equals(TN2)) && (vc.getTableName(2).equals(TN1)))))
-				.collect(Collectors.toList()).get(0);
+				.collect(Collectors.toList());
+		if (result.size() == 0)
+			return null;
+		else
+			return result.get(0);
 	}
 
 	public Table getTable(String tableName) {
@@ -431,6 +437,54 @@ public class Program_Utils {
 				return q;
 		logger.debug("no query was found in txn: " + txnName + " at po: " + po);
 		return null;
+	}
+
+	public boolean checkPotKeyForFn(TableName tn, ArrayList<FieldName> pot_keys, FieldName fn) {
+		// cases: either pot_keys are PK of tn, or there are VCs that state
+		// pot_keys are sufficient for uniquness
+		// case1: check if pot_keys are PK of tn
+		Table t = tableMap.get(tn.getName());
+		boolean contains_fn = t.getFieldNames().contains(fn);
+		if (contains_fn) {
+			logger.debug("first guard passed: the field " + fn + " is in the table " + tn);
+			boolean contained_pks = pot_keys.containsAll(t.getPKFields());
+			if (contained_pks) {
+				logger.debug(
+						"potential keys are in fact PK of the table, hence there is no need to do further analysis on VCs");
+				return true;
+			} else { // case 2: look for proper VCs
+				logger.debug("potential keys were not PK of the original table, hence must search for proper VCs");
+				for (Table other_t : this.tableMap.values()) {
+					VC vc = getVCByTables(other_t.getTableName(), t.getTableName());
+					if (vc != null) {
+						logger.debug("a vc found between " + other_t.getTableName() + " and " + t.getTableName());
+						logger.debug(
+								"must now check if " + pot_keys + " has corresponding PK in " + other_t.getTableName());
+						List<FieldName> constrained_fns = vc.getVCC().stream().map(vcc -> vcc.getF_1())
+								.collect(Collectors.toList());
+						logger.debug(
+								"constrained fields in table " + other_t.getTableName() + " are: " + constrained_fns);
+						List<FieldName> corresponding_constrained_fns = constrained_fns.stream()
+								.map(mfn -> vc.getCorrespondingFN(mfn)).collect(Collectors.toList());
+						logger.debug("corresponding fields for above fields are " + other_t.getTableName() + " are: "
+								+ corresponding_constrained_fns);
+						if (pot_keys.containsAll(corresponding_constrained_fns))
+							return true;
+					} else {
+						logger.debug("no vc found between " + other_t.getTableName() + " and " + t.getTableName()
+								+ ": continue");
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+	public boolean checkPotKeyForFns(TableName tn, ArrayList<FieldName> pot_keys, ArrayList<FieldName> fns) {
+		for (FieldName fn : fns)
+			if (!checkPotKeyForFn(tn, pot_keys, fn))
+				return false;
+		return true;
 	}
 
 	/*****************************************************************************************************************/

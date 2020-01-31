@@ -6,6 +6,7 @@ import kiarahmani.atropos.DDL.F_Type;
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DML.expression.BinOp;
 import kiarahmani.atropos.DML.expression.E_BinUp;
+import kiarahmani.atropos.DML.expression.E_Proj;
 import kiarahmani.atropos.DML.expression.E_UnOp;
 import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.expression.E_UnOp.UnOp;
@@ -52,6 +53,18 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 		pu.mkTable("checking", new FieldName("c_custid", true, true, F_Type.NUM),
 				new FieldName("c_bal", false, false, F_Type.NUM), new FieldName("c_score", false, false, F_Type.NUM),
 				new FieldName("c_age", false, false, F_Type.NUM));
+
+		pu.mkTable("car", new FieldName("car_id", true, true, F_Type.NUM),
+				new FieldName("car_maker", false, false, F_Type.NUM),
+				new FieldName("car_model", false, false, F_Type.NUM),
+				new FieldName("car_year", false, false, F_Type.NUM),
+				new FieldName("car_type", false, false, F_Type.NUM));
+
+		pu.mkTable("makers", new FieldName("maker_id", true, true, F_Type.NUM),
+				new FieldName("maker_name", false, false, F_Type.NUM),
+				new FieldName("maker_budget", false, false, F_Type.NUM),
+				new FieldName("maker_country", false, false, F_Type.NUM),
+				new FieldName("maker_age", false, false, F_Type.NUM));
 		/*
 		 * 
 		 * Amalgamate
@@ -128,8 +141,8 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 
 			// get customer's id based on his/her name
 			WHC Balance_GetAccount0_WHC = new WHC(pu.getIsAliveFieldName("accounts"),
-					new WHC_Constraint(pu.getTableName("accounts"), pu.getFieldName("a_name"), BinOp.EQ,
-							pu.mkProjExpr("test", 0, "a_name", 1)));
+					new WHC_Constraint(pu.getTableName("accounts"), pu.getFieldName("a_custid"), BinOp.EQ,
+							pu.mkProjExpr("test", 0, "a_custid", 1)));
 			Select_Query Balance_GetAccount0 = pu.addSelectQuery("test", "accounts", false, Balance_GetAccount0_WHC,
 					"a_custid");
 			pu.addQueryStatement("test", Balance_GetAccount0);
@@ -154,11 +167,11 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 			WHC DepositChecking_WHC = new WHC(pu.getIsAliveFieldName("checking"), new WHC_Constraint(
 					pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ,
 					new E_BinUp(BinOp.PLUS,
-							new E_BinUp(BinOp.MULT, (pu.mkProjExpr("test", 1, "s_bal", 1)), new E_Const_Num(11)),
+							new E_BinUp(BinOp.MULT, (pu.mkProjExpr("test", 2, "s_bal", 1)), new E_Const_Num(11)),
 							new E_Const_Num(1))));
 			Update_Query DepositChecking = pu.addUpdateQuery("test", "checking", true, DepositChecking_WHC);
 			DepositChecking.addUpdateExp(pu.getFieldName("c_bal"),
-					new E_BinUp(BinOp.PLUS, pu.mkProjExpr("test", 1, "s_bal", 1), new E_Const_Num(1)));
+					new E_BinUp(BinOp.PLUS, pu.mkProjExpr("test", 2, "s_bal", 1), new E_Const_Num(1)));
 			DepositChecking.addUpdateExp(pu.getFieldName("c_score"),
 					new E_BinUp(BinOp.PLUS, pu.mkProjExpr("test", 0, "a_custid", 1), new E_Const_Num(69)));
 			pu.addQueryStatement("test", DepositChecking);
@@ -167,12 +180,26 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 			WHC DepositChecking_WHC11 = new WHC(pu.getIsAliveFieldName("checking"),
 					new WHC_Constraint(pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ,
 							new E_BinUp(BinOp.PLUS, new E_Const_Num(1),
-									new E_BinUp(BinOp.MULT, new E_Const_Num(11), (pu.mkProjExpr("test", 1, "s_bal", 1)))
+									new E_BinUp(BinOp.MULT, new E_Const_Num(11), (pu.mkProjExpr("test", 2, "s_bal", 1)))
 
 							)));
 			Update_Query DepositChecking11 = pu.addUpdateQuery("test", "checking", true, DepositChecking_WHC11);
 			DepositChecking11.addUpdateExp(pu.getFieldName("c_age"), new E_Const_Num(69));
 			pu.addQueryStatement("test", DepositChecking11);
+
+			// select on car
+			WHC select_whc_1 = new WHC(pu.getIsAliveFieldName("car"), new WHC_Constraint(pu.getTableName("car"),
+					pu.getFieldName("car_id"), BinOp.EQ, new E_Const_Num(10)));
+			Select_Query select_1 = pu.addSelectQuery("test", "car", true, select_whc_1, "car_id", "car_maker",
+					"car_model", "car_type");
+			pu.addQueryStatement("test", select_1);
+
+			// select corresponding maker
+			WHC select_whc_2 = new WHC(pu.getIsAliveFieldName("makers"), new WHC_Constraint(pu.getTableName("makers"),
+					pu.getFieldName("maker_id"), BinOp.EQ, pu.mkProjExpr("test", 4, "car_maker", 1)));
+			Select_Query select_2 = pu.addSelectQuery("test", "makers", true, select_whc_2, "maker_id", "maker_name",
+					"maker_budget", "maker_country");
+			pu.addQueryStatement("test", select_2);
 
 		}
 

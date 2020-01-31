@@ -119,7 +119,7 @@ public class Query_Redirector extends One_to_One_Query_Modifier {
 
 		// there must be a correspondence from old table to new table, for every field
 		// selected by the redirecting SELCET
-		boolean assumption2 = vc.corresponsAllFns(input_query.getTableName(), input_query.getSelectedFieldNames());
+		boolean assumption2 = vc.correspondsAllFns(input_query.getTableName(), input_query.getSelectedFieldNames());
 
 		// redirecting SELECTS's where clause has only = (and not other comparison
 		// binary operations)

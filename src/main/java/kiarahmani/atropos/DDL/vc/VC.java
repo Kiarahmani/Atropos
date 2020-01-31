@@ -41,6 +41,10 @@ public class VC {
 	private ArrayList<VC_Constraint> vc_constraints;
 	private String name;
 
+	public ArrayList<VC_Constraint> getVCC() {
+		return this.vc_constraints;
+	}
+
 	public FieldName getCorrespondingFN(FieldName input_fn) {
 		for (Tuple<FieldName, FieldName> fnt : this.fieldTuples)
 			if (fnt.x.equals(input_fn))
@@ -91,6 +95,7 @@ public class VC {
 	}
 
 	public void addConstraint(VC_Constraint vcc) {
+		fieldTuples.add(new Tuple<FieldName, FieldName>(vcc.getF_1(), vcc.getF_2()));
 		this.vc_constraints.add(vcc);
 	}
 
@@ -114,7 +119,7 @@ public class VC {
 		return false;
 	}
 
-	public boolean corresponsAllFns(TableName tn, ArrayList<FieldName> fns) {
+	public boolean correspondsAllFns(TableName tn, ArrayList<FieldName> fns) {
 		boolean result = true;
 		for (FieldName fn : fns) {
 			result = result && corresponsSingleFn(tn, fn);

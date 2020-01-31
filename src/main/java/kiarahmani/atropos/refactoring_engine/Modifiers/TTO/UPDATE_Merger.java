@@ -47,11 +47,6 @@ public class UPDATE_Merger extends Two_to_One_Query_Modifier {
 
 	/*
 	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * kiarahmani.atropos.refactoring_engine.Modifiers.TTO.Two_to_One_Query_Modifier
-	 * #atIndexModification(kiarahmani.atropos.DML.query.Query,
-	 * kiarahmani.atropos.DML.query.Query)
 	 */
 	@Override
 	public Query atIndexModification(Query input_query_1, Query input_query_2) {
@@ -59,10 +54,11 @@ public class UPDATE_Merger extends Two_to_One_Query_Modifier {
 		old_update2 = (Update_Query) input_query_2;
 		logger.debug("whc1: " + old_update1.getWHC());
 		logger.debug("whc2: " + old_update2.getWHC());
-		Table old_table = pu.getTable(old_update1.getTableName().getName()); // this is stupid XXX
+		Table old_table = pu.getTable(old_update1.getTableName().getName());
 		WHC new_whc = mergeWHCs(old_update1.getWHC(), old_update2.getWHC());
-		assert (new_whc != null && modificationIsValid()) : "requested modification cannot be done on: "
-				+ input_query_1.getId() + " and " + input_query_2.getId();
+		assert (new_whc != null
+				&& modificationIsValid(old_update1, old_update2)) : "requested modification cannot be done on: "
+						+ input_query_1.getId() + " and " + input_query_2.getId();
 		Update_Query new_update = new Update_Query(-1, pu.getNewUpdateId(txnName),
 				new_whc.isAtomic(old_table.getShardKey()), old_table.getTableName(), new_whc);
 		for (Tuple<FieldName, Expression> fe : old_update1.getUpdateExps())
@@ -73,9 +69,14 @@ public class UPDATE_Merger extends Two_to_One_Query_Modifier {
 		return new_update;
 	}
 
-	private boolean modificationIsValid() {
-		// TODO
-		return true;
+	private boolean modificationIsValid(Update_Query old_update1, Update_Query old_update2) {
+		boolean valid1 = old_update1.getTableName().equalsWith(old_update2.getTableName());
+		logger.debug("valid1: " + valid1);
+		boolean valid2 = old_update1.isAtomic() == old_update2.isAtomic();
+		logger.debug("valid2: " + valid2);
+		boolean valid3 = old_update1.getPo() == old_update2.getPo() - 1;
+		logger.debug("valid3: " + valid3);
+		return valid1 && valid2 && valid3;
 	}
 
 	WHC mergeWHCs(WHC whc1, WHC whc2) {
