@@ -20,7 +20,7 @@ import kiarahmani.atropos.program.Program;
 import kiarahmani.atropos.program_generators.ProgramGenerator;
 import kiarahmani.atropos.program_generators.SmallBank.SmallBankProgramGenerator;
 import kiarahmani.atropos.refactoring_engine.Refactoring_Engine;
-import kiarahmani.atropos.refactoring_engine.Modifiers.OTO.Query_Redirector;
+import kiarahmani.atropos.refactoring_engine.Modifiers.OTO.SELECT_Redirector;
 import kiarahmani.atropos.refactoring_engine.Modifiers.OTT.SELECT_Splitter;
 import kiarahmani.atropos.refactoring_engine.Modifiers.OTT.UPDATE_Duplicator;
 import kiarahmani.atropos.refactoring_engine.Modifiers.OTT.UPDATE_Splitter;
@@ -71,7 +71,7 @@ public class Atropos {
 		refactored_program.printProgram();
 
 		// Instantiate a new modifier (redirector) and apply it
-		Query_Redirector qry_red = new Query_Redirector();
+		SELECT_Redirector qry_red = new SELECT_Redirector();
 		qry_red.set(pu, test_txn, "savings", "accounts");
 		re.applyAndPropagate(pu, qry_red, 2, test_txn);
 		Program redirected_program = pu.generateProgram();

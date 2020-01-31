@@ -63,9 +63,12 @@ public class SELECT_Merger extends Two_to_One_Query_Modifier {
 		logger.debug("whc1: " + old_select1.getWHC());
 		logger.debug("whc2: " + old_select2.getWHC());
 
-		WHC new_whc = mergeWHCs(old_select1, old_select2);
-		assert (new_whc != null && modificationIsValid()) : "requested modification cannot be done on: "
+		assert (modificationIsValid(old_select1, old_select1)) : "requested modification cannot be done on: "
 				+ input_query_1.getId() + " and " + input_query_2.getId();
+
+		WHC new_whc = mergeWHCs(old_select1, old_select2);
+		assert (new_whc != null) : "where clauses cannot be merged in: " + input_query_1.getId() + " and "
+				+ input_query_2.getId();
 		Table old_table = pu.getTable(old_select1.getTableName().getName());
 		new_var = pu.mkVariable(old_table.getTableName().getName(), txnName);
 		ArrayList<FieldName> new_fns = new ArrayList<>();
@@ -78,9 +81,11 @@ public class SELECT_Merger extends Two_to_One_Query_Modifier {
 		return new_select;
 	}
 
-	private boolean modificationIsValid() {
-		// TODO
-		return true;
+	private boolean modificationIsValid(Select_Query qry1, Select_Query qry2) {
+		// Queries access the same table
+		boolean assumption1 = qry1.getTableName().equalsWith(qry2.getTableName());
+
+		return assumption1;
 	}
 
 	WHC mergeWHCs(Select_Query qry_1, Select_Query qry_2) {
@@ -121,7 +126,7 @@ public class SELECT_Merger extends Two_to_One_Query_Modifier {
 	}
 
 	private boolean isAProjOnFn(Expression exp, FieldName fn, Variable var) {
-		logger.debug("Checking if " + exp + " is an instance of proj("+fn+") on " + var + " or not");
+		logger.debug("Checking if " + exp + " is an instance of proj(" + fn + ") on " + var + " or not");
 		if (exp instanceof E_Proj) {
 			E_Proj proj_exp = (E_Proj) exp;
 			if (proj_exp.v.equals(var) && proj_exp.e.isEqual(new E_Const_Num(1)) && proj_exp.f.equals(fn))

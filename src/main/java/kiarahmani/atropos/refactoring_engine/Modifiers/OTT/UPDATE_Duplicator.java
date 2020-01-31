@@ -46,7 +46,7 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 	 * modify each time.
 	 */
 	public void set(Program_Utils pu, String txnName, String sourceTableName, String targetTableName) {
-		logger.debug("setting the UPDATE_Splitter");
+		logger.debug("setting the UPDATE_Duplicator");
 		this.pu = pu;
 		this.txnName = txnName;
 		this.sourceTable = pu.getTable(sourceTableName);
@@ -61,12 +61,16 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 		old_update = (Update_Query) input_query;
 		WHC old_whcc = old_update.getWHC();
 		ArrayList<Tuple<FieldName, Expression>> old_ue = old_update.getUpdateExps();
+		logger.debug("Query to be duplicated: " + old_update.getPo());
 		// make sure modification is valid
-		assert (modificationIsValid()) : "requested modification cannot be done on: " + input_query;
+		assert (modificationIsValid(old_update)) : "requested modification cannot be done on: " + input_query;
 		// generate new query's components
 		WHC new_whc = updateWHC(old_whcc);
+		logger.debug("where clause of the duplicated query: " + new_whc);
 		ArrayList<Tuple<FieldName, Expression>> new_ue = updateUE(old_ue);
+		logger.debug("update expressions of the duplicated query: " + new_ue);
 		boolean new_isAtomic = new_whc.isAtomic(targetTable.getShardKey());
+		logger.debug("duplicated query is atomic? " + new_isAtomic);
 		Update_Query new_update = new Update_Query(-1, pu.getNewUpdateId(txnName), new_isAtomic,
 				targetTable.getTableName(), new_whc);
 		for (Tuple<FieldName, Expression> fe : new_ue)
@@ -126,9 +130,17 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 		return input_qry_stmt;
 	}
 
-	private boolean modificationIsValid() {
-		// TODO
-		boolean result = true;
+	private boolean modificationIsValid(Update_Query input_query) {
+		// all keys used as the WHC of duplicating UPDATE must be constrained by vc
+		boolean assumption1 = vc.containsWHC(input_query.getWHC());
+		// there must be a correspondence from src table to target table, for every
+		// field
+		// updated by the duplicating UPDATE
+		boolean assumption2 = vc.correspondsAllFns(input_query.getTableName(), input_query.getWrittenFieldNames());
+		// redirecting UPDATE's where clause has only = (and not other comparison
+		// binary operations)
+		boolean assumption3 = input_query.getWHC().hasOnlyEq();
+		boolean result = assumption1 && assumption2 && assumption3;
 		logger.debug("modificationIsValid returned result: " + result);
 		return result;
 	}

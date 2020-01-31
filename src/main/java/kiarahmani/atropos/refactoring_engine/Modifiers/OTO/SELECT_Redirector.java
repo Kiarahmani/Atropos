@@ -32,7 +32,7 @@ import kiarahmani.atropos.utils.Program_Utils;
  * @author Kiarash
  *
  */
-public class Query_Redirector extends One_to_One_Query_Modifier {
+public class SELECT_Redirector extends One_to_One_Query_Modifier {
 	private static final Logger logger = LogManager.getLogger(Atropos.class);
 	private Program_Utils pu;
 	private Table targetTable;
