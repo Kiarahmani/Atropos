@@ -66,4 +66,19 @@ public class E_Arg extends Expression {
 		} else
 			return false; // exp is of a different sub class
 	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * kiarahmani.atropos.DML.expression.Expression#substitute(kiarahmani.atropos.
+	 * DML.expression.Expression, kiarahmani.atropos.DML.expression.Expression)
+	 */
+	@Override
+	public Expression substitute(Expression oldExp, Expression newExp) {
+		if (this.isEqual(oldExp))
+			return newExp;
+		else
+			return this;
+	}
 }

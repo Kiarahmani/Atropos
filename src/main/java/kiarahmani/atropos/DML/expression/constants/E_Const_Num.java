@@ -42,11 +42,11 @@ public class E_Const_Num extends E_Const {
 	public HashSet<E_Proj> getAllProjExps() {
 		return new HashSet<>();
 	}
-	
+
 	public boolean equals(E_Const_Num other) {
 		return (this.val == other.val);
 	}
-	
+
 	@Override
 	public boolean isEqual(Expression other) {
 		if (other instanceof E_Const_Num) {
@@ -54,5 +54,13 @@ public class E_Const_Num extends E_Const {
 			return this.val == other_e_arg.val;
 		} else
 			return false; // exp is of a different sub class
+	}
+
+	@Override
+	public Expression substitute(Expression oldExp, Expression newExp) {
+		if (this.isEqual(oldExp))
+			return newExp;
+		else
+			return this;
 	}
 }

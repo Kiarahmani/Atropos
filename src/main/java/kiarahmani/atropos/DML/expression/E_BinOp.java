@@ -9,13 +9,13 @@ import kiarahmani.atropos.Atropos;
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DML.Variable;
 
-public class E_BinUp extends Expression {
+public class E_BinOp extends Expression {
 
 	public Expression oper1, oper2;
 	public BinOp op;
 	private static final Logger logger = LogManager.getLogger(Atropos.class);
 
-	public E_BinUp(BinOp o, Expression e1, Expression e2) {
+	public E_BinOp(BinOp o, Expression e1, Expression e2) {
 		this.oper1 = e1;
 		this.oper2 = e2;
 		this.op = o;
@@ -27,6 +27,17 @@ public class E_BinUp extends Expression {
 		assert (this.oper1 != null) : "oper1 is null (op:" + this.op + ")";
 		assert (this.oper2 != null) : "oper2 is null (op:" + this.op + ")";
 		return "(" + this.oper1.toString() + BinOp.BinOpToString(this.op) + this.oper2.toString() + ")";
+	}
+
+	@Override
+	public Expression substitute(Expression oldExp, Expression newExp) {
+		if (this.isEqual(oldExp))
+			return newExp;
+		else {
+			this.oper1 = this.oper1.substitute(oldExp, newExp);
+			this.oper2 = this.oper2.substitute(oldExp, newExp);
+			return this;
+		}
 	}
 
 	/*
@@ -67,8 +78,8 @@ public class E_BinUp extends Expression {
 
 	@Override
 	public boolean isEqual(Expression other) {
-		if (other instanceof E_BinUp) {
-			E_BinUp other_e_bin = (E_BinUp) other;
+		if (other instanceof E_BinOp) {
+			E_BinOp other_e_bin = (E_BinOp) other;
 			if (other_e_bin.op == this.op) {
 				logger.debug("operations are the same");
 				boolean ops_same = this.oper1.isEqual(other_e_bin.oper1) && this.oper2.isEqual(other_e_bin.oper2);

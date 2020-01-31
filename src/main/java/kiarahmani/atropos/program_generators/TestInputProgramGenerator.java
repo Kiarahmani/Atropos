@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import kiarahmani.atropos.DDL.F_Type;
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DML.expression.BinOp;
-import kiarahmani.atropos.DML.expression.E_BinUp;
+import kiarahmani.atropos.DML.expression.E_BinOp;
 import kiarahmani.atropos.DML.expression.E_UUID;
 import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.expression.constants.E_Const_Num;
@@ -124,7 +124,7 @@ public class TestInputProgramGenerator  implements ProgramGenerator{
 			// update
 			WHC increments_DEC_U1_WHC = new WHC(pu.getIsAliveFieldName(table_name),
 					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("key"), BinOp.EQ,
-							new E_BinUp(BinOp.PLUS, new E_Const_Num(1), pu.getArg("inc_id"))));
+							new E_BinOp(BinOp.PLUS, new E_Const_Num(1), pu.getArg("inc_id"))));
 			Update_Query increments_DEC_U1 = pu.addUpdateQuery(txn_name, table_name, true, increments_DEC_U1_WHC);
 			increments_DEC_U1.addUpdateExp(pu.getFieldName("value"), new E_Const_Num(2));
 			pu.addQueryStatement(txn_name, increments_DEC_U1);

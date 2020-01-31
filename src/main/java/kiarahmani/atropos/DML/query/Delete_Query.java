@@ -122,8 +122,7 @@ public class Delete_Query extends Query {
 	public HashSet<E_Proj> getAllProjExps() {
 		return this.where_clause.getAllProjExps();
 	}
-	
-	
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -134,5 +133,17 @@ public class Delete_Query extends Query {
 	@Override
 	public void redirectProjs(Variable oldVar, FieldName oldFn, Variable newVar, FieldName newFn) {
 		this.where_clause.redirectProjs(oldVar, oldFn, newVar, newFn);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * kiarahmani.atropos.DML.query.Query#substituteExps(kiarahmani.atropos.DML.
+	 * expression.Expression, kiarahmani.atropos.DML.expression.Expression)
+	 */
+	@Override
+	public void substituteExps(Expression oldExp, Expression newExp) {
+		this.where_clause.substituteExps(oldExp, newExp);
 	}
 }

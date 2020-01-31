@@ -1265,7 +1265,7 @@ public class Z3Driver {
 			return uuid;// ctx.mkInt2BV(Constants._MAX_FIELD_INT, (IntExpr) uuid_in_int);
 
 		case "E_BinUp":
-			E_BinUp bu_exp = (E_BinUp) input_expr;
+			E_BinOp bu_exp = (E_BinOp) input_expr;
 			switch (bu_exp.op) {
 			case GT:
 				return ctx.mkBVUGT((BitVecExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper1, po),

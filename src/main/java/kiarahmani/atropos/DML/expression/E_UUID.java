@@ -44,6 +44,14 @@ public class E_UUID extends Expression {
 	 */
 	@Override
 	public boolean isEqual(Expression other) {
-		return false;
+		return this.equals(other);
+	}
+
+	@Override
+	public Expression substitute(Expression oldExp, Expression newExp) {
+		if (this.isEqual(oldExp))
+			return newExp;
+		else
+			return this;
 	}
 }

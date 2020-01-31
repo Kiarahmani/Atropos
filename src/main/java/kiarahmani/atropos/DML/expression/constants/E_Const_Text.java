@@ -61,4 +61,12 @@ public class E_Const_Text extends E_Const {
 		} else
 			return false; // exp is of a different sub class
 	}
+
+	@Override
+	public Expression substitute(Expression oldExp, Expression newExp) {
+		if (this.isEqual(oldExp))
+			return newExp;
+		else
+			return this;
+	}
 }

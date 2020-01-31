@@ -24,7 +24,7 @@ import kiarahmani.atropos.DDL.vc.VC_Constraint;
 import kiarahmani.atropos.DML.Variable;
 import kiarahmani.atropos.DML.expression.BinOp;
 import kiarahmani.atropos.DML.expression.E_Arg;
-import kiarahmani.atropos.DML.expression.E_BinUp;
+import kiarahmani.atropos.DML.expression.E_BinOp;
 import kiarahmani.atropos.DML.expression.E_Proj;
 import kiarahmani.atropos.DML.expression.E_Size;
 import kiarahmani.atropos.DML.expression.E_UnOp;
@@ -293,7 +293,7 @@ public class Program_Utils {
 		transactionToStatement.put(txn, stmt_counts + 1);
 		Query_Statement result = new Query_Statement(stmt_counts, q);
 		If_Statement if_stmt = ifStatementMap.get(txn + "-if-" + if_id);
-		Expression new_path_condition = new E_BinUp(BinOp.AND, if_stmt.getPathCondition(), if_stmt.getCondition());
+		Expression new_path_condition = new E_BinOp(BinOp.AND, if_stmt.getPathCondition(), if_stmt.getCondition());
 		result.setPathCondition(new_path_condition);
 		if_stmt.addStatementInIf(result);
 		return result;
@@ -304,7 +304,7 @@ public class Program_Utils {
 		transactionToStatement.put(txn, stmt_counts + 1);
 		Query_Statement result = new Query_Statement(stmt_counts, q);
 		If_Statement if_stmt = ifStatementMap.get(txn + "-if-" + if_id);
-		Expression new_path_condition = new E_BinUp(BinOp.AND, if_stmt.getPathCondition(),
+		Expression new_path_condition = new E_BinOp(BinOp.AND, if_stmt.getPathCondition(),
 				new E_UnOp(UnOp.NOT, if_stmt.getCondition()));
 		result.setPathCondition(new_path_condition);
 		if_stmt.addStatementInElse(result);
@@ -317,7 +317,7 @@ public class Program_Utils {
 		If_Statement result = new If_Statement(if_stmt_counts, c);
 		Expression old_path_condition = ifStatementMap.get(txn + "-if-" + if_id).getPathCondition();
 		Expression old_condition = ifStatementMap.get(txn + "-if-" + if_id).getCondition();
-		result.setPathCondition(new E_BinUp(BinOp.AND, old_path_condition, old_condition));
+		result.setPathCondition(new E_BinOp(BinOp.AND, old_path_condition, old_condition));
 		ifStatementMap.put(txn + "-if-" + if_stmt_counts, result);
 		ifStatementMap.get(txn + "-if-" + if_id).addStatementInIf(result);
 		return result;
@@ -329,7 +329,7 @@ public class Program_Utils {
 		If_Statement result = new If_Statement(if_stmt_counts, c);
 		Expression old_path_condition = ifStatementMap.get(txn + "-if-" + if_id).getPathCondition();
 		Expression old_condition = ifStatementMap.get(txn + "-if-" + if_id).getCondition();
-		result.setPathCondition(new E_BinUp(BinOp.AND, old_path_condition, new E_UnOp(UnOp.NOT, old_condition)));
+		result.setPathCondition(new E_BinOp(BinOp.AND, old_path_condition, new E_UnOp(UnOp.NOT, old_condition)));
 		ifStatementMap.put(txn + "-if-" + if_stmt_counts, result);
 		ifStatementMap.get(txn + "-if-" + if_id).addStatementInElse(result);
 		return result;

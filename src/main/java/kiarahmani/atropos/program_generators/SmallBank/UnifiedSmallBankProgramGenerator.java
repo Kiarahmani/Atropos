@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import kiarahmani.atropos.DDL.F_Type;
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DML.expression.BinOp;
-import kiarahmani.atropos.DML.expression.E_BinUp;
+import kiarahmani.atropos.DML.expression.E_BinOp;
 import kiarahmani.atropos.DML.expression.E_UUID;
 import kiarahmani.atropos.DML.expression.E_UnOp;
 import kiarahmani.atropos.DML.expression.Expression;
@@ -52,7 +52,7 @@ public class UnifiedSmallBankProgramGenerator implements ProgramGenerator {
 		 */
 		if (txns.contains("Amalgamate")) {
 			pu.addTrnasaction("Amalgamate", "am_custId0:int", "am_custId1:int");
-			pu.addAssertion("Amalgamate", new E_UnOp(UnOp.NOT, new E_BinUp(BinOp.EQ, pu.getArg("am_custId1"), pu.getArg("am_custId0"))));
+			pu.addAssertion("Amalgamate", new E_UnOp(UnOp.NOT, new E_BinOp(BinOp.EQ, pu.getArg("am_custId1"), pu.getArg("am_custId0"))));
 			// retrieve customer0's data by id
 			WHC GetAccount0_WHC = new WHC(pu.getIsAliveFieldName("accounts"), new WHC_Constraint(
 					pu.getTableName("accounts"), pu.getFieldName("custid"), BinOp.EQ, pu.getArg("am_custId0")));
@@ -80,7 +80,7 @@ public class UnifiedSmallBankProgramGenerator implements ProgramGenerator {
 					pu.getTableName("accounts"), pu.getFieldName("custid"), BinOp.EQ, pu.getArg("am_custId1")));
 			Update_Query UpdateSavingsBalance = pu.addUpdateQuery("Amalgamate", "accounts", true,
 					UpdateSavingsBalance_WHC);
-			UpdateSavingsBalance.addUpdateExp(pu.getFieldName("savings"), new E_BinUp(BinOp.PLUS,
+			UpdateSavingsBalance.addUpdateExp(pu.getFieldName("savings"), new E_BinOp(BinOp.PLUS,
 					pu.getProjExpr("Amalgamate", 0, "savings", 1), pu.getProjExpr("Amalgamate", 0, "checking", 1)));
 			pu.addQueryStatement("Amalgamate", UpdateSavingsBalance);
 
@@ -120,7 +120,7 @@ public class UnifiedSmallBankProgramGenerator implements ProgramGenerator {
 					new WHC_Constraint(pu.getTableName("accounts"), pu.getFieldName("custid"), BinOp.EQ,
 							pu.getProjExpr("DepositChecking", 0, "custid", 1)));
 			Update_Query DepositChecking = pu.addUpdateQuery("DepositChecking", "accounts", true, DepositChecking_WHC);
-			DepositChecking.addUpdateExp(pu.getFieldName("checking"), new E_BinUp(BinOp.PLUS,
+			DepositChecking.addUpdateExp(pu.getFieldName("checking"), new E_BinOp(BinOp.PLUS,
 					pu.getProjExpr("DepositChecking", 0, "checking", 1), pu.getArg("dc_amount")));
 			pu.addQueryStatement("DepositChecking", DepositChecking);
 		}
@@ -131,7 +131,7 @@ public class UnifiedSmallBankProgramGenerator implements ProgramGenerator {
 		 */
 		if (txns.contains("SendPayment")) {
 			pu.addTrnasaction("SendPayment", "sp_sendAcct:int", "sp_destAcct:int", "sp_amount:int");
-			pu.addAssertion("SendPayment", new E_UnOp(UnOp.NOT, new E_BinUp(BinOp.EQ, pu.getArg("sp_sendAcct"), pu.getArg("sp_destAcct"))));
+			pu.addAssertion("SendPayment", new E_UnOp(UnOp.NOT, new E_BinOp(BinOp.EQ, pu.getArg("sp_sendAcct"), pu.getArg("sp_destAcct"))));
 			// retrieve sender accounts' data
 			WHC SendPayment_GetAccount_send_WHC = new WHC(pu.getIsAliveFieldName("accounts"), new WHC_Constraint(
 					pu.getTableName("accounts"), pu.getFieldName("custid"), BinOp.EQ, pu.getArg("sp_sendAcct")));
@@ -147,7 +147,7 @@ public class UnifiedSmallBankProgramGenerator implements ProgramGenerator {
 			pu.addQueryStatement("SendPayment", SendPayment_GetAccount_dest);
 
 			// if the sender's checking balance is greater than amount
-			Expression SendPayment_IF1_C = new E_BinUp(BinOp.GT, pu.getProjExpr("SendPayment", 0, "checking", 1),
+			Expression SendPayment_IF1_C = new E_BinOp(BinOp.GT, pu.getProjExpr("SendPayment", 0, "checking", 1),
 					pu.getArg("sp_amount"));
 			pu.addIfStatement("SendPayment", SendPayment_IF1_C);
 			// update sender's checking
@@ -155,7 +155,7 @@ public class UnifiedSmallBankProgramGenerator implements ProgramGenerator {
 					pu.getTableName("accounts"), pu.getFieldName("custid"), BinOp.EQ, pu.getArg("sp_sendAcct")));
 			Update_Query SendPayment_U1 = pu.addUpdateQuery("SendPayment", "accounts", true, SendPayment_U1_WHC);
 			SendPayment_U1.addUpdateExp(pu.getFieldName("checking"),
-					new E_BinUp(BinOp.MINUS, pu.getProjExpr("SendPayment", 0, "checking", 1), pu.getArg("sp_amount")));
+					new E_BinOp(BinOp.MINUS, pu.getProjExpr("SendPayment", 0, "checking", 1), pu.getArg("sp_amount")));
 			pu.addQueryStatementInIf("SendPayment", 0, SendPayment_U1);
 
 			// write dest's new checking balance
@@ -164,7 +164,7 @@ public class UnifiedSmallBankProgramGenerator implements ProgramGenerator {
 			Update_Query SendPayment_U1_dest = pu.addUpdateQuery("SendPayment", "accounts", true,
 					SendPayment_U1_dest_WHC);
 			SendPayment_U1_dest.addUpdateExp(pu.getFieldName("checking"),
-					new E_BinUp(BinOp.PLUS, pu.getProjExpr("SendPayment", 1, "checking", 1), pu.getArg("sp_amount")));
+					new E_BinOp(BinOp.PLUS, pu.getProjExpr("SendPayment", 1, "checking", 1), pu.getArg("sp_amount")));
 			pu.addQueryStatementInIf("SendPayment", 0, SendPayment_U1_dest);
 		}
 		/*
@@ -182,7 +182,7 @@ public class UnifiedSmallBankProgramGenerator implements ProgramGenerator {
 			pu.addQueryStatement("TransactSavings", TransactSavings_GetAccount0);
 
 			// if the balance is larger than amount
-			Expression TransactSavings_IF1_C = new E_BinUp(BinOp.GT, pu.getProjExpr("TransactSavings", 0, "savings", 1),
+			Expression TransactSavings_IF1_C = new E_BinOp(BinOp.GT, pu.getProjExpr("TransactSavings", 0, "savings", 1),
 					pu.getArg("ts_amount"));
 			pu.addIfStatement("TransactSavings", TransactSavings_IF1_C);
 
@@ -192,7 +192,7 @@ public class UnifiedSmallBankProgramGenerator implements ProgramGenerator {
 							pu.getProjExpr("TransactSavings", 0, "custid", 1)));
 			Update_Query TransactSavings_U1 = pu.addUpdateQuery("TransactSavings", "accounts", true,
 					TransactSavings_U1_WHC);
-			TransactSavings_U1.addUpdateExp(pu.getFieldName("savings"), new E_BinUp(BinOp.MINUS,
+			TransactSavings_U1.addUpdateExp(pu.getFieldName("savings"), new E_BinOp(BinOp.MINUS,
 					pu.getProjExpr("TransactSavings", 0, "savings", 1), pu.getArg("ts_amount")));
 			pu.addQueryStatementInIf("TransactSavings", 0, TransactSavings_U1);
 		}
@@ -211,9 +211,9 @@ public class UnifiedSmallBankProgramGenerator implements ProgramGenerator {
 			pu.addQueryStatement("WriteCheck", WriteCheck_GetAccount0);
 
 			// if the total of balances is high enough
-			E_BinUp total = new E_BinUp(BinOp.PLUS, pu.getProjExpr("WriteCheck", 0, "checking", 1),
+			E_BinOp total = new E_BinOp(BinOp.PLUS, pu.getProjExpr("WriteCheck", 0, "checking", 1),
 					pu.getProjExpr("WriteCheck", 0, "savings", 1));
-			Expression WriteCheck_IF1_C = new E_BinUp(BinOp.GT, total, pu.getArg("wc_amount"));
+			Expression WriteCheck_IF1_C = new E_BinOp(BinOp.GT, total, pu.getArg("wc_amount"));
 			pu.addIfStatement("WriteCheck", WriteCheck_IF1_C);
 			// update their checking
 			WHC WriteCheck_U1_dest_WHC = new WHC(pu.getIsAliveFieldName("accounts"),
@@ -221,7 +221,7 @@ public class UnifiedSmallBankProgramGenerator implements ProgramGenerator {
 							pu.getProjExpr("WriteCheck", 0, "custid", 1)));
 			Update_Query WriteCheck_U1_dest = pu.addUpdateQuery("WriteCheck", "accounts", true, WriteCheck_U1_dest_WHC);
 			WriteCheck_U1_dest.addUpdateExp(pu.getFieldName("checking"),
-					new E_BinUp(BinOp.MINUS, pu.getProjExpr("WriteCheck", 0, "checking", 1), pu.getArg("wc_amount")));
+					new E_BinOp(BinOp.MINUS, pu.getProjExpr("WriteCheck", 0, "checking", 1), pu.getArg("wc_amount")));
 			pu.addQueryStatementInIf("WriteCheck", 0, WriteCheck_U1_dest);
 
 			// else: update their checking
@@ -230,9 +230,9 @@ public class UnifiedSmallBankProgramGenerator implements ProgramGenerator {
 							pu.getProjExpr("WriteCheck", 0, "custid", 1)));
 			Update_Query WriteCheck_U1_dest_else = pu.addUpdateQuery("WriteCheck", "accounts", true,
 					WriteCheck_U1_dest_WHC_else);
-			E_BinUp penalty = new E_BinUp(BinOp.PLUS, pu.getArg("wc_amount"), new E_Const_Num(1));
+			E_BinOp penalty = new E_BinOp(BinOp.PLUS, pu.getArg("wc_amount"), new E_Const_Num(1));
 			WriteCheck_U1_dest_else.addUpdateExp(pu.getFieldName("checking"),
-					new E_BinUp(BinOp.MINUS, pu.getProjExpr("WriteCheck", 0, "checking", 1), penalty));
+					new E_BinOp(BinOp.MINUS, pu.getProjExpr("WriteCheck", 0, "checking", 1), penalty));
 			pu.addQueryStatementInElse("WriteCheck", 0, WriteCheck_U1_dest_else);
 		}
 		return pu.getProgram();

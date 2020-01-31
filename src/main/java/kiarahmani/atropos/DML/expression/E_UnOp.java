@@ -70,4 +70,14 @@ public class E_UnOp extends Expression {
 		else
 			return false;
 	}
+
+	@Override
+	public Expression substitute(Expression oldExp, Expression newExp) {
+		if (this.isEqual(oldExp))
+			return newExp;
+		else {
+			this.exp = this.exp.substitute(oldExp, newExp);
+			return this;
+		}
+	}
 }

@@ -11,6 +11,7 @@ import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DML.Variable;
 import kiarahmani.atropos.DML.expression.BinOp;
 import kiarahmani.atropos.DML.expression.E_Proj;
+import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.expression.constants.E_Const_Bool;
 
 public class WHC {
@@ -136,6 +137,11 @@ public class WHC {
 			if (whcc.getOp() != BinOp.EQ)
 				return false;
 		return true;
+	}
+
+	public void substituteExps(Expression oldExp, Expression newExp) {
+		for (WHC_Constraint whcc : whc_constraints)
+			whcc.substituteExps(oldExp, newExp);
 	}
 
 	public void redirectProjs(Variable oldVar, FieldName oldFn, Variable newVar, FieldName newFn) {

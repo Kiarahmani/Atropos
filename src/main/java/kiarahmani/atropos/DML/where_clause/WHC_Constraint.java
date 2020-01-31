@@ -50,9 +50,12 @@ public class WHC_Constraint {
 	}
 
 	public boolean isEqual(WHC_Constraint other) {
-		//logger.debug(this.f + " =? " + other.f + "   (" + this.f.equals(other.f) + ")");
-		//logger.debug(this.op + " =? " + other.op + "   (" + (this.op == other.op) + ")");
-		//logger.debug(this.exp + " =? " + other.exp + "    (" + this.exp.isEqual(other.exp) + ")");
+		// logger.debug(this.f + " =? " + other.f + " (" + this.f.equals(other.f) +
+		// ")");
+		// logger.debug(this.op + " =? " + other.op + " (" + (this.op == other.op) +
+		// ")");
+		// logger.debug(this.exp + " =? " + other.exp + " (" +
+		// this.exp.isEqual(other.exp) + ")");
 		return this.f.equals(other.f) && this.op == other.op && this.exp.isEqual(other.exp);
 
 	}
@@ -68,6 +71,10 @@ public class WHC_Constraint {
 
 	public void redirectProjs(Variable oldVar, FieldName oldFn, Variable newVar, FieldName newFn) {
 		this.exp.redirectProjs(oldVar, oldFn, newVar, newFn);
+	}
+
+	public void substituteExps(Expression oldExp, Expression newExp) {
+		this.exp = this.exp.substitute(oldExp, newExp);
 	}
 
 	/**

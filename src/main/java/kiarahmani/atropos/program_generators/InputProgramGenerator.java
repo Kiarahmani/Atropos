@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import kiarahmani.atropos.DDL.F_Type;
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DML.expression.BinOp;
-import kiarahmani.atropos.DML.expression.E_BinUp;
+import kiarahmani.atropos.DML.expression.E_BinOp;
 import kiarahmani.atropos.DML.expression.E_UUID;
 import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.expression.constants.E_Const_Num;
@@ -45,19 +45,19 @@ public class InputProgramGenerator implements ProgramGenerator {
 			Select_Query DEC_S1 = pu.addSelectQuery("txn", "table", true, DEC_S1_WHC, "name", "value");
 			pu.addQueryStatement("txn", DEC_S1);
 
-			Expression DEC_IF1_C = new E_BinUp(BinOp.GT, pu.getProjExpr("txn", 0, "value", 1), pu.getArg("arg_amnt"));
+			Expression DEC_IF1_C = new E_BinOp(BinOp.GT, pu.getProjExpr("txn", 0, "value", 1), pu.getArg("arg_amnt"));
 			pu.addIfStatement("txn", DEC_IF1_C);
 
 			WHC DEC_U1_WHC = new WHC(pu.getIsAliveFieldName("accs"), new WHC_Constraint(pu.getTableName("table"),
 					pu.getFieldName("key"), BinOp.EQ, pu.getArg("arg_id")));
 			Update_Query DEC_U1 = pu.addUpdateQuery("txn", "table", true, DEC_U1_WHC);
 			DEC_U1.addUpdateExp(pu.getFieldName("value"),
-					new E_BinUp(BinOp.MINUS, pu.getProjExpr("txn", 0, "value", 1), pu.getArg("arg_amnt")));
+					new E_BinOp(BinOp.MINUS, pu.getProjExpr("txn", 0, "value", 1), pu.getArg("arg_amnt")));
 			pu.addQueryStatementInIf("txn", 0, DEC_U1);
 
 			Update_Query DEC_U2 = pu.addUpdateQuery("txn", "table", true, DEC_U1_WHC);
 			DEC_U2.addUpdateExp(pu.getFieldName("value"),
-					new E_BinUp(BinOp.MINUS, pu.getProjExpr("txn", 0, "value", 1), new E_Const_Num(10)));
+					new E_BinOp(BinOp.MINUS, pu.getProjExpr("txn", 0, "value", 1), new E_Const_Num(10)));
 			pu.addQueryStatementInElse("txn", 0, DEC_U2);
 		}
 
@@ -73,7 +73,7 @@ public class InputProgramGenerator implements ProgramGenerator {
 					pu.getTableName("table"), pu.getFieldName("key"), BinOp.EQ, pu.getArg("inc_id")));
 			Update_Query increments_DEC_U1 = pu.addUpdateQuery("increments", "table", true, increments_DEC_U1_WHC);
 			increments_DEC_U1.addUpdateExp(pu.getFieldName("value"),
-					new E_BinUp(BinOp.PLUS, pu.getProjExpr("increments", 0, "value", 1), pu.getArg("inc_amnt")));
+					new E_BinOp(BinOp.PLUS, pu.getProjExpr("increments", 0, "value", 1), pu.getArg("inc_amnt")));
 			pu.addQueryStatement("increments", increments_DEC_U1);
 		}
 

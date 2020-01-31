@@ -149,4 +149,23 @@ public class Update_Query extends Query {
 			fn_exp.y.redirectProjs(oldVar, oldFn, newVar, newFn);
 		this.where_clause.redirectProjs(oldVar, oldFn, newVar, newFn);
 	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * kiarahmani.atropos.DML.query.Query#substituteExps(kiarahmani.atropos.DML.
+	 * expression.Expression, kiarahmani.atropos.DML.expression.Expression)
+	 */
+	@Override
+	public void substituteExps(Expression oldExp, Expression newExp) {
+		ArrayList<Tuple<FieldName, Expression>> new_update_expressions = new ArrayList<>();
+		for (Tuple<FieldName, Expression> fn_exp : update_expressions) {
+			Tuple<FieldName, Expression> newTuple = new Tuple<FieldName, Expression>(fn_exp.x,
+					fn_exp.y.substitute(oldExp, newExp));
+			new_update_expressions.add(newTuple);
+		}
+		this.update_expressions = new_update_expressions;
+		this.where_clause.substituteExps(oldExp, newExp);
+	}
 }

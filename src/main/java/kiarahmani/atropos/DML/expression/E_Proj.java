@@ -33,6 +33,18 @@ public class E_Proj extends Expression {
 		return result;
 	}
 
+	
+	@Override
+	public Expression substitute(Expression oldExp, Expression newExp) {
+		if (this.isEqual(oldExp))
+			return newExp;
+		else {
+			this.e = this.e.substitute(oldExp, newExp);
+			return this;
+		}
+	}
+	
+	
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -64,5 +76,6 @@ public class E_Proj extends Expression {
 		} else
 			return false;
 	}
+	
 
 }

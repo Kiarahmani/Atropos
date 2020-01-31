@@ -14,9 +14,11 @@ import kiarahmani.atropos.Atropos;
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DDL.TableName;
 import kiarahmani.atropos.DDL.vc.VC;
+import kiarahmani.atropos.DDL.vc.VC.VC_Agg;
 import kiarahmani.atropos.DDL.vc.VC.VC_Type;
 import kiarahmani.atropos.DML.Variable;
 import kiarahmani.atropos.DML.expression.E_Proj;
+import kiarahmani.atropos.DML.expression.E_Size;
 import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.expression.constants.E_Const_Num;
 import kiarahmani.atropos.DML.query.Query;
@@ -107,11 +109,24 @@ public class SELECT_Redirector extends One_to_One_Query_Modifier {
 
 	@Override
 	public Query_Statement propagatedQueryModification(Query_Statement input_qry) {
-		for (FieldName old_fn : old_select.getSelectedFieldNames())
-			input_qry.getQuery().redirectProjs(old_select.getVariable(), old_fn, new_var,
-					vc.getCorrespondingFN(old_fn));
+		Variable old_var = old_select.getVariable();
+		// handle CRDT case
+		if (vc.getType() == VC_Type.VC_OTM && vc.get_agg() == VC_Agg.VC_SUM) {
+			for (FieldName old_fn : old_select.getSelectedFieldNames())
+				input_qry.getQuery().substituteExps(new E_Proj(old_var, old_fn, new E_Const_Num(1)),
+						new E_Size(new_var));
+		} else {
+			// handle other cases
+			for (FieldName old_fn : old_select.getSelectedFieldNames())
+				input_qry.getQuery().redirectProjs(old_var, old_fn, new_var, vc.getCorrespondingFN(old_fn));
+
+		}
 		return input_qry;
 	}
+
+	/*
+	 * Helping functions
+	 */
 
 	private boolean modificationIsValid(Select_Query input_query, VC vc) {
 		// all keys used as the WHC of redirecting SELECT must be constrained by vc

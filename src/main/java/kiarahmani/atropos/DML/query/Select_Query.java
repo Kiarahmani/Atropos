@@ -153,4 +153,16 @@ public class Select_Query extends Query {
 		return this.where_clause.getAllProjExps();
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * kiarahmani.atropos.DML.query.Query#substituteExps(kiarahmani.atropos.DML.
+	 * expression.Expression, kiarahmani.atropos.DML.expression.Expression)
+	 */
+	@Override
+	public void substituteExps(Expression oldExp, Expression newExp) {
+		this.where_clause.substituteExps(oldExp, newExp);
+	}
+
 }

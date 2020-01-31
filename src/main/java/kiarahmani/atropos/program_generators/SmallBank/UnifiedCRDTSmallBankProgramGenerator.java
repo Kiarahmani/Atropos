@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import kiarahmani.atropos.DDL.F_Type;
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DML.expression.BinOp;
-import kiarahmani.atropos.DML.expression.E_BinUp;
+import kiarahmani.atropos.DML.expression.E_BinOp;
 import kiarahmani.atropos.DML.expression.E_UUID;
 import kiarahmani.atropos.DML.expression.E_UnOp;
 import kiarahmani.atropos.DML.expression.Expression;
@@ -57,7 +57,7 @@ public class UnifiedCRDTSmallBankProgramGenerator  implements ProgramGenerator{
 			String arg1 = "am_custId0:int";
 			String arg2 = "am_custId1:int";
 			pu.addTrnasaction(txn_name, arg1, arg2);
-			pu.addAssertion(txn_name, new E_UnOp(UnOp.NOT, new E_BinUp(BinOp.EQ, pu.getArg("am_custId1"), pu.getArg("am_custId0"))));
+			pu.addAssertion(txn_name, new E_UnOp(UnOp.NOT, new E_BinOp(BinOp.EQ, pu.getArg("am_custId1"), pu.getArg("am_custId0"))));
 			// retrieve customer0's data by id
 			WHC GetAccount0_WHC = new WHC(pu.getIsAliveFieldName("accounts"), new WHC_Constraint(
 					pu.getTableName("accounts"), pu.getFieldName("a_custid"), BinOp.EQ, pu.getArg("am_custId0")));
@@ -81,7 +81,7 @@ public class UnifiedCRDTSmallBankProgramGenerator  implements ProgramGenerator{
 			Insert_Query ZeroCheckingBalance = pu.addInsertQuery(txn_name, "accounts", true, ZeroCheckingBalance_WHC_1,
 					ZeroCheckingBalance_WHC_2, ZeroCheckingBalance_WHC_3);
 			ZeroCheckingBalance.addInsertExp(pu.getFieldName("a_bal"),
-					new E_BinUp(BinOp.MINUS, new E_Const_Num(0), pu.getProjExpr(txn_name, 0, "a_bal", 1)));
+					new E_BinOp(BinOp.MINUS, new E_Const_Num(0), pu.getProjExpr(txn_name, 0, "a_bal", 1)));
 			pu.addQueryStatement(txn_name, ZeroCheckingBalance);
 
 			// zero checking of cust0
@@ -94,7 +94,7 @@ public class UnifiedCRDTSmallBankProgramGenerator  implements ProgramGenerator{
 			Insert_Query ZeroCheckingBalance1 = pu.addInsertQuery(txn_name, "accounts", true,
 					ZeroCheckingBalance_WHC_11, ZeroCheckingBalance_WHC_21, ZeroCheckingBalance_WHC_31);
 			ZeroCheckingBalance1.addInsertExp(pu.getFieldName("a_bal"),
-					new E_BinUp(BinOp.MINUS, new E_Const_Num(0), pu.getProjExpr(txn_name, 0, "a_bal", 1)));
+					new E_BinOp(BinOp.MINUS, new E_Const_Num(0), pu.getProjExpr(txn_name, 0, "a_bal", 1)));
 			pu.addQueryStatement(txn_name, ZeroCheckingBalance1);
 
 			// update saving balance of cust1
@@ -163,7 +163,7 @@ public class UnifiedCRDTSmallBankProgramGenerator  implements ProgramGenerator{
 		if (txns.contains("SendPayment")) {
 			String txn_name = "SendPayment";
 			pu.addTrnasaction(txn_name, "sp_sendAcct:int", "sp_destAcct:int", "sp_amount:int");
-			pu.addAssertion(txn_name, new E_UnOp(UnOp.NOT, new E_BinUp(BinOp.EQ, pu.getArg("sp_sendAcct"), pu.getArg("sp_destAcct"))));
+			pu.addAssertion(txn_name, new E_UnOp(UnOp.NOT, new E_BinOp(BinOp.EQ, pu.getArg("sp_sendAcct"), pu.getArg("sp_destAcct"))));
 			// retrieve sender accounts' data
 			WHC SendPayment_GetAccount_send_WHC = new WHC(pu.getIsAliveFieldName("accounts"),
 					new WHC_Constraint(pu.getTableName("accounts"), pu.getFieldName("a_custid"), BinOp.EQ,
@@ -175,7 +175,7 @@ public class UnifiedCRDTSmallBankProgramGenerator  implements ProgramGenerator{
 			pu.addQueryStatement(txn_name, SendPayment_GetAccount_send);
 
 			// if the sender's checking balance is greater than amount
-			Expression SendPayment_IF1_C = new E_BinUp(BinOp.GT, pu.getProjExpr("SendPayment", 0, "a_bal", 1),
+			Expression SendPayment_IF1_C = new E_BinOp(BinOp.GT, pu.getProjExpr("SendPayment", 0, "a_bal", 1),
 					pu.getArg("sp_amount"));
 			pu.addIfStatement("SendPayment", SendPayment_IF1_C);
 
@@ -223,7 +223,7 @@ public class UnifiedCRDTSmallBankProgramGenerator  implements ProgramGenerator{
 			pu.addQueryStatement("TransactSavings", TransactSavings_GetAccount0);
 
 			// if the balance is larger than amount
-			Expression TransactSavings_IF1_C = new E_BinUp(BinOp.GT, pu.getProjExpr("TransactSavings", 0, "a_bal", 1),
+			Expression TransactSavings_IF1_C = new E_BinOp(BinOp.GT, pu.getProjExpr("TransactSavings", 0, "a_bal", 1),
 					pu.getArg("ts_amount"));
 			pu.addIfStatement("TransactSavings", TransactSavings_IF1_C);
 
@@ -257,7 +257,7 @@ public class UnifiedCRDTSmallBankProgramGenerator  implements ProgramGenerator{
 			pu.addQueryStatement("WriteCheck", WriteCheck_GetAccount0);
 
 			// if the total of balances is high enough
-			Expression WriteCheck_IF1_C = new E_BinUp(BinOp.GT, pu.getProjExpr("WriteCheck", 0, "a_bal", 1),
+			Expression WriteCheck_IF1_C = new E_BinOp(BinOp.GT, pu.getProjExpr("WriteCheck", 0, "a_bal", 1),
 					pu.getArg("wc_amount"));
 			pu.addIfStatement("WriteCheck", WriteCheck_IF1_C);
 			// update their checking
@@ -283,7 +283,7 @@ public class UnifiedCRDTSmallBankProgramGenerator  implements ProgramGenerator{
 					ZeroCheckingBalance_WHC_1_dest_else, ZeroCheckingBalance_WHC_2_dest_else,
 					ZeroCheckingBalance_WHC_3_dest_else);
 			SendPayment_U1_dest_else.addInsertExp(pu.getFieldName("a_bal"),
-					new E_BinUp(BinOp.PLUS, pu.getArg("wc_amount"), new E_Const_Num(1)));
+					new E_BinOp(BinOp.PLUS, pu.getArg("wc_amount"), new E_Const_Num(1)));
 			pu.addQueryStatementInElse("WriteCheck", 0, SendPayment_U1_dest_else);
 		}
 		return pu.getProgram();

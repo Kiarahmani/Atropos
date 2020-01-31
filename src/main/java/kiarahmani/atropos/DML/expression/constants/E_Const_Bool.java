@@ -62,4 +62,12 @@ public class E_Const_Bool extends E_Const {
 			return false; // exp is of a different sub class
 	}
 
+	@Override
+	public Expression substitute(Expression oldExp, Expression newExp) {
+		if (this.isEqual(oldExp))
+			return newExp;
+		else
+			return this;
+	}
+
 }

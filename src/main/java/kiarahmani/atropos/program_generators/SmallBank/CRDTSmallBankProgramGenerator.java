@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import kiarahmani.atropos.DDL.F_Type;
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DML.expression.BinOp;
-import kiarahmani.atropos.DML.expression.E_BinUp;
+import kiarahmani.atropos.DML.expression.E_BinOp;
 import kiarahmani.atropos.DML.expression.E_UUID;
 import kiarahmani.atropos.DML.expression.E_UnOp;
 import kiarahmani.atropos.DML.expression.Expression;
@@ -58,7 +58,7 @@ public class CRDTSmallBankProgramGenerator implements ProgramGenerator{
 			String arg1 = "am_custId0:int";
 			String arg2 = "am_custId1:int";
 			pu.addTrnasaction(txn_name, arg1, arg2);
-			pu.addAssertion(txn_name, new E_UnOp(UnOp.NOT, new E_BinUp(BinOp.EQ, pu.getArg("am_custId1"), pu.getArg("am_custId0"))));
+			pu.addAssertion(txn_name, new E_UnOp(UnOp.NOT, new E_BinOp(BinOp.EQ, pu.getArg("am_custId1"), pu.getArg("am_custId0"))));
 			// retrieve customer0's name by id
 			WHC GetAccount0_WHC = new WHC(pu.getIsAliveFieldName("accounts"), new WHC_Constraint(
 					pu.getTableName("accounts"), pu.getFieldName("a_custid"), BinOp.EQ, pu.getArg("am_custId0")));
@@ -90,7 +90,7 @@ public class CRDTSmallBankProgramGenerator implements ProgramGenerator{
 			Insert_Query ZeroCheckingBalance = pu.addInsertQuery(txn_name, "savings", true, ZeroCheckingBalance_WHC_1,
 					ZeroCheckingBalance_WHC_2);
 			ZeroCheckingBalance.addInsertExp(pu.getFieldName("s_bal"),
-					new E_BinUp(BinOp.MINUS, new E_Const_Num(0), pu.getProjExpr(txn_name, 2, "s_bal", 1)));
+					new E_BinOp(BinOp.MINUS, new E_Const_Num(0), pu.getProjExpr(txn_name, 2, "s_bal", 1)));
 			pu.addQueryStatement(txn_name, ZeroCheckingBalance);
 
 			// zero checking of cust0
@@ -101,7 +101,7 @@ public class CRDTSmallBankProgramGenerator implements ProgramGenerator{
 			Insert_Query ZeroCheckingBalance1 = pu.addInsertQuery(txn_name, "checking", true,
 					ZeroCheckingBalance_WHC_11, ZeroCheckingBalance_WHC_21);
 			ZeroCheckingBalance1.addInsertExp(pu.getFieldName("c_bal"),
-					new E_BinUp(BinOp.MINUS, new E_Const_Num(0), pu.getProjExpr(txn_name, 3, "c_bal", 1)));
+					new E_BinOp(BinOp.MINUS, new E_Const_Num(0), pu.getProjExpr(txn_name, 3, "c_bal", 1)));
 			pu.addQueryStatement(txn_name, ZeroCheckingBalance1);
 
 			// update saving balance of cust1
@@ -111,7 +111,7 @@ public class CRDTSmallBankProgramGenerator implements ProgramGenerator{
 					pu.getFieldName("s_uuid"), BinOp.EQ, new E_UUID());
 			Insert_Query ZeroCheckingBalance2 = pu.addInsertQuery(txn_name, "savings", true,
 					ZeroCheckingBalance_WHC_12, ZeroCheckingBalance_WHC_22);
-			ZeroCheckingBalance2.addInsertExp(pu.getFieldName("s_bal"), new E_BinUp(BinOp.PLUS,
+			ZeroCheckingBalance2.addInsertExp(pu.getFieldName("s_bal"), new E_BinOp(BinOp.PLUS,
 					pu.getProjExpr(txn_name, 2, "s_bal", 1), pu.getProjExpr(txn_name, 3, "c_bal", 1)));
 			pu.addQueryStatement(txn_name, ZeroCheckingBalance2);
 		}

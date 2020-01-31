@@ -54,7 +54,7 @@ public abstract class Query {
 
 	public abstract HashSet<Variable> getAllRefferencedVars();
 
-	public abstract  HashSet<E_Proj> getAllProjExps();
+	public abstract HashSet<E_Proj> getAllProjExps();
 
 	/*
 	 * 
@@ -62,5 +62,7 @@ public abstract class Query {
 	 * 
 	 */
 	public abstract void redirectProjs(Variable oldVar, FieldName oldFn, Variable newVar, FieldName newFn);
+
+	public abstract void substituteExps(Expression oldExp, Expression newExp);
 
 }

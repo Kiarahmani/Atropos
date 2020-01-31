@@ -154,9 +154,7 @@ public class Insert_Query extends Query {
 			result.addAll(exp.y.getAllRefferencedVars());
 		return result;
 	}
-	
-	
-	
+
 	@Override
 	public HashSet<E_Proj> getAllProjExps() {
 		HashSet<E_Proj> result = new HashSet<>();
@@ -177,4 +175,16 @@ public class Insert_Query extends Query {
 		for (Tuple<FieldName, Expression> t : this.insert_expressions)
 			t.y.redirectProjs(newVar, newFn, newVar, newFn);
 	}
+
+	@Override
+	public void substituteExps(Expression oldExp, Expression newExp) {
+		ArrayList<Tuple<FieldName, Expression>> new_update_expressions = new ArrayList<>();
+		for (Tuple<FieldName, Expression> fn_exp : insert_expressions) {
+			Tuple<FieldName, Expression> newTuple = new Tuple<FieldName, Expression>(fn_exp.x,
+					fn_exp.y.substitute(oldExp, newExp));
+			new_update_expressions.add(newTuple);
+		}
+		this.insert_expressions = new_update_expressions;
+	}
+
 }
