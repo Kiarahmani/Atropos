@@ -13,7 +13,10 @@ import org.apache.logging.log4j.Logger;
 import kiarahmani.atropos.Atropos;
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DDL.vc.VC;
+import kiarahmani.atropos.DDL.vc.VC.VC_Agg;
+import kiarahmani.atropos.DDL.vc.VC.VC_Type;
 import kiarahmani.atropos.DML.expression.Expression;
+import kiarahmani.atropos.DML.query.Insert_Query;
 import kiarahmani.atropos.DML.query.Query;
 import kiarahmani.atropos.DML.query.Update_Query;
 import kiarahmani.atropos.DML.where_clause.WHC;
@@ -64,18 +67,42 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 		logger.debug("Query to be duplicated: " + old_update.getPo());
 		// make sure modification is valid
 		assert (modificationIsValid(old_update)) : "requested modification cannot be done on: " + input_query;
-		// generate new query's components
-		WHC new_whc = updateWHC(old_whcc);
-		logger.debug("where clause of the duplicated query: " + new_whc);
-		ArrayList<Tuple<FieldName, Expression>> new_ue = updateUE(old_ue);
-		logger.debug("update expressions of the duplicated query: " + new_ue);
-		boolean new_isAtomic = new_whc.isAtomic(targetTable.getShardKey());
-		logger.debug("duplicated query is atomic? " + new_isAtomic);
-		Update_Query new_update = new Update_Query(-1, pu.getNewUpdateId(txnName), new_isAtomic,
-				targetTable.getTableName(), new_whc);
-		for (Tuple<FieldName, Expression> fe : new_ue)
-			new_update.addUpdateExp(fe.x, fe.y);
-		return new Tuple<Query, Query>(input_query, new_update);
+
+		Query new_qry = null;
+		// handle the CRDT case
+		if (vc.getType() == VC_Type.VC_OTM && vc.get_agg() == VC_Agg.VC_SUM) {
+			WHC_Constraint[] whcc_array = mkInsert();
+			new_qry = new Insert_Query(-1, pu.getNewUpdateId(txnName), targetTable, targetTable.getIsAliveFN());
+			((Insert_Query) new_qry).addPKExp(whcc_array);
+			for (WHC_Constraint pk : whcc_array)
+				((Insert_Query) new_qry).addInsertExp(pk.getFieldName(), pk.getExpression());
+
+		} else {// handle other (non-CRDT) cases
+			// generate new query's components
+			WHC new_whc = updateWHC(old_whcc);
+			logger.debug("where clause of the duplicated query: " + new_whc);
+			ArrayList<Tuple<FieldName, Expression>> new_ue = updateUE(old_ue);
+			logger.debug("update expressions of the duplicated query: " + new_ue);
+			boolean new_isAtomic = new_whc.isAtomic(targetTable.getShardKey());
+			logger.debug("duplicated query is atomic? " + new_isAtomic);
+			new_qry = new Update_Query(-1, pu.getNewUpdateId(txnName), new_isAtomic, targetTable.getTableName(),
+					new_whc);
+			for (Tuple<FieldName, Expression> fe : new_ue)
+				((Update_Query) new_qry).addUpdateExp(fe.x, fe.y);
+		}
+		return new Tuple<Query, Query>(input_query, new_qry);
+	}
+
+	/**
+	 * @return
+	 */
+	private WHC_Constraint[] mkInsert() {
+		int pk_cnt_of_target_table = targetTable.getPKFields().size();
+		WHC_Constraint[] result = new WHC_Constraint[pk_cnt_of_target_table + 2];
+		// TODO: must fill the insert with appropriate vals, both from the key of the
+		// old update and the DELTA of the written valuess
+		// TODO: implement a function to return the DELTA of update expressions
+		return result;
 	}
 
 	private ArrayList<Tuple<FieldName, Expression>> updateUE(ArrayList<Tuple<FieldName, Expression>> old_ue) {
@@ -108,7 +135,7 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 						old_whcc.getOp(), old_whcc.getExpression());
 				break;
 			case VC_SUM:
-				assert (false) : "CRDT case is not implemented yet"; // TODO: implement CRDT case for update duplication
+				assert (false) : "unexpected state";
 				break;
 			default:
 				assert (false) : "unhandled agg function";
