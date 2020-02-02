@@ -44,6 +44,7 @@ import kiarahmani.atropos.program.Block.BlockType;
 import kiarahmani.atropos.program.statements.If_Statement;
 import kiarahmani.atropos.program.statements.Query_Statement;
 import kiarahmani.atropos.refactoring_engine.Refactoring_Engine;
+import kiarahmani.atropos.refactoring_engine.Modifiers.OTO.Query_ReAtomicizer;
 import kiarahmani.atropos.refactoring_engine.Modifiers.OTO.SELECT_Redirector;
 import kiarahmani.atropos.refactoring_engine.Modifiers.OTT.SELECT_Splitter;
 import kiarahmani.atropos.refactoring_engine.Modifiers.OTT.UPDATE_Duplicator;
@@ -101,6 +102,7 @@ public class Program_Utils {
 	UPDATE_Merger upd_merger;
 	SELECT_Merger select_merger;
 	UPDATE_Duplicator upd_dup;
+	Query_ReAtomicizer qry_atom;
 
 	public void lock() {
 		this.lock = true;
@@ -233,6 +235,7 @@ public class Program_Utils {
 		upd_merger = new UPDATE_Merger();
 		select_merger = new SELECT_Merger();
 		upd_dup = new UPDATE_Duplicator();
+		qry_atom = new Query_ReAtomicizer();
 		lock = false;
 	}
 

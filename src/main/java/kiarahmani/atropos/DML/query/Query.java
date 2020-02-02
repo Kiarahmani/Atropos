@@ -22,6 +22,14 @@ public abstract class Query {
 	protected int id;
 	protected int po;
 
+	public boolean isAtomic() {
+		return this.isAtomic;
+	}
+
+	public void setAtomic(boolean atomic) {
+		this.isAtomic = atomic;
+	}
+
 	public void updatePO(int newPO) {
 		this.po = newPO;
 	}

@@ -55,9 +55,10 @@ public class Atropos {
 		pu.lock(); // make sure that certain features of pu won't be used anymore
 
 		/*
-		 * BEGIN REFACTORING
+		 * 
+		 * BEGIN SCHEMA REFACTORING
+		 * 
 		 */
-
 		// Add a new field
 		Delta intro_f = new INTRO_F("accounts", "a_sav_bal", F_Type.NUM);
 		pu.refactor(intro_f);
@@ -90,6 +91,12 @@ public class Atropos {
 		pu.mkVC("makers", "makers_budget_crdt", VC_Agg.VC_SUM, VC_Type.VC_OTM,
 				new VC_Constraint(pu.getFieldName("maker_id"), pu.getFieldName("mbc_maker_id")));
 		pu.addFieldTupleToVC("vc_2", "maker_budget", "mbc_amnt");
+
+		/*
+		 * 
+		 * BEGIN PROGRAM REFACTORING
+		 * 
+		 */
 
 		// redirect SELECT2 from savings to accounts
 		pu.redirect_select(test_txn, "savings", "accounts", 2);
