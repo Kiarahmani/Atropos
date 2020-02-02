@@ -49,167 +49,117 @@ public class Atropos {
 		ProgramGenerator ipg = new SmallBankProgramGenerator(pu);
 		String test_txn = "test";
 
-		Program base_program = ipg.generate("Balance1", "Amalgamate1", "TransactSavings1", "DepositChecking1",
-				"SendPaymen1", "WriteCheck1", test_txn);
-		base_program.printProgram();
+		Program program = ipg.generate("Balance1", "Amalgamate1", "TransactSavings1", "DepositChecking1", "SendPaymen1",
+				"WriteCheck1", test_txn);
+		program.printProgram();
 
-		// Create new refactoring engine
-		Refactoring_Engine re = new Refactoring_Engine();
+		/*
+		 * BEGIN REFACTORING
+		 */
 
 		// Add a new field
 		Delta intro_f = new INTRO_F("accounts", "a_sav_bal", F_Type.NUM);
-		re.refactor(pu, intro_f);
-		Program new_field_program = pu.generateProgram();
-		new_field_program.printProgram();
+		pu.refactor(intro_f);
+		pu.generateProgram().printProgram();
 
 		// Add a new vc
 		pu.mkVC("savings", "accounts", VC_Agg.VC_ID, VC_Type.VC_OTO,
 				new VC_Constraint(pu.getFieldName("a_custid"), pu.getFieldName("s_custid")));
 		pu.addFieldTupleToVC("vc_0", "s_custid", "a_custid");
 		pu.addFieldTupleToVC("vc_0", "s_bal", "a_sav_bal");
-		Program refactored_program = pu.generateProgram();
-		refactored_program.printProgram();
+		pu.generateProgram().printProgram();
 
-		// Instantiate a new modifier (redirector) and apply it
-		SELECT_Redirector qry_red = new SELECT_Redirector();
-		qry_red.set(pu, test_txn, "savings", "accounts");
-		re.applyAndPropagate(pu, qry_red, 2, test_txn);
-		Program redirected_program = pu.generateProgram();
-		redirected_program.printProgram();
+		// redirect SELECT2 from savings to accounts
+		pu.redirect_select(test_txn, "savings", "accounts", 2);
+		pu.generateProgram().printProgram();
 
-		// Instantiate a new modifier (splitter) and apply it
-		SELECT_Splitter qry_splt = new SELECT_Splitter();
+		// split SELECT0
 		ArrayList<FieldName> excluded_fns = new ArrayList<>();
 		excluded_fns.add(pu.getFieldName("a_name"));
-		qry_splt.set(pu, test_txn, excluded_fns);
-		re.applyAndPropagate(pu, qry_splt, 0, test_txn);
-		Program splitted_program = pu.generateProgram();
-		splitted_program.printProgram();
+		pu.split_select(test_txn, excluded_fns, 0);
+		pu.generateProgram().printProgram();
 
-		// Instantiate a new modifier (splitter) and apply it
-		UPDATE_Splitter upd_splt = new UPDATE_Splitter();
+		// split UPDATE5
 		ArrayList<FieldName> excluded_fns_upd = new ArrayList<>();
 		excluded_fns_upd.add(pu.getFieldName("c_bal"));
-		upd_splt.set(pu, test_txn, excluded_fns_upd);
-		re.applyAndPropagate(pu, upd_splt, 5, test_txn);
-		Program splitted_program_upd = pu.generateProgram();
-		splitted_program_upd.printProgram();
+		pu.split_update(test_txn, excluded_fns_upd, 5);
+		pu.generateProgram().printProgram();
 
-		// Instantiate a new modifier (update merger) and apply it
-		UPDATE_Merger upd_merger = new UPDATE_Merger();
-		upd_merger.set(pu, test_txn);
-		re.applyAndPropagate(pu, upd_merger, 5, test_txn);
-		Program merged_program_upd = pu.generateProgram();
-		merged_program_upd.printProgram();
+		// merge UPDATE5 and UPDATE6
+		pu.merge_update(test_txn, 5);
+		pu.generateProgram().printProgram();
 
-		// DO it again
-		re.applyAndPropagate(pu, upd_merger, 5, test_txn);
-		merged_program_upd = pu.generateProgram();
-		merged_program_upd.printProgram();
+		// merge UPDATE5 and UPDATE6 (again)
+		pu.merge_update(test_txn, 5);
+		pu.generateProgram().printProgram();
 
-		// Instantiate a new modifier (select merger) and apply it
-		SELECT_Merger select_merger = new SELECT_Merger();
-		select_merger.set(pu, test_txn);
-		re.applyAndPropagate(pu, select_merger, 0, test_txn);
-		merged_program_upd = pu.generateProgram();
-		merged_program_upd.printProgram();
+		// merge SELECT0 and SELECT1
+		pu.merge_select(test_txn, 0);
+		pu.generateProgram().printProgram();
 
-		// DO it again
-		re.applyAndPropagate(pu, select_merger, 0, test_txn);
-		merged_program_upd = pu.generateProgram();
-		merged_program_upd.printProgram();
+		// merge SELECT0 and SELECT1 (again)
+		pu.merge_select(test_txn, 0);
+		pu.generateProgram().printProgram();
 
 		// add new columns in car table
 		Delta intro_car = new INTRO_F("car", "car_maker_name", F_Type.NUM);
-		re.refactor(pu, intro_car);
+		pu.refactor(intro_car);
 		intro_car = new INTRO_F("car", "car_maker_budget", F_Type.NUM);
-		re.refactor(pu, intro_car);
+		pu.refactor(intro_car);
 		intro_car = new INTRO_F("car", "car_maker_country", F_Type.NUM);
-		re.refactor(pu, intro_car);
+		pu.refactor(intro_car);
 
 		// Add a new vc
 		pu.mkVC("makers", "car", VC_Agg.VC_ID, VC_Type.VC_OTM,
 				new VC_Constraint(pu.getFieldName("maker_id"), pu.getFieldName("car_maker")));
-
 		pu.addFieldTupleToVC("vc_1", "maker_name", "car_maker_name");
 		pu.addFieldTupleToVC("vc_1", "maker_budget", "car_maker_budget");
 		pu.addFieldTupleToVC("vc_1", "maker_country", "car_maker_country");
+		pu.generateProgram().printProgram();
 
-		new_field_program = pu.generateProgram();
-		new_field_program.printProgram();
+		// redirect SELECT5 from makers to car
+		pu.redirect_select(test_txn, "makers", "car", 5);
+		pu.generateProgram().printProgram();
 
-		// redirect select on makers to the copies in car table
-		qry_red.set(pu, test_txn, "makers", "car");
-		re.applyAndPropagate(pu, qry_red, 5, test_txn);
-		redirected_program = pu.generateProgram();
-		redirected_program.printProgram();
+		// merge SELECT4 and SELECT5
+		pu.merge_select(test_txn, 4);
+		pu.generateProgram().printProgram();
 
-		// merge two consecutive selects on (now) car
-		re.applyAndPropagate(pu, select_merger, 4, test_txn);
-		merged_program_upd = pu.generateProgram();
-		merged_program_upd.printProgram();
+		// duplicate UPDATE5 to accounts table (test OTO VC)
+		pu.duplicate_update(test_txn, "savings", "accounts", 5);
+		pu.generateProgram().printProgram();
 
-		// duplicate an update operation
-		UPDATE_Duplicator qry_dup = new UPDATE_Duplicator();
-		qry_dup.set(pu, test_txn, "savings", "accounts");
-		re.applyAndPropagate(pu, qry_dup, 5, test_txn);
+		// duplicate UPDATE(7) to table car (test OTM VC: T1 to T2)
+		pu.duplicate_update(test_txn, "makers", "car", 7);
+		pu.generateProgram().printProgram();
 
-		merged_program_upd = pu.generateProgram();
-		merged_program_upd.printProgram();
+		// duplicate UPDATE(7) to table car (test OTM VC: T2 to T1)
+		pu.duplicate_update(test_txn, "car", "makers", 8);
+		pu.generateProgram().printProgram();
 
-		// do it again on makers
-		qry_dup = new UPDATE_Duplicator();
-		qry_dup.set(pu, test_txn, "makers", "car");
-		re.applyAndPropagate(pu, qry_dup, 7, test_txn);
-
-		merged_program_upd = pu.generateProgram();
-		merged_program_upd.printProgram();
-
-		// do it again
-		qry_dup = new UPDATE_Duplicator();
-		qry_dup.set(pu, test_txn, "car", "makers");
-		re.applyAndPropagate(pu, qry_dup, 8, test_txn);
-
-		merged_program_upd = pu.generateProgram();
-		merged_program_upd.printProgram();
-
-		// Add vc between makers table and a CRDT table to hold maker's budget
+		// add vc between makers table and a CRDT table to hold maker's budget
 		pu.mkVC("makers", "makers_budget_crdt", VC_Agg.VC_SUM, VC_Type.VC_OTM,
 				new VC_Constraint(pu.getFieldName("maker_id"), pu.getFieldName("mbc_maker_id")));
-
 		pu.addFieldTupleToVC("vc_2", "maker_budget", "mbc_amnt");
 
-		// redirect select on makers to the CRDT copy in makers_budget_crdt table
-		qry_red.set(pu, test_txn, "makers", "makers_budget_crdt");
-		re.applyAndPropagate(pu, qry_red, 10, test_txn);
+		// redirect SELECT(10) to CRDT copy in makers_budget_crdt table
+		pu.redirect_select(test_txn, "makers", "makers_budget_crdt", 10);
+		pu.generateProgram().printProgram();
 
-		merged_program_upd = pu.generateProgram();
-		merged_program_upd.printProgram();
-		
-		
-		
-		
-		
-		// duplicate update on maker to the CRDT table
-		qry_dup.set(pu, test_txn, "makers", "makers_budget_crdt");
-		re.applyAndPropagate(pu, qry_dup, 9, test_txn);
+		// duplicate UPDATE(9) to makers_budget_crdt
+		pu.duplicate_update(test_txn, "makers", "makers_budget_crdt", 9);
+		pu.generateProgram().printProgram();
 
-		merged_program_upd = pu.generateProgram();
-		merged_program_upd.printProgram();
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
+		/*
+		 * 
+		 * END OF REFACTORING
+		 * 
+		 */
 
 		// Print Running Time
 		long time_end = System.currentTimeMillis();
 		System.out.println("\nTotal Time: " + (time_end - time_begin) / 1000.0 + " s\n");
 
 	}
+
 }

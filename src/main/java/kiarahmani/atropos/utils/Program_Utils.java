@@ -48,6 +48,14 @@ import kiarahmani.atropos.program.Transaction;
 import kiarahmani.atropos.program.Block.BlockType;
 import kiarahmani.atropos.program.statements.If_Statement;
 import kiarahmani.atropos.program.statements.Query_Statement;
+import kiarahmani.atropos.refactoring_engine.Refactoring_Engine;
+import kiarahmani.atropos.refactoring_engine.Modifiers.OTO.SELECT_Redirector;
+import kiarahmani.atropos.refactoring_engine.Modifiers.OTT.SELECT_Splitter;
+import kiarahmani.atropos.refactoring_engine.Modifiers.OTT.UPDATE_Duplicator;
+import kiarahmani.atropos.refactoring_engine.Modifiers.OTT.UPDATE_Splitter;
+import kiarahmani.atropos.refactoring_engine.Modifiers.TTO.SELECT_Merger;
+import kiarahmani.atropos.refactoring_engine.Modifiers.TTO.UPDATE_Merger;
+import kiarahmani.atropos.refactoring_engine.deltas.Delta;
 
 public class Program_Utils {
 	private static final Logger logger = LogManager.getLogger(Atropos.class);
@@ -88,6 +96,57 @@ public class Program_Utils {
 	private HashMap<String, Integer> transactionToStatement;
 	private HashMap<String, Integer> transactionToIf;
 	private HashMap<String, Integer> transactionToPoCnt;
+
+	// Program Refactoring objects
+	Refactoring_Engine re;
+	SELECT_Redirector select_red;
+	SELECT_Splitter select_splt;
+	UPDATE_Splitter upd_splt;
+	UPDATE_Merger upd_merger;
+	SELECT_Merger select_merger;
+	UPDATE_Duplicator upd_dup;
+
+	/*
+	 * 
+	 * 
+	 * REFACTORING METHODS
+	 * 
+	 * 
+	 */
+
+	public void refactor(Delta delta) {
+		re.refactor(this, delta);
+	}
+
+	public void redirect_select(String txn_name, String src_table, String dest_table, int qry_po) {
+		this.select_red.set(this, txn_name, src_table, dest_table);
+		re.applyAndPropagate(this, select_red, qry_po, txn_name);
+	}
+
+	public void merge_select(String txn_name, int qry_po) {
+		select_merger.set(this, txn_name);
+		re.applyAndPropagate(this, select_merger, qry_po, txn_name);
+	}
+
+	public void split_select(String txn_name, ArrayList<FieldName> excluded_fns, int qry_po) {
+		select_splt.set(this, txn_name, excluded_fns);
+		re.applyAndPropagate(this, select_splt, qry_po, txn_name);
+	}
+
+	public void merge_update(String txn_name, int qry_po) {
+		upd_merger.set(this, txn_name);
+		re.applyAndPropagate(this, upd_merger, qry_po, txn_name);
+	}
+
+	public void split_update(String txn_name, ArrayList<FieldName> excluded_fns_upd, int qry_po) {
+		upd_splt.set(this, txn_name, excluded_fns_upd);
+		re.applyAndPropagate(this, upd_splt, qry_po, txn_name);
+	}
+
+	public void duplicate_update(String txn_name, String source_table, String target_table, int qry_po) {
+		upd_dup.set(this, txn_name, source_table, target_table);
+		re.applyAndPropagate(this, upd_dup, qry_po, txn_name);
+	}
 
 	public int getNewSelectId(String txnName) {
 		int result = this.transactionToSelectCount.get(txnName);
@@ -139,6 +198,13 @@ public class Program_Utils {
 		transactionToPoCnt = new HashMap<>();
 		variableMap = new HashMap<>();
 		variableToExpressionSetMap = new HashMap<>();
+		re = new Refactoring_Engine();
+		select_red = new SELECT_Redirector();
+		select_splt = new SELECT_Splitter();
+		upd_splt = new UPDATE_Splitter();
+		upd_merger = new UPDATE_Merger();
+		select_merger = new SELECT_Merger();
+		upd_dup = new UPDATE_Duplicator();
 	}
 
 	/* Create a new table, store it locally and return it */

@@ -75,7 +75,9 @@ public class SELECT_Merger extends Two_to_One_Query_Modifier {
 		for (FieldName fn : old_select1.getSelectedFieldNames())
 			new_fns.add(fn);
 		for (FieldName fn : old_select2.getSelectedFieldNames())
-			new_fns.add(fn);
+			if (!new_fns.contains(fn))
+				new_fns.add(fn);
+
 		Select_Query new_select = new Select_Query(-1, pu.getNewSelectId(txnName), old_select1.isAtomic(),
 				old_table.getTableName(), new_fns, new_var, new_whc);
 		return new_select;
