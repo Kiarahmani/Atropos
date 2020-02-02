@@ -19,14 +19,12 @@ import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.expression.constants.E_Const_Num;
 import kiarahmani.atropos.DML.query.Query;
 import kiarahmani.atropos.DML.query.Select_Query;
-import kiarahmani.atropos.DML.query.Update_Query;
 import kiarahmani.atropos.DML.where_clause.WHC;
 import kiarahmani.atropos.DML.where_clause.WHC_Constraint;
 import kiarahmani.atropos.program.Table;
 import kiarahmani.atropos.program.statements.Query_Statement;
 import kiarahmani.atropos.refactoring_engine.Modifiers.QM_Type;
 import kiarahmani.atropos.utils.Program_Utils;
-import kiarahmani.atropos.utils.Tuple;
 
 /**
  * @author Kiarash
@@ -63,7 +61,7 @@ public class SELECT_Merger extends Two_to_One_Query_Modifier {
 		logger.debug("whc1: " + old_select1.getWHC());
 		logger.debug("whc2: " + old_select2.getWHC());
 
-		assert (modificationIsValid(old_select1, old_select1)) : "requested modification cannot be done on: "
+		assert (isValid(input_query_1, input_query_2)) : "requested modification cannot be done on: "
 				+ input_query_1.getId() + " and " + input_query_2.getId();
 
 		WHC new_whc = mergeWHCs(old_select1, old_select2);
@@ -81,13 +79,6 @@ public class SELECT_Merger extends Two_to_One_Query_Modifier {
 		Select_Query new_select = new Select_Query(-1, pu.getNewSelectId(txnName), old_select1.isAtomic(),
 				old_table.getTableName(), new_fns, new_var, new_whc);
 		return new_select;
-	}
-
-	private boolean modificationIsValid(Select_Query qry1, Select_Query qry2) {
-		// Queries access the same table
-		boolean assumption1 = qry1.getTableName().equalsWith(qry2.getTableName());
-
-		return assumption1;
 	}
 
 	WHC mergeWHCs(Select_Query qry_1, Select_Query qry_2) {
@@ -153,6 +144,31 @@ public class SELECT_Merger extends Two_to_One_Query_Modifier {
 		for (FieldName fn : old_select2.getSelectedFieldNames())
 			input_qry_stmt.getQuery().redirectProjs(old_var2, fn, new_var, fn);
 		return input_qry_stmt;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * kiarahmani.atropos.refactoring_engine.Modifiers.TTO.Two_to_One_Query_Modifier
+	 * #isValid(kiarahmani.atropos.DML.query.Query,
+	 * kiarahmani.atropos.DML.query.Query)
+	 */
+	@Override
+	public boolean isValid(Query input_query_1, Query input_query_2) {
+		Select_Query input_select_1 = null;
+		if (input_query_1 instanceof Select_Query) {
+			input_select_1 = (Select_Query) input_query_1;
+		} else
+			return false;
+		Select_Query input_select_2 = null;
+		if (input_query_2 instanceof Select_Query) {
+			input_select_2 = (Select_Query) input_query_2;
+		} else
+			return false;
+		// Queries access the same table
+		boolean assumption1 = input_select_1.getTableName().equalsWith(input_select_2.getTableName());
+		return assumption1;
 	}
 
 }

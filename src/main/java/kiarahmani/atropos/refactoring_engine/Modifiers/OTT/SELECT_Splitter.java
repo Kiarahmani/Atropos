@@ -59,7 +59,7 @@ public class SELECT_Splitter extends One_to_Two_Query_Modifier {
 		old_var = old_select.getVariable();
 		WHC old_whc = old_select.getWHC();
 		// make sure the redirection is possible
-		assert (modificationIsValid(old_selected_fieldNames)) : "requested modification cannot be done";
+		assert (isValid(input_query)) : "requested modification cannot be done";
 		//
 		logger.debug("Original Set of FieldNames: " + old_selected_fieldNames);
 		logger.debug("Excluded Set of FieldNames: " + excluded_fns);
@@ -105,10 +105,24 @@ public class SELECT_Splitter extends One_to_Two_Query_Modifier {
 		return input_qry_stmt;
 	}
 
-	private boolean modificationIsValid(ArrayList<FieldName> old_selected_fieldNames) {
-		boolean result = old_selected_fieldNames.containsAll(excluded_fns);
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * kiarahmani.atropos.refactoring_engine.Modifiers.OTT.One_to_Two_Query_Modifier
+	 * #isValid(kiarahmani.atropos.DML.query.Query)
+	 */
+	@Override
+	public boolean isValid(Query input_query) {
+		Select_Query input_select = null;
+		if (input_query instanceof Select_Query) {
+			input_select = (Select_Query) input_query;
+		} else
+			return false;
+
+		boolean result = input_select.getSelectedFieldNames().containsAll(excluded_fns);
 		logger.debug("old_selected_fieldNames must include all excluded_fns: " + result);
-		logger.debug("old_selected_fieldNames: " + old_selected_fieldNames);
+		logger.debug("old_selected_fieldNames: " + input_select.getSelectedFieldNames());
 		logger.debug("excluded_fns: " + excluded_fns);
 		return result;
 	}

@@ -52,7 +52,7 @@ public class UPDATE_Splitter extends One_to_Two_Query_Modifier {
 		TableName old_table_name = old_update.getTableName();
 		old_update_exps = old_update.getUpdateExps();
 		logger.debug("original update expressions: " + old_update_exps);
-		assert (modificationIsValid(old_update)) : "requested modification cannot be done on: " + input_query;
+		assert (isValid(old_update)) : "requested modification cannot be done on: " + input_query;
 		// define and populate a new array list of update expressions for the new query
 		excluded_update_exps = new ArrayList<>();
 		for (Tuple<FieldName, Expression> fe : old_update_exps)
@@ -86,7 +86,21 @@ public class UPDATE_Splitter extends One_to_Two_Query_Modifier {
 		return input_qry_stmt;
 	}
 
-	private boolean modificationIsValid(Update_Query input_update) {
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * kiarahmani.atropos.refactoring_engine.Modifiers.OTT.One_to_Two_Query_Modifier
+	 * #isValid(kiarahmani.atropos.DML.query.Query)
+	 */
+	@Override
+	public boolean isValid(Query input_query) {
+		Update_Query input_update = null;
+		if (input_query instanceof Update_Query) {
+			input_update = (Update_Query) input_query;
+		} else
+			return false;
+
 		logger.debug("set of updated fields " + input_update.getWrittenFieldNames()
 				+ " must include all excluded field names " + excluded_fns + "");
 		boolean result = input_update.getWrittenFieldNames().containsAll(excluded_fns);

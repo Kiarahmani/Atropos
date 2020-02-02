@@ -6,6 +6,7 @@
 package kiarahmani.atropos.refactoring_engine.Modifiers.OTT;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -26,6 +27,7 @@ import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.expression.constants.E_Const_Num;
 import kiarahmani.atropos.DML.query.Insert_Query;
 import kiarahmani.atropos.DML.query.Query;
+import kiarahmani.atropos.DML.query.Select_Query;
 import kiarahmani.atropos.DML.query.Update_Query;
 import kiarahmani.atropos.DML.where_clause.WHC;
 import kiarahmani.atropos.DML.where_clause.WHC_Constraint;
@@ -74,7 +76,7 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 		ArrayList<Tuple<FieldName, Expression>> old_ue = old_update.getUpdateExps();
 		logger.debug("Query to be duplicated: " + old_update.getPo());
 		// make sure modification is valid
-		assert (modificationIsValid(old_update)) : "requested modification cannot be done on: " + input_query;
+		assert (isValid(input_query)) : "requested modification cannot be done on: " + input_query;
 
 		Query new_qry = null;
 		// handle the CRDT case
@@ -106,45 +108,54 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 	 */
 	private WHC_Constraint[] mkInsert(WHC old_whc) {
 		List<FieldName> pk_fields = sourceTable.getPKFields();
+		logger.debug("PK fields of the source table: " + pk_fields);
 		int pk_fields_size = pk_fields.size();
 		WHC_Constraint[] result = new WHC_Constraint[pk_fields_size + 2];
 		// set pk fields
 		int index = 0;
+		logger.debug("For each PK a new expression will be added to the beginning of the ISNERT:");
 		for (FieldName pk_fn : pk_fields) {
 			result[index] = new WHC_Constraint(targetTable.getTableName(), targetTable.getPKFields().get(index),
 					BinOp.EQ, old_whc.getConstraintByFieldName(pk_fn).getExpression());
 			index++;
 		}
-
+		logger.debug("Insert Exps after adding PKs: " + Arrays.toString(result));
 		// set uuid field
 		result[pk_fields_size] = new WHC_Constraint(targetTable.getTableName(), targetTable.getUUIDField(), BinOp.EQ,
 				new E_UUID());
-
+		logger.debug("Insert Exps after adding UUID: " + Arrays.toString(result));
 		// set delta field
 		Expression delta_exp = extractDeltaExp();
 		result[pk_fields_size + 1] = new WHC_Constraint(targetTable.getTableName(), targetTable.getDeltaField(),
 				BinOp.EQ, delta_exp);
-
+		logger.debug("Final insert Exps: " + Arrays.toString(result));
 		return result;
 	}
 
 	private Expression extractDeltaExp() {
+		Expression result = null;
 		ArrayList<Tuple<FieldName, Expression>> old_exps = old_update.getUpdateExps();
 		assert (old_exps
 				.size() == 1) : "assumption failed: CRDT duplication can only be called on single field updates";
-		FieldName fn = old_exps.get(0).x;
+		logger.debug("Extracting delta from: " + old_exps);
+		// FieldName fn = old_exps.get(0).x;
 		Expression exp = old_exps.get(0).y;
 		if (exp instanceof E_BinOp) {
+			// TODO: Generalize CRDT tables and supported operations
 			E_BinOp bin_exp = (E_BinOp) exp;
-			if (BinOp.isCommutative(bin_exp.op))
+			if (bin_exp.op == BinOp.PLUS)
 				if (bin_exp.oper1 instanceof E_Proj) {
-					// if (proj_exp.f.equals(fn)) // not necessary: proj may be redirected to
-					// another copy
-					return bin_exp.oper2;
+					result = bin_exp.oper2;
+				}
+			if (bin_exp.op == BinOp.MINUS)
+				if (bin_exp.oper1 instanceof E_Proj) {
+					result = new E_BinOp(BinOp.MULT, new E_Const_Num(-1), bin_exp.oper2);
 				}
 		}
-		assert (false) : "no delta expression can be extracted from: " + old_exps.toString();
-		return null;
+		if (result == null)
+			assert (false) : "no delta expression can be extracted from: " + old_exps.toString();
+		logger.debug("Final extracted delta: " + result);
+		return result;
 	}
 
 	private ArrayList<Tuple<FieldName, Expression>> updateUE(ArrayList<Tuple<FieldName, Expression>> old_ue) {
@@ -199,26 +210,41 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 		return input_qry_stmt;
 	}
 
-	private boolean modificationIsValid(Update_Query input_query) {
-		// all keys used as the WHC of duplicating UPDATE must be constrained by vc
-		boolean assumption1 = vc.containsWHC(input_query.getWHC());
-		// there must be a correspondence from src table to target table, for every
-		// field
-		// updated by the duplicating UPDATE
-		boolean assumption2 = vc.correspondsAllFns(input_query.getTableName(), input_query.getWrittenFieldNames());
-		// redirecting UPDATE's where clause has only = (and not other comparison
-		// binary operations)
-		boolean assumption3 = input_query.getWHC().hasOnlyEq();
-		boolean result = assumption1 && assumption2 && assumption3;
-		logger.debug("modificationIsValid returned result: " + result);
-		return result;
-	}
-
 	private Redirection_Type get_redirection_type() {
 		if (this.vc.getTableName(1).equals(this.sourceTable.getTableName()))
 			return Redirection_Type.T1_TO_T2;
 		else
 			return Redirection_Type.T2_TO_T1;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * kiarahmani.atropos.refactoring_engine.Modifiers.OTT.One_to_Two_Query_Modifier
+	 * #isValid(kiarahmani.atropos.DML.query.Query)
+	 */
+	@Override
+	public boolean isValid(Query input_query) {
+		Update_Query input_update = null;
+		if (input_query instanceof Update_Query) {
+			input_update = (Update_Query) input_query;
+		} else
+			return false;
+
+		// all keys used as the WHC of duplicating UPDATE must be constrained by vc
+		boolean assumption1 = vc.containsWHC(input_update.getWHC());
+		// there must be a correspondence from src table to target table, for every
+		// field
+		// updated by the duplicating UPDATE
+		boolean assumption2 = vc.correspondsAllFns(input_update.getTableName(), input_update.getWrittenFieldNames());
+		// redirecting UPDATE's where clause has only = (and not other comparison
+		// binary operations)
+		boolean assumption3 = input_update.getWHC().hasOnlyEq();
+
+		boolean result = assumption1 && assumption2 && assumption3;
+		logger.debug("modificationIsValid returned result: " + result);
+		return result;
 	}
 
 }

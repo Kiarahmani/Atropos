@@ -17,6 +17,8 @@ public abstract class Two_to_One_Query_Modifier extends Query_Modifier {
 	// update a single targeted query
 	public abstract Query atIndexModification(Query input_query_1, Query input_query_2);
 
+	public abstract boolean isValid(Query input_query_1, Query input_query_2);
+
 	public void set() {
 		super.set();
 	}

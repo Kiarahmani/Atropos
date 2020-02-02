@@ -1,17 +1,13 @@
 package kiarahmani.atropos.utils;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import com.sun.org.apache.xpath.internal.functions.Function;
 
 import kiarahmani.atropos.Atropos;
 import kiarahmani.atropos.DDL.F_Type;
@@ -35,7 +31,6 @@ import kiarahmani.atropos.DML.expression.constants.E_Const_Num;
 import kiarahmani.atropos.DML.query.Delete_Query;
 import kiarahmani.atropos.DML.query.Insert_Query;
 import kiarahmani.atropos.DML.query.Query;
-import kiarahmani.atropos.DML.query.Query.Kind;
 import kiarahmani.atropos.DML.query.Select_Query;
 import kiarahmani.atropos.DML.query.Update_Query;
 import kiarahmani.atropos.DML.where_clause.WHC;
@@ -62,6 +57,7 @@ public class Program_Utils {
 	// basic program meta data
 	private String program_name;
 	private int version;
+	private boolean lock;
 	/*
 	 * string to object mappings
 	 */
@@ -106,6 +102,10 @@ public class Program_Utils {
 	SELECT_Merger select_merger;
 	UPDATE_Duplicator upd_dup;
 
+	public void lock() {
+		this.lock = true;
+	}
+
 	/*
 	 * 
 	 * 
@@ -114,38 +114,66 @@ public class Program_Utils {
 	 * 
 	 */
 
-	public void refactor(Delta delta) {
+	public boolean refactor(Delta delta) {
 		re.refactor(this, delta);
+		return true;
 	}
 
-	public void redirect_select(String txn_name, String src_table, String dest_table, int qry_po) {
+	public boolean redirect_select(String txn_name, String src_table, String dest_table, int qry_po) {
 		this.select_red.set(this, txn_name, src_table, dest_table);
-		re.applyAndPropagate(this, select_red, qry_po, txn_name);
+		if (select_red.isValid(getQueryByPo(txn_name, qry_po))) {
+			re.applyAndPropagate(this, select_red, qry_po, txn_name);
+			return true;
+		} else
+			return false;
 	}
 
-	public void merge_select(String txn_name, int qry_po) {
+	public boolean merge_select(String txn_name, int qry_po) {
 		select_merger.set(this, txn_name);
-		re.applyAndPropagate(this, select_merger, qry_po, txn_name);
+		if (select_merger.isValid(getQueryByPo(txn_name, qry_po), getQueryByPo(txn_name, qry_po + 1))) {
+			re.applyAndPropagate(this, select_merger, qry_po, txn_name);
+			return true;
+		} else
+			return false;
 	}
 
-	public void split_select(String txn_name, ArrayList<FieldName> excluded_fns, int qry_po) {
+	public boolean split_select(String txn_name, ArrayList<FieldName> excluded_fns, int qry_po) {
 		select_splt.set(this, txn_name, excluded_fns);
-		re.applyAndPropagate(this, select_splt, qry_po, txn_name);
+		if (select_splt.isValid(getQueryByPo(txn_name, qry_po))) {
+			re.applyAndPropagate(this, select_splt, qry_po, txn_name);
+			return true;
+		} else
+			return false;
+
 	}
 
-	public void merge_update(String txn_name, int qry_po) {
+	public boolean merge_update(String txn_name, int qry_po) {
 		upd_merger.set(this, txn_name);
-		re.applyAndPropagate(this, upd_merger, qry_po, txn_name);
+		if (upd_merger.isValid(getQueryByPo(txn_name, qry_po), getQueryByPo(txn_name, qry_po + 1))) {
+			re.applyAndPropagate(this, upd_merger, qry_po, txn_name);
+			return true;
+		} else
+			return false;
+
 	}
 
-	public void split_update(String txn_name, ArrayList<FieldName> excluded_fns_upd, int qry_po) {
+	public boolean split_update(String txn_name, ArrayList<FieldName> excluded_fns_upd, int qry_po) {
 		upd_splt.set(this, txn_name, excluded_fns_upd);
-		re.applyAndPropagate(this, upd_splt, qry_po, txn_name);
+		if (upd_splt.isValid(getQueryByPo(txn_name, qry_po))) {
+			re.applyAndPropagate(this, upd_splt, qry_po, txn_name);
+			return true;
+		} else
+			return false;
+
 	}
 
-	public void duplicate_update(String txn_name, String source_table, String target_table, int qry_po) {
+	public boolean duplicate_update(String txn_name, String source_table, String target_table, int qry_po) {
 		upd_dup.set(this, txn_name, source_table, target_table);
-		re.applyAndPropagate(this, upd_dup, qry_po, txn_name);
+		if (upd_dup.isValid(getQueryByPo(txn_name, qry_po))) {
+			re.applyAndPropagate(this, upd_dup, qry_po, txn_name);
+			return true;
+		} else
+			return false;
 	}
 
 	public int getNewSelectId(String txnName) {
@@ -205,6 +233,7 @@ public class Program_Utils {
 		upd_merger = new UPDATE_Merger();
 		select_merger = new SELECT_Merger();
 		upd_dup = new UPDATE_Duplicator();
+		lock = false;
 	}
 
 	/* Create a new table, store it locally and return it */
@@ -273,7 +302,7 @@ public class Program_Utils {
 	 * Create a new transaction, store it locally and return it
 	 */
 	public Transaction mkTrnasaction(String txn_name, String... args) {
-
+		assert (!lock) : "cannot call this function after locking";
 		Transaction txn = new Transaction(txn_name);
 		String transaction_name = txn.getName();
 		this.getTrasnsactionMap().put(transaction_name, txn);
@@ -290,6 +319,7 @@ public class Program_Utils {
 	}
 
 	public Expression mkAssertion(String txn, Expression exp) {
+		assert (!lock) : "cannot call this function after locking";
 		this.getTrasnsactionMap().get(txn).addAssertion(exp);
 		return exp;
 	}
@@ -307,6 +337,7 @@ public class Program_Utils {
 	}
 
 	public String getFreshVariableName(String txn) {
+		assert (!lock) : "cannot call this function after locking";
 		return txn + "_v" + transactionToVariableSetMap.get(txn).size();
 	}
 
@@ -314,6 +345,7 @@ public class Program_Utils {
 	 * Create fresh expressions based on a variable
 	 */
 	public E_Proj mkProjExpr(String txn, int var_id, String fn, int order) {
+		assert (!lock) : "cannot call this function after locking";
 		Variable v = getVariable(txn, var_id);
 		assert (v != null);
 		assert (getFieldName(fn) != null);
@@ -360,6 +392,7 @@ public class Program_Utils {
 	}
 
 	public Query_Statement addQueryStatement(String txn, Query q) {
+		assert (!lock) : "cannot call this function after locking";
 		int stmt_counts = (transactionToStatement.containsKey(txn)) ? transactionToStatement.get(txn) : 0;
 		transactionToStatement.put(txn, stmt_counts + 1);
 		Query_Statement result = new Query_Statement(stmt_counts, q);
@@ -369,6 +402,7 @@ public class Program_Utils {
 	}
 
 	public Query_Statement addQueryStatementInIf(String txn, int if_id, Query q) {
+		assert (!lock) : "cannot call this function after locking";
 		int stmt_counts = (transactionToStatement.containsKey(txn)) ? transactionToStatement.get(txn) : 0;
 		transactionToStatement.put(txn, stmt_counts + 1);
 		Query_Statement result = new Query_Statement(stmt_counts, q);
@@ -380,6 +414,7 @@ public class Program_Utils {
 	}
 
 	public Query_Statement addQueryStatementInElse(String txn, int if_id, Query q) {
+		assert (!lock) : "cannot call this function after locking";
 		int stmt_counts = (transactionToStatement.containsKey(txn)) ? transactionToStatement.get(txn) : 0;
 		transactionToStatement.put(txn, stmt_counts + 1);
 		Query_Statement result = new Query_Statement(stmt_counts, q);
@@ -392,6 +427,7 @@ public class Program_Utils {
 	}
 
 	public If_Statement addIfStatementInIf(String txn, int if_id, Expression c) {
+		assert (!lock) : "cannot call this function after locking";
 		int if_stmt_counts = (transactionToIf.containsKey(txn)) ? transactionToIf.get(txn) : 0;
 		transactionToIf.put(txn, if_stmt_counts + 1);
 		If_Statement result = new If_Statement(if_stmt_counts, c);
@@ -404,6 +440,7 @@ public class Program_Utils {
 	}
 
 	public If_Statement addIfStatementInElse(String txn, int if_id, Expression c) {
+		assert (!lock) : "cannot call this function after locking";
 		int if_stmt_counts = (transactionToIf.containsKey(txn)) ? transactionToIf.get(txn) : 0;
 		transactionToIf.put(txn, if_stmt_counts + 1);
 		If_Statement result = new If_Statement(if_stmt_counts, c);
@@ -419,6 +456,7 @@ public class Program_Utils {
 	 * create and add an empty if statement.
 	 */
 	public If_Statement addIfStatement(String txn, Expression c) {
+		assert (!lock) : "cannot call this function after locking";
 		int if_stmt_counts = (transactionToIf.containsKey(txn)) ? transactionToIf.get(txn) : 0;
 		transactionToIf.put(txn, if_stmt_counts + 1);
 		If_Statement result = new If_Statement(if_stmt_counts, c);
@@ -429,6 +467,7 @@ public class Program_Utils {
 	}
 
 	public Select_Query addSelectQuery(String txn, String tableName, boolean isAtomic, WHC whc, String... fieldNames) {
+		assert (!lock) : "cannot call this function after locking";
 		int po = transactionToPoCnt.containsKey(txn) ? transactionToPoCnt.get(txn) : 0;
 		transactionToPoCnt.put(txn, po + 1);
 		Variable fresh_variable = mkVariable(tableName, txn);
@@ -443,6 +482,7 @@ public class Program_Utils {
 	}
 
 	public Update_Query addUpdateQuery(String txn, String tableName, boolean isAtomic, WHC whc) {
+		assert (!lock) : "cannot call this function after locking";
 		int po = transactionToPoCnt.containsKey(txn) ? transactionToPoCnt.get(txn) : 0;
 		transactionToPoCnt.put(txn, po + 1);
 		int update_counts = (transactionToUpdateCount.containsKey(txn)) ? transactionToUpdateCount.get(txn) : 0;
@@ -452,6 +492,7 @@ public class Program_Utils {
 	}
 
 	public Insert_Query addInsertQuery(String txn, String tableName, boolean isAtomic, WHC_Constraint... pks) {
+		assert (!lock) : "cannot call this function after locking";
 		int po = transactionToPoCnt.containsKey(txn) ? transactionToPoCnt.get(txn) : 0;
 		transactionToPoCnt.put(txn, po + 1);
 		int update_counts = (transactionToUpdateCount.containsKey(txn)) ? transactionToUpdateCount.get(txn) : 0;
@@ -466,6 +507,7 @@ public class Program_Utils {
 	}
 
 	public Delete_Query addDeleteQuery(String txn, String tableName, boolean isAtomic, WHC whc) {
+		assert (!lock) : "cannot call this function after locking";
 		int po = transactionToPoCnt.containsKey(txn) ? transactionToPoCnt.get(txn) : 0;
 		transactionToPoCnt.put(txn, po + 1);
 		int update_counts = (transactionToUpdateCount.containsKey(txn)) ? transactionToUpdateCount.get(txn) : 0;
@@ -573,7 +615,7 @@ public class Program_Utils {
 	 */
 
 	public Query_Statement mkTestQryStmt(String txnName) {
-		int id = getNewSelectId(txnName);
+		assert (!lock) : "cannot call this function after locking";
 		Variable v = new Variable("accounts", "v_test_" + 999);
 		WHC GetAccount0_WHC = new WHC(getIsAliveFieldName("accounts"),
 				new WHC_Constraint(getTableName("accounts"), getFieldName("a_custid"), BinOp.EQ, new E_Const_Num(999)));
@@ -584,7 +626,6 @@ public class Program_Utils {
 	}
 
 	public Query_Statement mkTestQryStmt_6(String txnName) {
-		int id = getNewSelectId(txnName);
 		Variable v = new Variable("accounts", "v_test_" + 666);
 		WHC GetAccount0_WHC = new WHC(getIsAliveFieldName("accounts"),
 				new WHC_Constraint(getTableName("accounts"), getFieldName("a_custid"), BinOp.EQ, new E_Const_Num(666)));

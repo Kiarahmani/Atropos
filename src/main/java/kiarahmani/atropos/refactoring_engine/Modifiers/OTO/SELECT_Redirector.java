@@ -75,7 +75,7 @@ public class SELECT_Redirector extends One_to_One_Query_Modifier {
 		WHC old_whc = old_select.getWHC();
 
 		// make sure the redirection is possible
-		assert (modificationIsValid(old_select, vc)) : "requested modification cannot be done";
+		assert (isValid(input_query)) : "requested modification cannot be done";
 
 		// create new query's details
 		int new_select_id = pu.getNewSelectId(txnName);
@@ -128,32 +128,6 @@ public class SELECT_Redirector extends One_to_One_Query_Modifier {
 	 * Helping functions
 	 */
 
-	private boolean modificationIsValid(Select_Query input_query, VC vc) {
-		// all keys used as the WHC of redirecting SELECT must be constrained by vc
-		boolean assumption1 = vc.containsWHC(input_query.getWHC());
-
-		// there must be a correspondence from old table to new table, for every field
-		// selected by the redirecting SELCET
-		boolean assumption2 = vc.correspondsAllFns(input_query.getTableName(), input_query.getSelectedFieldNames());
-
-		// redirecting SELECTS's where clause has only = (and not other comparison
-		// binary operations)
-		boolean assumption3 = input_query.getWHC().hasOnlyEq();
-
-		// if the redirecting SELECT is a range query on T2 (which may be replaced with
-		// a single-row select on T1), we have to make sure that no project is called on
-		// it's variable which accesses k'th row where k>1
-		Transaction txn = pu.getTrasnsactionMap().get(txnName);
-		boolean assumption4 = true;
-		if (get_redirection_type() == Redirection_Type.T2_TO_T1 && vc.getType() == VC_Type.VC_OTM) {
-			for (E_Proj exp : txn.getAllProjExps()) {
-				assumption4 &= (!exp.getOrderExp().equals(new E_Const_Num(1)));
-				logger.debug("E_Proj " + exp + " = 1?  " + assumption4);
-			}
-		}
-		return assumption1 && assumption2 && assumption3 && assumption4;
-	}
-
 	private Redirection_Type get_redirection_type() {
 		if (this.vc.getTableName(1).equals(this.sourceTable.getTableName()))
 			return Redirection_Type.T1_TO_T2;
@@ -204,6 +178,46 @@ public class SELECT_Redirector extends One_to_One_Query_Modifier {
 
 	private Variable updateVar(Variable old_var) {
 		return pu.mkVariable(targetTable.getTableName().getName(), txnName);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * kiarahmani.atropos.refactoring_engine.Modifiers.OTO.One_to_One_Query_Modifier
+	 * #isValid(kiarahmani.atropos.DML.query.Query)
+	 */
+	@Override
+	public boolean isValid(Query input_query) {
+		Select_Query input_select = null;
+		if (input_query instanceof Select_Query) {
+			input_select = (Select_Query) input_query;
+		} else
+			return false;
+
+		// all keys used as the WHC of redirecting SELECT must be constrained by vc
+		boolean assumption1 = vc.containsWHC(input_query.getWHC());
+
+		// there must be a correspondence from old table to new table, for every field
+		// selected by the redirecting SELCET
+		boolean assumption2 = vc.correspondsAllFns(input_query.getTableName(), input_select.getSelectedFieldNames());
+
+		// redirecting SELECTS's where clause has only = (and not other comparison
+		// binary operations)
+		boolean assumption3 = input_query.getWHC().hasOnlyEq();
+
+		// if the redirecting SELECT is a range query on T2 (which may be replaced with
+		// a single-row select on T1), we have to make sure that no project is called on
+		// it's variable which accesses k'th row where k>1
+		Transaction txn = pu.getTrasnsactionMap().get(txnName);
+		boolean assumption4 = true;
+		if (get_redirection_type() == Redirection_Type.T2_TO_T1 && vc.getType() == VC_Type.VC_OTM) {
+			for (E_Proj exp : txn.getAllProjExps()) {
+				assumption4 &= (!exp.getOrderExp().equals(new E_Const_Num(1)));
+				logger.debug("E_Proj " + exp + " = 1?  " + assumption4);
+			}
+		}
+		return assumption1 && assumption2 && assumption3 && assumption4;
 	}
 
 }

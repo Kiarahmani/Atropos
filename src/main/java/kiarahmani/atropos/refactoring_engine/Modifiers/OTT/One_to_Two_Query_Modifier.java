@@ -18,10 +18,12 @@ public abstract class One_to_Two_Query_Modifier extends Query_Modifier {
 	// update a single targeted query
 	public abstract Tuple<Query, Query> atIndexModification(Query input_query);
 
+	public abstract boolean isValid(Query input_query);
+
 	public void set() {
 		super.set();
 	}
-	
+
 	public One_to_Two_Query_Modifier() {
 		super.type = QM_Type.OTT;
 	}

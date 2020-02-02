@@ -63,4 +63,16 @@ public class Test_Modifier extends One_to_One_Query_Modifier {
 		return q_stmt;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * kiarahmani.atropos.refactoring_engine.Modifiers.OTO.One_to_One_Query_Modifier
+	 * #isValid(kiarahmani.atropos.DML.query.Query)
+	 */
+	@Override
+	public boolean isValid(Query input_query) {
+		return true;
+	}
+
 }

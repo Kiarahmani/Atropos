@@ -33,4 +33,6 @@ public abstract class Query_Modifier {
 
 	// update all subsequent queries
 	public abstract Query_Statement propagatedQueryModification(Query_Statement input_exp);
+	
+	
 }

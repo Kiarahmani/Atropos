@@ -23,4 +23,5 @@ public abstract class One_to_One_Query_Modifier extends Query_Modifier {
 	// update a single targeted query
 	public abstract Query atIndexModification(Query input_query);
 
+	public abstract boolean isValid(Query input_query);
 }

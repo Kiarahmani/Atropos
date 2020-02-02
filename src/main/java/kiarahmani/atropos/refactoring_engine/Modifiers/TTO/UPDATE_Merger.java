@@ -56,9 +56,8 @@ public class UPDATE_Merger extends Two_to_One_Query_Modifier {
 		logger.debug("whc2: " + old_update2.getWHC());
 		Table old_table = pu.getTable(old_update1.getTableName().getName());
 		WHC new_whc = mergeWHCs(old_update1.getWHC(), old_update2.getWHC());
-		assert (new_whc != null
-				&& modificationIsValid(old_update1, old_update2)) : "requested modification cannot be done on: "
-						+ input_query_1.getId() + " and " + input_query_2.getId();
+		assert (new_whc != null && isValid(input_query_1, input_query_2)) : "requested modification cannot be done on: "
+				+ input_query_1.getId() + " and " + input_query_2.getId();
 		Update_Query new_update = new Update_Query(-1, pu.getNewUpdateId(txnName),
 				new_whc.isAtomic(old_table.getShardKey()), old_table.getTableName(), new_whc);
 		for (Tuple<FieldName, Expression> fe : old_update1.getUpdateExps())
@@ -67,16 +66,6 @@ public class UPDATE_Merger extends Two_to_One_Query_Modifier {
 			new_update.addUpdateExp(fe.x, fe.y);
 
 		return new_update;
-	}
-
-	private boolean modificationIsValid(Update_Query old_update1, Update_Query old_update2) {
-		boolean valid1 = old_update1.getTableName().equalsWith(old_update2.getTableName());
-		logger.debug("valid1: " + valid1);
-		boolean valid2 = old_update1.isAtomic() == old_update2.isAtomic();
-		logger.debug("valid2: " + valid2);
-		boolean valid3 = old_update1.getPo() == old_update2.getPo() - 1;
-		logger.debug("valid3: " + valid3);
-		return valid1 && valid2 && valid3;
 	}
 
 	WHC mergeWHCs(WHC whc1, WHC whc2) {
@@ -112,6 +101,37 @@ public class UPDATE_Merger extends Two_to_One_Query_Modifier {
 	public Query_Statement propagatedQueryModification(Query_Statement input_qry_stmt) {
 		logger.debug("No propagated modification is necessary");
 		return input_qry_stmt;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * kiarahmani.atropos.refactoring_engine.Modifiers.TTO.Two_to_One_Query_Modifier
+	 * #isValid(kiarahmani.atropos.DML.query.Query,
+	 * kiarahmani.atropos.DML.query.Query)
+	 */
+	@Override
+	public boolean isValid(Query input_query_1, Query input_query_2) {
+		Update_Query input_update_1 = null;
+		if (input_query_1 instanceof Update_Query) {
+			input_update_1 = (Update_Query) input_query_1;
+		} else
+			return false;
+		Update_Query input_update_2 = null;
+		if (input_query_2 instanceof Update_Query) {
+			input_update_2 = (Update_Query) input_query_2;
+		} else
+			return false;
+
+		boolean valid1 = input_update_1.getTableName().equalsWith(input_update_2.getTableName());
+		logger.debug("valid1: " + valid1);
+		boolean valid2 = input_update_1.isAtomic() == input_update_2.isAtomic();
+		logger.debug("valid2: " + valid2);
+		boolean valid3 = input_update_1.getPo() == input_update_2.getPo() - 1;
+		logger.debug("valid3: " + valid3);
+
+		return valid1 && valid2 && valid3;
 	}
 
 }

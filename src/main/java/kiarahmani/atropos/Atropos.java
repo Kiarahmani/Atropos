@@ -52,6 +52,7 @@ public class Atropos {
 		Program program = ipg.generate("Balance1", "Amalgamate1", "TransactSavings1", "DepositChecking1", "SendPaymen1",
 				"WriteCheck1", test_txn);
 		program.printProgram();
+		pu.lock(); // make sure that certain features of pu won't be used anymore
 
 		/*
 		 * BEGIN REFACTORING
@@ -68,6 +69,27 @@ public class Atropos {
 		pu.addFieldTupleToVC("vc_0", "s_custid", "a_custid");
 		pu.addFieldTupleToVC("vc_0", "s_bal", "a_sav_bal");
 		pu.generateProgram().printProgram();
+
+		// add new columns in car table
+		Delta intro_car = new INTRO_F("car", "car_maker_name", F_Type.NUM);
+		pu.refactor(intro_car);
+		intro_car = new INTRO_F("car", "car_maker_budget", F_Type.NUM);
+		pu.refactor(intro_car);
+		intro_car = new INTRO_F("car", "car_maker_country", F_Type.NUM);
+		pu.refactor(intro_car);
+
+		// Add a new vc
+		pu.mkVC("makers", "car", VC_Agg.VC_ID, VC_Type.VC_OTM,
+				new VC_Constraint(pu.getFieldName("maker_id"), pu.getFieldName("car_maker")));
+		pu.addFieldTupleToVC("vc_1", "maker_name", "car_maker_name");
+		pu.addFieldTupleToVC("vc_1", "maker_budget", "car_maker_budget");
+		pu.addFieldTupleToVC("vc_1", "maker_country", "car_maker_country");
+		pu.generateProgram().printProgram();
+
+		// add vc between makers table and a CRDT table to hold maker's budget
+		pu.mkVC("makers", "makers_budget_crdt", VC_Agg.VC_SUM, VC_Type.VC_OTM,
+				new VC_Constraint(pu.getFieldName("maker_id"), pu.getFieldName("mbc_maker_id")));
+		pu.addFieldTupleToVC("vc_2", "maker_budget", "mbc_amnt");
 
 		// redirect SELECT2 from savings to accounts
 		pu.redirect_select(test_txn, "savings", "accounts", 2);
@@ -101,22 +123,6 @@ public class Atropos {
 		pu.merge_select(test_txn, 0);
 		pu.generateProgram().printProgram();
 
-		// add new columns in car table
-		Delta intro_car = new INTRO_F("car", "car_maker_name", F_Type.NUM);
-		pu.refactor(intro_car);
-		intro_car = new INTRO_F("car", "car_maker_budget", F_Type.NUM);
-		pu.refactor(intro_car);
-		intro_car = new INTRO_F("car", "car_maker_country", F_Type.NUM);
-		pu.refactor(intro_car);
-
-		// Add a new vc
-		pu.mkVC("makers", "car", VC_Agg.VC_ID, VC_Type.VC_OTM,
-				new VC_Constraint(pu.getFieldName("maker_id"), pu.getFieldName("car_maker")));
-		pu.addFieldTupleToVC("vc_1", "maker_name", "car_maker_name");
-		pu.addFieldTupleToVC("vc_1", "maker_budget", "car_maker_budget");
-		pu.addFieldTupleToVC("vc_1", "maker_country", "car_maker_country");
-		pu.generateProgram().printProgram();
-
 		// redirect SELECT5 from makers to car
 		pu.redirect_select(test_txn, "makers", "car", 5);
 		pu.generateProgram().printProgram();
@@ -136,11 +142,6 @@ public class Atropos {
 		// duplicate UPDATE(7) to table car (test OTM VC: T2 to T1)
 		pu.duplicate_update(test_txn, "car", "makers", 8);
 		pu.generateProgram().printProgram();
-
-		// add vc between makers table and a CRDT table to hold maker's budget
-		pu.mkVC("makers", "makers_budget_crdt", VC_Agg.VC_SUM, VC_Type.VC_OTM,
-				new VC_Constraint(pu.getFieldName("maker_id"), pu.getFieldName("mbc_maker_id")));
-		pu.addFieldTupleToVC("vc_2", "maker_budget", "mbc_amnt");
 
 		// redirect SELECT(10) to CRDT copy in makers_budget_crdt table
 		pu.redirect_select(test_txn, "makers", "makers_budget_crdt", 10);
