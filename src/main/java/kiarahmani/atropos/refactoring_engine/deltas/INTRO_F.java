@@ -25,4 +25,14 @@ public class INTRO_F extends Delta {
 		this.tableName = tableName;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see kiarahmani.atropos.refactoring_engine.deltas.Delta#getDesc()
+	 */
+	@Override
+	public String getDesc() {
+		return "Field \"" + newFieldName + "\" added to table \"" + this.tableName + "\"";
+	}
+
 }

@@ -19,15 +19,17 @@ public class Program {
 	private ArrayList<Table> tables;
 	private ArrayList<VC> vcs;
 	private int version;
+	private String comment;
 
 	// constructor
-	public Program(String name, int version) {
+	public Program(String name, int version, String comment) {
 		this.transactions = new ArrayList<Transaction>();
 		this.vcs = new ArrayList<VC>();
 		this.programName = name;
 		setMaxQueryCount();
 		this.tables = new ArrayList<>();
 		this.version = version;
+		this.comment = comment;
 	}
 
 	public void addVC(VC vc) {
@@ -147,6 +149,7 @@ public class Program {
 		System.out.println(
 				"\n\n\n\n##############################################################################################################################");
 		System.out.println("### " + programName.toUpperCase() + "(" + version + ")");
+		System.out.println("## COMMENTS: " + comment);
 		System.out.println("## SCHEMA:");
 		for (Table t : tables)
 			System.out.println(t.toString());

@@ -58,6 +58,7 @@ public class Program_Utils {
 	// basic program meta data
 	private String program_name;
 	private int version;
+	private String comments;
 	private boolean lock;
 	/*
 	 * string to object mappings
@@ -117,6 +118,15 @@ public class Program_Utils {
 	 */
 
 	public boolean refactor(Delta delta) {
+		version++;
+		comments += delta.getDesc() + " | ";
+		re.refactor(this, delta);
+		return true;
+	}
+
+	public boolean refactor(Delta delta, String comments) {
+		version++;
+		this.comments = comments;
 		re.refactor(this, delta);
 		return true;
 	}
@@ -125,6 +135,15 @@ public class Program_Utils {
 		this.select_red.set(this, txn_name, src_table, dest_table);
 		if (select_red.isValid(getQueryByPo(txn_name, qry_po))) {
 			re.applyAndPropagate(this, select_red, qry_po, txn_name);
+			return true;
+		} else
+			return false;
+	}
+
+	public boolean reAtomicize_qry(String txn_name, int qry_po) {
+		this.qry_atom.set(this, txn_name);
+		if (qry_atom.isValid(getQueryByPo(txn_name, qry_po))) {
+			re.applyAndPropagate(this, qry_atom, qry_po, txn_name);
 			return true;
 		} else
 			return false;
@@ -195,7 +214,7 @@ public class Program_Utils {
 	 * is simply a packaging for currently stored meta-data
 	 */
 	public Program generateProgram() {
-		Program program = new Program(program_name, version++);
+		Program program = new Program(program_name, version, comments);
 		for (Table t : tableMap.values())
 			program.addTable(t);
 		for (Transaction t : getTrasnsactionMap().values())
@@ -203,6 +222,7 @@ public class Program_Utils {
 		for (VC vc : vcMap.values())
 			program.addVC(vc);
 		program.setMaxQueryCount();
+		comments = "";
 		return program;
 	}
 
@@ -287,11 +307,9 @@ public class Program_Utils {
 	/*
 	 * Create a new VC, store it locally and return it
 	 */
-	public VC mkVC(String T_1, String T_2, VC_Agg vc_agg, VC_Type vc_type, VC_Constraint... constraints) {
+	public VC mkVC(String T_1, String T_2, VC_Agg vc_agg, VC_Type vc_type) {
 		String name = "vc_" + this.vcMap.size();
 		VC vc = new VC(name, this.getTableName(T_1), this.getTableName(T_2), vc_agg, vc_type);
-		for (VC_Constraint vcc : constraints)
-			vc.addConstraint(vcc);
 		this.vcMap.put(name, vc);
 		return vc;
 	}
@@ -299,6 +317,12 @@ public class Program_Utils {
 	public void addFieldTupleToVC(String vcName, String F_1, String F_2) {
 		assert (this.vcMap.get(vcName) != null) : "cannot add tuple to a non-existing VC";
 		this.vcMap.get(vcName).addFieldTuple(getFieldName(F_1), getFieldName(F_2));
+	}
+
+	public void addKeyCorrespondenceToVC(String vcName, String F_1, String F_2) {
+		assert (this.vcMap.get(vcName) != null) : "cannot add tuple to a non-existing VC";
+		VC_Constraint vcc = new VC_Constraint(getFieldName(F_1), getFieldName(F_2));
+		this.vcMap.get(vcName).addConstraint(vcc);
 	}
 
 	/*
@@ -610,6 +634,18 @@ public class Program_Utils {
 			if (!checkPotKeyForFn(tn, pot_keys, fn))
 				return false;
 		return true;
+	}
+
+	public VC getVC(String key) {
+		return this.vcMap.get(key);
+	}
+
+	public int getVCCnt() {
+		return this.vcMap.size();
+	}
+
+	public void putVC(VC vc) {
+		this.vcMap.put(vc.getName(), vc);
 	}
 
 	/*****************************************************************************************************************/

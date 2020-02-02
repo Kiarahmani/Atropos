@@ -41,6 +41,10 @@ public class VC {
 	private ArrayList<VC_Constraint> vc_constraints;
 	private String name;
 
+	public String getName() {
+		return this.name;
+	}
+
 	public ArrayList<VC_Constraint> getVCC() {
 		return this.vc_constraints;
 	}

@@ -11,4 +11,15 @@ package kiarahmani.atropos.refactoring_engine.deltas;
  */
 public class CHSK extends Delta {
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see kiarahmani.atropos.refactoring_engine.deltas.Delta#getDesc()
+	 */
+	@Override
+	public String getDesc() {
+		// TODO Auto-generated method stub
+		return "a change in shard key";
+	}
+
 }

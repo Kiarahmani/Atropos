@@ -25,6 +25,7 @@ import kiarahmani.atropos.refactoring_engine.Modifiers.TTO.Two_to_One_Query_Modi
 import kiarahmani.atropos.refactoring_engine.deltas.Delta;
 import kiarahmani.atropos.refactoring_engine.deltas.INTRO_F;
 import kiarahmani.atropos.refactoring_engine.deltas.INTRO_R;
+import kiarahmani.atropos.refactoring_engine.deltas.INTRO_VC;
 import kiarahmani.atropos.utils.Program_Utils;
 import kiarahmani.atropos.utils.Tuple;
 
@@ -48,8 +49,10 @@ public class Refactoring_Engine {
 			return apply_chsk(input_pu);
 		case "INTRO_F":
 			return apply_intro_f(input_pu, (INTRO_F) delta);
+		case "INTRO_VC":
+			return apply_intro_vc(input_pu, (INTRO_VC) delta);
 		default:
-			assert false : "Case not catched!" + delta_class;
+			assert false : "Case not catched: " + delta_class;
 			break;
 		}
 		return input_pu;
@@ -62,6 +65,11 @@ public class Refactoring_Engine {
 		logger.debug("applying INTRO_R refactoring");
 		String table_name = intro_r.getNewTableName();
 		input_pu.mkTable(table_name);
+		return input_pu;
+	}
+
+	private Program_Utils apply_intro_vc(Program_Utils input_pu, INTRO_VC intro_f) {
+		logger.debug("applying INTRO_VC refactoring");
 		return input_pu;
 	}
 

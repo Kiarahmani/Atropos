@@ -10,5 +10,5 @@ package kiarahmani.atropos.refactoring_engine.deltas;
  *
  */
 public abstract class Delta {
-	
+	abstract public String getDesc();
 }

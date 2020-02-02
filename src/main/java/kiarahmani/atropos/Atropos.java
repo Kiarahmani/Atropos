@@ -11,23 +11,12 @@ import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DDL.vc.*;
 import kiarahmani.atropos.DDL.vc.VC.VC_Agg;
 import kiarahmani.atropos.DDL.vc.VC.VC_Type;
-import kiarahmani.atropos.DML.expression.BinOp;
-import kiarahmani.atropos.DML.expression.constants.E_Const_Num;
-import kiarahmani.atropos.DML.query.Update_Query;
-import kiarahmani.atropos.DML.where_clause.WHC;
-import kiarahmani.atropos.DML.where_clause.WHC_Constraint;
 import kiarahmani.atropos.program.Program;
 import kiarahmani.atropos.program_generators.ProgramGenerator;
 import kiarahmani.atropos.program_generators.SmallBank.SmallBankProgramGenerator;
-import kiarahmani.atropos.refactoring_engine.Refactoring_Engine;
-import kiarahmani.atropos.refactoring_engine.Modifiers.OTO.SELECT_Redirector;
-import kiarahmani.atropos.refactoring_engine.Modifiers.OTT.SELECT_Splitter;
-import kiarahmani.atropos.refactoring_engine.Modifiers.OTT.UPDATE_Duplicator;
-import kiarahmani.atropos.refactoring_engine.Modifiers.OTT.UPDATE_Splitter;
-import kiarahmani.atropos.refactoring_engine.Modifiers.TTO.SELECT_Merger;
-import kiarahmani.atropos.refactoring_engine.Modifiers.TTO.UPDATE_Merger;
 import kiarahmani.atropos.refactoring_engine.deltas.Delta;
 import kiarahmani.atropos.refactoring_engine.deltas.INTRO_F;
+import kiarahmani.atropos.refactoring_engine.deltas.INTRO_VC;
 import kiarahmani.atropos.utils.Constants;
 import kiarahmani.atropos.utils.Program_Utils;
 
@@ -59,38 +48,47 @@ public class Atropos {
 		 * BEGIN SCHEMA REFACTORING
 		 * 
 		 */
-		// Add a new field
+		// Add a new field in accounts
 		Delta intro_f = new INTRO_F("accounts", "a_sav_bal", F_Type.NUM);
 		pu.refactor(intro_f);
+
+		// Add a new vc between savings and accounts
+		INTRO_VC intro_vc0 = new INTRO_VC(pu, "savings", "accounts", VC_Agg.VC_ID, VC_Type.VC_OTO);
+		intro_vc0.addKeyCorrespondenceToVC("s_custid", "a_custid");
+		intro_vc0.addFieldTupleToVC("s_custid", "a_custid");
+		intro_vc0.addFieldTupleToVC("s_bal", "a_sav_bal");
+		pu.refactor(intro_vc0);
+
+		// print
 		pu.generateProgram().printProgram();
 
-		// Add a new vc
-		pu.mkVC("savings", "accounts", VC_Agg.VC_ID, VC_Type.VC_OTO,
-				new VC_Constraint(pu.getFieldName("a_custid"), pu.getFieldName("s_custid")));
-		pu.addFieldTupleToVC("vc_0", "s_custid", "a_custid");
-		pu.addFieldTupleToVC("vc_0", "s_bal", "a_sav_bal");
+		// add 3 new columns in car table
+		pu.refactor(new INTRO_F("car", "car_maker_name", F_Type.NUM));
+		pu.refactor(new INTRO_F("car", "car_maker_budget", F_Type.NUM));
+		pu.refactor(new INTRO_F("car", "car_maker_country", F_Type.NUM));
+
+		// print
 		pu.generateProgram().printProgram();
 
-		// add new columns in car table
-		Delta intro_car = new INTRO_F("car", "car_maker_name", F_Type.NUM);
-		pu.refactor(intro_car);
-		intro_car = new INTRO_F("car", "car_maker_budget", F_Type.NUM);
-		pu.refactor(intro_car);
-		intro_car = new INTRO_F("car", "car_maker_country", F_Type.NUM);
-		pu.refactor(intro_car);
+		// add a new vc between makes and car tables
+		INTRO_VC intro_vc1 = new INTRO_VC(pu, "makers", "car", VC_Agg.VC_ID, VC_Type.VC_OTM);
+		intro_vc1.addKeyCorrespondenceToVC("maker_id", "car_maker");
+		intro_vc1.addFieldTupleToVC("maker_name", "car_maker_name");
+		intro_vc1.addFieldTupleToVC("maker_budget", "car_maker_budget");
+		intro_vc1.addFieldTupleToVC("maker_country", "car_maker_country");
+		pu.refactor(intro_vc1);
 
-		// Add a new vc
-		pu.mkVC("makers", "car", VC_Agg.VC_ID, VC_Type.VC_OTM,
-				new VC_Constraint(pu.getFieldName("maker_id"), pu.getFieldName("car_maker")));
-		pu.addFieldTupleToVC("vc_1", "maker_name", "car_maker_name");
-		pu.addFieldTupleToVC("vc_1", "maker_budget", "car_maker_budget");
-		pu.addFieldTupleToVC("vc_1", "maker_country", "car_maker_country");
+		// print
 		pu.generateProgram().printProgram();
 
 		// add vc between makers table and a CRDT table to hold maker's budget
-		pu.mkVC("makers", "makers_budget_crdt", VC_Agg.VC_SUM, VC_Type.VC_OTM,
-				new VC_Constraint(pu.getFieldName("maker_id"), pu.getFieldName("mbc_maker_id")));
-		pu.addFieldTupleToVC("vc_2", "maker_budget", "mbc_amnt");
+		INTRO_VC intro_vc2 = new INTRO_VC(pu, "makers", "makers_budget_crdt", VC_Agg.VC_SUM, VC_Type.VC_OTM);
+		intro_vc2.addKeyCorrespondenceToVC("maker_id", "mbc_maker_id");
+		intro_vc2.addFieldTupleToVC("maker_budget", "mbc_amnt");
+		pu.refactor(intro_vc2);
+
+		// print
+		pu.generateProgram().printProgram();
 
 		/*
 		 * 
@@ -98,65 +96,65 @@ public class Atropos {
 		 * 
 		 */
 
-		// redirect SELECT2 from savings to accounts
-		pu.redirect_select(test_txn, "savings", "accounts", 2);
-		pu.generateProgram().printProgram();
-
-		// split SELECT0
-		ArrayList<FieldName> excluded_fns = new ArrayList<>();
-		excluded_fns.add(pu.getFieldName("a_name"));
-		pu.split_select(test_txn, excluded_fns, 0);
-		pu.generateProgram().printProgram();
-
-		// split UPDATE5
-		ArrayList<FieldName> excluded_fns_upd = new ArrayList<>();
-		excluded_fns_upd.add(pu.getFieldName("c_bal"));
-		pu.split_update(test_txn, excluded_fns_upd, 5);
-		pu.generateProgram().printProgram();
-
-		// merge UPDATE5 and UPDATE6
-		pu.merge_update(test_txn, 5);
-		pu.generateProgram().printProgram();
-
-		// merge UPDATE5 and UPDATE6 (again)
-		pu.merge_update(test_txn, 5);
-		pu.generateProgram().printProgram();
-
-		// merge SELECT0 and SELECT1
-		pu.merge_select(test_txn, 0);
-		pu.generateProgram().printProgram();
-
-		// merge SELECT0 and SELECT1 (again)
-		pu.merge_select(test_txn, 0);
-		pu.generateProgram().printProgram();
-
-		// redirect SELECT5 from makers to car
-		pu.redirect_select(test_txn, "makers", "car", 5);
-		pu.generateProgram().printProgram();
-
-		// merge SELECT4 and SELECT5
-		pu.merge_select(test_txn, 4);
-		pu.generateProgram().printProgram();
-
-		// duplicate UPDATE5 to accounts table (test OTO VC)
-		pu.duplicate_update(test_txn, "savings", "accounts", 5);
-		pu.generateProgram().printProgram();
-
-		// duplicate UPDATE(7) to table car (test OTM VC: T1 to T2)
-		pu.duplicate_update(test_txn, "makers", "car", 7);
-		pu.generateProgram().printProgram();
-
-		// duplicate UPDATE(7) to table car (test OTM VC: T2 to T1)
-		pu.duplicate_update(test_txn, "car", "makers", 8);
-		pu.generateProgram().printProgram();
-
-		// redirect SELECT(10) to CRDT copy in makers_budget_crdt table
-		pu.redirect_select(test_txn, "makers", "makers_budget_crdt", 10);
-		pu.generateProgram().printProgram();
-
-		// duplicate UPDATE(9) to makers_budget_crdt
-		pu.duplicate_update(test_txn, "makers", "makers_budget_crdt", 9);
-		pu.generateProgram().printProgram();
+//		// redirect SELECT2 from savings to accounts
+//		pu.redirect_select(test_txn, "savings", "accounts", 2);
+//		pu.generateProgram().printProgram();
+//
+//		// split SELECT0
+//		ArrayList<FieldName> excluded_fns = new ArrayList<>();
+//		excluded_fns.add(pu.getFieldName("a_name"));
+//		pu.split_select(test_txn, excluded_fns, 0);
+//		pu.generateProgram().printProgram();
+//
+//		// split UPDATE5
+//		ArrayList<FieldName> excluded_fns_upd = new ArrayList<>();
+//		excluded_fns_upd.add(pu.getFieldName("c_bal"));
+//		pu.split_update(test_txn, excluded_fns_upd, 5);
+//		pu.generateProgram().printProgram();
+//
+//		// merge UPDATE5 and UPDATE6
+//		pu.merge_update(test_txn, 5);
+//		pu.generateProgram().printProgram();
+//
+//		// merge UPDATE5 and UPDATE6 (again)
+//		pu.merge_update(test_txn, 5);
+//		pu.generateProgram().printProgram();
+//
+//		// merge SELECT0 and SELECT1
+//		pu.merge_select(test_txn, 0);
+//		pu.generateProgram().printProgram();
+//
+//		// merge SELECT0 and SELECT1 (again)
+//		pu.merge_select(test_txn, 0);
+//		pu.generateProgram().printProgram();
+//
+//		// redirect SELECT5 from makers to car
+//		pu.redirect_select(test_txn, "makers", "car", 5);
+//		pu.generateProgram().printProgram();
+//
+//		// merge SELECT4 and SELECT5
+//		pu.merge_select(test_txn, 4);
+//		pu.generateProgram().printProgram();
+//
+//		// duplicate UPDATE5 to accounts table (test OTO VC)
+//		pu.duplicate_update(test_txn, "savings", "accounts", 5);
+//		pu.generateProgram().printProgram();
+//
+//		// duplicate UPDATE(7) to table car (test OTM VC: T1 to T2)
+//		pu.duplicate_update(test_txn, "makers", "car", 7);
+//		pu.generateProgram().printProgram();
+//
+//		// duplicate UPDATE(7) to table car (test OTM VC: T2 to T1)
+//		pu.duplicate_update(test_txn, "car", "makers", 8);
+//		pu.generateProgram().printProgram();
+//
+//		// redirect SELECT(10) to CRDT copy in makers_budget_crdt table
+//		pu.redirect_select(test_txn, "makers", "makers_budget_crdt", 10);
+//		pu.generateProgram().printProgram();
+//
+//		// duplicate UPDATE(9) to makers_budget_crdt
+//		pu.duplicate_update(test_txn, "makers", "makers_budget_crdt", 9);
+//		pu.generateProgram().printProgram();
 
 		/*
 		 * 

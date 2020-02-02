@@ -20,4 +20,15 @@ public class INTRO_R extends Delta {
 	public String getNewTableName() {
 		return this.new_table_name;
 	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see kiarahmani.atropos.refactoring_engine.deltas.Delta#getDesc()
+	 */
+	@Override
+	public String getDesc() {
+		// TODO Auto-generated method stub
+		return "Table \"" + new_table_name + "\" added to the schema";
+	}
 }
