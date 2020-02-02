@@ -6,6 +6,24 @@ public class FieldName {
 	private String name;
 	private boolean isPK;
 	private boolean isSK;
+	private boolean isDelta;
+	private boolean isUUID;
+
+	public boolean isUUID() {
+		return this.isUUID;
+	}
+
+	public void setUUID() {
+		this.isUUID = true;
+	}
+
+	public boolean isDelta() {
+		return this.isDelta;
+	}
+
+	public void setDelta() {
+		this.isDelta = true;
+	}
 
 	public boolean isPK() {
 		return this.isPK;
@@ -24,6 +42,7 @@ public class FieldName {
 		this.isPK = isPK;
 		this.isSK = isSK;
 		this.f_type = f_type;
+		this.isDelta = false; // must be explicitly set later.
 	}
 
 	public String getName() {

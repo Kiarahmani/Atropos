@@ -66,9 +66,12 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 				new FieldName("maker_country", false, false, F_Type.NUM),
 				new FieldName("maker_age", false, false, F_Type.NUM));
 
-		pu.mkTable("makers_budget_crdt", new FieldName("mbc_maker_id", true, false, F_Type.NUM),
-				new FieldName("mbc_uuid", true, true, F_Type.NUM),
-				new FieldName("mbc_amnt", false, false, F_Type.NUM));
+		FieldName fn_mbc_maker_id = new FieldName("mbc_maker_id", true, true, F_Type.NUM);
+		FieldName fn_mbc_uuid = new FieldName("mbc_uuid", true, false, F_Type.NUM);
+		fn_mbc_uuid.setUUID();
+		FieldName fn_mbc_amnt = new FieldName("mbc_amnt", false, false, F_Type.NUM);
+		fn_mbc_amnt.setDelta();
+		pu.mkCRDTTable("makers_budget_crdt", fn_mbc_maker_id, fn_mbc_uuid, fn_mbc_amnt);
 		/*
 		 * /*
 		 * 
@@ -217,24 +220,23 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 			WHC DepositChecking_WHC1111 = new WHC(pu.getIsAliveFieldName("makers"), new WHC_Constraint(
 					pu.getTableName("makers"), pu.getFieldName("maker_id"), BinOp.EQ, new E_Const_Num(12)));
 			Update_Query DepositChecking1111 = pu.addUpdateQuery("test", "makers", true, DepositChecking_WHC1111);
-			DepositChecking1111.addUpdateExp(pu.getFieldName("maker_budget"), new E_Const_Num(10000));
+			DepositChecking1111.addUpdateExp(pu.getFieldName("maker_budget"),
+					new E_BinOp(BinOp.PLUS, pu.mkProjExpr("test", 5, "maker_budget", 1), new E_Const_Num(100)));
 			pu.addQueryStatement("test", DepositChecking1111);
 
 			// select a maker's budget from the original table (this will be redirected to
 			// CRDT table)
-			//WHC select_whc_21 = new WHC(pu.getIsAliveFieldName("makers"), new WHC_Constraint(pu.getTableName("makers"),
-			//		pu.getFieldName("maker_id"), BinOp.EQ, new E_Const_Num(10)));
-			//Select_Query select_21 = pu.addSelectQuery("test", "makers", true, select_whc_21, "maker_budget");
-			//pu.addQueryStatement("test", select_21);
-			
+			WHC select_whc_21 = new WHC(pu.getIsAliveFieldName("makers"), new WHC_Constraint(pu.getTableName("makers"),
+					pu.getFieldName("maker_id"), BinOp.EQ, new E_Const_Num(10)));
+			Select_Query select_21 = pu.addSelectQuery("test", "makers", true, select_whc_21, "maker_budget");
+			pu.addQueryStatement("test", select_21);
+
 			// just an operation to use the variable selected by the above query
-			//WHC select_whc_211 = new WHC(pu.getIsAliveFieldName("accounts"), new WHC_Constraint(pu.getTableName("accounts"),
-			//		pu.getFieldName("a_custid"), BinOp.EQ, pu.mkProjExpr("test", 6, "maker_budget", 1)));
-			//Select_Query select_211 = pu.addSelectQuery("test", "accounts", true, select_whc_211, "a_name");
-			//pu.addQueryStatement("test", select_211);
-			
-			
-			
+			WHC select_whc_211 = new WHC(pu.getIsAliveFieldName("accounts"),
+					new WHC_Constraint(pu.getTableName("accounts"), pu.getFieldName("a_custid"), BinOp.EQ,
+							pu.mkProjExpr("test", 6, "maker_budget", 1)));
+			Select_Query select_211 = pu.addSelectQuery("test", "accounts", true, select_whc_211, "a_name");
+			pu.addQueryStatement("test", select_211);
 
 		}
 

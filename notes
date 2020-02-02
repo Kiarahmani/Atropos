@@ -21,7 +21,8 @@ TODO:
 ASSUMPTIONS:
   - only one VC between each pair of tables
   - CRDT tables only have 3 columns
-
+  - CRDT-able operations must have the following form: fn=op(proj(fn,_,_),exp):
+    order matters. op must be commutative
 
 ====================================================================================================
 IMPROVEMENTS:

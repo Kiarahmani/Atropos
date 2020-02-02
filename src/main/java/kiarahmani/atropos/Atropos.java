@@ -180,8 +180,8 @@ public class Atropos {
 		pu.addFieldTupleToVC("vc_2", "maker_budget", "mbc_amnt");
 
 		// redirect select on makers to the CRDT copy in makers_budget_crdt table
-		//qry_red.set(pu, test_txn, "makers", "makers_budget_crdt");
-		//re.applyAndPropagate(pu, qry_red, 10, test_txn);
+		qry_red.set(pu, test_txn, "makers", "makers_budget_crdt");
+		re.applyAndPropagate(pu, qry_red, 10, test_txn);
 
 		merged_program_upd = pu.generateProgram();
 		merged_program_upd.printProgram();

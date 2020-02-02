@@ -154,6 +154,20 @@ public class Program_Utils {
 		return newTable;
 	}
 
+	/* Create a new table, store it locally and return it */
+	public Table mkCRDTTable(String tn_name, FieldName... fns) {
+		TableName tn = new TableName(tn_name);
+		FieldName is_alive = new FieldName("is_alive", false, false, F_Type.BOOL);
+		this.tableNameMap.put(tn.getName(), tn);
+		Table newTable = new Table(tn, is_alive, fns);
+		this.tableMap.put(tn.getName(), newTable);
+		for (FieldName fn : fns)
+			this.fieldNameMap.put(fn.getName(), fn);
+		this.fieldNameMap.put(tn_name + "_is_alive", is_alive);
+		newTable.setCrdt(true);
+		return newTable;
+	}
+
 	public Table mkBasicTable(String tn_name, String... fns) {
 		TableName tn = new TableName(tn_name);
 		this.tableNameMap.put(tn_name, tn);
@@ -233,8 +247,8 @@ public class Program_Utils {
 	/*
 	 * Create fresh expressions based on a variable
 	 */
-	public E_Proj mkProjExpr(String txn, int id, String fn, int order) {
-		Variable v = getVariable(txn, id);
+	public E_Proj mkProjExpr(String txn, int var_id, String fn, int order) {
+		Variable v = getVariable(txn, var_id);
 		assert (v != null);
 		assert (getFieldName(fn) != null);
 		E_Proj exp = new E_Proj(v, getFieldName(fn), new E_Const_Num(order));

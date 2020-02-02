@@ -10,18 +10,45 @@ import kiarahmani.atropos.DDL.TableName;
 public class Table {
 	private ArrayList<FieldName> fieldNames;
 	private TableName name;
+	private boolean crdt;
+
+	public boolean isCrdt() {
+		return crdt;
+	}
+
+	public void setCrdt(boolean crdt) {
+		this.crdt = crdt;
+	}
 
 	public List<FieldName> getPKFields() {
 		return this.fieldNames.stream().filter(fn -> fn.isPK()).collect(Collectors.toList());
 	}
 
+	public FieldName getDeltaField() {
+		assert (this.crdt) : "delta field is not defined on non-crdt tables";
+		for (FieldName fn : fieldNames)
+			if (fn.isDelta())
+				return fn;
+		assert (false) : "unexpected state";
+		return null;
+	}
+
+	public FieldName getUUIDField() {
+		assert (this.crdt) : "delta field is not defined on non-crdt tables";
+		for (FieldName fn : fieldNames)
+			if (fn.isUUID())
+				return fn;
+		assert (false) : "unexpected state";
+		return null;
+	}
+
 	public Table(TableName tn, FieldName is_alive, FieldName... fns) {
+		this.crdt = false; // must be set explicitly
 		fieldNames = new ArrayList<>();
 		name = tn;
 		for (FieldName fn : fns)
 			this.fieldNames.add(fn);
 		this.fieldNames.add(is_alive);
-
 	}
 
 	public void addFieldName(FieldName fn) {

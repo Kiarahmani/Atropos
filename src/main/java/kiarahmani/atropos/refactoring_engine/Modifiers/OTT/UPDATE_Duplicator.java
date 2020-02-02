@@ -6,16 +6,24 @@
 package kiarahmani.atropos.refactoring_engine.Modifiers.OTT;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import com.microsoft.z3.BitVecNum;
 
 import kiarahmani.atropos.Atropos;
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DDL.vc.VC;
 import kiarahmani.atropos.DDL.vc.VC.VC_Agg;
 import kiarahmani.atropos.DDL.vc.VC.VC_Type;
+import kiarahmani.atropos.DML.expression.BinOp;
+import kiarahmani.atropos.DML.expression.E_BinOp;
+import kiarahmani.atropos.DML.expression.E_Proj;
+import kiarahmani.atropos.DML.expression.E_UUID;
 import kiarahmani.atropos.DML.expression.Expression;
+import kiarahmani.atropos.DML.expression.constants.E_Const_Num;
 import kiarahmani.atropos.DML.query.Insert_Query;
 import kiarahmani.atropos.DML.query.Query;
 import kiarahmani.atropos.DML.query.Update_Query;
@@ -62,7 +70,7 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 	public Tuple<Query, Query> atIndexModification(Query input_query) {
 		// extract old query's details
 		old_update = (Update_Query) input_query;
-		WHC old_whcc = old_update.getWHC();
+		WHC old_whc = old_update.getWHC();
 		ArrayList<Tuple<FieldName, Expression>> old_ue = old_update.getUpdateExps();
 		logger.debug("Query to be duplicated: " + old_update.getPo());
 		// make sure modification is valid
@@ -71,7 +79,7 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 		Query new_qry = null;
 		// handle the CRDT case
 		if (vc.getType() == VC_Type.VC_OTM && vc.get_agg() == VC_Agg.VC_SUM) {
-			WHC_Constraint[] whcc_array = mkInsert();
+			WHC_Constraint[] whcc_array = mkInsert(old_whc);
 			new_qry = new Insert_Query(-1, pu.getNewUpdateId(txnName), targetTable, targetTable.getIsAliveFN());
 			((Insert_Query) new_qry).addPKExp(whcc_array);
 			for (WHC_Constraint pk : whcc_array)
@@ -79,7 +87,7 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 
 		} else {// handle other (non-CRDT) cases
 			// generate new query's components
-			WHC new_whc = updateWHC(old_whcc);
+			WHC new_whc = updateWHC(old_whc);
 			logger.debug("where clause of the duplicated query: " + new_whc);
 			ArrayList<Tuple<FieldName, Expression>> new_ue = updateUE(old_ue);
 			logger.debug("update expressions of the duplicated query: " + new_ue);
@@ -96,13 +104,47 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 	/**
 	 * @return
 	 */
-	private WHC_Constraint[] mkInsert() {
-		int pk_cnt_of_target_table = targetTable.getPKFields().size();
-		WHC_Constraint[] result = new WHC_Constraint[pk_cnt_of_target_table + 2];
-		// TODO: must fill the insert with appropriate vals, both from the key of the
-		// old update and the DELTA of the written valuess
-		// TODO: implement a function to return the DELTA of update expressions
+	private WHC_Constraint[] mkInsert(WHC old_whc) {
+		List<FieldName> pk_fields = sourceTable.getPKFields();
+		int pk_fields_size = pk_fields.size();
+		WHC_Constraint[] result = new WHC_Constraint[pk_fields_size + 2];
+		// set pk fields
+		int index = 0;
+		for (FieldName pk_fn : pk_fields) {
+			result[index] = new WHC_Constraint(targetTable.getTableName(), targetTable.getPKFields().get(index),
+					BinOp.EQ, old_whc.getConstraintByFieldName(pk_fn).getExpression());
+			index++;
+		}
+
+		// set uuid field
+		result[pk_fields_size] = new WHC_Constraint(targetTable.getTableName(), targetTable.getUUIDField(), BinOp.EQ,
+				new E_UUID());
+
+		// set delta field
+		Expression delta_exp = extractDeltaExp();
+		result[pk_fields_size + 1] = new WHC_Constraint(targetTable.getTableName(), targetTable.getDeltaField(),
+				BinOp.EQ, delta_exp);
+
 		return result;
+	}
+
+	private Expression extractDeltaExp() {
+		ArrayList<Tuple<FieldName, Expression>> old_exps = old_update.getUpdateExps();
+		assert (old_exps
+				.size() == 1) : "assumption failed: CRDT duplication can only be called on single field updates";
+		FieldName fn = old_exps.get(0).x;
+		Expression exp = old_exps.get(0).y;
+		if (exp instanceof E_BinOp) {
+			E_BinOp bin_exp = (E_BinOp) exp;
+			if (BinOp.isCommutative(bin_exp.op))
+				if (bin_exp.oper1 instanceof E_Proj) {
+					// if (proj_exp.f.equals(fn)) // not necessary: proj may be redirected to
+					// another copy
+					return bin_exp.oper2;
+				}
+		}
+		assert (false) : "no delta expression can be extracted from: " + old_exps.toString();
+		return null;
 	}
 
 	private ArrayList<Tuple<FieldName, Expression>> updateUE(ArrayList<Tuple<FieldName, Expression>> old_ue) {
