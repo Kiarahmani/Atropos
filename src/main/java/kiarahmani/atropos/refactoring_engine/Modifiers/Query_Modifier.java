@@ -17,8 +17,11 @@ import kiarahmani.atropos.program.statements.Query_Statement;
 public abstract class Query_Modifier {
 	private boolean is_set;
 	public QM_Type type;
+	protected String desc;
 
-
+	public String getDesc() {
+		return this.desc;
+	}
 
 	public void set() {
 		this.is_set = true;
@@ -33,6 +36,5 @@ public abstract class Query_Modifier {
 
 	// update all subsequent queries
 	public abstract Query_Statement propagatedQueryModification(Query_Statement input_exp);
-	
-	
+
 }

@@ -124,17 +124,12 @@ public class Program_Utils {
 		return true;
 	}
 
-	public boolean refactor(Delta delta, String comments) {
-		version++;
-		this.comments = comments;
-		re.refactor(this, delta);
-		return true;
-	}
-
 	public boolean redirect_select(String txn_name, String src_table, String dest_table, int qry_po) {
 		this.select_red.set(this, txn_name, src_table, dest_table);
 		if (select_red.isValid(getQueryByPo(txn_name, qry_po))) {
 			re.applyAndPropagate(this, select_red, qry_po, txn_name);
+			version++;
+			comments += select_red.getDesc() + " | ";
 			return true;
 		} else
 			return false;
@@ -144,6 +139,8 @@ public class Program_Utils {
 		this.qry_atom.set(this, txn_name);
 		if (qry_atom.isValid(getQueryByPo(txn_name, qry_po))) {
 			re.applyAndPropagate(this, qry_atom, qry_po, txn_name);
+			version++;
+			comments += qry_atom.getDesc() + " | ";
 			return true;
 		} else
 			return false;
@@ -153,6 +150,8 @@ public class Program_Utils {
 		select_merger.set(this, txn_name);
 		if (select_merger.isValid(getQueryByPo(txn_name, qry_po), getQueryByPo(txn_name, qry_po + 1))) {
 			re.applyAndPropagate(this, select_merger, qry_po, txn_name);
+			version++;
+			comments += select_merger.getDesc() + " | ";
 			return true;
 		} else
 			return false;
@@ -162,6 +161,8 @@ public class Program_Utils {
 		select_splt.set(this, txn_name, excluded_fns);
 		if (select_splt.isValid(getQueryByPo(txn_name, qry_po))) {
 			re.applyAndPropagate(this, select_splt, qry_po, txn_name);
+			version++;
+			comments += select_splt.getDesc() + " | ";
 			return true;
 		} else
 			return false;
@@ -172,6 +173,8 @@ public class Program_Utils {
 		upd_merger.set(this, txn_name);
 		if (upd_merger.isValid(getQueryByPo(txn_name, qry_po), getQueryByPo(txn_name, qry_po + 1))) {
 			re.applyAndPropagate(this, upd_merger, qry_po, txn_name);
+			version++;
+			comments += upd_merger.getDesc() + " | ";
 			return true;
 		} else
 			return false;
@@ -182,6 +185,8 @@ public class Program_Utils {
 		upd_splt.set(this, txn_name, excluded_fns_upd);
 		if (upd_splt.isValid(getQueryByPo(txn_name, qry_po))) {
 			re.applyAndPropagate(this, upd_splt, qry_po, txn_name);
+			version++;
+			comments += upd_splt.getDesc() + " | ";
 			return true;
 		} else
 			return false;
@@ -192,6 +197,8 @@ public class Program_Utils {
 		upd_dup.set(this, txn_name, source_table, target_table);
 		if (upd_dup.isValid(getQueryByPo(txn_name, qry_po))) {
 			re.applyAndPropagate(this, upd_dup, qry_po, txn_name);
+			version++;
+			comments += upd_dup.getDesc() + " | ";
 			return true;
 		} else
 			return false;

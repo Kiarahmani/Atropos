@@ -96,65 +96,65 @@ public class Atropos {
 		 * 
 		 */
 
-//		// redirect SELECT2 from savings to accounts
-//		pu.redirect_select(test_txn, "savings", "accounts", 2);
-//		pu.generateProgram().printProgram();
-//
-//		// split SELECT0
-//		ArrayList<FieldName> excluded_fns = new ArrayList<>();
-//		excluded_fns.add(pu.getFieldName("a_name"));
-//		pu.split_select(test_txn, excluded_fns, 0);
-//		pu.generateProgram().printProgram();
-//
-//		// split UPDATE5
-//		ArrayList<FieldName> excluded_fns_upd = new ArrayList<>();
-//		excluded_fns_upd.add(pu.getFieldName("c_bal"));
-//		pu.split_update(test_txn, excluded_fns_upd, 5);
-//		pu.generateProgram().printProgram();
-//
-//		// merge UPDATE5 and UPDATE6
-//		pu.merge_update(test_txn, 5);
-//		pu.generateProgram().printProgram();
-//
+		// redirect SELECT2 from savings to accounts
+		pu.redirect_select(test_txn, "savings", "accounts", 2);
+		pu.generateProgram().printProgram();
+
+		// split SELECT0
+		ArrayList<FieldName> excluded_fns = new ArrayList<>();
+		excluded_fns.add(pu.getFieldName("a_name"));
+		pu.split_select(test_txn, excluded_fns, 0);
+		pu.generateProgram().printProgram();
+
+		// split UPDATE5
+		ArrayList<FieldName> excluded_fns_upd = new ArrayList<>();
+		excluded_fns_upd.add(pu.getFieldName("c_bal"));
+		pu.split_update(test_txn, excluded_fns_upd, 5);
+		pu.generateProgram().printProgram();
+
+		// merge UPDATE5 and UPDATE6
+		pu.merge_update(test_txn, 5);
+		pu.generateProgram().printProgram();
+
 //		// merge UPDATE5 and UPDATE6 (again)
-//		pu.merge_update(test_txn, 5);
-//		pu.generateProgram().printProgram();
+		pu.merge_update(test_txn, 5);
+		pu.generateProgram().printProgram();
 //
-//		// merge SELECT0 and SELECT1
-//		pu.merge_select(test_txn, 0);
-//		pu.generateProgram().printProgram();
+		// merge SELECT0 and SELECT1
+		pu.merge_select(test_txn, 0);
+		pu.generateProgram().printProgram();
 //
 //		// merge SELECT0 and SELECT1 (again)
-//		pu.merge_select(test_txn, 0);
-//		pu.generateProgram().printProgram();
+		pu.merge_select(test_txn, 0);
+		pu.generateProgram().printProgram();
 //
-//		// redirect SELECT5 from makers to car
-//		pu.redirect_select(test_txn, "makers", "car", 5);
-//		pu.generateProgram().printProgram();
+		// redirect SELECT5 from makers to car
+		pu.redirect_select(test_txn, "makers", "car", 5);
+		pu.generateProgram().printProgram();
 //
 //		// merge SELECT4 and SELECT5
-//		pu.merge_select(test_txn, 4);
-//		pu.generateProgram().printProgram();
+		pu.merge_select(test_txn, 4);
+		pu.generateProgram().printProgram();
 //
 //		// duplicate UPDATE5 to accounts table (test OTO VC)
-//		pu.duplicate_update(test_txn, "savings", "accounts", 5);
-//		pu.generateProgram().printProgram();
+		pu.duplicate_update(test_txn, "savings", "accounts", 5);
+		pu.generateProgram().printProgram();
 //
 //		// duplicate UPDATE(7) to table car (test OTM VC: T1 to T2)
-//		pu.duplicate_update(test_txn, "makers", "car", 7);
-//		pu.generateProgram().printProgram();
+		pu.duplicate_update(test_txn, "makers", "car", 7);
+		pu.generateProgram().printProgram();
 //
 //		// duplicate UPDATE(7) to table car (test OTM VC: T2 to T1)
-//		pu.duplicate_update(test_txn, "car", "makers", 8);
-//		pu.generateProgram().printProgram();
+		pu.duplicate_update(test_txn, "car", "makers", 8);
+		pu.generateProgram().printProgram();
 //
 //		// redirect SELECT(10) to CRDT copy in makers_budget_crdt table
-//		pu.redirect_select(test_txn, "makers", "makers_budget_crdt", 10);
-//		pu.generateProgram().printProgram();
+		pu.redirect_select(test_txn, "makers", "makers_budget_crdt", 10);
+		pu.generateProgram().printProgram();
 //
 //		// duplicate UPDATE(9) to makers_budget_crdt
-//		pu.duplicate_update(test_txn, "makers", "makers_budget_crdt", 9);
-//		pu.generateProgram().printProgram();
+		pu.duplicate_update(test_txn, "makers", "makers_budget_crdt", 9);
+		pu.generateProgram().printProgram();
 
 		/*
 		 * 

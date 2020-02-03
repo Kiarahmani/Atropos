@@ -34,8 +34,15 @@ public class Query_ReAtomicizer extends One_to_One_Query_Modifier {
 	}
 
 	public Query atIndexModification(Query input_query) {
-		input_query.setAtomic(
-				input_query.getWHC().isAtomic(pu.getTable(input_query.getTableName().getName()).getShardKey()));
+		boolean old_is_atomic = input_query.isAtomic();
+		boolean new_is_atomic = input_query.getWHC()
+				.isAtomic(pu.getTable(input_query.getTableName().getName()).getShardKey());
+		input_query.setAtomic(new_is_atomic);
+		if (old_is_atomic != new_is_atomic)
+			this.desc = "Atomicity of query (" + input_query.getId() + ") is updated from " + old_is_atomic + " to "
+					+ new_is_atomic;
+		else
+			this.desc = "Atomicity of query (" + input_query.getId() + ") did not change";
 		return input_query;
 	}
 

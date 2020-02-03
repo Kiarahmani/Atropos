@@ -64,7 +64,8 @@ public class UPDATE_Merger extends Two_to_One_Query_Modifier {
 			new_update.addUpdateExp(fe.x, fe.y);
 		for (Tuple<FieldName, Expression> fe : old_update2.getUpdateExps())
 			new_update.addUpdateExp(fe.x, fe.y);
-
+		this.desc = "Old queries (" + input_query_1.getId() + ") and (" + input_query_2.getId()
+				+ ") are merged into query (" + new_update.getId() + ")";
 		return new_update;
 	}
 
