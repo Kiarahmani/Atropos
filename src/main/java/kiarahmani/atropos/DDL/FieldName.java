@@ -33,6 +33,10 @@ public class FieldName {
 		return this.isSK;
 	}
 
+	public void setSK(boolean sk) {
+		this.isSK = sk;
+	}
+
 	public F_Type getType() {
 		return this.f_type;
 	}
@@ -59,9 +63,15 @@ public class FieldName {
 	}
 
 	public String toStringWithType() {
-		if (this.isPK)
-			return "*(" + this.name + ":" + this.f_type + ")*";
-		else
-			return "(" + this.name + ":" + this.f_type + ")";
+		String pre = "", post = "";
+		if (this.isPK) {
+			pre += "*";
+			post += "*";
+		}
+		if (this.isSK) {
+			pre += "+";
+			post += "+";
+		}
+		return pre + "(" + this.name + ":" + this.f_type + ")" + post;
 	}
 }

@@ -78,8 +78,8 @@ public class SELECT_Merger extends Two_to_One_Query_Modifier {
 
 		Select_Query new_select = new Select_Query(-1, pu.getNewSelectId(txnName), old_select1.isAtomic(),
 				old_table.getTableName(), new_fns, new_var, new_whc);
-		this.desc = "Old queries (" + input_query_1.getId() + ") and (" + input_query_2.getId()
-				+ ") are merged into query (" + new_select.getId() + ")";
+		this.desc = "Old queries (" + input_query_1.getId() + ") and (" + input_query_2.getId() + ") in " + txnName
+				+ " are merged into query (" + new_select.getId() + ")";
 		return new_select;
 	}
 

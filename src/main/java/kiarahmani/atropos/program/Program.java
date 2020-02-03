@@ -150,7 +150,7 @@ public class Program {
 				"\n\n\n\n##############################################################################################################################");
 		System.out.println("### " + programName.toUpperCase() + "(" + version + ")");
 		System.out.println("## COMMENTS: " + comment);
-		System.out.println("## SCHEMA:");
+		System.out.println("\n## SCHEMA:");
 		for (Table t : tables)
 			System.out.println(t.toString());
 		System.out.println("\n## VC:");

@@ -119,7 +119,7 @@ public class Program_Utils {
 
 	public boolean refactor(Delta delta) {
 		version++;
-		comments += delta.getDesc() + " | ";
+		comments += "\n" + delta.getDesc();
 		re.refactor(this, delta);
 		return true;
 	}
@@ -129,7 +129,7 @@ public class Program_Utils {
 		if (select_red.isValid(getQueryByPo(txn_name, qry_po))) {
 			re.applyAndPropagate(this, select_red, qry_po, txn_name);
 			version++;
-			comments += select_red.getDesc() + " | ";
+			comments += "\n" + select_red.getDesc();
 			return true;
 		} else
 			return false;
@@ -140,7 +140,7 @@ public class Program_Utils {
 		if (qry_atom.isValid(getQueryByPo(txn_name, qry_po))) {
 			re.applyAndPropagate(this, qry_atom, qry_po, txn_name);
 			version++;
-			comments += qry_atom.getDesc() + " | ";
+			comments += "\n" + qry_atom.getDesc();
 			return true;
 		} else
 			return false;
@@ -151,7 +151,7 @@ public class Program_Utils {
 		if (select_merger.isValid(getQueryByPo(txn_name, qry_po), getQueryByPo(txn_name, qry_po + 1))) {
 			re.applyAndPropagate(this, select_merger, qry_po, txn_name);
 			version++;
-			comments += select_merger.getDesc() + " | ";
+			comments += "\n" + select_merger.getDesc();
 			return true;
 		} else
 			return false;
@@ -162,7 +162,7 @@ public class Program_Utils {
 		if (select_splt.isValid(getQueryByPo(txn_name, qry_po))) {
 			re.applyAndPropagate(this, select_splt, qry_po, txn_name);
 			version++;
-			comments += select_splt.getDesc() + " | ";
+			comments += "\n" + select_splt.getDesc();
 			return true;
 		} else
 			return false;
@@ -174,7 +174,7 @@ public class Program_Utils {
 		if (upd_merger.isValid(getQueryByPo(txn_name, qry_po), getQueryByPo(txn_name, qry_po + 1))) {
 			re.applyAndPropagate(this, upd_merger, qry_po, txn_name);
 			version++;
-			comments += upd_merger.getDesc() + " | ";
+			comments += "\n" + upd_merger.getDesc();
 			return true;
 		} else
 			return false;
@@ -186,7 +186,7 @@ public class Program_Utils {
 		if (upd_splt.isValid(getQueryByPo(txn_name, qry_po))) {
 			re.applyAndPropagate(this, upd_splt, qry_po, txn_name);
 			version++;
-			comments += upd_splt.getDesc() + " | ";
+			comments += "\n" + upd_splt.getDesc();
 			return true;
 		} else
 			return false;
@@ -198,7 +198,7 @@ public class Program_Utils {
 		if (upd_dup.isValid(getQueryByPo(txn_name, qry_po))) {
 			re.applyAndPropagate(this, upd_dup, qry_po, txn_name);
 			version++;
-			comments += upd_dup.getDesc() + " | ";
+			comments += "\n" + upd_dup.getDesc();
 			return true;
 		} else
 			return false;
@@ -500,8 +500,9 @@ public class Program_Utils {
 		return result;
 	}
 
-	public Select_Query addSelectQuery(String txn, String tableName, boolean isAtomic, WHC whc, String... fieldNames) {
+	public Select_Query addSelectQuery(String txn, String tableName, WHC whc, String... fieldNames) {
 		assert (!lock) : "cannot call this function after locking";
+		boolean isAtomic = whc.isAtomic(getTable(tableName).getShardKey());
 		int po = transactionToPoCnt.containsKey(txn) ? transactionToPoCnt.get(txn) : 0;
 		transactionToPoCnt.put(txn, po + 1);
 		Variable fresh_variable = mkVariable(tableName, txn);
@@ -515,8 +516,9 @@ public class Program_Utils {
 		return result;
 	}
 
-	public Update_Query addUpdateQuery(String txn, String tableName, boolean isAtomic, WHC whc) {
+	public Update_Query addUpdateQuery(String txn, String tableName, WHC whc) {
 		assert (!lock) : "cannot call this function after locking";
+		boolean isAtomic = whc.isAtomic(getTable(tableName).getShardKey());
 		int po = transactionToPoCnt.containsKey(txn) ? transactionToPoCnt.get(txn) : 0;
 		transactionToPoCnt.put(txn, po + 1);
 		int update_counts = (transactionToUpdateCount.containsKey(txn)) ? transactionToUpdateCount.get(txn) : 0;
@@ -525,7 +527,7 @@ public class Program_Utils {
 		return result;
 	}
 
-	public Insert_Query addInsertQuery(String txn, String tableName, boolean isAtomic, WHC_Constraint... pks) {
+	public Insert_Query addInsertQuery(String txn, String tableName, WHC_Constraint... pks) {
 		assert (!lock) : "cannot call this function after locking";
 		int po = transactionToPoCnt.containsKey(txn) ? transactionToPoCnt.get(txn) : 0;
 		transactionToPoCnt.put(txn, po + 1);
@@ -540,8 +542,9 @@ public class Program_Utils {
 		return result;
 	}
 
-	public Delete_Query addDeleteQuery(String txn, String tableName, boolean isAtomic, WHC whc) {
+	public Delete_Query addDeleteQuery(String txn, String tableName, WHC whc) {
 		assert (!lock) : "cannot call this function after locking";
+		boolean isAtomic = whc.isAtomic(getTable(tableName).getShardKey());
 		int po = transactionToPoCnt.containsKey(txn) ? transactionToPoCnt.get(txn) : 0;
 		transactionToPoCnt.put(txn, po + 1);
 		int update_counts = (transactionToUpdateCount.containsKey(txn)) ? transactionToUpdateCount.get(txn) : 0;

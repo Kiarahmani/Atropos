@@ -85,38 +85,37 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 			// retrieve customer0's name by id
 			WHC GetAccount0_WHC = new WHC(pu.getIsAliveFieldName("accounts"), new WHC_Constraint(
 					pu.getTableName("accounts"), pu.getFieldName("a_custid"), BinOp.EQ, pu.getArg("am_custId0")));
-			Select_Query GetAccount0 = pu.addSelectQuery("Amalgamate", "accounts", true, GetAccount0_WHC, "a_name");
+			Select_Query GetAccount0 = pu.addSelectQuery("Amalgamate", "accounts", GetAccount0_WHC, "a_name");
 			pu.addQueryStatement("Amalgamate", GetAccount0);
 			// retrieve customer1's name by id
 			WHC GetAccount1_WHC = new WHC(pu.getIsAliveFieldName("accounts"), new WHC_Constraint(
 					pu.getTableName("accounts"), pu.getFieldName("a_custid"), BinOp.EQ, pu.getArg("am_custId1")));
-			Select_Query GetAccount1 = pu.addSelectQuery("Amalgamate", "accounts", true, GetAccount1_WHC, "a_name");
+			Select_Query GetAccount1 = pu.addSelectQuery("Amalgamate", "accounts", GetAccount1_WHC, "a_name");
 			pu.addQueryStatement("Amalgamate", GetAccount1);
 
 			// retrieve savings balance of cust0
 			WHC GetSavings0_WHC = new WHC(pu.getIsAliveFieldName("savings"), new WHC_Constraint(
 					pu.getTableName("savings"), pu.getFieldName("s_custid"), BinOp.EQ, pu.getArg("am_custId0")));
-			Select_Query GetSavings0 = pu.addSelectQuery("Amalgamate", "savings", true, GetSavings0_WHC, "s_bal");
+			Select_Query GetSavings0 = pu.addSelectQuery("Amalgamate", "savings", GetSavings0_WHC, "s_bal");
 			pu.addQueryStatement("Amalgamate", GetSavings0);
 
 			// retrieve checking balance of cust0
 			WHC GetChecking1_WHC = new WHC(pu.getIsAliveFieldName("checking"), new WHC_Constraint(
 					pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ, pu.getArg("am_custId0")));
-			Select_Query GetChecking1 = pu.addSelectQuery("Amalgamate", "checking", true, GetChecking1_WHC, "c_bal");
+			Select_Query GetChecking1 = pu.addSelectQuery("Amalgamate", "checking", GetChecking1_WHC, "c_bal");
 			pu.addQueryStatement("Amalgamate", GetChecking1);
 
 			// zero cust0's checking balance
 			WHC ZeroCheckingBalance_WHC = new WHC(pu.getIsAliveFieldName("checking"), new WHC_Constraint(
 					pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ, pu.getArg("am_custId0")));
-			Update_Query ZeroCheckingBalance = pu.addUpdateQuery("Amalgamate", "checking", true,
-					ZeroCheckingBalance_WHC);
+			Update_Query ZeroCheckingBalance = pu.addUpdateQuery("Amalgamate", "checking", ZeroCheckingBalance_WHC);
 			ZeroCheckingBalance.addUpdateExp(pu.getFieldName("c_bal"), new E_Const_Num(0));
 			pu.addQueryStatement("Amalgamate", ZeroCheckingBalance);
 
 			// zero cust0's savings balance
 			WHC savingsZeroCheckingBalance_WHC = new WHC(pu.getIsAliveFieldName("savings"), new WHC_Constraint(
 					pu.getTableName("savings"), pu.getFieldName("s_custid"), BinOp.EQ, pu.getArg("am_custId0")));
-			Update_Query savingsZeroCheckingBalance = pu.addUpdateQuery("Amalgamate", "savings", true,
+			Update_Query savingsZeroCheckingBalance = pu.addUpdateQuery("Amalgamate", "savings",
 					savingsZeroCheckingBalance_WHC);
 			savingsZeroCheckingBalance.addUpdateExp(pu.getFieldName("s_bal"), new E_Const_Num(0));
 			pu.addQueryStatement("Amalgamate", savingsZeroCheckingBalance);
@@ -124,8 +123,7 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 			// incremenet cust1's savings balance
 			WHC UpdateSavingsBalance_WHC = new WHC(pu.getIsAliveFieldName("savings"), new WHC_Constraint(
 					pu.getTableName("savings"), pu.getFieldName("s_custid"), BinOp.EQ, pu.getArg("am_custId1")));
-			Update_Query UpdateSavingsBalance = pu.addUpdateQuery("Amalgamate", "savings", true,
-					UpdateSavingsBalance_WHC);
+			Update_Query UpdateSavingsBalance = pu.addUpdateQuery("Amalgamate", "savings", UpdateSavingsBalance_WHC);
 			UpdateSavingsBalance.addUpdateExp(pu.getFieldName("s_bal"), new E_BinOp(BinOp.PLUS,
 					pu.mkProjExpr("Amalgamate", 2, "s_bal", 1), pu.mkProjExpr("Amalgamate", 3, "c_bal", 1)));
 			pu.addQueryStatement("Amalgamate", UpdateSavingsBalance);
@@ -143,7 +141,7 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 
 			WHC Balance_GetAccount0_WHC1 = new WHC(pu.getIsAliveFieldName("accounts"), new WHC_Constraint(
 					pu.getTableName("accounts"), pu.getFieldName("a_custid"), BinOp.EQ, new E_Const_Num(69)));
-			Select_Query Balance_GetAccount01 = pu.addSelectQuery("test", "accounts", false, Balance_GetAccount0_WHC1,
+			Select_Query Balance_GetAccount01 = pu.addSelectQuery("test", "accounts", Balance_GetAccount0_WHC1,
 					"a_custid", "a_name");
 			pu.addQueryStatement("test", Balance_GetAccount01);
 
@@ -151,24 +149,22 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 			WHC Balance_GetAccount0_WHC = new WHC(pu.getIsAliveFieldName("accounts"),
 					new WHC_Constraint(pu.getTableName("accounts"), pu.getFieldName("a_custid"), BinOp.EQ,
 							pu.mkProjExpr("test", 0, "a_custid", 1)));
-			Select_Query Balance_GetAccount0 = pu.addSelectQuery("test", "accounts", false, Balance_GetAccount0_WHC,
-					"a_custid","a_name");
+			Select_Query Balance_GetAccount0 = pu.addSelectQuery("test", "accounts", Balance_GetAccount0_WHC,
+					"a_custid", "a_name");
 			pu.addQueryStatement("test", Balance_GetAccount0);
 
 			// retrieve customer's savings balance based on the retrieved id
 			WHC Balance_GetSavings_WHC = new WHC(pu.getIsAliveFieldName("savings"),
 					new WHC_Constraint(pu.getTableName("savings"), pu.getFieldName("s_custid"), BinOp.EQ,
 							pu.mkProjExpr("test", 0, "a_custid", 1)));
-			Select_Query Balance_GetSavings = pu.addSelectQuery("test", "savings", true, Balance_GetSavings_WHC,
-					"s_bal");
+			Select_Query Balance_GetSavings = pu.addSelectQuery("test", "savings", Balance_GetSavings_WHC, "s_bal");
 			pu.addQueryStatement("test", Balance_GetSavings);
 
 			// retrieve customer's checking balance based on the retrieved id
 			WHC Balance_GetChecking_WHC = new WHC(pu.getIsAliveFieldName("checking"),
 					new WHC_Constraint(pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ,
 							pu.mkProjExpr("test", 0, "a_custid", 1)));
-			Select_Query Balance_GetChecking = pu.addSelectQuery("test", "checking", true, Balance_GetChecking_WHC,
-					"c_bal");
+			Select_Query Balance_GetChecking = pu.addSelectQuery("test", "checking", Balance_GetChecking_WHC, "c_bal");
 			pu.addQueryStatement("test", Balance_GetChecking);
 
 			// write customer's new checking balance
@@ -177,7 +173,7 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 					new E_BinOp(BinOp.PLUS,
 							new E_BinOp(BinOp.MULT, (pu.mkProjExpr("test", 2, "s_bal", 1)), new E_Const_Num(11)),
 							new E_Const_Num(1))));
-			Update_Query DepositChecking = pu.addUpdateQuery("test", "checking", true, DepositChecking_WHC);
+			Update_Query DepositChecking = pu.addUpdateQuery("test", "checking", DepositChecking_WHC);
 			DepositChecking.addUpdateExp(pu.getFieldName("c_bal"),
 					new E_BinOp(BinOp.PLUS, pu.mkProjExpr("test", 2, "s_bal", 1), new E_Const_Num(1)));
 			DepositChecking.addUpdateExp(pu.getFieldName("c_score"),
@@ -191,35 +187,35 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 									new E_BinOp(BinOp.MULT, new E_Const_Num(11), (pu.mkProjExpr("test", 2, "s_bal", 1)))
 
 							)));
-			Update_Query DepositChecking11 = pu.addUpdateQuery("test", "checking", true, DepositChecking_WHC11);
+			Update_Query DepositChecking11 = pu.addUpdateQuery("test", "checking", DepositChecking_WHC11);
 			DepositChecking11.addUpdateExp(pu.getFieldName("c_age"), new E_Const_Num(69));
 			pu.addQueryStatement("test", DepositChecking11);
 
 			// select on car
 			WHC select_whc_1 = new WHC(pu.getIsAliveFieldName("car"), new WHC_Constraint(pu.getTableName("car"),
 					pu.getFieldName("car_id"), BinOp.EQ, new E_Const_Num(10)));
-			Select_Query select_1 = pu.addSelectQuery("test", "car", true, select_whc_1, "car_id", "car_maker",
-					"car_model", "car_type");
+			Select_Query select_1 = pu.addSelectQuery("test", "car", select_whc_1, "car_id", "car_maker", "car_model",
+					"car_type");
 			pu.addQueryStatement("test", select_1);
 
 			// select corresponding maker
 			WHC select_whc_2 = new WHC(pu.getIsAliveFieldName("makers"), new WHC_Constraint(pu.getTableName("makers"),
 					pu.getFieldName("maker_id"), BinOp.EQ, pu.mkProjExpr("test", 4, "car_maker", 1)));
-			Select_Query select_2 = pu.addSelectQuery("test", "makers", true, select_whc_2, "maker_id", "maker_name",
+			Select_Query select_2 = pu.addSelectQuery("test", "makers", select_whc_2, "maker_id", "maker_name",
 					"maker_budget", "maker_country");
 			pu.addQueryStatement("test", select_2);
 
 			// a write on savings (which will be used to test basic duplication)
 			WHC DepositChecking_WHC111 = new WHC(pu.getIsAliveFieldName("savings"), new WHC_Constraint(
 					pu.getTableName("savings"), pu.getFieldName("s_custid"), BinOp.EQ, new E_Const_Num(96)));
-			Update_Query DepositChecking111 = pu.addUpdateQuery("test", "savings", true, DepositChecking_WHC111);
+			Update_Query DepositChecking111 = pu.addUpdateQuery("test", "savings", DepositChecking_WHC111);
 			DepositChecking111.addUpdateExp(pu.getFieldName("s_bal"), new E_Const_Num(69));
 			pu.addQueryStatement("test", DepositChecking111);
 
 			// a write on makers (which will be used to test OTM duplication)
 			WHC DepositChecking_WHC1111 = new WHC(pu.getIsAliveFieldName("makers"), new WHC_Constraint(
 					pu.getTableName("makers"), pu.getFieldName("maker_id"), BinOp.EQ, new E_Const_Num(12)));
-			Update_Query DepositChecking1111 = pu.addUpdateQuery("test", "makers", true, DepositChecking_WHC1111);
+			Update_Query DepositChecking1111 = pu.addUpdateQuery("test", "makers", DepositChecking_WHC1111);
 			DepositChecking1111.addUpdateExp(pu.getFieldName("maker_budget"),
 					new E_BinOp(BinOp.PLUS, pu.mkProjExpr("test", 5, "maker_budget", 1), new E_Const_Num(100)));
 			pu.addQueryStatement("test", DepositChecking1111);
@@ -228,14 +224,14 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 			// CRDT table)
 			WHC select_whc_21 = new WHC(pu.getIsAliveFieldName("makers"), new WHC_Constraint(pu.getTableName("makers"),
 					pu.getFieldName("maker_id"), BinOp.EQ, new E_Const_Num(10)));
-			Select_Query select_21 = pu.addSelectQuery("test", "makers", true, select_whc_21, "maker_budget");
+			Select_Query select_21 = pu.addSelectQuery("test", "makers", select_whc_21, "maker_budget");
 			pu.addQueryStatement("test", select_21);
 
 			// just an operation to use the variable selected by the above query
 			WHC select_whc_211 = new WHC(pu.getIsAliveFieldName("accounts"),
 					new WHC_Constraint(pu.getTableName("accounts"), pu.getFieldName("a_custid"), BinOp.EQ,
 							pu.mkProjExpr("test", 6, "maker_budget", 1)));
-			Select_Query select_211 = pu.addSelectQuery("test", "accounts", true, select_whc_211, "a_name");
+			Select_Query select_211 = pu.addSelectQuery("test", "accounts", select_whc_211, "a_name");
 			pu.addQueryStatement("test", select_211);
 
 		}
@@ -253,7 +249,7 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 			// get customer's id based on his/her name
 			WHC Balance_GetAccount0_WHC = new WHC(pu.getIsAliveFieldName("accounts"), new WHC_Constraint(
 					pu.getTableName("accounts"), pu.getFieldName("a_name"), BinOp.EQ, pu.getArg("ba_custName")));
-			Select_Query Balance_GetAccount0 = pu.addSelectQuery("Balance", "accounts", false, Balance_GetAccount0_WHC,
+			Select_Query Balance_GetAccount0 = pu.addSelectQuery("Balance", "accounts", Balance_GetAccount0_WHC,
 					"a_custid");
 			pu.addQueryStatement("Balance", Balance_GetAccount0);
 
@@ -261,15 +257,14 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 			WHC Balance_GetSavings_WHC = new WHC(pu.getIsAliveFieldName("savings"),
 					new WHC_Constraint(pu.getTableName("savings"), pu.getFieldName("s_custid"), BinOp.EQ,
 							pu.mkProjExpr("Balance", 0, "a_custid", 1)));
-			Select_Query Balance_GetSavings = pu.addSelectQuery("Balance", "savings", true, Balance_GetSavings_WHC,
-					"s_bal");
+			Select_Query Balance_GetSavings = pu.addSelectQuery("Balance", "savings", Balance_GetSavings_WHC, "s_bal");
 			pu.addQueryStatement("Balance", Balance_GetSavings);
 
 			// retrieve customer's checking balance based on the retrieved id
 			WHC Balance_GetChecking_WHC = new WHC(pu.getIsAliveFieldName("checking"),
 					new WHC_Constraint(pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ,
 							pu.mkProjExpr("Balance", 0, "a_custid", 1)));
-			Select_Query Balance_GetChecking = pu.addSelectQuery("Balance", "checking", true, Balance_GetChecking_WHC,
+			Select_Query Balance_GetChecking = pu.addSelectQuery("Balance", "checking", Balance_GetChecking_WHC,
 					"c_bal");
 			pu.addQueryStatement("Balance", Balance_GetChecking);
 
@@ -284,7 +279,7 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 			pu.mkTrnasaction("DepositChecking", "dc_custName:string", "dc_amount:int");
 			WHC DepositChecking_GetAccount0_WHC = new WHC(pu.getIsAliveFieldName("accounts"), new WHC_Constraint(
 					pu.getTableName("accounts"), pu.getFieldName("a_name"), BinOp.EQ, pu.getArg("dc_custName")));
-			Select_Query DepositChecking_GetAccount0 = pu.addSelectQuery("DepositChecking", "accounts", false,
+			Select_Query DepositChecking_GetAccount0 = pu.addSelectQuery("DepositChecking", "accounts",
 					DepositChecking_GetAccount0_WHC, "a_custid");
 			pu.addQueryStatement("DepositChecking", DepositChecking_GetAccount0);
 
@@ -292,7 +287,7 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 			WHC DepositChecking_GetChecking_WHC = new WHC(pu.getIsAliveFieldName("checking"),
 					new WHC_Constraint(pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ,
 							pu.mkProjExpr("DepositChecking", 0, "a_custid", 1)));
-			Select_Query DepositChecking_GetChecking = pu.addSelectQuery("DepositChecking", "checking", true,
+			Select_Query DepositChecking_GetChecking = pu.addSelectQuery("DepositChecking", "checking",
 					DepositChecking_GetChecking_WHC, "c_bal");
 			pu.addQueryStatement("DepositChecking", DepositChecking_GetChecking);
 
@@ -300,7 +295,7 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 			WHC DepositChecking_WHC = new WHC(pu.getIsAliveFieldName("checking"),
 					new WHC_Constraint(pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ,
 							pu.mkProjExpr("DepositChecking", 0, "a_custid", 1)));
-			Update_Query DepositChecking = pu.addUpdateQuery("DepositChecking", "checking", true, DepositChecking_WHC);
+			Update_Query DepositChecking = pu.addUpdateQuery("DepositChecking", "checking", DepositChecking_WHC);
 			DepositChecking.addUpdateExp(pu.getFieldName("c_bal"),
 					new E_BinOp(BinOp.PLUS, pu.mkProjExpr("DepositChecking", 1, "c_bal", 1), pu.getArg("dc_amount")));
 			pu.addQueryStatement("DepositChecking", DepositChecking);
@@ -318,20 +313,20 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 					new E_UnOp(UnOp.NOT, new E_BinOp(BinOp.EQ, pu.getArg("sp_sendAcct"), pu.getArg("sp_destAcct"))));
 			WHC SendPayment_GetAccount_send_WHC = new WHC(pu.getIsAliveFieldName("accounts"), new WHC_Constraint(
 					pu.getTableName("accounts"), pu.getFieldName("a_custid"), BinOp.EQ, pu.getArg("sp_sendAcct")));
-			Select_Query SendPayment_GetAccount_send = pu.addSelectQuery("SendPayment", "accounts", true,
+			Select_Query SendPayment_GetAccount_send = pu.addSelectQuery("SendPayment", "accounts",
 					SendPayment_GetAccount_send_WHC, "a_name");
 			pu.addQueryStatement("SendPayment", SendPayment_GetAccount_send);
 
 			WHC SendPayment_GetAccount_dest_WHC = new WHC(pu.getIsAliveFieldName("accounts"), new WHC_Constraint(
 					pu.getTableName("accounts"), pu.getFieldName("a_custid"), BinOp.EQ, pu.getArg("sp_destAcct")));
-			Select_Query SendPayment_GetAccount_dest = pu.addSelectQuery("SendPayment", "accounts", true,
+			Select_Query SendPayment_GetAccount_dest = pu.addSelectQuery("SendPayment", "accounts",
 					SendPayment_GetAccount_dest_WHC, "a_name");
 			pu.addQueryStatement("SendPayment", SendPayment_GetAccount_dest);
 
 			// retrieve sender's old checking balance
 			WHC SendPayment_GetChecking_WHC = new WHC(pu.getIsAliveFieldName("checking"), new WHC_Constraint(
 					pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ, pu.getArg("sp_sendAcct")));
-			Select_Query SendPayment_GetChecking = pu.addSelectQuery("SendPayment", "checking", true,
+			Select_Query SendPayment_GetChecking = pu.addSelectQuery("SendPayment", "checking",
 					SendPayment_GetChecking_WHC, "c_bal");
 			pu.addQueryStatement("SendPayment", SendPayment_GetChecking);
 
@@ -343,7 +338,7 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 			// update sender's checking
 			WHC SendPayment_U1_WHC = new WHC(pu.getIsAliveFieldName("checking"), new WHC_Constraint(
 					pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ, pu.getArg("sp_sendAcct")));
-			Update_Query SendPayment_U1 = pu.addUpdateQuery("SendPayment", "checking", true, SendPayment_U1_WHC);
+			Update_Query SendPayment_U1 = pu.addUpdateQuery("SendPayment", "checking", SendPayment_U1_WHC);
 			SendPayment_U1.addUpdateExp(pu.getFieldName("c_bal"),
 					new E_BinOp(BinOp.MINUS, pu.mkProjExpr("SendPayment", 2, "c_bal", 1), pu.getArg("sp_amount")));
 			pu.addQueryStatementInIf("SendPayment", 0, SendPayment_U1);
@@ -351,15 +346,14 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 			// retrieve dest's old checking balance
 			WHC SendPayment_GetChecking_dest_WHC = new WHC(pu.getIsAliveFieldName("checking"), new WHC_Constraint(
 					pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ, pu.getArg("sp_destAcct")));
-			Select_Query SendPayment_GetChecking_dest = pu.addSelectQuery("SendPayment", "checking", true,
+			Select_Query SendPayment_GetChecking_dest = pu.addSelectQuery("SendPayment", "checking",
 					SendPayment_GetChecking_dest_WHC, "c_bal");
 			pu.addQueryStatementInIf("SendPayment", 0, SendPayment_GetChecking_dest);
 
 			// write dest's new checking balance
 			WHC SendPayment_U1_dest_WHC = new WHC(pu.getIsAliveFieldName("checking"), new WHC_Constraint(
 					pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ, pu.getArg("sp_destAcct")));
-			Update_Query SendPayment_U1_dest = pu.addUpdateQuery("SendPayment", "checking", true,
-					SendPayment_U1_dest_WHC);
+			Update_Query SendPayment_U1_dest = pu.addUpdateQuery("SendPayment", "checking", SendPayment_U1_dest_WHC);
 			SendPayment_U1_dest.addUpdateExp(pu.getFieldName("c_bal"),
 					new E_BinOp(BinOp.PLUS, pu.mkProjExpr("SendPayment", 3, "c_bal", 1), pu.getArg("sp_amount")));
 			pu.addQueryStatementInIf("SendPayment", 0, SendPayment_U1_dest);
@@ -374,7 +368,7 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 			// retrieve customer's id based on his/her name
 			WHC TransactSavings_GetAccount0_WHC = new WHC(pu.getIsAliveFieldName("accounts"), new WHC_Constraint(
 					pu.getTableName("accounts"), pu.getFieldName("a_name"), BinOp.EQ, pu.getArg("ts_custName")));
-			Select_Query TransactSavings_GetAccount0 = pu.addSelectQuery("TransactSavings", "accounts", false,
+			Select_Query TransactSavings_GetAccount0 = pu.addSelectQuery("TransactSavings", "accounts",
 					TransactSavings_GetAccount0_WHC, "a_custid");
 			pu.addQueryStatement("TransactSavings", TransactSavings_GetAccount0);
 
@@ -382,7 +376,7 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 			WHC TransactSavings_GetSavings_WHC = new WHC(pu.getIsAliveFieldName("savings"),
 					new WHC_Constraint(pu.getTableName("savings"), pu.getFieldName("s_custid"), BinOp.EQ,
 							pu.mkProjExpr("TransactSavings", 0, "a_custid", 1)));
-			Select_Query TransactSavings_GetSavings = pu.addSelectQuery("TransactSavings", "savings", true,
+			Select_Query TransactSavings_GetSavings = pu.addSelectQuery("TransactSavings", "savings",
 					TransactSavings_GetSavings_WHC, "s_bal");
 			pu.addQueryStatement("TransactSavings", TransactSavings_GetSavings);
 
@@ -395,8 +389,7 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 			WHC TransactSavings_U1_WHC = new WHC(pu.getIsAliveFieldName("savings"),
 					new WHC_Constraint(pu.getTableName("savings"), pu.getFieldName("s_custid"), BinOp.EQ,
 							pu.mkProjExpr("TransactSavings", 0, "a_custid", 1)));
-			Update_Query TransactSavings_U1 = pu.addUpdateQuery("TransactSavings", "savings", true,
-					TransactSavings_U1_WHC);
+			Update_Query TransactSavings_U1 = pu.addUpdateQuery("TransactSavings", "savings", TransactSavings_U1_WHC);
 			TransactSavings_U1.addUpdateExp(pu.getFieldName("s_bal"),
 					new E_BinOp(BinOp.MINUS, pu.mkProjExpr("TransactSavings", 1, "s_bal", 1), pu.getArg("ts_amount")));
 			pu.addQueryStatementInIf("TransactSavings", 0, TransactSavings_U1);
@@ -411,7 +404,7 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 			// retrive customer's id based on his/her name
 			WHC WriteCheck_GetAccount0_WHC = new WHC(pu.getIsAliveFieldName("accounts"), new WHC_Constraint(
 					pu.getTableName("accounts"), pu.getFieldName("a_name"), BinOp.EQ, pu.getArg("wc_custName")));
-			Select_Query WriteCheck_GetAccount0 = pu.addSelectQuery("WriteCheck", "accounts", false,
+			Select_Query WriteCheck_GetAccount0 = pu.addSelectQuery("WriteCheck", "accounts",
 					WriteCheck_GetAccount0_WHC, "a_custid");
 			pu.addQueryStatement("WriteCheck", WriteCheck_GetAccount0);
 
@@ -419,15 +412,15 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 			WHC WriteCheck_GetChecking_WHC = new WHC(pu.getIsAliveFieldName("checking"),
 					new WHC_Constraint(pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ,
 							pu.mkProjExpr("WriteCheck", 0, "a_custid", 1)));
-			Select_Query WriteCheck_GetChecking = pu.addSelectQuery("WriteCheck", "checking", true,
+			Select_Query WriteCheck_GetChecking = pu.addSelectQuery("WriteCheck", "checking",
 					WriteCheck_GetChecking_WHC, "c_bal");
 			pu.addQueryStatement("WriteCheck", WriteCheck_GetChecking);
 			// get their savings balance
 			WHC WriteCheck_GetSavings_WHC = new WHC(pu.getIsAliveFieldName("savings"),
 					new WHC_Constraint(pu.getTableName("savings"), pu.getFieldName("s_custid"), BinOp.EQ,
 							pu.mkProjExpr("WriteCheck", 0, "a_custid", 1)));
-			Select_Query WriteCheck_GetSavings = pu.addSelectQuery("WriteCheck", "savings", true,
-					WriteCheck_GetSavings_WHC, "s_bal");
+			Select_Query WriteCheck_GetSavings = pu.addSelectQuery("WriteCheck", "savings", WriteCheck_GetSavings_WHC,
+					"s_bal");
 			pu.addQueryStatement("WriteCheck", WriteCheck_GetSavings);
 
 			// if the total of balances is high enough
@@ -439,7 +432,7 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 			WHC WriteCheck_U1_dest_WHC = new WHC(pu.getIsAliveFieldName("checking"),
 					new WHC_Constraint(pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ,
 							pu.mkProjExpr("WriteCheck", 0, "a_custid", 1)));
-			Update_Query WriteCheck_U1_dest = pu.addUpdateQuery("WriteCheck", "checking", true, WriteCheck_U1_dest_WHC);
+			Update_Query WriteCheck_U1_dest = pu.addUpdateQuery("WriteCheck", "checking", WriteCheck_U1_dest_WHC);
 			WriteCheck_U1_dest.addUpdateExp(pu.getFieldName("c_bal"),
 					new E_BinOp(BinOp.MINUS, pu.mkProjExpr("WriteCheck", 1, "c_bal", 1), pu.getArg("wc_amount")));
 			pu.addQueryStatementInIf("WriteCheck", 0, WriteCheck_U1_dest);
@@ -448,7 +441,7 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 			WHC WriteCheck_U1_dest_WHC_else = new WHC(pu.getIsAliveFieldName("checking"),
 					new WHC_Constraint(pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ,
 							pu.mkProjExpr("WriteCheck", 0, "a_custid", 1)));
-			Update_Query WriteCheck_U1_dest_else = pu.addUpdateQuery("WriteCheck", "checking", true,
+			Update_Query WriteCheck_U1_dest_else = pu.addUpdateQuery("WriteCheck", "checking",
 					WriteCheck_U1_dest_WHC_else);
 			E_BinOp penalty = new E_BinOp(BinOp.PLUS, pu.getArg("wc_amount"), new E_Const_Num(1));
 			WriteCheck_U1_dest_else.addUpdateExp(pu.getFieldName("c_bal"),
