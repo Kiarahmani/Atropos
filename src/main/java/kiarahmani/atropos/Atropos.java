@@ -14,6 +14,7 @@ import kiarahmani.atropos.DDL.vc.VC.VC_Type;
 import kiarahmani.atropos.program.Program;
 import kiarahmani.atropos.program_generators.ProgramGenerator;
 import kiarahmani.atropos.program_generators.SmallBank.SmallBankProgramGenerator;
+import kiarahmani.atropos.refactoring_engine.deltas.ADDPK;
 import kiarahmani.atropos.refactoring_engine.deltas.CHSK;
 import kiarahmani.atropos.refactoring_engine.deltas.Delta;
 import kiarahmani.atropos.refactoring_engine.deltas.INTRO_F;
@@ -39,8 +40,8 @@ public class Atropos {
 		ProgramGenerator ipg = new SmallBankProgramGenerator(pu);
 		String test_txn = "test";
 
-		Program program = ipg.generate("Balance", "Amalgamate", "TransactSavings", "DepositChecking", "SendPaymen",
-				"WriteCheck", test_txn);
+		Program program = ipg.generate("Balance1", "Amalgamate1", "TransactSavings1", "DepositChecking1", "SendPaymen1",
+				"WriteCheck1", test_txn);
 		program.printProgram();
 		pu.lock(); // make sure that certain features of pu won't be used anymore
 
@@ -59,16 +60,12 @@ public class Atropos {
 		intro_vc0.addFieldTupleToVC("s_custid", "a_custid");
 		intro_vc0.addFieldTupleToVC("s_bal", "a_sav_bal");
 		pu.refactor(intro_vc0);
-
-		// print
 		pu.generateProgram().printProgram();
 
 		// add 3 new columns in car table
 		pu.refactor(new INTRO_F("car", "car_maker_name", F_Type.NUM));
 		pu.refactor(new INTRO_F("car", "car_maker_budget", F_Type.NUM));
 		pu.refactor(new INTRO_F("car", "car_maker_country", F_Type.NUM));
-
-		// print
 		pu.generateProgram().printProgram();
 
 		// add a new vc between makes and car tables
@@ -78,8 +75,6 @@ public class Atropos {
 		intro_vc1.addFieldTupleToVC("maker_budget", "car_maker_budget");
 		intro_vc1.addFieldTupleToVC("maker_country", "car_maker_country");
 		pu.refactor(intro_vc1);
-
-		// print
 		pu.generateProgram().printProgram();
 
 		// add vc between makers table and a CRDT table to hold maker's budget
@@ -87,17 +82,22 @@ public class Atropos {
 		intro_vc2.addKeyCorrespondenceToVC("maker_id", "mbc_maker_id");
 		intro_vc2.addFieldTupleToVC("maker_budget", "mbc_amnt");
 		pu.refactor(intro_vc2);
-
-		// print
 		pu.generateProgram().printProgram();
 
 		// change shard key of table accounts from custid to name
 		CHSK chsk = new CHSK(pu, "accounts", "a_name");
 		pu.refactor(chsk);
-
-		// print
 		pu.generateProgram().printProgram();
 
+		
+		// add a_name as PK of accounts
+		ADDPK addpk = new ADDPK(pu, "accounts", "a_name");
+		pu.refactor(addpk);
+		pu.generateProgram().printProgram();
+
+		
+		
+		
 		/*
 		 * 
 		 * BEGIN PROGRAM REFACTORING

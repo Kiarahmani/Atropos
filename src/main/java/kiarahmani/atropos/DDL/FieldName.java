@@ -25,6 +25,10 @@ public class FieldName {
 		this.isDelta = true;
 	}
 
+	public void setPK(boolean pk) {
+		this.isPK = pk;
+	}
+
 	public boolean isPK() {
 		return this.isPK;
 	}

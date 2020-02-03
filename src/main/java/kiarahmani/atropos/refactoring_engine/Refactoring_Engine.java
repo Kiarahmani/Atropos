@@ -22,6 +22,7 @@ import kiarahmani.atropos.refactoring_engine.Modifiers.Query_Modifier;
 import kiarahmani.atropos.refactoring_engine.Modifiers.OTO.One_to_One_Query_Modifier;
 import kiarahmani.atropos.refactoring_engine.Modifiers.OTT.One_to_Two_Query_Modifier;
 import kiarahmani.atropos.refactoring_engine.Modifiers.TTO.Two_to_One_Query_Modifier;
+import kiarahmani.atropos.refactoring_engine.deltas.ADDPK;
 import kiarahmani.atropos.refactoring_engine.deltas.CHSK;
 import kiarahmani.atropos.refactoring_engine.deltas.Delta;
 import kiarahmani.atropos.refactoring_engine.deltas.INTRO_F;
@@ -45,7 +46,7 @@ public class Refactoring_Engine {
 		case "INTRO_R":
 			return apply_intro_r(input_pu, (INTRO_R) delta);
 		case "ADDPK":
-			return apply_addpk(input_pu);
+			return apply_addpk(input_pu, (ADDPK) delta);
 		case "CHSK":
 			return apply_chsk(input_pu, (CHSK) delta);
 		case "INTRO_F":
@@ -87,9 +88,10 @@ public class Refactoring_Engine {
 	/*
 	 * 
 	 */
-	private Program_Utils apply_addpk(Program_Utils input_pu) {
+	private Program_Utils apply_addpk(Program_Utils input_pu, ADDPK addpk) {
 		logger.debug("applying ADDPK refactoring");
-		// TODO
+		addpk.getNewPK().setPK(true);
+		logger.debug("schema updated. No need to update the program");
 		return input_pu;
 	}
 
@@ -101,11 +103,11 @@ public class Refactoring_Engine {
 		chsk.getOldSK().setSK(false);
 		chsk.getNewSK().setSK(true);
 		logger.debug("schema updated");
-
 		for (Transaction txn : input_pu.getTrasnsactionMap().values())
 			for (Query q : txn.getAllQueries())
 				if (q.getTableName().equalsWith(chsk.getTable().getTableName()))
 					input_pu.reAtomicize_qry(txn.getName(), q.getPo());
+		logger.debug("program updated");
 		return input_pu;
 	}
 
