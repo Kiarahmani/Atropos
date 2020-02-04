@@ -43,7 +43,7 @@ public class ADDPK extends Delta {
 	 */
 	@Override
 	public String getDesc() {
-		return "Field " + new_pk + " is added as PK of table " + table.getTableName().getName();
+		return "field " + new_pk + " is added as PK of table " + table.getTableName().getName();
 	}
 
 }

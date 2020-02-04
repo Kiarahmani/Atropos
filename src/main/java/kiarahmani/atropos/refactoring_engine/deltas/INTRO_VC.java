@@ -15,6 +15,10 @@ public class INTRO_VC extends Delta {
 	private Program_Utils pu;
 	private String name;
 
+	public VC getVC() {
+		return this.vc;
+	}
+
 	public INTRO_VC(Program_Utils pu, String T_1, String T_2, VC_Agg vc_agg, VC_Type vc_type) {
 		name = "vc_" + pu.getVCCnt();
 		vc = new VC(name, pu.getTableName(T_1), pu.getTableName(T_2), vc_agg, vc_type);
@@ -45,8 +49,7 @@ public class INTRO_VC extends Delta {
 	 */
 	@Override
 	public String getDesc() {
-		// TODO Auto-generated method stub
-		return "VC " + this.name + " added to the schema";
+		return this.name + " (between " + vc.getTableName(1) + " and " + vc.getTableName(2) + ") added to the schema";
 	}
 
 }

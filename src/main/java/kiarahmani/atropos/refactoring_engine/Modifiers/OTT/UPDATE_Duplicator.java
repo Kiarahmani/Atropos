@@ -59,7 +59,7 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 	 * modify each time.
 	 */
 	public void set(Program_Utils pu, String txnName, String sourceTableName, String targetTableName) {
-		logger.debug("setting the UPDATE_Duplicator");
+		logger.debug("setting the UPDATE_Duplicator from "+sourceTableName +" to "+targetTableName);
 		this.pu = pu;
 		this.txnName = txnName;
 		this.sourceTable = pu.getTable(sourceTableName);

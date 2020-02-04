@@ -8,6 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import kiarahmani.atropos.Atropos;
+import kiarahmani.atropos.DDL.TableName;
 import kiarahmani.atropos.DML.Variable;
 import kiarahmani.atropos.DML.query.Query;
 import kiarahmani.atropos.DML.query.Select_Query;
@@ -70,9 +71,24 @@ public class Refactoring_Engine {
 		return input_pu;
 	}
 
-	private Program_Utils apply_intro_vc(Program_Utils input_pu, INTRO_VC intro_f) {
+	private Program_Utils apply_intro_vc(Program_Utils input_pu, INTRO_VC intro_vc) {
 		logger.debug("applying INTRO_VC refactoring");
-		// TODO
+		TableName t1 = intro_vc.getVC().getTableName(1);
+		TableName t2 = intro_vc.getVC().getTableName(2);
+		// vc is already generated and added to pu; must now deal with the program
+		for (Transaction txn : input_pu.getTrasnsactionMap().values())
+			for (Query q : txn.getAllQueries())
+				if (q.isWrite())
+					if (q.getTableName().equalsWith(t1)) {
+						logger.debug("query " + q.getId() + " is a write on T1 (" + t1.getName()
+								+ ") and must be duplicated on T2 (" + t2.getName() + ")");
+						input_pu.duplicate_update(txn.getName(), t1.getName(), t2.getName(), q.getPo());
+
+					} else if (q.getTableName().equalsWith(intro_vc.getVC().getTableName(2))) {
+						logger.debug("query " + q.getId() + " is a write on T2 (" + t1.getName()
+								+ ") and must be duplicated on T1 (" + t2.getName() + ")");
+						input_pu.duplicate_update(txn.getName(), t2.getName(), t1.getName(), q.getPo());
+					}
 		return input_pu;
 	}
 

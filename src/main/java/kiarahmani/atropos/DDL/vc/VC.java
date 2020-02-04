@@ -139,11 +139,11 @@ public class VC {
 	public boolean corresponsSingleFn(TableName tn, FieldName fn) {
 		boolean result_x = false;
 		boolean result_y = false;
-		for (Tuple<FieldName, FieldName> tpn : this.fieldTuples) {
-			logger.debug("tpn: " + tpn + "   fn: " + fn + "  tpn.x.equals(fn)=" + tpn.x.equals(fn)
-					+ "   tpn.y.equals(fn)=" + tpn.y.equals(fn));
-			result_x = result_x || tpn.x.equals(fn);
-			result_y = result_y || tpn.y.equals(fn);
+		for (Tuple<FieldName, FieldName> tfn : this.fieldTuples) {
+			logger.debug("tfn: " + tfn + "   fn: " + fn + "  tfn.x.equals(fn)=" + tfn.x.equals(fn)
+					+ "   tfn.y.equals(fn)=" + tfn.y.equals(fn));
+			result_x = result_x || tfn.x.equals(fn);
+			result_y = result_y || tfn.y.equals(fn);
 		}
 		if (tn.equals(T_1)) {
 			logger.debug("The result of correspondence in T1(" + T_1.getName() + ") is: " + result_x);

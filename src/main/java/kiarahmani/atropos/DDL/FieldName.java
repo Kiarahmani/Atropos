@@ -74,7 +74,7 @@ public class FieldName {
 		}
 		if (this.isSK) {
 			pre += "+";
-			post += "+";
+			post = "+" + post;
 		}
 		return pre + "(" + this.name + ":" + this.f_type + ")" + post;
 	}

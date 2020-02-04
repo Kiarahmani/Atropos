@@ -32,7 +32,7 @@ public class INTRO_F extends Delta {
 	 */
 	@Override
 	public String getDesc() {
-		return "Field \"" + newFieldName + "\" added to table \"" + this.tableName + "\"";
+		return "field \"" + newFieldName + "\" added to table \"" + this.tableName + "\"";
 	}
 
 }

@@ -28,7 +28,6 @@ public class INTRO_R extends Delta {
 	 */
 	@Override
 	public String getDesc() {
-		// TODO Auto-generated method stub
-		return "Table \"" + new_table_name + "\" added to the schema";
+		return "table \"" + new_table_name + "\" added to the schema";
 	}
 }
