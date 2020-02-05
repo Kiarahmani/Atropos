@@ -8,6 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import kiarahmani.atropos.Atropos;
+import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DDL.TableName;
 import kiarahmani.atropos.DML.Variable;
 import kiarahmani.atropos.DML.query.Query;
@@ -21,8 +22,15 @@ import kiarahmani.atropos.program.statements.If_Statement;
 import kiarahmani.atropos.program.statements.Query_Statement;
 import kiarahmani.atropos.refactoring_engine.Modifiers.Query_Modifier;
 import kiarahmani.atropos.refactoring_engine.Modifiers.OTO.One_to_One_Query_Modifier;
+import kiarahmani.atropos.refactoring_engine.Modifiers.OTO.Query_ReAtomicizer;
+import kiarahmani.atropos.refactoring_engine.Modifiers.OTO.SELECT_Redirector;
 import kiarahmani.atropos.refactoring_engine.Modifiers.OTT.One_to_Two_Query_Modifier;
+import kiarahmani.atropos.refactoring_engine.Modifiers.OTT.SELECT_Splitter;
+import kiarahmani.atropos.refactoring_engine.Modifiers.OTT.UPDATE_Duplicator;
+import kiarahmani.atropos.refactoring_engine.Modifiers.OTT.UPDATE_Splitter;
+import kiarahmani.atropos.refactoring_engine.Modifiers.TTO.SELECT_Merger;
 import kiarahmani.atropos.refactoring_engine.Modifiers.TTO.Two_to_One_Query_Modifier;
+import kiarahmani.atropos.refactoring_engine.Modifiers.TTO.UPDATE_Merger;
 import kiarahmani.atropos.refactoring_engine.deltas.ADDPK;
 import kiarahmani.atropos.refactoring_engine.deltas.CHSK;
 import kiarahmani.atropos.refactoring_engine.deltas.Delta;
@@ -34,14 +42,40 @@ import kiarahmani.atropos.utils.Tuple;
 
 public class Refactoring_Engine {
 	private static final Logger logger = LogManager.getLogger(Atropos.class);
+	// Program Refactoring objects
+	SELECT_Redirector select_red;
+	SELECT_Splitter select_splt;
+	UPDATE_Splitter upd_splt;
+	UPDATE_Merger upd_merger;
+	SELECT_Merger select_merger;
+	UPDATE_Duplicator upd_dup;
+	Query_ReAtomicizer qry_atom;
 
 	/*
 	 * Constructor
 	 */
 	public Refactoring_Engine() {
+		select_red = new SELECT_Redirector();
+		select_splt = new SELECT_Splitter();
+		upd_splt = new UPDATE_Splitter();
+		upd_merger = new UPDATE_Merger();
+		select_merger = new SELECT_Merger();
+		upd_dup = new UPDATE_Duplicator();
+		qry_atom = new Query_ReAtomicizer();
 	}
 
-	public Program_Utils refactor(Program_Utils input_pu, Delta delta) {
+	/*****************************************************************************************************************/
+	// Functions for handling schema refactoring requests (i.e. handling
+	// Delta instances)
+	/*****************************************************************************************************************/
+
+	/*
+	 * Main function called to apply updates on the *schema*
+	 */
+
+	public Program_Utils refactor_schema(Program_Utils input_pu, Delta delta) {
+		input_pu.version++;
+		input_pu.comments += "\n" + input_pu.program_name + "(" + input_pu.version + "):	" + delta.getDesc();
 		String delta_class = delta.getClass().getSimpleName().toString();
 		switch (delta_class) {
 		case "INTRO_R":
@@ -62,7 +96,7 @@ public class Refactoring_Engine {
 	}
 
 	/*
-	 * 
+	 * case: Schema Delta was INTRO_R
 	 */
 	private Program_Utils apply_intro_r(Program_Utils input_pu, INTRO_R intro_r) {
 		logger.debug("applying INTRO_R refactoring");
@@ -71,6 +105,9 @@ public class Refactoring_Engine {
 		return input_pu;
 	}
 
+	/*
+	 * case: Schema Delta was INTRO_VC
+	 */
 	private Program_Utils apply_intro_vc(Program_Utils input_pu, INTRO_VC intro_vc) {
 		logger.debug("applying INTRO_VC refactoring");
 		TableName t1 = intro_vc.getVC().getTableName(1);
@@ -82,18 +119,18 @@ public class Refactoring_Engine {
 					if (q.getTableName().equalsWith(t1)) {
 						logger.debug("query " + q.getId() + " is a write on T1 (" + t1.getName()
 								+ ") and must be duplicated on T2 (" + t2.getName() + ")");
-						input_pu.duplicate_update(txn.getName(), t1.getName(), t2.getName(), q.getPo());
+						duplicate_update(input_pu, txn.getName(), t1.getName(), t2.getName(), q.getPo());
 
 					} else if (q.getTableName().equalsWith(intro_vc.getVC().getTableName(2))) {
 						logger.debug("query " + q.getId() + " is a write on T2 (" + t1.getName()
 								+ ") and must be duplicated on T1 (" + t2.getName() + ")");
-						input_pu.duplicate_update(txn.getName(), t2.getName(), t1.getName(), q.getPo());
+						duplicate_update(input_pu, txn.getName(), t2.getName(), t1.getName(), q.getPo());
 					}
 		return input_pu;
 	}
 
 	/*
-	 * 
+	 * case: Schema Delta was INTRO_F
 	 */
 	private Program_Utils apply_intro_f(Program_Utils input_pu, INTRO_F intro_f) {
 		logger.debug("applying INTRO_F refactoring");
@@ -102,7 +139,7 @@ public class Refactoring_Engine {
 	}
 
 	/*
-	 * 
+	 * case: Schema Delta was ADDPK
 	 */
 	private Program_Utils apply_addpk(Program_Utils input_pu, ADDPK addpk) {
 		logger.debug("applying ADDPK refactoring");
@@ -112,7 +149,7 @@ public class Refactoring_Engine {
 	}
 
 	/*
-	 * 
+	 * case: Schema Delta was CHSK
 	 */
 	private Program_Utils apply_chsk(Program_Utils input_pu, CHSK chsk) {
 		logger.debug("applying CHSK refactoring");
@@ -122,14 +159,116 @@ public class Refactoring_Engine {
 		for (Transaction txn : input_pu.getTrasnsactionMap().values())
 			for (Query q : txn.getAllQueries())
 				if (q.getTableName().equalsWith(chsk.getTable().getTableName()))
-					input_pu.reAtomicize_qry(txn.getName(), q.getPo());
+					reAtomicize_qry(input_pu, txn.getName(), q.getPo());
 		logger.debug("program updated");
 		return input_pu;
 	}
 
 	/*****************************************************************************************************************/
-	// Update Queries in the statement lists
+	// Functions for handling program refactoring requests (i.e. generating
+	// Query_Modifier instances and processing them)
 	/*****************************************************************************************************************/
+
+	public boolean redirect_select(Program_Utils input_pu, String txn_name, String src_table, String dest_table,
+			int qry_po) {
+		this.select_red.set(input_pu, txn_name, src_table, dest_table);
+		if (select_red.isValid(input_pu.getQueryByPo(txn_name, qry_po))) {
+			applyAndPropagate(input_pu, select_red, qry_po, txn_name);
+			input_pu.version++;
+			input_pu.comments += "\n" + input_pu.program_name + "(" + input_pu.version + "):	"
+					+ select_red.getDesc();
+			return true;
+		} else
+			return false;
+	}
+
+	public boolean reAtomicize_qry(Program_Utils input_pu, String txn_name, int qry_po) {
+		this.qry_atom.set(input_pu, txn_name);
+		if (qry_atom.isValid(input_pu.getQueryByPo(txn_name, qry_po))) {
+			applyAndPropagate(input_pu, qry_atom, qry_po, txn_name);
+			input_pu.version++;
+			input_pu.comments += "\n" + input_pu.program_name + "(" + input_pu.version + "):	" + qry_atom.getDesc();
+			return true;
+		} else
+			return false;
+	}
+
+	public boolean merge_select(Program_Utils input_pu, String txn_name, int qry_po) {
+		select_merger.set(input_pu, txn_name);
+		if (select_merger.isValid(input_pu.getQueryByPo(txn_name, qry_po),
+				input_pu.getQueryByPo(txn_name, qry_po + 1))) {
+			applyAndPropagate(input_pu, select_merger, qry_po, txn_name);
+			input_pu.version++;
+			input_pu.comments += "\n" + input_pu.program_name + "(" + input_pu.version + "):	"
+					+ select_merger.getDesc();
+			return true;
+		} else
+			return false;
+	}
+
+	public boolean split_select(Program_Utils input_pu, String txn_name, ArrayList<FieldName> excluded_fns,
+			int qry_po) {
+		select_splt.set(input_pu, txn_name, excluded_fns);
+		if (select_splt.isValid(input_pu.getQueryByPo(txn_name, qry_po))) {
+			applyAndPropagate(input_pu, select_splt, qry_po, txn_name);
+			input_pu.version++;
+			input_pu.comments += "\n" + input_pu.program_name + "(" + input_pu.version + "):	"
+					+ select_splt.getDesc();
+			return true;
+		} else
+			return false;
+
+	}
+
+	public boolean merge_update(Program_Utils input_pu, String txn_name, int qry_po) {
+		upd_merger.set(input_pu, txn_name);
+		if (upd_merger.isValid(input_pu.getQueryByPo(txn_name, qry_po), input_pu.getQueryByPo(txn_name, qry_po + 1))) {
+			applyAndPropagate(input_pu, upd_merger, qry_po, txn_name);
+			input_pu.version++;
+			input_pu.comments += "\n" + input_pu.program_name + "(" + input_pu.version + "):	"
+					+ upd_merger.getDesc();
+			return true;
+		} else
+			return false;
+
+	}
+
+	public boolean split_update(Program_Utils input_pu, String txn_name, ArrayList<FieldName> excluded_fns_upd,
+			int qry_po) {
+		upd_splt.set(input_pu, txn_name, excluded_fns_upd);
+		if (upd_splt.isValid(input_pu.getQueryByPo(txn_name, qry_po))) {
+			applyAndPropagate(input_pu, upd_splt, qry_po, txn_name);
+			input_pu.version++;
+			input_pu.comments += "\n" + input_pu.program_name + "(" + input_pu.version + "):	" + upd_splt.getDesc();
+			return true;
+		} else
+			return false;
+
+	}
+
+	public boolean duplicate_update(Program_Utils input_pu, String txn_name, String source_table, String target_table,
+			int qry_po) {
+		upd_dup.set(input_pu, txn_name, source_table, target_table);
+		if (upd_dup.isValid(input_pu.getQueryByPo(txn_name, qry_po))) {
+			applyAndPropagate(input_pu, upd_dup, qry_po, txn_name);
+			input_pu.version++;
+			input_pu.comments += "\n" + input_pu.program_name + "(" + input_pu.version + "):	" + upd_dup.getDesc();
+			return true;
+		} else {
+			logger.debug("attempted duplication of po#" + qry_po + "from " + source_table + " to " + target_table
+					+ " but failed");
+			return false;
+		}
+	}
+
+	/*****************************************************************************************************************/
+	// Helping functions to update Queries in the statement lists (called by the
+	// above dispatcher functions)
+	/*****************************************************************************************************************/
+
+	/*
+	 * Main function called to apply updates on the *prorgam*
+	 */
 
 	public Program_Utils applyAndPropagate(Program_Utils input_pu, Query_Modifier modifier, int apply_at_po,
 			String txnName) {

@@ -15,6 +15,7 @@ import kiarahmani.atropos.DDL.vc.VC.VC_Type;
 import kiarahmani.atropos.program.Program;
 import kiarahmani.atropos.program_generators.ProgramGenerator;
 import kiarahmani.atropos.program_generators.SmallBank.SmallBankProgramGenerator;
+import kiarahmani.atropos.refactoring_engine.Refactoring_Engine;
 import kiarahmani.atropos.refactoring_engine.deltas.Delta;
 import kiarahmani.atropos.refactoring_engine.deltas.INTRO_F;
 import kiarahmani.atropos.refactoring_engine.deltas.INTRO_R;
@@ -40,6 +41,7 @@ public class Atropos {
 		} catch (IOException e) {
 		}
 		Naive_search_engine nse = new Naive_search_engine();
+		Refactoring_Engine re = new Refactoring_Engine();
 		Set<Program> results = new HashSet<>();
 		Program_Utils pu = new Program_Utils("SmallBank");
 		ProgramGenerator ipg = new SmallBankProgramGenerator(pu);
@@ -48,18 +50,7 @@ public class Atropos {
 				"WriteCheck1", txn_name);
 		program.printProgram();
 		pu.lock();
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
+
 		/*
 		 * 
 		 * BEGIN SCHEMA REFACTORING
@@ -67,20 +58,20 @@ public class Atropos {
 		 */
 		// Add a new field in accounts
 		Delta intro_f = new INTRO_F("accounts", "a_sav_bal", F_Type.NUM);
-		pu.refactor(intro_f);
+		re.refactor_schema(pu, intro_f);
 
 		// Add a new vc between savings and accounts
 		INTRO_VC intro_vc0 = new INTRO_VC(pu, "savings", "accounts", VC_Agg.VC_ID, VC_Type.VC_OTO);
 		intro_vc0.addKeyCorrespondenceToVC("s_custid", "a_custid");
 		intro_vc0.addFieldTupleToVC("s_custid", "a_custid");
 		intro_vc0.addFieldTupleToVC("s_bal", "a_sav_bal");
-		pu.refactor(intro_vc0);
+		re.refactor_schema(pu, intro_vc0);
 		pu.generateProgram().printProgram();
 
 		// add 3 new columns in car table
-		pu.refactor(new INTRO_F("car", "car_maker_name", F_Type.NUM));
-		pu.refactor(new INTRO_F("car", "car_maker_budget", F_Type.NUM));
-		pu.refactor(new INTRO_F("car", "car_maker_country", F_Type.NUM));
+		re.refactor_schema(pu, new INTRO_F("car", "car_maker_name", F_Type.NUM));
+		re.refactor_schema(pu, new INTRO_F("car", "car_maker_budget", F_Type.NUM));
+		re.refactor_schema(pu, new INTRO_F("car", "car_maker_country", F_Type.NUM));
 		pu.generateProgram().printProgram();
 
 		// add a new vc between makes and car tables
@@ -89,14 +80,14 @@ public class Atropos {
 		intro_vc1.addFieldTupleToVC("maker_name", "car_maker_name");
 		intro_vc1.addFieldTupleToVC("maker_budget", "car_maker_budget");
 		intro_vc1.addFieldTupleToVC("maker_country", "car_maker_country");
-		pu.refactor(intro_vc1);
+		re.refactor_schema(pu, intro_vc1);
 		pu.generateProgram().printProgram();
 
 		// add vc between makers table and a CRDT table to hold maker's budget
 		INTRO_VC intro_vc2 = new INTRO_VC(pu, "makers", "makers_budget_crdt", VC_Agg.VC_SUM, VC_Type.VC_OTM);
 		intro_vc2.addKeyCorrespondenceToVC("maker_id", "mbc_maker_id");
 		intro_vc2.addFieldTupleToVC("maker_budget", "mbc_amnt");
-		pu.refactor(intro_vc2);
+		re.refactor_schema(pu, intro_vc2);
 		pu.generateProgram().printProgram();
 
 		// change shard key of table accounts from custid to name
@@ -114,63 +105,63 @@ public class Atropos {
 		 * BEGIN PROGRAM REFACTORING
 		 * 
 		 */
-		
+
 		String test_txn = "test";
 
 		// redirect SELECT2 from savings to accounts
-		pu.redirect_select(test_txn, "savings", "accounts", 2);
+		re.redirect_select(pu, test_txn, "savings", "accounts", 2);
 		pu.generateProgram().printProgram();
 
 		// split SELECT0
 		ArrayList<FieldName> excluded_fns = new ArrayList<>();
 		excluded_fns.add(pu.getFieldName("a_name"));
-		pu.split_select(test_txn, excluded_fns, 0);
+		re.split_select(pu, test_txn, excluded_fns, 0);
 		pu.generateProgram().printProgram();
 
 		// split UPDATE5
 		ArrayList<FieldName> excluded_fns_upd = new ArrayList<>();
 		excluded_fns_upd.add(pu.getFieldName("c_bal"));
-		pu.split_update(test_txn, excluded_fns_upd, 5);
+		re.split_update(pu, test_txn, excluded_fns_upd, 5);
 		pu.generateProgram().printProgram();
 
 		// merge UPDATE5 and UPDATE6
-		pu.merge_update(test_txn, 5);
+		re.merge_update(pu, test_txn, 5);
 		pu.generateProgram().printProgram();
 
 		// merge UPDATE5 and UPDATE6 (again)
-		pu.merge_update(test_txn, 5);
+		re.merge_update(pu, test_txn, 5);
 		pu.generateProgram().printProgram();
 
 		// merge SELECT0 and SELECT1
-		pu.merge_select(test_txn, 0);
+		re.merge_select(pu, test_txn, 0);
 		pu.generateProgram().printProgram();
 
 		// merge SELECT0 and SELECT1 (again)
-		pu.merge_select(test_txn, 0);
+		re.merge_select(pu, test_txn, 0);
 		pu.generateProgram().printProgram();
 
 		// redirect SELECT5 from makers to car
-		pu.redirect_select(test_txn, "makers", "car", 5);
+		re.redirect_select(pu, test_txn, "makers", "car", 5);
 		pu.generateProgram().printProgram();
 
 		// merge SELECT4 and SELECT5
-		pu.merge_select(test_txn, 4);
+		re.merge_select(pu, test_txn, 4);
 		pu.generateProgram().printProgram();
 
 		// duplicate UPDATE(7) to table car (test OTM VC: T1 to T2)
-		pu.duplicate_update(test_txn, "makers", "car", 7);
+		re.duplicate_update(pu, test_txn, "makers", "car", 7);
 		pu.generateProgram().printProgram();
 
 		// duplicate UPDATE(7) to table car (test OTM VC: T2 to T1)
-		pu.duplicate_update(test_txn, "car", "makers", 8);
+		re.duplicate_update(pu, test_txn, "car", "makers", 8);
 		pu.generateProgram().printProgram();
 
 		// redirect SELECT(10) to CRDT copy in makers_budget_crdt table
-		pu.redirect_select(test_txn, "makers", "makers_budget_crdt", 10);
+		re.redirect_select(pu, test_txn, "makers", "makers_budget_crdt", 10);
 		pu.generateProgram().printProgram();
 
 		// duplicate UPDATE(9) to makers_budget_crdt
-		pu.duplicate_update(test_txn, "makers", "makers_budget_crdt", 9);
+		re.duplicate_update(pu, test_txn, "makers", "makers_budget_crdt", 9);
 		pu.generateProgram().printProgram();
 
 		/*
@@ -178,59 +169,20 @@ public class Atropos {
 		 * END OF REFACTORING
 		 * 
 		 */
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-	/*	
-		
-		// search the refactoring space
-		for (int intro_r_index = 0; intro_r_index < max_intro_r; intro_r_index++) {
-			INTRO_R new_intro_r = nse.nextIntroR();
-			pu.refactor(new_intro_r);
-			for (int intro_f_index = 0; intro_f_index < max_intro_f; intro_f_index++) {
-				INTRO_F new_intro_f = nse.nextIntroF();
-				pu.refactor(new_intro_f);
-				nse.set(pu, max_search_depth);
-				while (nse.hasNext()) {
-					INTRO_VC new_intro_vc = nse.nextIntroVC();
-					pu.refactor(new_intro_vc);
-					program = pu.generateProgram();
-					program.printProgram();
-					if (programIsAccepted(program, results))
-						results.add(program);
-					else {
-						//TODO
-					}
-				}
-			}
-		}
-		
-		*/
+
+		/*
+		 * 
+		 * // search the refactoring space for (int intro_r_index = 0; intro_r_index <
+		 * max_intro_r; intro_r_index++) { INTRO_R new_intro_r = nse.nextIntroR();
+		 * pu.refactor(new_intro_r); for (int intro_f_index = 0; intro_f_index <
+		 * max_intro_f; intro_f_index++) { INTRO_F new_intro_f = nse.nextIntroF();
+		 * pu.refactor(new_intro_f); nse.set(pu, max_search_depth); while
+		 * (nse.hasNext()) { INTRO_VC new_intro_vc = nse.nextIntroVC();
+		 * pu.refactor(new_intro_vc); program = pu.generateProgram();
+		 * program.printProgram(); if (programIsAccepted(program, results))
+		 * results.add(program); else { //TODO } } } }
+		 * 
+		 */
 		// print stats and exit
 		printStats(System.currentTimeMillis() - time_begin, results);
 	}
