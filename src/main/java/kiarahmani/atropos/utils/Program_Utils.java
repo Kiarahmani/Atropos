@@ -51,9 +51,9 @@ public class Program_Utils {
 	/*
 	 * basic program meta data
 	 */
-	public String program_name;
-	public int version;
-	public String comments;
+	private String program_name;
+	private int version;
+	private String comments;
 	private boolean lock;
 
 	/*
@@ -291,8 +291,12 @@ public class Program_Utils {
 	/*****************************************************************************************************************/
 	// Book keeping functions regarding VC
 	/*****************************************************************************************************************/
-	public void putVC(VC vc) {
+	public void mkVC(VC vc) {
 		this.vcMap.put(vc.getName(), vc);
+	}
+
+	public void rmVC(VC vc) {
+		this.vcMap.remove(vc.getName());
 	}
 
 	public VC getVC(String key) {
@@ -433,13 +437,6 @@ public class Program_Utils {
 	}
 
 	/*
-	 * Version
-	 */
-	public int getVersion() {
-		return this.version;
-	}
-
-	/*
 	 * Fresh IDs
 	 */
 	public int getNewSelectId(String txnName) {
@@ -455,7 +452,39 @@ public class Program_Utils {
 	}
 
 	/*****************************************************************************************************************/
-	// Make, store and return new components
+	// Meta Data interface
+	/*****************************************************************************************************************/
+	public void incVersion() {
+		this.version++;
+	}
+
+	public int getVersion() {
+		return this.version;
+	}
+
+	public void decVersion() {
+		this.version--;
+	}
+
+	public String getProgramName() {
+		return this.program_name;
+	}
+
+	public String getComments() {
+		return this.comments;
+	}
+
+	public void resetComments() {
+		this.comments = "";
+	}
+
+	public void addComment(String comment) {
+		this.comments += comment;
+	}
+
+	/*****************************************************************************************************************/
+	// Make, store and return new components (and remove, for some dynamically
+	// created/deleted components)
 	/*****************************************************************************************************************/
 	/*
 	 * new table
@@ -470,6 +499,15 @@ public class Program_Utils {
 			this.fieldNameMap.put(fn.getName(), fn);
 		this.fieldNameMap.put(tn_name + "_is_alive", is_alive);
 		return newTable;
+	}
+
+	public void rmTable(String tn_name) {
+		Table toBeRemovedTable = this.tableMap.get(tn_name);
+		this.tableNameMap.remove(tn_name);
+		this.tableMap.remove(tn_name);
+		for (FieldName fn : toBeRemovedTable.getFieldNames())
+			this.fieldNameMap.remove(fn.getName());
+		this.fieldNameMap.remove(tn_name + "_is_alive");
 	}
 
 	/*
@@ -494,11 +532,16 @@ public class Program_Utils {
 	public Variable mkVariable(String tn, String txn) {
 		int var_cnt = transactionToVarCount.get(txn);
 		String fresh_variable_name = txn + "_v" + var_cnt;
-		System.out.println(fresh_variable_name + " ? " + var_cnt);
 		Variable fresh_variable = new Variable(tn, fresh_variable_name);
 		transactionToVarCount.put(txn, ++var_cnt);
 		variableMap.put(fresh_variable_name, fresh_variable);
 		return fresh_variable;
+	}
+
+	public void rmVariable(String txnName, Variable var) {
+		int var_cnt = transactionToVarCount.get(txnName);
+		transactionToVarCount.put(txnName, --var_cnt);
+		variableMap.remove(var.getName());
 	}
 
 	/*
@@ -515,6 +558,12 @@ public class Program_Utils {
 		Table table = this.tableMap.get(tableName);
 		table.addFieldName(fn);
 		this.fieldNameMap.put(fn.getName(), fn);
+	}
+
+	public void removeFieldNameFromTable(String tableName, FieldName fn) {
+		Table table = this.tableMap.get(tableName);
+		table.removeFieldName(fn);
+		this.fieldNameMap.remove(fn.getName());
 	}
 
 	/*****************************************************************************************************************/

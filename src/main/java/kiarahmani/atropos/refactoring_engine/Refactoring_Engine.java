@@ -74,8 +74,9 @@ public class Refactoring_Engine {
 	 */
 
 	public Program_Utils refactor_schema(Program_Utils input_pu, Delta delta) {
-		input_pu.version++;
-		input_pu.comments += "\n" + input_pu.program_name + "(" + input_pu.version + "):	" + delta.getDesc();
+		input_pu.incVersion();
+		input_pu.addComment(
+				"\n" + input_pu.getProgramName() + "(" + input_pu.getVersion() + "):	" + delta.getDesc());
 		String delta_class = delta.getClass().getSimpleName().toString();
 		switch (delta_class) {
 		case "INTRO_R":
@@ -174,9 +175,9 @@ public class Refactoring_Engine {
 		this.select_red.set(input_pu, txn_name, src_table, dest_table);
 		if (select_red.isValid(input_pu.getQueryByPo(txn_name, qry_po))) {
 			applyAndPropagate(input_pu, select_red, qry_po, txn_name);
-			input_pu.version++;
-			input_pu.comments += "\n" + input_pu.program_name + "(" + input_pu.version + "):	"
-					+ select_red.getDesc();
+			input_pu.incVersion();
+			input_pu.addComment(
+					"\n" + input_pu.getProgramName() + "(" + input_pu.getVersion() + "):	" + select_red.getDesc());
 			return true;
 		} else
 			return false;
@@ -186,8 +187,9 @@ public class Refactoring_Engine {
 		this.qry_atom.set(input_pu, txn_name);
 		if (qry_atom.isValid(input_pu.getQueryByPo(txn_name, qry_po))) {
 			applyAndPropagate(input_pu, qry_atom, qry_po, txn_name);
-			input_pu.version++;
-			input_pu.comments += "\n" + input_pu.program_name + "(" + input_pu.version + "):	" + qry_atom.getDesc();
+			input_pu.incVersion();
+			input_pu.addComment(
+					"\n" + input_pu.getProgramName() + "(" + input_pu.getVersion() + "):	" + qry_atom.getDesc());
 			return true;
 		} else
 			return false;
@@ -198,9 +200,9 @@ public class Refactoring_Engine {
 		if (select_merger.isValid(input_pu.getQueryByPo(txn_name, qry_po),
 				input_pu.getQueryByPo(txn_name, qry_po + 1))) {
 			applyAndPropagate(input_pu, select_merger, qry_po, txn_name);
-			input_pu.version++;
-			input_pu.comments += "\n" + input_pu.program_name + "(" + input_pu.version + "):	"
-					+ select_merger.getDesc();
+			input_pu.incVersion();
+			input_pu.addComment("\n" + input_pu.getProgramName() + "(" + input_pu.getVersion() + "):	"
+					+ select_merger.getDesc());
 			return true;
 		} else
 			return false;
@@ -211,9 +213,9 @@ public class Refactoring_Engine {
 		select_splt.set(input_pu, txn_name, excluded_fns);
 		if (select_splt.isValid(input_pu.getQueryByPo(txn_name, qry_po))) {
 			applyAndPropagate(input_pu, select_splt, qry_po, txn_name);
-			input_pu.version++;
-			input_pu.comments += "\n" + input_pu.program_name + "(" + input_pu.version + "):	"
-					+ select_splt.getDesc();
+			input_pu.incVersion();
+			input_pu.addComment(
+					"\n" + input_pu.getProgramName() + "(" + input_pu.getVersion() + "):	" + select_splt.getDesc());
 			return true;
 		} else
 			return false;
@@ -224,9 +226,9 @@ public class Refactoring_Engine {
 		upd_merger.set(input_pu, txn_name);
 		if (upd_merger.isValid(input_pu.getQueryByPo(txn_name, qry_po), input_pu.getQueryByPo(txn_name, qry_po + 1))) {
 			applyAndPropagate(input_pu, upd_merger, qry_po, txn_name);
-			input_pu.version++;
-			input_pu.comments += "\n" + input_pu.program_name + "(" + input_pu.version + "):	"
-					+ upd_merger.getDesc();
+			input_pu.incVersion();
+			input_pu.addComment(
+					"\n" + input_pu.getProgramName() + "(" + input_pu.getVersion() + "):	" + upd_merger.getDesc());
 			return true;
 		} else
 			return false;
@@ -238,8 +240,9 @@ public class Refactoring_Engine {
 		upd_splt.set(input_pu, txn_name, excluded_fns_upd);
 		if (upd_splt.isValid(input_pu.getQueryByPo(txn_name, qry_po))) {
 			applyAndPropagate(input_pu, upd_splt, qry_po, txn_name);
-			input_pu.version++;
-			input_pu.comments += "\n" + input_pu.program_name + "(" + input_pu.version + "):	" + upd_splt.getDesc();
+			input_pu.incVersion();
+			input_pu.addComment(
+					"\n" + input_pu.getProgramName() + "(" + input_pu.getVersion() + "):	" + upd_splt.getDesc());
 			return true;
 		} else
 			return false;
@@ -251,8 +254,9 @@ public class Refactoring_Engine {
 		upd_dup.set(input_pu, txn_name, source_table, target_table);
 		if (upd_dup.isValid(input_pu.getQueryByPo(txn_name, qry_po))) {
 			applyAndPropagate(input_pu, upd_dup, qry_po, txn_name);
-			input_pu.version++;
-			input_pu.comments += "\n" + input_pu.program_name + "(" + input_pu.version + "):	" + upd_dup.getDesc();
+			input_pu.incVersion();
+			input_pu.addComment(
+					"\n" + input_pu.getProgramName() + "(" + input_pu.getVersion() + "):	" + upd_dup.getDesc());
 			return true;
 		} else {
 			logger.debug("attempted duplication of po#" + qry_po + "from " + source_table + " to " + target_table
@@ -260,6 +264,141 @@ public class Refactoring_Engine {
 			return false;
 		}
 	}
+
+	public boolean swap_queries(Program_Utils input_pu, String txnName, int q1_po, int q2_po) {
+		Transaction txn = (Transaction) input_pu.getTrasnsactionMap().get(txnName);
+		assert (txn != null) : "swap request is made on a transaction that does not exist";
+		// guard the swaps from invalid requests
+		if (q1_po > q2_po || !swapChecks(txn, q1_po, q2_po))
+			return false;
+		swapQueries_rec(txn.getStatements(), q1_po, q2_po);
+		return true;
+	}
+
+	/*****************************************************************************************************************/
+	// Helping functions for SWAP
+	/*****************************************************************************************************************/
+
+	/*
+	 * Helping function used in swap_queries. It recusrsively checks continous
+	 * blocks of statements
+	 */
+	private void swapQueries_rec(ArrayList<Statement> inputList, int q1_po, int q2_po) {
+		int iter = 0;
+		int index_po1 = -1, index_po2 = -1;
+		loop_label: for (Statement stmt : inputList) {
+			switch (stmt.getClass().getSimpleName()) {
+			case "Query_Statement":
+				Query_Statement qry_stmt = (Query_Statement) stmt;
+				Query qry = qry_stmt.getQuery();
+				if (qry.getPo() == q1_po) {
+					qry.updatePO(q2_po);
+					index_po1 = iter;
+					break;
+				}
+				if (qry.getPo() == q2_po) {
+					assert (index_po1 != -1) : "unexpected state: q2 is found in the current block but"
+							+ " q1 belongs to another (possibly outer) block";
+					qry.updatePO(q1_po);
+					index_po2 = iter;
+					break loop_label;
+				}
+				break;
+			case "If_Statement":
+				If_Statement if_stmt = (If_Statement) stmt;
+				swapQueries_rec(if_stmt.getIfStatements(), q1_po, q2_po);
+				swapQueries_rec(if_stmt.getElseStatements(), q1_po, q2_po);
+				break;
+			default:
+				break;
+			}
+			iter++;
+		}
+		if (index_po1 != -1 && index_po2 != -1)
+			Collections.swap(inputList, index_po1, index_po2);
+	}
+
+	/*
+	 * Check if the requested swap is valid or not
+	 */
+	private boolean swapChecks(Transaction txn, int q1_po, int q2_po) {
+		if (q1_po > q2_po)
+			return false;
+		Boolean result = swapChecks_rec(txn.getStatements(), q1_po, q2_po);
+		assert (result != null) : "the requested swap is invalid and cannot be checked";
+		return result;
+	}
+
+	/*
+	 * Helping function used in swapChecks. Recursively analyzes the contineous
+	 * blocks of statements
+	 */
+	private Boolean swapChecks_rec(ArrayList<Statement> inputList, int q1_po, int q2_po) {
+		ArrayList<Query> pot_dep_qries = new ArrayList<>();
+		Query qry1 = null;
+		Query qry2 = null;
+		boolean q1_seen_flag = false;
+		loop_label: for (Statement stmt : inputList) {
+			switch (stmt.getClass().getSimpleName()) {
+			case "Query_Statement":
+				Query_Statement qry_stmt = (Query_Statement) stmt;
+				Query qry = qry_stmt.getQuery();
+				if (qry.getPo() == q1_po) {
+					q1_seen_flag = true;
+					qry1 = qry;
+					pot_dep_qries.add(qry);
+					break;
+				}
+				if (qry.getPo() == q2_po) {
+					assert (q1_seen_flag) : "unexpected state: q2 is found in the current block but"
+							+ " q1 belongs to another (possibly outer) block";
+					qry2 = qry;
+					break loop_label;
+				}
+				if (q1_seen_flag && qryAreDep(qry1, qry))
+					pot_dep_qries.add(qry);
+				break;
+			case "If_Statement":
+				If_Statement if_stmt = (If_Statement) stmt;
+				Boolean if_result = swapChecks_rec(if_stmt.getIfStatements(), q1_po, q2_po);
+				if (if_result != null)
+					return if_result;
+				Boolean else_result = swapChecks_rec(if_stmt.getElseStatements(), q1_po, q2_po);
+				if (else_result != null)
+					return else_result;
+				break;
+			default:
+				break;
+			}
+		}
+		if (q1_seen_flag) {
+			assert (qry2 != null) : "unexpected state: qry2 is not set although qry1 has been found in the current block";
+			for (Query q : pot_dep_qries)
+				if (qryAreDep(q, qry2))
+					return false;
+			return true;
+		} else
+			return null;
+	}
+
+	/*
+	 * check if two queries are dependent on each other or not
+	 */
+	private boolean qryAreDep(Query qry1, Query qry2) {
+		assert (qry1.getPo() < qry2
+				.getPo()) : "unexpected state: algorithm assumes this function is only called for po1<po2 -> po1:"
+						+ qry1.getPo() + " po2:" + qry2.getPo();
+		if (qry1.getKind() == Kind.SELECT) {
+			Select_Query slct_qry = (Select_Query) qry1;
+			Variable var1 = slct_qry.getVariable();
+			return qry2.getAllRefferencedVars().contains(var1);
+			// the only case where true (identifying a dependency) is returned is when the
+			// first query is a select and
+			// the second query has a reference to the variable created by the first one
+		}
+		return false;
+	}
+	/*****************************************************************************************************************/
 
 	/*****************************************************************************************************************/
 	// Helping functions to update Queries in the statement lists (called by the

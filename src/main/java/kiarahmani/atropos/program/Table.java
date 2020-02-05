@@ -55,6 +55,10 @@ public class Table {
 		this.fieldNames.add(fn);
 	}
 
+	public void removeFieldName(FieldName fn) {
+		this.fieldNames.remove(fn);
+	}
+
 	public ArrayList<FieldName> getFieldNames() {
 		return this.fieldNames;
 	}

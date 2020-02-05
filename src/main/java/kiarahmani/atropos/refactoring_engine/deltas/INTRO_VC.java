@@ -22,7 +22,7 @@ public class INTRO_VC extends Delta {
 	public INTRO_VC(Program_Utils pu, String T_1, String T_2, VC_Agg vc_agg, VC_Type vc_type) {
 		name = "vc_" + pu.getVCCnt();
 		vc = new VC(name, pu.getTableName(T_1), pu.getTableName(T_2), vc_agg, vc_type);
-		pu.putVC(vc);
+		pu.mkVC(vc);
 		this.pu = pu;
 	}
 
