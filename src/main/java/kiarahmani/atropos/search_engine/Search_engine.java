@@ -9,11 +9,13 @@ import kiarahmani.atropos.refactoring_engine.deltas.Delta;
 import kiarahmani.atropos.utils.Program_Utils;
 
 public abstract class Search_engine {
-	public abstract Delta nextIntroduction();
+	public abstract Delta nextIntroF();
 
-	public abstract Delta nextRefactoring();
+	public abstract Delta nextIntroR();
 
-	public abstract boolean hasNextRef();
+	public abstract Delta nextIntroVC();
 
-	public abstract void set(Program_Utils pu, int k);
+	public abstract boolean hasNext();
+
+	public abstract void set(Program_Utils pu, int max_depth);
 }
