@@ -21,6 +21,7 @@ import kiarahmani.atropos.DML.query.Query;
 import kiarahmani.atropos.DML.query.Select_Query;
 import kiarahmani.atropos.DML.where_clause.WHC;
 import kiarahmani.atropos.DML.where_clause.WHC_Constraint;
+import kiarahmani.atropos.program.Block;
 import kiarahmani.atropos.program.Table;
 import kiarahmani.atropos.program.statements.Query_Statement;
 import kiarahmani.atropos.refactoring_engine.Modifiers.QM_Type;
@@ -34,6 +35,15 @@ public class SELECT_Merger extends Two_to_One_Query_Modifier {
 	private static final Logger logger = LogManager.getLogger(Atropos.class);
 	private Program_Utils pu;
 	private int original_applied_po;
+	private Block original_block;
+
+	public Block getOriginal_block() {
+		return original_block;
+	}
+
+	public void setOriginal_block(Block original_block) {
+		this.original_block = original_block;
+	}
 
 	public int getOriginal_applied_po() {
 		return original_applied_po;
