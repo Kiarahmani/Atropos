@@ -219,7 +219,10 @@ public class SELECT_Merger extends Two_to_One_Query_Modifier {
 			return false;
 		// Queries access the same table
 		boolean assumption1 = input_select_1.getTableName().equalsWith(input_select_2.getTableName());
-		return assumption1;
+
+		boolean assumption2 = (mergeWHCs(input_select_1, input_select_2) != null);
+
+		return assumption1 && assumption2;
 	}
 
 }

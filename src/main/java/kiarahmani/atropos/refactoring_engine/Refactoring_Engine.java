@@ -53,7 +53,7 @@ public class Refactoring_Engine {
 	 */
 	public void shrink(Program_Utils pu) {
 		/*
-		 * get rid of unread tables and updates on them
+		 * DELETE REDUNDANT SUB-ROUTINE: get rid of unread tables and updates on them
 		 */
 		ArrayList<Table> tables_to_be_removed = new ArrayList<>();
 		for (Table t : pu.getTables().values())
@@ -63,6 +63,32 @@ public class Refactoring_Engine {
 			}
 		for (Table t : tables_to_be_removed)
 			pu.rmTable(t.getTableName().getName());
+		/*
+		 * MERGE Consecutive Queries
+		 */
+		for (Transaction txn : pu.getTrasnsactionMap().values()) {
+			ArrayList<Query> all_queries = txn.getAllQueries();
+			int qry_cnt = all_queries.size();
+			for (int i = 0; i < qry_cnt; i++)
+				for (int j = i + 1; j < qry_cnt; j++) {
+					Query q1 = all_queries.get(i);
+					attempt_merge_query(pu, txn.getName(), q1.getPo(), false);
+				}
+		}
+
+	}
+
+	private boolean attempt_merge_query(Program_Utils input_pu, String txn_name, int qry_po, boolean isRevert) {
+		Query q1 = input_pu.getQueryByPo(txn_name, qry_po);
+		Query q2 = input_pu.getQueryByPo(txn_name, qry_po + 1);
+		if (q1.getKind() == Kind.UPDATE && q2.getKind() == Kind.UPDATE) {
+			merge_update(input_pu, txn_name, qry_po, isRevert);
+			return true;
+		} else if (q1.getKind() == Kind.SELECT && q2.getKind() == Kind.SELECT) {
+			merge_select(input_pu, txn_name, qry_po, isRevert);
+			return true;
+		}
+		return true;
 	}
 
 	private void deleteUnreadUpdates(Program_Utils pu, Table t) {

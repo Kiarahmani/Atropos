@@ -94,8 +94,8 @@ public class UPDATE_Merger extends Two_to_One_Query_Modifier {
 			new_update.addUpdateExp(fe.x, fe.y);
 		for (Tuple<FieldName, Expression> fe : old_update2.getUpdateExps())
 			new_update.addUpdateExp(fe.x, fe.y);
-		this.desc = "Old queries (" + input_query_1.getId() + ") and (" + input_query_2.getId()
-				+ ") are merged into query (" + new_update.getId() + ")";
+		this.desc = "Old queries (" + input_query_1.getId() + ") and (" + input_query_2.getId() + ") in " + txnName
+				+ " are merged into query (" + new_update.getId() + ")";
 		new_update.setPathCondition(old_update1.getPathCondition());
 		return new_update;
 	}
@@ -163,7 +163,9 @@ public class UPDATE_Merger extends Two_to_One_Query_Modifier {
 		boolean valid3 = input_update_1.getPo() == input_update_2.getPo() - 1;
 		logger.debug("valid3: " + valid3);
 
-		return valid1 && valid2 && valid3;
+		boolean valid4 = (mergeWHCs(input_update_1.getWHC(), input_update_2.getWHC()) != null);
+
+		return valid1 && valid2 && valid3 && valid4;
 	}
 
 }
