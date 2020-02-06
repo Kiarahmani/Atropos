@@ -49,9 +49,22 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 	private Table targetTable;
 	private VC vc;
 	private Redirection_Type type;
+	private int original_duplicated_po;
+
+	public int getOrgDupPo() {
+		return this.original_duplicated_po;
+	}
+
+	public void setOrgDupPo(int po) {
+		this.original_duplicated_po = po;
+	}
 
 	private enum Redirection_Type {
 		T1_TO_T2, T2_TO_T1;
+	}
+
+	public String getTxnName() {
+		return this.txnName;
 	}
 
 	/*
@@ -59,7 +72,7 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 	 * modify each time.
 	 */
 	public void set(Program_Utils pu, String txnName, String sourceTableName, String targetTableName) {
-		logger.debug("setting the UPDATE_Duplicator from "+sourceTableName +" to "+targetTableName);
+		logger.debug("setting the UPDATE_Duplicator from " + sourceTableName + " to " + targetTableName);
 		this.pu = pu;
 		this.txnName = txnName;
 		this.sourceTable = pu.getTable(sourceTableName);

@@ -38,6 +38,40 @@ public class SELECT_Redirector extends One_to_One_Query_Modifier {
 	private static final Logger logger = LogManager.getLogger(Atropos.class);
 	private Program_Utils pu;
 	private Table targetTable;
+	private int original_applied_po;
+
+	public int getApplied_po() {
+		return original_applied_po;
+	}
+
+	public void setApplied_po(int applied_po) {
+		this.original_applied_po = applied_po;
+	}
+
+	public Table getTargetTable() {
+		return targetTable;
+	}
+
+	public void setTargetTable(Table targetTable) {
+		this.targetTable = targetTable;
+	}
+
+	public Table getSourceTable() {
+		return sourceTable;
+	}
+
+	public void setSourceTable(Table sourceTable) {
+		this.sourceTable = sourceTable;
+	}
+
+	public String getTxnName() {
+		return txnName;
+	}
+
+	public void setTxnName(String txnName) {
+		this.txnName = txnName;
+	}
+
 	private Table sourceTable;
 	private String txnName;
 	private VC vc;

@@ -33,6 +33,40 @@ import kiarahmani.atropos.utils.Program_Utils;
 public class SELECT_Merger extends Two_to_One_Query_Modifier {
 	private static final Logger logger = LogManager.getLogger(Atropos.class);
 	private Program_Utils pu;
+	private int original_applied_po;
+
+	public int getOriginal_applied_po() {
+		return original_applied_po;
+	}
+
+	public void setOriginal_applied_po(int original_applied_po) {
+		this.original_applied_po = original_applied_po;
+	}
+
+	public String getTxnName() {
+		return txnName;
+	}
+
+	public void setTxnName(String txnName) {
+		this.txnName = txnName;
+	}
+
+	public Select_Query getOld_select1() {
+		return old_select1;
+	}
+
+	public void setOld_select1(Select_Query old_select1) {
+		this.old_select1 = old_select1;
+	}
+
+	public Select_Query getOld_select2() {
+		return old_select2;
+	}
+
+	public void setOld_select2(Select_Query old_select2) {
+		this.old_select2 = old_select2;
+	}
+
 	private String txnName;
 	private Select_Query old_select1;
 	private Select_Query old_select2;

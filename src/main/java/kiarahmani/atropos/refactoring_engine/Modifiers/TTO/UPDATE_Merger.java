@@ -31,8 +31,37 @@ public class UPDATE_Merger extends Two_to_One_Query_Modifier {
 	private static final Logger logger = LogManager.getLogger(Atropos.class);
 	private Program_Utils pu;
 	private String txnName;
+	public Update_Query getOld_update1() {
+		return old_update1;
+	}
+
+	public void setOld_update1(Update_Query old_update1) {
+		this.old_update1 = old_update1;
+	}
+
+	public Update_Query getOld_update2() {
+		return old_update2;
+	}
+
+	public void setOld_update2(Update_Query old_update2) {
+		this.old_update2 = old_update2;
+	}
+
 	private Update_Query old_update1;
 	private Update_Query old_update2;
+	private int original_applied_po;
+
+	public int getOriginal_applied_po() {
+		return original_applied_po;
+	}
+
+	public void setOriginal_applied_po(int original_applied_po) {
+		this.original_applied_po = original_applied_po;
+	}
+
+	public String getTxnName() {
+		return txnName;
+	}
 
 	public UPDATE_Merger() {
 		super.type = QM_Type.TTO;

@@ -37,6 +37,20 @@ public class SELECT_Splitter extends One_to_Two_Query_Modifier {
 	Variable new_var_2;
 	Variable old_var;
 
+	private int original_applied_po;
+
+	public int getOriginal_applied_po() {
+		return original_applied_po;
+	}
+
+	public void setOriginal_applied_po(int original_applied_po) {
+		this.original_applied_po = original_applied_po;
+	}
+
+	public String getTxnName() {
+		return txnName;
+	}
+
 	/*
 	 * Set the stage before modifying. Function set must be called before calling
 	 * modify each time.

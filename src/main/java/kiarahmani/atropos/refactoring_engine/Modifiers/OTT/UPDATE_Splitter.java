@@ -32,6 +32,19 @@ public class UPDATE_Splitter extends One_to_Two_Query_Modifier {
 	private ArrayList<FieldName> excluded_fns;
 	private ArrayList<Tuple<FieldName, Expression>> old_update_exps;
 	private ArrayList<Tuple<FieldName, Expression>> excluded_update_exps;
+	private int original_applied_po;
+
+	public int getOriginal_applied_po() {
+		return original_applied_po;
+	}
+
+	public String getTxnName() {
+		return txnName;
+	}
+
+	public void setOriginal_applied_po(int original_applied_po) {
+		this.original_applied_po = original_applied_po;
+	}
 
 	/*
 	 * Set the stage before modifying. Function set must be called before calling
