@@ -126,7 +126,7 @@ public class SELECT_Redirector extends One_to_One_Query_Modifier {
 		// create new query
 		Select_Query new_select = new Select_Query(old_po, new_select_id, new_isAtomic, targetTable.getTableName(),
 				new_selected_fieldNames, new_var, new_whc);
-		this.desc = "Old query " + input_query.getId() + "in " + txnName + " is redirected into a new query ("
+		this.desc = "Old query " + input_query.getId() + " in " + txnName + " is redirected into a new query ("
 				+ new_select.getId() + ")";
 		logger.debug("final select query to return: " + new_select);
 		// return

@@ -23,6 +23,7 @@ import kiarahmani.atropos.refactoring_engine.Modifiers.OTT.UPDATE_Duplicator;
 import kiarahmani.atropos.refactoring_engine.Modifiers.OTT.UPDATE_Splitter;
 import kiarahmani.atropos.refactoring_engine.Modifiers.TTO.SELECT_Merger;
 import kiarahmani.atropos.refactoring_engine.Modifiers.TTO.UPDATE_Merger;
+import kiarahmani.atropos.refactoring_engine.deltas.CHSK;
 import kiarahmani.atropos.refactoring_engine.deltas.Delta;
 import kiarahmani.atropos.refactoring_engine.deltas.INTRO_F;
 import kiarahmani.atropos.refactoring_engine.deltas.INTRO_R;
@@ -57,6 +58,59 @@ public class Atropos {
 				"WriteCheck1", txn_name);
 		program.printProgram();
 		pu.lock();
+
+		// Add a new field in accounts
+		Delta intro_f = new INTRO_F("accounts", "a_sav_bal", F_Type.NUM);
+		re.refactor_schema(pu, intro_f);
+
+		// Add a new vc between savings and accounts
+		INTRO_VC intro_vc0 = new INTRO_VC(pu, "savings", "accounts", VC_Agg.VC_ID, VC_Type.VC_OTO);
+		intro_vc0.addKeyCorrespondenceToVC("s_custid", "a_custid");
+		intro_vc0.addFieldTupleToVC("s_custid", "a_custid");
+		intro_vc0.addFieldTupleToVC("s_bal", "a_sav_bal");
+		re.refactor_schema(pu, intro_vc0);
+
+		// add 3 new columns in car table
+		// re.refactor_schema(pu, new INTRO_F("car", "car_maker_name", F_Type.NUM));
+		// re.refactor_schema(pu, new INTRO_F("car", "car_maker_budget", F_Type.NUM));
+		// re.refactor_schema(pu, new INTRO_F("car", "car_maker_country", F_Type.NUM));
+
+		// add a new vc between makes and car tables
+		// INTRO_VC intro_vc1 = new INTRO_VC(pu, "makers", "car", VC_Agg.VC_ID,
+		// VC_Type.VC_OTM);
+		// intro_vc1.addKeyCorrespondenceToVC("maker_id", "car_maker");
+		// intro_vc1.addFieldTupleToVC("maker_name", "car_maker_name");
+		// intro_vc1.addFieldTupleToVC("maker_budget", "car_maker_budget");
+		// intro_vc1.addFieldTupleToVC("maker_country", "car_maker_country");
+		// re.refactor_schema(pu, intro_vc1);
+
+		// add vc between makers table and a CRDT table to hold maker's budget
+		// INTRO_VC intro_vc2 = new INTRO_VC(pu, "makers", "makers_budget_crdt",
+		// VC_Agg.VC_SUM, VC_Type.VC_OTM);
+		// intro_vc2.addKeyCorrespondenceToVC("maker_id", "mbc_maker_id");
+		// intro_vc2.addFieldTupleToVC("maker_budget", "mbc_amnt");
+		// re.refactor_schema(pu, intro_vc2);
+
+		// change shard key of table accounts from custid to name
+		// CHSK chsk = new CHSK(pu, "accounts", "a_name");
+		// re.refactor_schema(pu,chsk);
+		// pu.generateProgram().printProgram();
+		pu.generateProgram().printProgram();
+		String test_txn = "test";
+		Query_Modifier x;
+		// merge SELECT0 and SELECT1
+				x = re.merge_select(pu, test_txn, 0,false);
+				pu.generateProgram().printProgram();
+
+
+
+		re.revert_refactor_program(pu, x);
+		pu.generateProgram().printProgram();
+
+		// add a_name as PK of accounts
+		// ADDPK addpk = new ADDPK(pu, "accounts", "a_name");
+		// pu.refactor(addpk);
+		// pu.generateProgram().printProgram();
 
 		/*
 		 * 

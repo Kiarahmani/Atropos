@@ -143,7 +143,7 @@ public class Refactoring_Engine {
 		for (Transaction txn : input_pu.getTrasnsactionMap().values())
 			for (Query q : txn.getAllQueries())
 				if (q.getTableName().equalsWith(chsk.getTable().getTableName()))
-					reAtomicize_qry(input_pu, txn.getName(), q.getPo());
+					reAtomicize_qry(input_pu, txn.getName(), q.getPo(), false);
 		logger.debug("program updated");
 		return input_pu;
 	}
@@ -158,8 +158,7 @@ public class Refactoring_Engine {
 
 	public Program_Utils revert_refactor_schema(Program_Utils input_pu, Delta delta) {
 		input_pu.decVersion();
-		input_pu.addComment("\n !!REVERTED!! " + input_pu.getProgramName() + "(" + input_pu.getVersion() + "):	"
-				+ delta.getDesc());
+		input_pu.addComment("\n !!REVERTED!! " + delta.getDesc());
 		String delta_class = delta.getClass().getSimpleName().toString();
 		switch (delta_class) {
 		case "INTRO_R":
@@ -232,7 +231,7 @@ public class Refactoring_Engine {
 		for (Transaction txn : input_pu.getTrasnsactionMap().values())
 			for (Query q : txn.getAllQueries())
 				if (q.getTableName().equalsWith(chsk.getTable().getTableName()))
-					reAtomicize_qry(input_pu, txn.getName(), q.getPo());
+					reAtomicize_qry(input_pu, txn.getName(), q.getPo(), true);
 		logger.debug("program updated");
 		return input_pu;
 	}
@@ -242,30 +241,59 @@ public class Refactoring_Engine {
 	// Query_Modifier instances and processing them)
 	/*****************************************************************************************************************/
 
+	/*
+	 * Dispatching function for the below functions
+	 */
+
+	public void revert_refactor_program(Program_Utils input_pu, Query_Modifier qm) {
+		if (qm instanceof UPDATE_Duplicator) {
+			UPDATE_Duplicator x = (UPDATE_Duplicator) qm;
+			revert_duplicate_update(input_pu, x);
+		}
+		if (qm instanceof SELECT_Redirector) {
+			SELECT_Redirector x = (SELECT_Redirector) qm;
+			revert_redirect_select(input_pu, x);
+		}
+		if (qm instanceof SELECT_Merger) {
+			SELECT_Merger x = (SELECT_Merger) qm;
+			revert_merge_select(input_pu, x);
+		}
+		if (qm instanceof SELECT_Splitter) {
+			SELECT_Splitter x = (SELECT_Splitter) qm;
+			revert_split_select(input_pu, x);
+		}
+		if (qm instanceof UPDATE_Merger) {
+			UPDATE_Merger x = (UPDATE_Merger) qm;
+			revert_merge_update(input_pu, x);
+		}
+		if (qm instanceof UPDATE_Splitter) {
+			UPDATE_Splitter x = (UPDATE_Splitter) qm;
+			revert_split_update(input_pu, x);
+		}
+	}
+
 	public void revert_duplicate_update(Program_Utils input_pu, UPDATE_Duplicator ud) {
 		input_pu.decVersion();
-		input_pu.addComment(
-				"\n !!REVERTED!! " + input_pu.getProgramName() + "(" + input_pu.getVersion() + "):	" + ud.getDesc());
+		input_pu.addComment("\n !!REVERTED!! " + ud.getDesc());
 		deleteQuery(input_pu, ud.getOrgDupPo() + 1, ud.getTxnName());
 	}
 
 	public void revert_redirect_select(Program_Utils input_pu, SELECT_Redirector select_red) {
 		input_pu.decVersion();
-		input_pu.addComment("\n !!REVERTED!! " + input_pu.getProgramName() + "(" + input_pu.getVersion() + "):	"
-				+ select_red.getDesc());
+		input_pu.addComment("\n !!REVERTED!! " + select_red.getDesc());
 		String original_txn_name = select_red.getTxnName();
 		String original_src_table = select_red.getSourceTable().getTableName().getName();
 		String original_target_table = select_red.getTargetTable().getTableName().getName();
 		redirect_select(input_pu, original_txn_name, original_target_table, original_src_table,
-				select_red.getApplied_po());
+				select_red.getApplied_po(), true);
 	}
 
 	public void revert_merge_select(Program_Utils input_pu, SELECT_Merger select_merger) {
 		input_pu.decVersion();
-		input_pu.addComment("\n !!REVERTED!! " + input_pu.getProgramName() + "(" + input_pu.getVersion() + "):	"
-				+ select_merger.getDesc());
+		input_pu.addComment("\n !!REVERTED!! " + select_merger.getDesc());
 		// TODO
-		//deleteQuery(input_pu, select_merger.getOriginal_applied_po(), select_merger.getTxnName());
+		// deleteQuery(input_pu, select_merger.getOriginal_applied_po(),
+		// select_merger.getTxnName());
 		// InsertQueriesAtPO(select_merger.getOriginal_block(), input_pu,
 		// select_merger.getTxnName(),
 		// select_merger.getOriginal_applied_po(),
@@ -275,29 +303,26 @@ public class Refactoring_Engine {
 		// select_merger.getOld_select2()));
 
 		split_select(input_pu, select_merger.getTxnName(), select_merger.getOld_select2().getReadFieldNames(),
-				select_merger.getOriginal_applied_po());
+				select_merger.getOriginal_applied_po(), true);
 	}
 
 	public void revert_split_select(Program_Utils input_pu, SELECT_Splitter select_splt) {
 		input_pu.decVersion();
-		input_pu.addComment("\n !!REVERTED!! " + input_pu.getProgramName() + "(" + input_pu.getVersion() + "):	"
-				+ select_splt.getDesc());
-		merge_select(input_pu, select_splt.getTxnName(), select_splt.getOriginal_applied_po());
+		input_pu.addComment("\n !!REVERTED!! " + select_splt.getDesc());
+		merge_select(input_pu, select_splt.getTxnName(), select_splt.getOriginal_applied_po(), true);
 	}
 
 	public void revert_merge_update(Program_Utils input_pu, UPDATE_Merger upd_merger) {
 		input_pu.decVersion();
-		input_pu.addComment("\n !!REVERTING!! " + input_pu.getProgramName() + "(" + input_pu.getVersion() + "):	"
-				+ upd_merger.getDesc());
+		input_pu.addComment("\n !!REVERTING!! " + upd_merger.getDesc());
 		split_update(input_pu, upd_merger.getTxnName(), upd_merger.getOld_update2().getWrittenFieldNames(),
-				upd_merger.getOriginal_applied_po());
+				upd_merger.getOriginal_applied_po(), true);
 	}
 
 	public void revert_split_update(Program_Utils input_pu, UPDATE_Splitter upd_splt) {
 		input_pu.decVersion();
-		input_pu.addComment("\n !!REVERTED!! " + input_pu.getProgramName() + "(" + input_pu.getVersion() + "):	"
-				+ upd_splt.getDesc());
-		merge_update(input_pu, upd_splt.getTxnName(), upd_splt.getOriginal_applied_po());
+		input_pu.addComment("\n !!REVERTED!! " + upd_splt.getDesc());
+		merge_update(input_pu, upd_splt.getTxnName(), upd_splt.getOriginal_applied_po(), true);
 	}
 
 	/*****************************************************************************************************************/
@@ -306,42 +331,61 @@ public class Refactoring_Engine {
 	/*****************************************************************************************************************/
 
 	public SELECT_Redirector redirect_select(Program_Utils input_pu, String txn_name, String src_table,
-			String dest_table, int qry_po) {
+			String dest_table, int qry_po, boolean isRevert) {
 		SELECT_Redirector select_red = new SELECT_Redirector();
 		select_red.set(input_pu, txn_name, src_table, dest_table);
 		if (select_red.isValid(input_pu.getQueryByPo(txn_name, qry_po))) {
 			applyAndPropagate(input_pu, select_red, qry_po, txn_name);
-			input_pu.incVersion();
-			input_pu.addComment(
-					"\n" + input_pu.getProgramName() + "(" + input_pu.getVersion() + "):	" + select_red.getDesc());
+			String begin;
+			if (isRevert) {
+				input_pu.decVersion();
+				begin = "              ";
+			} else {
+				input_pu.incVersion();
+				begin = input_pu.getProgramName() + "(" + input_pu.getVersion() + "):	";
+			}
+			input_pu.addComment("\n" + begin + select_red.getDesc());
+
 			select_red.setApplied_po(qry_po);
 			return select_red;
 		} else
 			return null;
 	}
 
-	public Query_ReAtomicizer reAtomicize_qry(Program_Utils input_pu, String txn_name, int qry_po) {
+	public Query_ReAtomicizer reAtomicize_qry(Program_Utils input_pu, String txn_name, int qry_po, boolean isRevert) {
 		Query_ReAtomicizer qry_atom = new Query_ReAtomicizer();
 		qry_atom.set(input_pu, txn_name);
 		if (qry_atom.isValid(input_pu.getQueryByPo(txn_name, qry_po))) {
 			applyAndPropagate(input_pu, qry_atom, qry_po, txn_name);
-			input_pu.incVersion();
-			input_pu.addComment(
-					"\n" + input_pu.getProgramName() + "(" + input_pu.getVersion() + "):	" + qry_atom.getDesc());
+			String begin;
+			if (isRevert) {
+				input_pu.decVersion();
+				begin = "              ";
+			} else {
+				input_pu.incVersion();
+				begin = input_pu.getProgramName() + "(" + input_pu.getVersion() + "):	";
+			}
+			input_pu.addComment("\n" + begin + qry_atom.getDesc());
 			return qry_atom;
 		} else
 			return null;
 	}
 
-	public SELECT_Merger merge_select(Program_Utils input_pu, String txn_name, int qry_po) {
+	public SELECT_Merger merge_select(Program_Utils input_pu, String txn_name, int qry_po, boolean isRevert) {
 		SELECT_Merger select_merger = new SELECT_Merger();
 		select_merger.set(input_pu, txn_name);
 		if (select_merger.isValid(input_pu.getQueryByPo(txn_name, qry_po),
 				input_pu.getQueryByPo(txn_name, qry_po + 1))) {
 			applyAndPropagate(input_pu, select_merger, qry_po, txn_name);
-			input_pu.incVersion();
-			input_pu.addComment("\n" + input_pu.getProgramName() + "(" + input_pu.getVersion() + "):	"
-					+ select_merger.getDesc());
+			String begin;
+			if (isRevert) {
+				input_pu.decVersion();
+				begin = "              ";
+			} else {
+				input_pu.incVersion();
+				begin = input_pu.getProgramName() + "(" + input_pu.getVersion() + "):	";
+			}
+			input_pu.addComment("\n" + begin + select_merger.getDesc());
 			select_merger.setOriginal_applied_po(qry_po);
 			select_merger.setOriginal_block(input_pu.getBlockByPo(txn_name, qry_po));
 			return select_merger;
@@ -350,14 +394,20 @@ public class Refactoring_Engine {
 	}
 
 	public SELECT_Splitter split_select(Program_Utils input_pu, String txn_name, ArrayList<FieldName> excluded_fns,
-			int qry_po) {
+			int qry_po, boolean isRevert) {
 		SELECT_Splitter select_splt = new SELECT_Splitter();
 		select_splt.set(input_pu, txn_name, excluded_fns);
 		if (select_splt.isValid(input_pu.getQueryByPo(txn_name, qry_po))) {
 			applyAndPropagate(input_pu, select_splt, qry_po, txn_name);
-			input_pu.incVersion();
-			input_pu.addComment(
-					"\n" + input_pu.getProgramName() + "(" + input_pu.getVersion() + "):	" + select_splt.getDesc());
+			String begin;
+			if (isRevert) {
+				input_pu.decVersion();
+				begin = "              ";
+			} else {
+				input_pu.incVersion();
+				begin = input_pu.getProgramName() + "(" + input_pu.getVersion() + "):	";
+			}
+			input_pu.addComment("\n" + begin + select_splt.getDesc());
 			select_splt.setOriginal_applied_po(qry_po);
 			return select_splt;
 		} else
@@ -365,14 +415,20 @@ public class Refactoring_Engine {
 
 	}
 
-	public UPDATE_Merger merge_update(Program_Utils input_pu, String txn_name, int qry_po) {
+	public UPDATE_Merger merge_update(Program_Utils input_pu, String txn_name, int qry_po, boolean isRevert) {
 		UPDATE_Merger upd_merger = new UPDATE_Merger();
 		upd_merger.set(input_pu, txn_name);
 		if (upd_merger.isValid(input_pu.getQueryByPo(txn_name, qry_po), input_pu.getQueryByPo(txn_name, qry_po + 1))) {
 			applyAndPropagate(input_pu, upd_merger, qry_po, txn_name);
-			input_pu.incVersion();
-			input_pu.addComment(
-					"\n" + input_pu.getProgramName() + "(" + input_pu.getVersion() + "):	" + upd_merger.getDesc());
+			String begin;
+			if (isRevert) {
+				input_pu.decVersion();
+				begin = "              ";
+			} else {
+				input_pu.incVersion();
+				begin = input_pu.getProgramName() + "(" + input_pu.getVersion() + "):	";
+			}
+			input_pu.addComment("\n" + begin + upd_merger.getDesc());
 			upd_merger.setOriginal_applied_po(qry_po);
 			return upd_merger;
 		} else
@@ -381,15 +437,22 @@ public class Refactoring_Engine {
 	}
 
 	public UPDATE_Splitter split_update(Program_Utils input_pu, String txn_name, ArrayList<FieldName> excluded_fns_upd,
-			int qry_po) {
+			int qry_po, boolean isRevert) {
 		UPDATE_Splitter upd_splt = new UPDATE_Splitter();
 		upd_splt.set(input_pu, txn_name, excluded_fns_upd);
 		if (upd_splt.isValid(input_pu.getQueryByPo(txn_name, qry_po))) {
 			applyAndPropagate(input_pu, upd_splt, qry_po, txn_name);
-			input_pu.incVersion();
-			input_pu.addComment(
-					"\n" + input_pu.getProgramName() + "(" + input_pu.getVersion() + "):	" + upd_splt.getDesc());
+			String begin;
+			if (isRevert) {
+				input_pu.decVersion();
+				begin = "              ";
+			} else {
+				input_pu.incVersion();
+				begin = input_pu.getProgramName() + "(" + input_pu.getVersion() + "):	";
+			}
+			input_pu.addComment("\n" + begin + upd_splt.getDesc());
 			upd_splt.setOriginal_applied_po(qry_po);
+
 			return upd_splt;
 		} else
 			return null;
@@ -414,7 +477,7 @@ public class Refactoring_Engine {
 		}
 	}
 
-	public boolean swap_queries(Program_Utils input_pu, String txnName, int q1_po, int q2_po) {
+	public boolean swap_queries(Program_Utils input_pu, String txnName, int q1_po, int q2_po, boolean isRevert) {
 		Transaction txn = (Transaction) input_pu.getTrasnsactionMap().get(txnName);
 		assert (txn != null) : "swap request is made on a transaction that does not exist";
 		// guard the swaps from invalid requests

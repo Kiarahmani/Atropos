@@ -64,20 +64,20 @@ SAMPLE REFACTORINGS TO BE USED IN THE ATROPOS LEVEL
 
 		String test_txn = "test";
 
-		// redirect SELECT2 from savings to accounts
+		// redirect SELECT2 from savings to accounts (done)
 		re.redirect_select(pu, test_txn, "savings", "accounts", 2);
 		pu.generateProgram().printProgram();
 
 		// split SELECT0
 		ArrayList<FieldName> excluded_fns = new ArrayList<>();
 		excluded_fns.add(pu.getFieldName("a_name"));
-		re.split_select(pu, test_txn, excluded_fns, 0);
+		x = re.split_select(pu, test_txn, excluded_fns, 0, false);
 		pu.generateProgram().printProgram();
 
 		// split UPDATE5
 		ArrayList<FieldName> excluded_fns_upd = new ArrayList<>();
 		excluded_fns_upd.add(pu.getFieldName("c_bal"));
-		re.split_update(pu, test_txn, excluded_fns_upd, 5);
+		x = re.split_update(pu, test_txn, excluded_fns_upd, 4, false);
 		pu.generateProgram().printProgram();
 
 		// merge UPDATE5 and UPDATE6
@@ -85,8 +85,8 @@ SAMPLE REFACTORINGS TO BE USED IN THE ATROPOS LEVEL
 		pu.generateProgram().printProgram();
 
 		// merge UPDATE5 and UPDATE6 (again)
-		re.merge_update(pu, test_txn, 5);
-		pu.generateProgram().printProgram();
+				x = re.merge_update(pu, test_txn, 4,false);
+				pu.generateProgram().printProgram();
 
 		// merge SELECT0 and SELECT1
 		re.merge_select(pu, test_txn, 0);

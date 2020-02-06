@@ -142,7 +142,7 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 			WHC Balance_GetAccount0_WHC1 = new WHC(pu.getIsAliveFieldName("accounts"), new WHC_Constraint(
 					pu.getTableName("accounts"), pu.getFieldName("a_custid"), BinOp.EQ, new E_Const_Num(69)));
 			Select_Query Balance_GetAccount01 = pu.addSelectQuery("test", "accounts", Balance_GetAccount0_WHC1,
-					"a_custid", "a_name");
+					"a_custid");
 			pu.addQueryStatement("test", Balance_GetAccount01);
 
 			// get customer's id based on his/her name
@@ -150,7 +150,7 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 					new WHC_Constraint(pu.getTableName("accounts"), pu.getFieldName("a_custid"), BinOp.EQ,
 							pu.mkProjExpr("test", 0, "a_custid", 1)));
 			Select_Query Balance_GetAccount0 = pu.addSelectQuery("test", "accounts", Balance_GetAccount0_WHC,
-					"a_custid", "a_name");
+					"a_name");
 			pu.addQueryStatement("test", Balance_GetAccount0);
 
 			// retrieve customer's savings balance based on the retrieved id
