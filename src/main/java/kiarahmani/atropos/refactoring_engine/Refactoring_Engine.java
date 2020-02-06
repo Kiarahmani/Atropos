@@ -24,6 +24,7 @@ import kiarahmani.atropos.refactoring_engine.Modifiers.Query_Modifier;
 import kiarahmani.atropos.refactoring_engine.Modifiers.OTO.One_to_One_Query_Modifier;
 import kiarahmani.atropos.refactoring_engine.Modifiers.OTO.Query_ReAtomicizer;
 import kiarahmani.atropos.refactoring_engine.Modifiers.OTO.SELECT_Redirector;
+import kiarahmani.atropos.refactoring_engine.Modifiers.OTO.Var_Replacer;
 import kiarahmani.atropos.refactoring_engine.Modifiers.OTT.One_to_Two_Query_Modifier;
 import kiarahmani.atropos.refactoring_engine.Modifiers.OTT.SELECT_Splitter;
 import kiarahmani.atropos.refactoring_engine.Modifiers.OTT.UPDATE_Duplicator;
@@ -291,19 +292,27 @@ public class Refactoring_Engine {
 	public void revert_merge_select(Program_Utils input_pu, SELECT_Merger select_merger) {
 		input_pu.decVersion();
 		input_pu.addComment("\n !!REVERTED!! " + select_merger.getDesc());
-		// TODO
-		// deleteQuery(input_pu, select_merger.getOriginal_applied_po(),
-		// select_merger.getTxnName());
-		// InsertQueriesAtPO(select_merger.getOriginal_block(), input_pu,
-		// select_merger.getTxnName(),
-		// select_merger.getOriginal_applied_po(),
-		// new Query_Statement(select_merger.getOriginal_applied_po(),
-		// select_merger.getOld_select1()),
-		// new Query_Statement(select_merger.getOriginal_applied_po() + 1,
-		// select_merger.getOld_select2()));
 
-		split_select(input_pu, select_merger.getTxnName(), select_merger.getOld_select2().getReadFieldNames(),
-				select_merger.getOriginal_applied_po(), true);
+		String txnName = select_merger.getTxnName();
+		int originalPO = select_merger.getOriginal_applied_po();
+		Select_Query original_q1 = select_merger.getOld_select1();
+		Select_Query original_q2 = select_merger.getOld_select2();
+		Block originalBlock = select_merger.getOriginal_block();
+
+		deleteQuery(input_pu, originalPO, txnName);
+		InsertQueriesAtPO(originalBlock, input_pu, txnName, originalPO, new Query_Statement(originalPO, original_q1),
+				new Query_Statement(originalPO + 1, original_q2));
+
+		Var_Replacer vr = new Var_Replacer();
+		// replace old var1
+		vr.set(input_pu, txnName, original_q1.getSelectedFieldNames(), select_merger.getNewVar(),
+				original_q1.getVariable());
+		applyAndPropagate(input_pu, vr, originalPO + 1, txnName);
+		// replace old var2
+		vr.set(input_pu, txnName, original_q2.getSelectedFieldNames(), select_merger.getNewVar(),
+				original_q2.getVariable());
+		applyAndPropagate(input_pu, vr, originalPO + 1, txnName);
+
 	}
 
 	public void revert_split_select(Program_Utils input_pu, SELECT_Splitter select_splt) {

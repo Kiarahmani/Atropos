@@ -39,6 +39,7 @@ public class SELECT_Redirector extends One_to_One_Query_Modifier {
 	private Program_Utils pu;
 	private Table targetTable;
 	private int original_applied_po;
+	private Select_Query new_select;
 
 	public int getApplied_po() {
 		return original_applied_po;
@@ -124,7 +125,7 @@ public class SELECT_Redirector extends One_to_One_Query_Modifier {
 		logger.debug("new selected field names: " + new_selected_fieldNames);
 
 		// create new query
-		Select_Query new_select = new Select_Query(old_po, new_select_id, new_isAtomic, targetTable.getTableName(),
+		new_select = new Select_Query(old_po, new_select_id, new_isAtomic, targetTable.getTableName(),
 				new_selected_fieldNames, new_var, new_whc);
 		this.desc = "Old query " + input_query.getId() + " in " + txnName + " is redirected into a new query ("
 				+ new_select.getId() + ")";
@@ -148,9 +149,15 @@ public class SELECT_Redirector extends One_to_One_Query_Modifier {
 		Variable old_var = old_select.getVariable();
 		// handle CRDT case
 		if (vc.getType() == VC_Type.VC_OTM && vc.get_agg() == VC_Agg.VC_SUM) {
-			for (FieldName old_fn : old_select.getSelectedFieldNames())
-				input_qry.getQuery().substituteExps(new E_Proj(old_var, old_fn, new E_Const_Num(1)),
-						new E_Size(new_var));
+			if (this.type == Redirection_Type.T1_TO_T2) { // from base table to CRDT table
+				for (FieldName old_fn : old_select.getSelectedFieldNames())
+					input_qry.getQuery().substituteExps(new E_Proj(old_var, old_fn, new E_Const_Num(1)),
+							new E_Size(new_var));
+			} else if (this.type == Redirection_Type.T2_TO_T1) {
+				for (FieldName old_fn : new_select.getSelectedFieldNames())
+					input_qry.getQuery().substituteExps(new E_Size(old_var),
+							new E_Proj(new_var, old_fn, new E_Const_Num(1)));
+			}
 		} else {
 			// handle other cases
 			for (FieldName old_fn : old_select.getSelectedFieldNames())
@@ -229,6 +236,9 @@ public class SELECT_Redirector extends One_to_One_Query_Modifier {
 		if (input_query instanceof Select_Query) {
 			input_select = (Select_Query) input_query;
 		} else
+			return false;
+
+		if (vc == null)
 			return false;
 
 		// all keys used as the WHC of redirecting SELECT must be constrained by vc

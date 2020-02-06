@@ -71,25 +71,23 @@ public class Atropos {
 		re.refactor_schema(pu, intro_vc0);
 
 		// add 3 new columns in car table
-		// re.refactor_schema(pu, new INTRO_F("car", "car_maker_name", F_Type.NUM));
-		// re.refactor_schema(pu, new INTRO_F("car", "car_maker_budget", F_Type.NUM));
-		// re.refactor_schema(pu, new INTRO_F("car", "car_maker_country", F_Type.NUM));
+		re.refactor_schema(pu, new INTRO_F("car", "car_maker_name", F_Type.NUM));
+		re.refactor_schema(pu, new INTRO_F("car", "car_maker_budget", F_Type.NUM));
+		re.refactor_schema(pu, new INTRO_F("car", "car_maker_country", F_Type.NUM));
 
 		// add a new vc between makes and car tables
-		// INTRO_VC intro_vc1 = new INTRO_VC(pu, "makers", "car", VC_Agg.VC_ID,
-		// VC_Type.VC_OTM);
-		// intro_vc1.addKeyCorrespondenceToVC("maker_id", "car_maker");
-		// intro_vc1.addFieldTupleToVC("maker_name", "car_maker_name");
-		// intro_vc1.addFieldTupleToVC("maker_budget", "car_maker_budget");
-		// intro_vc1.addFieldTupleToVC("maker_country", "car_maker_country");
-		// re.refactor_schema(pu, intro_vc1);
+		INTRO_VC intro_vc1 = new INTRO_VC(pu, "makers", "car", VC_Agg.VC_ID, VC_Type.VC_OTM);
+		intro_vc1.addKeyCorrespondenceToVC("maker_id", "car_maker");
+		intro_vc1.addFieldTupleToVC("maker_name", "car_maker_name");
+		intro_vc1.addFieldTupleToVC("maker_budget", "car_maker_budget");
+		intro_vc1.addFieldTupleToVC("maker_country", "car_maker_country");
+		re.refactor_schema(pu, intro_vc1);
 
 		// add vc between makers table and a CRDT table to hold maker's budget
-		// INTRO_VC intro_vc2 = new INTRO_VC(pu, "makers", "makers_budget_crdt",
-		// VC_Agg.VC_SUM, VC_Type.VC_OTM);
-		// intro_vc2.addKeyCorrespondenceToVC("maker_id", "mbc_maker_id");
-		// intro_vc2.addFieldTupleToVC("maker_budget", "mbc_amnt");
-		// re.refactor_schema(pu, intro_vc2);
+		INTRO_VC intro_vc2 = new INTRO_VC(pu, "makers", "makers_budget_crdt", VC_Agg.VC_SUM, VC_Type.VC_OTM);
+		intro_vc2.addKeyCorrespondenceToVC("maker_id", "mbc_maker_id");
+		intro_vc2.addFieldTupleToVC("maker_budget", "mbc_amnt");
+		re.refactor_schema(pu, intro_vc2);
 
 		// change shard key of table accounts from custid to name
 		// CHSK chsk = new CHSK(pu, "accounts", "a_name");
@@ -98,11 +96,10 @@ public class Atropos {
 		pu.generateProgram().printProgram();
 		String test_txn = "test";
 		Query_Modifier x;
-		// merge SELECT0 and SELECT1
-				x = re.merge_select(pu, test_txn, 0,false);
-				pu.generateProgram().printProgram();
 
-
+		// duplicate UPDATE(9) to makers_budget_crdt
+		x = re.duplicate_update(pu, test_txn, "makers", "makers_budget_crdt", 10);
+		pu.generateProgram().printProgram();
 
 		re.revert_refactor_program(pu, x);
 		pu.generateProgram().printProgram();

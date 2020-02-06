@@ -77,6 +77,10 @@ public class SELECT_Merger extends Two_to_One_Query_Modifier {
 		this.old_select2 = old_select2;
 	}
 
+	public Variable getNewVar() {
+		return this.new_var;
+	}
+
 	private String txnName;
 	private Select_Query old_select1;
 	private Select_Query old_select2;
