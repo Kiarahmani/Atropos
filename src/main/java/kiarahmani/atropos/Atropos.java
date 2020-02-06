@@ -53,21 +53,42 @@ public class Atropos {
 		program.printProgram();
 		pu.lock();
 
+		// introduce new fields
 		Delta delta_1 = new INTRO_F("accounts", "a_check_bal", F_Type.NUM);
 		Delta delta_2 = new INTRO_F("accounts", "a_save_bal", F_Type.NUM);
 		re.refactor_schema_seq(pu, new Delta[] { delta_1, delta_2 });
 
+		// introduce vc between checking and accounts
 		INTRO_VC delta_3 = new INTRO_VC(pu, "checking", "accounts", VC_Agg.VC_ID, VC_Type.VC_OTO);
 		delta_3.addKeyCorrespondenceToVC("c_custid", "a_custid");
 		delta_3.addFieldTupleToVC("c_bal", "a_check_bal");
 
+		// introduce vc between savings and accounts
 		INTRO_VC delta_4 = new INTRO_VC(pu, "savings", "accounts", VC_Agg.VC_ID, VC_Type.VC_OTO);
 		delta_4.addKeyCorrespondenceToVC("s_custid", "a_custid");
 		delta_4.addFieldTupleToVC("s_bal", "a_save_bal");
+		re.refactor_schema_seq(pu, new Delta[] { delta_3, delta_4 });
 
+		// redirect both selects to account table
+		re.redirect_select(pu, "Amalgamate", "savings", "accounts", 2, false);
+		re.redirect_select(pu, "Amalgamate", "checking", "accounts", 3, false);
+		
+		// get rid of unnecessary operations and tables
 		re.shrink(pu);
 
-		re.refactor_schema_seq(pu, new Delta[] { delta_3, delta_4 });
+		// merge updates on a_custid=am_custId0
+		re.merge_update(pu, "Amalgamate", 4, false);
+		
+		// swap 0 and 1 so we can merge three selects together next
+		re.swap_queries(pu, "Amalgamate", 0, 1, false);
+		
+		// merge selects on a_custid=am_custId0
+		re.merge_select(pu, "Amalgamate", 1, false);
+		
+		// merge selects on a_custid=am_custId0
+		re.merge_select(pu, "Amalgamate", 1, false);
+		
+		
 		program = pu.generateProgram();
 		program.printProgram();
 

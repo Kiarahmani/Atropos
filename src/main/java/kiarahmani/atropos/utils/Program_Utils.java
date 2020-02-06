@@ -3,6 +3,7 @@ package kiarahmani.atropos.utils;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -343,6 +344,10 @@ public class Program_Utils {
 	public TableName getTableName(String tn) {
 		assert (this.tableNameMap.get(tn) != null);
 		return this.tableNameMap.get(tn);
+	}
+
+	public HashMap<String, Table> getTables() {
+		return this.tableMap;
 	}
 
 	/*

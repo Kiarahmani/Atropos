@@ -16,6 +16,7 @@ import kiarahmani.atropos.DML.query.Select_Query;
 import kiarahmani.atropos.DML.query.Query.Kind;
 import kiarahmani.atropos.program.Block;
 import kiarahmani.atropos.program.Statement;
+import kiarahmani.atropos.program.Table;
 import kiarahmani.atropos.program.Transaction;
 import kiarahmani.atropos.program.Block.BlockType;
 import kiarahmani.atropos.program.statements.If_Statement;
@@ -43,6 +44,41 @@ import kiarahmani.atropos.utils.Tuple;
 
 public class Refactoring_Engine {
 	private static final Logger logger = LogManager.getLogger(Atropos.class);
+
+	/*****************************************************************************************************************/
+	// Functions for shrinking the program
+	/*****************************************************************************************************************/
+	/*
+	 * Main function called from the outside
+	 */
+	public void shrink(Program_Utils pu) {
+		/*
+		 * get rid of unread tables and updates on them
+		 */
+		ArrayList<Table> tables_to_be_removed = new ArrayList<>();
+		for (Table t : pu.getTables().values())
+			if (isTableRedundant(pu, t)) {
+				deleteUnreadUpdates(pu, t);
+				tables_to_be_removed.add(t);
+			}
+		for (Table t : tables_to_be_removed)
+			pu.rmTable(t.getTableName().getName());
+	}
+
+	private void deleteUnreadUpdates(Program_Utils pu, Table t) {
+		for (Transaction txn : pu.getTrasnsactionMap().values())
+			for (Query q : txn.getAllQueries())
+				if (q.isWrite() && q.getTableName().equalsWith(t.getTableName()))
+					deleteQuery(pu, q.getPo(), txn.getName());
+	}
+
+	private boolean isTableRedundant(Program_Utils pu, Table t) {
+		for (Transaction txn : pu.getTrasnsactionMap().values())
+			for (Query q : txn.getAllQueries())
+				if (!q.isWrite() && q.getTableName().equalsWith(t.getTableName()))
+					return false;
+		return true;
+	}
 
 	/*****************************************************************************************************************/
 	// Functions for handling schema refactoring requests (i.e. handling
@@ -967,11 +1003,4 @@ public class Refactoring_Engine {
 		return false;
 	}
 
-	/**
-	 * @param pu
-	 */
-	public void shrink(Program_Utils pu) {
-		// TODO Auto-generated method stub
-		
-	}
 }
