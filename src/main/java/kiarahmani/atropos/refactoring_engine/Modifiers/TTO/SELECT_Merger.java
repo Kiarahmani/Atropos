@@ -128,6 +128,7 @@ public class SELECT_Merger extends Two_to_One_Query_Modifier {
 				old_table.getTableName(), new_fns, new_var, new_whc);
 		this.desc = "Old queries (" + input_query_1.getId() + ") and (" + input_query_2.getId() + ") in " + txnName
 				+ " are merged into query (" + new_select.getId() + ")";
+		new_select.setPathCondition(old_select1.getPathCondition());
 		return new_select;
 	}
 

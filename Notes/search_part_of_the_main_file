@@ -1,0 +1,19 @@
+for (int intro_r_index = 0; intro_r_index < max_intro_r; intro_r_index++) {
+			INTRO_R new_intro_r = nse.nextIntroR();
+			re.refactor_schema(pu, new_intro_r);
+			for (int intro_f_index = 0; intro_f_index < max_intro_f; intro_f_index++) {
+				INTRO_F new_intro_f = nse.nextIntroF();
+				re.refactor_schema(pu, new_intro_f);
+				nse.set(pu, max_search_depth);
+				while (nse.hasNext()) {
+					INTRO_VC new_intro_vc = nse.nextIntroVC();
+					re.refactor_schema(pu, new_intro_vc);
+					program = pu.generateProgram();
+					program.printProgram();
+					if (programIsAccepted(program, results))
+						results.add(program);
+					else { // TODO
+					}
+				}
+			}
+		}

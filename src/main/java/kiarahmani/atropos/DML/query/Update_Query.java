@@ -75,7 +75,7 @@ public class Update_Query extends Query {
 
 	@Override
 	public Expression getPathCondition() {
-		assert (this.path_condition != null) : "cannot return null";
+		assert (this.path_condition != null) : "cannot return null"+this;
 		return this.path_condition;
 	}
 

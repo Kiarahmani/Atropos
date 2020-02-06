@@ -31,6 +31,7 @@ public class UPDATE_Merger extends Two_to_One_Query_Modifier {
 	private static final Logger logger = LogManager.getLogger(Atropos.class);
 	private Program_Utils pu;
 	private String txnName;
+
 	public Update_Query getOld_update1() {
 		return old_update1;
 	}
@@ -95,6 +96,7 @@ public class UPDATE_Merger extends Two_to_One_Query_Modifier {
 			new_update.addUpdateExp(fe.x, fe.y);
 		this.desc = "Old queries (" + input_query_1.getId() + ") and (" + input_query_2.getId()
 				+ ") are merged into query (" + new_update.getId() + ")";
+		new_update.setPathCondition(old_update1.getPathCondition());
 		return new_update;
 	}
 

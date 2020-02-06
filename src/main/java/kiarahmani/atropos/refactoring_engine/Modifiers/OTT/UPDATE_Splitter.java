@@ -84,6 +84,8 @@ public class UPDATE_Splitter extends One_to_Two_Query_Modifier {
 		for (Tuple<FieldName, Expression> fe : excluded_update_exps)
 			new_update_2.addUpdateExp(fe.x, fe.y);
 		logger.debug("final query #2: " + new_update_2);
+		new_update_1.setPathCondition(old_update.getPathCondition());
+		new_update_2.setPathCondition(old_update.getPathCondition());
 		this.desc = "Old query (" + input_query.getId() + ") in " + txnName + " is splitted into queries ("
 				+ new_update_1.getId() + ") and (" + new_update_2.getId() + ")";
 		return new Tuple<Query, Query>(new_update_1, new_update_2);

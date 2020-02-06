@@ -193,8 +193,7 @@ public class Z3Driver {
 		}
 		return status;
 
-
-	} 
+	}
 
 	private void print_result_header(Status status, long begin, long end) {
 		System.out.println("==================\n" + status + " (" + (end - begin) + "ms)" + "\n==================\n\n");
@@ -1264,7 +1263,7 @@ public class Z3Driver {
 			// Expr uuid_in_int = ctx.mkApp(objs.getfuncs("uuid_to_int"), uuid);
 			return uuid;// ctx.mkInt2BV(Constants._MAX_FIELD_INT, (IntExpr) uuid_in_int);
 
-		case "E_BinUp":
+		case "E_BinOp":
 			E_BinOp bu_exp = (E_BinOp) input_expr;
 			switch (bu_exp.op) {
 			case GT:
@@ -1295,11 +1294,14 @@ public class Z3Driver {
 				return ctx.mkOr((BoolExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper1, po),
 						(BoolExpr) translateExpressionsToZ3Expr(txnName, transaction, bu_exp.oper2, po));
 			default:
+				assert (false) : "unhandled input expression type " + bu_exp.op + "  >>> "
+						+ input_expr.getClass().getSimpleName();
 				break;
 			}
 
 		default:
-			assert (false) : "unhandled input expression type " + input_expr;
+			assert (false) : "unhandled input expression type " + input_expr + "   --> "
+					+ input_expr.getClass().getSimpleName();
 			break;
 		}
 		return null;

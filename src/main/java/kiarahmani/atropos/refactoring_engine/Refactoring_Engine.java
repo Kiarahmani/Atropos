@@ -50,8 +50,14 @@ public class Refactoring_Engine {
 	/*****************************************************************************************************************/
 
 	/*
-	 * Main function called to apply updates on the *schema*
+	 * Main functions called to apply updates on the *schema*
 	 */
+
+	public Program_Utils refactor_schema_seq(Program_Utils input_pu, Delta... deltas) {
+		for (Delta d : deltas)
+			input_pu = refactor_schema(input_pu, d);
+		return input_pu;
+	}
 
 	public Program_Utils refactor_schema(Program_Utils input_pu, Delta delta) {
 		input_pu.incVersion();
@@ -154,8 +160,14 @@ public class Refactoring_Engine {
 	// Delta instances)
 	/*****************************************************************************************************************/
 	/*
-	 * Main function called to revert updates on the *schema*
+	 * Main functions called to revert updates on the *schema*
 	 */
+
+	public Program_Utils revert_refactor_schema_seq(Program_Utils input_pu, Delta... deltas) {
+		for (Delta d : deltas)
+			input_pu = revert_refactor_schema(input_pu, d);
+		return input_pu;
+	}
 
 	public Program_Utils revert_refactor_schema(Program_Utils input_pu, Delta delta) {
 		input_pu.decVersion();
@@ -245,6 +257,11 @@ public class Refactoring_Engine {
 	/*
 	 * Dispatching function for the below functions
 	 */
+
+	public void revert_refactor_program_seq(Program_Utils input_pu, Query_Modifier... qms) {
+		for (Query_Modifier qm : qms)
+			revert_refactor_program(input_pu, qm);
+	}
 
 	public void revert_refactor_program(Program_Utils input_pu, Query_Modifier qm) {
 		if (qm instanceof UPDATE_Duplicator) {
@@ -948,5 +965,13 @@ public class Refactoring_Engine {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * @param pu
+	 */
+	public void shrink(Program_Utils pu) {
+		// TODO Auto-generated method stub
+		
 	}
 }

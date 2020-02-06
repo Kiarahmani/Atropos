@@ -82,10 +82,12 @@ public class SELECT_Splitter extends One_to_Two_Query_Modifier {
 		new_var_1 = pu.mkVariable(old_tableName.getName(), txnName);
 		Select_Query new_select_1 = new Select_Query(-1, pu.getNewSelectId(txnName), old_is_atomic, old_tableName,
 				old_selected_fieldNames, new_var_1, old_whc);
+		new_select_1.setPathCondition(old_select.getPathCondition());
 		logger.debug("New SELECT (1): " + new_select_1);
 		new_var_2 = pu.mkVariable(old_tableName.getName(), txnName);
 		Select_Query new_select_2 = new Select_Query(-1, pu.getNewSelectId(txnName), old_is_atomic, old_tableName,
 				excluded_fns, new_var_2, old_whc);
+		new_select_2.setPathCondition(old_select.getPathCondition());
 		logger.debug("New SELECT (2): " + new_select_2);
 		this.desc = "Old query (" + input_query.getId() + ") in " + txnName + " is splitted into queries ("
 				+ new_select_1.getId() + ") and (" + new_select_2.getId() + ")";

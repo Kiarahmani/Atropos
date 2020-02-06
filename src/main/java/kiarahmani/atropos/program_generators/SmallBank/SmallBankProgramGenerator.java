@@ -51,27 +51,26 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 		pu.mkTable("savings", new FieldName("s_custid", true, true, F_Type.NUM),
 				new FieldName("s_bal", false, false, F_Type.NUM));
 		pu.mkTable("checking", new FieldName("c_custid", true, true, F_Type.NUM),
-				new FieldName("c_bal", false, false, F_Type.NUM), new FieldName("c_score", false, false, F_Type.NUM),
-				new FieldName("c_age", false, false, F_Type.NUM));
-
-		pu.mkTable("car", new FieldName("car_id", true, true, F_Type.NUM),
-				new FieldName("car_maker", false, false, F_Type.NUM),
-				new FieldName("car_model", false, false, F_Type.NUM),
-				new FieldName("car_year", false, false, F_Type.NUM),
-				new FieldName("car_type", false, false, F_Type.NUM));
-
-		pu.mkTable("makers", new FieldName("maker_id", true, true, F_Type.NUM),
-				new FieldName("maker_name", false, false, F_Type.NUM),
-				new FieldName("maker_budget", false, false, F_Type.NUM),
-				new FieldName("maker_country", false, false, F_Type.NUM),
-				new FieldName("maker_age", false, false, F_Type.NUM));
-
-		FieldName fn_mbc_maker_id = new FieldName("mbc_maker_id", true, true, F_Type.NUM);
-		FieldName fn_mbc_uuid = new FieldName("mbc_uuid", true, false, F_Type.NUM);
-		fn_mbc_uuid.setUUID();
-		FieldName fn_mbc_amnt = new FieldName("mbc_amnt", false, false, F_Type.NUM);
-		fn_mbc_amnt.setDelta();
-		pu.mkCRDTTable("makers_budget_crdt", fn_mbc_maker_id, fn_mbc_uuid, fn_mbc_amnt);
+				new FieldName("c_bal", false, false, F_Type.NUM));
+		/*
+		 * pu.mkTable("car", new FieldName("car_id", true, true, F_Type.NUM), new
+		 * FieldName("car_maker", false, false, F_Type.NUM), new FieldName("car_model",
+		 * false, false, F_Type.NUM), new FieldName("car_year", false, false,
+		 * F_Type.NUM), new FieldName("car_type", false, false, F_Type.NUM));
+		 * 
+		 * pu.mkTable("makers", new FieldName("maker_id", true, true, F_Type.NUM), new
+		 * FieldName("maker_name", false, false, F_Type.NUM), new
+		 * FieldName("maker_budget", false, false, F_Type.NUM), new
+		 * FieldName("maker_country", false, false, F_Type.NUM), new
+		 * FieldName("maker_age", false, false, F_Type.NUM));
+		 * 
+		 * FieldName fn_mbc_maker_id = new FieldName("mbc_maker_id", true, true,
+		 * F_Type.NUM); FieldName fn_mbc_uuid = new FieldName("mbc_uuid", true, false,
+		 * F_Type.NUM); fn_mbc_uuid.setUUID(); FieldName fn_mbc_amnt = new
+		 * FieldName("mbc_amnt", false, false, F_Type.NUM); fn_mbc_amnt.setDelta();
+		 * pu.mkCRDTTable("makers_budget_crdt", fn_mbc_maker_id, fn_mbc_uuid,
+		 * fn_mbc_amnt);
+		 */
 		/*
 		 * /*
 		 * 
@@ -135,107 +134,111 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 		 * 
 		 */
 
-		if (txns.contains("test")) {
-
-			pu.mkTrnasaction("test", "ba_custName:string");
-
-			WHC Balance_GetAccount0_WHC1 = new WHC(pu.getIsAliveFieldName("accounts"), new WHC_Constraint(
-					pu.getTableName("accounts"), pu.getFieldName("a_custid"), BinOp.EQ, new E_Const_Num(69)));
-			Select_Query Balance_GetAccount01 = pu.addSelectQuery("test", "accounts", Balance_GetAccount0_WHC1,
-					"a_custid");
-			pu.addQueryStatement("test", Balance_GetAccount01);
-
-			// get customer's id based on his/her name
-			WHC Balance_GetAccount0_WHC = new WHC(pu.getIsAliveFieldName("accounts"),
-					new WHC_Constraint(pu.getTableName("accounts"), pu.getFieldName("a_custid"), BinOp.EQ,
-							pu.mkProjExpr("test", 0, "a_custid", 1)));
-			Select_Query Balance_GetAccount0 = pu.addSelectQuery("test", "accounts", Balance_GetAccount0_WHC,
-					"a_name");
-			pu.addQueryStatement("test", Balance_GetAccount0);
-
-			// retrieve customer's savings balance based on the retrieved id
-			WHC Balance_GetSavings_WHC = new WHC(pu.getIsAliveFieldName("savings"),
-					new WHC_Constraint(pu.getTableName("savings"), pu.getFieldName("s_custid"), BinOp.EQ,
-							pu.mkProjExpr("test", 0, "a_custid", 1)));
-			Select_Query Balance_GetSavings = pu.addSelectQuery("test", "savings", Balance_GetSavings_WHC, "s_bal");
-			pu.addQueryStatement("test", Balance_GetSavings);
-
-			// retrieve customer's checking balance based on the retrieved id
-			WHC Balance_GetChecking_WHC = new WHC(pu.getIsAliveFieldName("checking"),
-					new WHC_Constraint(pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ,
-							pu.mkProjExpr("test", 0, "a_custid", 1)));
-			Select_Query Balance_GetChecking = pu.addSelectQuery("test", "checking", Balance_GetChecking_WHC, "c_bal");
-			pu.addQueryStatement("test", Balance_GetChecking);
-
-			// write customer's new checking balance
-			WHC DepositChecking_WHC = new WHC(pu.getIsAliveFieldName("checking"), new WHC_Constraint(
-					pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ,
-					new E_BinOp(BinOp.PLUS,
-							new E_BinOp(BinOp.MULT, (pu.mkProjExpr("test", 2, "s_bal", 1)), new E_Const_Num(11)),
-							new E_Const_Num(1))));
-			Update_Query DepositChecking = pu.addUpdateQuery("test", "checking", DepositChecking_WHC);
-			DepositChecking.addUpdateExp(pu.getFieldName("c_bal"),
-					new E_BinOp(BinOp.PLUS, pu.mkProjExpr("test", 2, "s_bal", 1), new E_Const_Num(1)));
-			DepositChecking.addUpdateExp(pu.getFieldName("c_score"),
-					new E_BinOp(BinOp.PLUS, pu.mkProjExpr("test", 0, "a_custid", 1), new E_Const_Num(69)));
-			pu.addQueryStatement("test", DepositChecking);
-
-			// write customer's new checking balance
-			WHC DepositChecking_WHC11 = new WHC(pu.getIsAliveFieldName("checking"),
-					new WHC_Constraint(pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ,
-							new E_BinOp(BinOp.PLUS, new E_Const_Num(1),
-									new E_BinOp(BinOp.MULT, new E_Const_Num(11), (pu.mkProjExpr("test", 2, "s_bal", 1)))
-
-							)));
-			Update_Query DepositChecking11 = pu.addUpdateQuery("test", "checking", DepositChecking_WHC11);
-			DepositChecking11.addUpdateExp(pu.getFieldName("c_age"), new E_Const_Num(69));
-			pu.addQueryStatement("test", DepositChecking11);
-
-			// select on car
-			WHC select_whc_1 = new WHC(pu.getIsAliveFieldName("car"), new WHC_Constraint(pu.getTableName("car"),
-					pu.getFieldName("car_id"), BinOp.EQ, new E_Const_Num(10)));
-			Select_Query select_1 = pu.addSelectQuery("test", "car", select_whc_1, "car_id", "car_maker", "car_model",
-					"car_type");
-			pu.addQueryStatement("test", select_1);
-
-			// select corresponding maker
-			WHC select_whc_2 = new WHC(pu.getIsAliveFieldName("makers"), new WHC_Constraint(pu.getTableName("makers"),
-					pu.getFieldName("maker_id"), BinOp.EQ, pu.mkProjExpr("test", 4, "car_maker", 1)));
-			Select_Query select_2 = pu.addSelectQuery("test", "makers", select_whc_2, "maker_id", "maker_name",
-					"maker_budget", "maker_country");
-			pu.addQueryStatement("test", select_2);
-
-			// a write on savings (which will be used to test basic duplication)
-			WHC DepositChecking_WHC111 = new WHC(pu.getIsAliveFieldName("savings"), new WHC_Constraint(
-					pu.getTableName("savings"), pu.getFieldName("s_custid"), BinOp.EQ, new E_Const_Num(96)));
-			Update_Query DepositChecking111 = pu.addUpdateQuery("test", "savings", DepositChecking_WHC111);
-			DepositChecking111.addUpdateExp(pu.getFieldName("s_bal"), new E_Const_Num(69));
-			pu.addQueryStatement("test", DepositChecking111);
-
-			// a write on makers (which will be used to test OTM duplication)
-			WHC DepositChecking_WHC1111 = new WHC(pu.getIsAliveFieldName("makers"), new WHC_Constraint(
-					pu.getTableName("makers"), pu.getFieldName("maker_id"), BinOp.EQ, new E_Const_Num(12)));
-			Update_Query DepositChecking1111 = pu.addUpdateQuery("test", "makers", DepositChecking_WHC1111);
-			DepositChecking1111.addUpdateExp(pu.getFieldName("maker_budget"),
-					new E_BinOp(BinOp.PLUS, pu.mkProjExpr("test", 5, "maker_budget", 1), new E_Const_Num(100)));
-			pu.addQueryStatement("test", DepositChecking1111);
-
-			// select a maker's budget from the original table (this will be redirected to
-			// CRDT table)
-			WHC select_whc_21 = new WHC(pu.getIsAliveFieldName("makers"), new WHC_Constraint(pu.getTableName("makers"),
-					pu.getFieldName("maker_id"), BinOp.EQ, new E_Const_Num(10)));
-			Select_Query select_21 = pu.addSelectQuery("test", "makers", select_whc_21, "maker_budget");
-			pu.addQueryStatement("test", select_21);
-
-			// just an operation to use the variable selected by the above query
-			WHC select_whc_211 = new WHC(pu.getIsAliveFieldName("accounts"),
-					new WHC_Constraint(pu.getTableName("accounts"), pu.getFieldName("a_custid"), BinOp.EQ,
-							pu.mkProjExpr("test", 6, "maker_budget", 1)));
-			Select_Query select_211 = pu.addSelectQuery("test", "accounts", select_whc_211, "a_name");
-			pu.addQueryStatement("test", select_211);
-
-		}
-
+		/*
+		 * if (txns.contains("test")) {
+		 * 
+		 * pu.mkTrnasaction("test", "ba_custName:string");
+		 * 
+		 * WHC Balance_GetAccount0_WHC1 = new WHC(pu.getIsAliveFieldName("accounts"),
+		 * new WHC_Constraint( pu.getTableName("accounts"), pu.getFieldName("a_custid"),
+		 * BinOp.EQ, new E_Const_Num(69))); Select_Query Balance_GetAccount01 =
+		 * pu.addSelectQuery("test", "accounts", Balance_GetAccount0_WHC1, "a_custid");
+		 * pu.addQueryStatement("test", Balance_GetAccount01);
+		 * 
+		 * // get customer's id based on his/her name WHC Balance_GetAccount0_WHC = new
+		 * WHC(pu.getIsAliveFieldName("accounts"), new
+		 * WHC_Constraint(pu.getTableName("accounts"), pu.getFieldName("a_custid"),
+		 * BinOp.EQ, pu.mkProjExpr("test", 0, "a_custid", 1))); Select_Query
+		 * Balance_GetAccount0 = pu.addSelectQuery("test", "accounts",
+		 * Balance_GetAccount0_WHC, "a_name"); pu.addQueryStatement("test",
+		 * Balance_GetAccount0);
+		 * 
+		 * // retrieve customer's savings balance based on the retrieved id WHC
+		 * Balance_GetSavings_WHC = new WHC(pu.getIsAliveFieldName("savings"), new
+		 * WHC_Constraint(pu.getTableName("savings"), pu.getFieldName("s_custid"),
+		 * BinOp.EQ, pu.mkProjExpr("test", 0, "a_custid", 1))); Select_Query
+		 * Balance_GetSavings = pu.addSelectQuery("test", "savings",
+		 * Balance_GetSavings_WHC, "s_bal"); pu.addQueryStatement("test",
+		 * Balance_GetSavings);
+		 * 
+		 * // retrieve customer's checking balance based on the retrieved id WHC
+		 * Balance_GetChecking_WHC = new WHC(pu.getIsAliveFieldName("checking"), new
+		 * WHC_Constraint(pu.getTableName("checking"), pu.getFieldName("c_custid"),
+		 * BinOp.EQ, pu.mkProjExpr("test", 0, "a_custid", 1))); Select_Query
+		 * Balance_GetChecking = pu.addSelectQuery("test", "checking",
+		 * Balance_GetChecking_WHC, "c_bal"); pu.addQueryStatement("test",
+		 * Balance_GetChecking);
+		 * 
+		 * // write customer's new checking balance WHC DepositChecking_WHC = new
+		 * WHC(pu.getIsAliveFieldName("checking"), new WHC_Constraint(
+		 * pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ, new
+		 * E_BinOp(BinOp.PLUS, new E_BinOp(BinOp.MULT, (pu.mkProjExpr("test", 2,
+		 * "s_bal", 1)), new E_Const_Num(11)), new E_Const_Num(1)))); Update_Query
+		 * DepositChecking = pu.addUpdateQuery("test", "checking", DepositChecking_WHC);
+		 * DepositChecking.addUpdateExp(pu.getFieldName("c_bal"), new
+		 * E_BinOp(BinOp.PLUS, pu.mkProjExpr("test", 2, "s_bal", 1), new
+		 * E_Const_Num(1))); DepositChecking.addUpdateExp(pu.getFieldName("c_score"),
+		 * new E_BinOp(BinOp.PLUS, pu.mkProjExpr("test", 0, "a_custid", 1), new
+		 * E_Const_Num(69))); pu.addQueryStatement("test", DepositChecking);
+		 * 
+		 * // write customer's new checking balance WHC DepositChecking_WHC11 = new
+		 * WHC(pu.getIsAliveFieldName("checking"), new
+		 * WHC_Constraint(pu.getTableName("checking"), pu.getFieldName("c_custid"),
+		 * BinOp.EQ, new E_BinOp(BinOp.PLUS, new E_Const_Num(1), new E_BinOp(BinOp.MULT,
+		 * new E_Const_Num(11), (pu.mkProjExpr("test", 2, "s_bal", 1)))
+		 * 
+		 * ))); Update_Query DepositChecking11 = pu.addUpdateQuery("test", "checking",
+		 * DepositChecking_WHC11);
+		 * DepositChecking11.addUpdateExp(pu.getFieldName("c_age"), new
+		 * E_Const_Num(69)); pu.addQueryStatement("test", DepositChecking11);
+		 * 
+		 * // select on car WHC select_whc_1 = new WHC(pu.getIsAliveFieldName("car"),
+		 * new WHC_Constraint(pu.getTableName("car"), pu.getFieldName("car_id"),
+		 * BinOp.EQ, new E_Const_Num(10))); Select_Query select_1 =
+		 * pu.addSelectQuery("test", "car", select_whc_1, "car_id", "car_maker",
+		 * "car_model", "car_type"); pu.addQueryStatement("test", select_1);
+		 * 
+		 * // select corresponding maker WHC select_whc_2 = new
+		 * WHC(pu.getIsAliveFieldName("makers"), new
+		 * WHC_Constraint(pu.getTableName("makers"), pu.getFieldName("maker_id"),
+		 * BinOp.EQ, pu.mkProjExpr("test", 4, "car_maker", 1))); Select_Query select_2 =
+		 * pu.addSelectQuery("test", "makers", select_whc_2, "maker_id", "maker_name",
+		 * "maker_budget", "maker_country"); pu.addQueryStatement("test", select_2);
+		 * 
+		 * // a write on savings (which will be used to test basic duplication) WHC
+		 * DepositChecking_WHC111 = new WHC(pu.getIsAliveFieldName("savings"), new
+		 * WHC_Constraint( pu.getTableName("savings"), pu.getFieldName("s_custid"),
+		 * BinOp.EQ, new E_Const_Num(96))); Update_Query DepositChecking111 =
+		 * pu.addUpdateQuery("test", "savings", DepositChecking_WHC111);
+		 * DepositChecking111.addUpdateExp(pu.getFieldName("s_bal"), new
+		 * E_Const_Num(69)); pu.addQueryStatement("test", DepositChecking111);
+		 * 
+		 * // a write on makers (which will be used to test OTM duplication) WHC
+		 * DepositChecking_WHC1111 = new WHC(pu.getIsAliveFieldName("makers"), new
+		 * WHC_Constraint( pu.getTableName("makers"), pu.getFieldName("maker_id"),
+		 * BinOp.EQ, new E_Const_Num(12))); Update_Query DepositChecking1111 =
+		 * pu.addUpdateQuery("test", "makers", DepositChecking_WHC1111);
+		 * DepositChecking1111.addUpdateExp(pu.getFieldName("maker_budget"), new
+		 * E_BinOp(BinOp.PLUS, pu.mkProjExpr("test", 5, "maker_budget", 1), new
+		 * E_Const_Num(100))); pu.addQueryStatement("test", DepositChecking1111);
+		 * 
+		 * // select a maker's budget from the original table (this will be redirected
+		 * to // CRDT table) WHC select_whc_21 = new
+		 * WHC(pu.getIsAliveFieldName("makers"), new
+		 * WHC_Constraint(pu.getTableName("makers"), pu.getFieldName("maker_id"),
+		 * BinOp.EQ, new E_Const_Num(10))); Select_Query select_21 =
+		 * pu.addSelectQuery("test", "makers", select_whc_21, "maker_budget");
+		 * pu.addQueryStatement("test", select_21);
+		 * 
+		 * // just an operation to use the variable selected by the above query WHC
+		 * select_whc_211 = new WHC(pu.getIsAliveFieldName("accounts"), new
+		 * WHC_Constraint(pu.getTableName("accounts"), pu.getFieldName("a_custid"),
+		 * BinOp.EQ, pu.mkProjExpr("test", 6, "maker_budget", 1))); Select_Query
+		 * select_211 = pu.addSelectQuery("test", "accounts", select_whc_211, "a_name");
+		 * pu.addQueryStatement("test", select_211);
+		 * 
+		 * }
+		 */
 		/*
 		 * 
 		 * Balance

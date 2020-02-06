@@ -113,6 +113,7 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 			for (Tuple<FieldName, Expression> fe : new_ue)
 				((Update_Query) new_qry).addUpdateExp(fe.x, fe.y);
 		}
+		new_qry.setPathCondition(old_update.getPathCondition());
 		this.desc = "Old query (" + input_query.getId() + ") in " + txnName + " is duplicated in query("
 				+ new_qry.getId() + ")";
 		return new Tuple<Query, Query>(input_query, new_qry);
