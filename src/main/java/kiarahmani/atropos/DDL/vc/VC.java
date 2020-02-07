@@ -41,6 +41,10 @@ public class VC {
 	private ArrayList<VC_Constraint> vc_constraints;
 	private String name;
 
+	/*
+	 * public TableName getOtherTableName(TableName tn) { if (T_1.equalsWith(tn))
+	 * return T_2; else if (T_2.equalsWith(tn)) return T_1; return null; }
+	 */
 	public String getName() {
 		return this.name;
 	}

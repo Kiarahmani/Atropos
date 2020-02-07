@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Logger;
 import kiarahmani.atropos.Atropos;
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DDL.TableName;
+import kiarahmani.atropos.DDL.vc.VC;
 import kiarahmani.atropos.DML.Variable;
 import kiarahmani.atropos.DML.query.Query;
 import kiarahmani.atropos.DML.query.Select_Query;
@@ -63,16 +64,23 @@ public class Refactoring_Engine {
 			}
 		for (Table t : tables_to_be_removed)
 			pu.rmTable(t.getTableName().getName());
+
 		/*
-		 * MERGE Consecutive Queries
+		 * SWAP MERGE Consecutive Queries
 		 */
+
 		for (Transaction txn : pu.getTrasnsactionMap().values()) {
 			ArrayList<Query> all_queries = txn.getAllQueries();
 			int qry_cnt = all_queries.size();
 			for (int i = 0; i < qry_cnt; i++)
 				for (int j = i + 1; j < qry_cnt; j++) {
 					Query q1 = all_queries.get(i);
-					attempt_merge_query(pu, txn.getName(), q1.getPo(), false);
+					Query q2 = all_queries.get(j);
+					// reorder
+					swap_queries(pu, txn.getName(), q1.getPo() + 1, q2.getPo(), false);
+					if (attempt_merge_query(pu, txn.getName(), q1.getPo(), false))
+						continue;
+					swap_queries(pu, txn.getName(), q2.getPo(), q1.getPo() + 1, true);
 				}
 		}
 
@@ -81,14 +89,19 @@ public class Refactoring_Engine {
 	private boolean attempt_merge_query(Program_Utils input_pu, String txn_name, int qry_po, boolean isRevert) {
 		Query q1 = input_pu.getQueryByPo(txn_name, qry_po);
 		Query q2 = input_pu.getQueryByPo(txn_name, qry_po + 1);
+		if (q1 == null || q2 == null)
+			return false;
+
 		if (q1.getKind() == Kind.UPDATE && q2.getKind() == Kind.UPDATE) {
-			merge_update(input_pu, txn_name, qry_po, isRevert);
-			return true;
+			UPDATE_Merger success = merge_update(input_pu, txn_name, qry_po, isRevert);
+			return (success != null);
 		} else if (q1.getKind() == Kind.SELECT && q2.getKind() == Kind.SELECT) {
-			merge_select(input_pu, txn_name, qry_po, isRevert);
-			return true;
+			SELECT_Merger success = merge_select(input_pu, txn_name, qry_po, isRevert);
+			if (success != null)
+				return true;
+			// try redirecting: TODO
 		}
-		return true;
+		return false;
 	}
 
 	private void deleteUnreadUpdates(Program_Utils pu, Table t) {
@@ -569,7 +582,7 @@ public class Refactoring_Engine {
 		Transaction txn = (Transaction) input_pu.getTrasnsactionMap().get(txnName);
 		assert (txn != null) : "swap request is made on a transaction that does not exist";
 		// guard the swaps from invalid requests
-		if (q1_po > q2_po || !swapChecks(txn, q1_po, q2_po))
+		if (q1_po > q2_po || !swapChecks(input_pu, txn, q1_po, q2_po))
 			return false;
 		swapQueries_rec(txn.getStatements(), q1_po, q2_po);
 		return true;
@@ -621,8 +634,10 @@ public class Refactoring_Engine {
 	/*
 	 * Check if the requested swap is valid or not
 	 */
-	private boolean swapChecks(Transaction txn, int q1_po, int q2_po) {
-		if (q1_po > q2_po)
+	private boolean swapChecks(Program_Utils pu, Transaction txn, int q1_po, int q2_po) {
+		if (q1_po >= q2_po)
+			return false;
+		if (!pu.getBlockByPo(txn.getName(), q1_po).isEqual(pu.getBlockByPo(txn.getName(), q2_po)))
 			return false;
 		Boolean result = swapChecks_rec(txn.getStatements(), q1_po, q2_po);
 		assert (result != null) : "the requested swap is invalid and cannot be checked";
@@ -672,7 +687,8 @@ public class Refactoring_Engine {
 			}
 		}
 		if (q1_seen_flag) {
-			assert (qry2 != null) : "unexpected state: qry2 is not set although qry1 has been found in the current block";
+			assert (qry2 != null) : "unexpected state: qry2 is not set although qry1 has been found in the current block po1= "
+					+ q1_po + "   po2= " + q2_po;
 			for (Query q : pot_dep_qries)
 				if (qryAreDep(q, qry2))
 					return false;

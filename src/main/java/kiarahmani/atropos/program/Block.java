@@ -38,6 +38,8 @@ public class Block {
 	}
 
 	public boolean isEqual(Block other) {
+		if (other == null)
+			return false;
 		return this.depth == other.depth && this.type == other.type && this.enclosing_if_id == other.enclosing_if_id;
 	}
 

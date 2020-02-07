@@ -72,37 +72,23 @@ public class Atropos {
 		// redirect both selects to account table
 		re.redirect_select(pu, "Amalgamate", "savings", "accounts", 2, false);
 		re.redirect_select(pu, "Amalgamate", "checking", "accounts", 3, false);
-		
+
 		// get rid of unnecessary operations and tables
 		program = pu.generateProgram();
 		program.printProgram();
 		re.shrink(pu);
-
-		// merge updates on a_custid=am_custId0
-		//re.merge_update(pu, "Amalgamate", 4, false);
-		
-		// swap 0 and 1 so we can merge three selects together next
-		//re.swap_queries(pu, "Amalgamate", 0, 1, false);
-		
-		// merge selects on a_custid=am_custId0
-		//re.merge_select(pu, "Amalgamate", 1, false);
-		
-		// merge selects on a_custid=am_custId0
-		//re.merge_select(pu, "Amalgamate", 1, false);
-		
-		
 		program = pu.generateProgram();
 		program.printProgram();
 
 		/*
 		 * Initial analysis
 		 */
-		Conflict_Graph cg = new Conflict_Graph(program);
-		Encoding_Engine ee = new Encoding_Engine(program.getName());
-		DAI_Graph dai_graph = ee.constructInitialDAIGraph(program, cg);
-		program.printProgram();
-		cg.printGraph();
-		dai_graph.printDAIGraph();
+		//Conflict_Graph cg = new Conflict_Graph(program);
+		//Encoding_Engine ee = new Encoding_Engine(program.getName());
+		//DAI_Graph dai_graph = ee.constructInitialDAIGraph(program, cg);
+		//program.printProgram();
+		//cg.printGraph();
+		//dai_graph.printDAIGraph();
 
 		/*
 		 * apply a sequence of refactorings on SmallBank to make it more atomic
