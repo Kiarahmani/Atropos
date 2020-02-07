@@ -2,6 +2,7 @@ package kiarahmani.atropos.refactoring_engine;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -79,13 +80,27 @@ public class Refactoring_Engine {
 		 * DELETE REDUNDANT: get rid of unread tables and updates on them
 		 */
 		ArrayList<Table> tables_to_be_removed = new ArrayList<>();
-		for (Table t : pu.getTables().values())
-			if (isTableRedundant(pu, t)) {
+		out_loop: for (Table t : pu.getTables().values()) {
+			HashMap<Select_Query, String> pot_sels_map = isTableRedundant(pu, t);
+			if (pot_sels_map.size() == 0) {
 				deleteUnreadUpdates(pu, t);
 				tables_to_be_removed.add(t);
+			} else { // try to make the table redundant
+				for (Table t_dest : pu.getTables().values()) {
+					if (t.getTableName().equalsWith(t_dest.getTableName()) || tables_to_be_removed.contains(t_dest)
+							|| pu.getVCByTables(t.getTableName(), t_dest.getTableName()) == null)
+						continue;
+					if (mkTableRedundant(pu, t, t_dest, pot_sels_map) == true) {
+						deleteUnreadUpdates(pu, t);
+						tables_to_be_removed.add(t);
+						continue out_loop;
+					}
+				}
 			}
+		}
 		for (Table t : tables_to_be_removed)
 			pu.rmTable(t.getTableName().getName());
+
 	}
 
 	/*
@@ -97,7 +112,7 @@ public class Refactoring_Engine {
 		Query q2 = input_pu.getQueryByPo(txn_name, qry_po + 1);
 		if (q1 == null || q2 == null)
 			return false;
-		if (!input_pu.getBlockByPo(txn_name, qry_po).isEqual(input_pu.getBlockByPo(txn_name, qry_po+1)))
+		if (!input_pu.getBlockByPo(txn_name, qry_po).isEqual(input_pu.getBlockByPo(txn_name, qry_po + 1)))
 			return false;
 		logger.debug("attempting to merge queries q1(" + q1.getId() + ") and q2(" + q2.getId() + ")");
 		logger.debug("q1: " + q1);
@@ -163,12 +178,36 @@ public class Refactoring_Engine {
 					deleteQuery(pu, q.getPo(), txn.getName());
 	}
 
-	private boolean isTableRedundant(Program_Utils pu, Table t) {
+	private boolean mkTableRedundant(Program_Utils pu, Table t, Table dest_t,
+			HashMap<Select_Query, String> pot_sels_map) {
+		ArrayList<SELECT_Redirector> attempted_reds = new ArrayList<>();
+		logger.debug("attempting to redirect all selects from " + t.getTableName() + " to " + dest_t.getTableName());
+		boolean success = true;
+		for (Select_Query q : pot_sels_map.keySet()) {
+			// attempt redirecting q from t to dest_t
+			SELECT_Redirector attempted_red = redirect_select(pu, pot_sels_map.get(q), t.getTableName().getName(),
+					dest_t.getTableName().getName(), q.getPo(), false);
+			attempted_reds.add(attempted_red);
+			success &= (attempted_red != null);
+		}
+		if (success)
+			return true;
+		else {// revert
+			for (SELECT_Redirector attempted_red : attempted_reds) {
+				if (attempted_red != null)
+					revert_redirect_select(pu, attempted_red);
+			}
+		}
+		return false;
+	}
+
+	private HashMap<Select_Query, String> isTableRedundant(Program_Utils pu, Table t) {
+		HashMap<Select_Query, String> pot_sels_map = new HashMap<>();
 		for (Transaction txn : pu.getTrasnsactionMap().values())
 			for (Query q : txn.getAllQueries())
 				if (!q.isWrite() && q.getTableName().equalsWith(t.getTableName()))
-					return false;
-		return true;
+					pot_sels_map.put((Select_Query) q, txn.getName());
+		return pot_sels_map;
 	}
 
 	/*****************************************************************************************************************/
@@ -853,11 +892,10 @@ public class Refactoring_Engine {
 				"Applying the modifer " + modifier + " at indexes: " + apply_at_po_fst + " and " + apply_at_po_sec);
 		Query fst_qry = input_pu.getQueryByPo(txnName, apply_at_po_fst);
 		Query sec_qry = input_pu.getQueryByPo(txnName, apply_at_po_sec);
-		assert (fst_block.isEqual(sec_block)) : "can only apply TTO modifiers on queries in the same block ("
-				+ fst_qry + ") and ("+ sec_qry + ")";
+		assert (fst_block.isEqual(sec_block)) : "can only apply TTO modifiers on queries in the same block (" + fst_qry
+				+ ") and (" + sec_qry + ")";
 		logger.debug("the original queries are found in block: " + fst_block);
 
-		
 		// define new query
 		Query new_qry = modifier.atIndexModification(fst_qry, sec_qry);
 		logger.debug("old queries (" + fst_qry.getId() + ") and (" + sec_qry.getId()

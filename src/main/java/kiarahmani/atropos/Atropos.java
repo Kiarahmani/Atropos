@@ -48,8 +48,8 @@ public class Atropos {
 		Refactoring_Engine re = new Refactoring_Engine();
 		Set<Program> results = new HashSet<>();
 		Program_Utils pu = new Program_Utils("SmallBank");
-		Program program = (new SmallBankProgramGenerator(pu)).generate("Balance1", "Amalgamate1", "TransactSavings1",
-				"DepositChecking1", "SendPayment", "WriteCheck1");
+		Program program = (new SmallBankProgramGenerator(pu)).generate("Balance", "Amalgamate", "TransactSavings",
+				"DepositChecking", "SendPayment", "WriteCheck");
 		program.printProgram();
 		pu.lock();
 
@@ -69,11 +69,6 @@ public class Atropos {
 		delta_4.addFieldTupleToVC("s_bal", "a_save_bal");
 		re.refactor_schema_seq(pu, new Delta[] { delta_3, delta_4 });
 
-		// get rid of unnecessary operations and tables
-		program = pu.generateProgram();
-		program.printProgram();
-		
-		re.cleanUp(pu);
 		re.shrink(pu);
 		re.cleanUp(pu);
 		program = pu.generateProgram();
