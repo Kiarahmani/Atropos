@@ -178,7 +178,7 @@ public class Z3Driver {
 		if (status == Status.SATISFIABLE) {
 			// record the generated model
 			model = slv.getModel();
-			System.out.println("\n~~~> " + model.getSortUniverse(objs.getSort("Rec")).length + "\n");
+			//System.out.println("\n~~~> " + model.getSortUniverse(objs.getSort("Rec")).length + "\n");
 			File file = new File("smt2/model.smt2");
 			PrintWriter printer;
 			FileWriter writer;

@@ -53,6 +53,9 @@ public class Atropos {
 		program.printProgram();
 		pu.lock();
 
+		// analyze the initial program
+		analyze(program);
+
 		// introduce new fields
 		Delta delta_1 = new INTRO_F("accounts", "a_check_bal", F_Type.NUM);
 		Delta delta_2 = new INTRO_F("accounts", "a_save_bal", F_Type.NUM);
@@ -71,22 +74,10 @@ public class Atropos {
 
 		re.shrink(pu);
 		re.cleanUp(pu);
+
 		program = pu.generateProgram();
 		program.printProgram();
-
-		/*
-		 * Initial analysis
-		 */
-		// Conflict_Graph cg = new Conflict_Graph(program);
-		// Encoding_Engine ee = new Encoding_Engine(program.getName());
-		// DAI_Graph dai_graph = ee.constructInitialDAIGraph(program, cg);
-		// program.printProgram();
-		// cg.printGraph();
-		// dai_graph.printDAIGraph();
-
-		/*
-		 * apply a sequence of refactorings on SmallBank to make it more atomic
-		 */
+		analyze(program);
 
 		// print stats and exit
 		printStats(System.currentTimeMillis() - time_begin, results);
@@ -109,6 +100,15 @@ public class Atropos {
 	 * 
 	 * 
 	 */
+
+	private static void analyze(Program program) {
+		Conflict_Graph cg = new Conflict_Graph(program);
+		Encoding_Engine ee = new Encoding_Engine(program.getName());
+		DAI_Graph dai_graph = ee.constructInitialDAIGraph(program, cg);
+		cg.printGraph();
+		dai_graph.printDAIGraph();
+	}
+
 	private static void printStats(long time, Set<Program> results) {
 		System.out.println(
 				"\n\n\n\n============================================================================================");

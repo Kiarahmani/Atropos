@@ -19,6 +19,7 @@ public class Constants {
 	public static int _MAX_EXECUTION_PO;
 	public static int _MAX_VARIABLE_RO;
 	public static boolean _IS_TEST;
+	public static boolean _VERBOSE_ANALYSIS;
 
 	public Constants() throws IOException {
 		this._IS_TEST = false;
@@ -38,6 +39,7 @@ public class Constants {
 		Constants._MAX_BV_SIZE = Integer.parseInt(prop.getProperty("_MAX_BV_SIZE"));
 		Constants._SHOULD_WRITE_ASSERTIONS_TO_FILE = Boolean
 				.parseBoolean(prop.getProperty("_SHOULD_WRITE_ASSERTIONS_TO_FILE"));
+		Constants._VERBOSE_ANALYSIS = Boolean.parseBoolean(prop.getProperty("_VERBOSE_ANALYSIS"));
 
 	}
 }

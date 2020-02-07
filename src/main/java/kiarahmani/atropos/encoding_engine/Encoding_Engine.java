@@ -73,12 +73,11 @@ public class Encoding_Engine {
 			for (Transaction txn : program.getTransactions())
 				txn.is_included = true;
 			Status valid = local_z3_driver.validDAI(program, pot_dai);
-			if (valid==Status.UNSATISFIABLE) {
+			if (valid == Status.UNSATISFIABLE) {
 				logger.debug(" discarding the potential DAI due to conflicting path conditions");
 				continue dais_loop;
 			}
-			
-			
+
 			// could not rule out the potential dai: must perform full analysis
 			for (Conflict c1 : cg.getConfsFromQuery(pot_dai.getQuery(1), pot_dai.getTransaction())) {
 				for (Conflict c2 : cg.getConfsFromQuery(pot_dai.getQuery(2), pot_dai.getTransaction())) {
@@ -93,9 +92,10 @@ public class Encoding_Engine {
 					z3logger.reset();
 					local_z3_driver = new Z3Driver();
 					// check if it is actualy a valid instance
-					System.out.println("Round #" + iter++ + "");
-					System.out.println("Number of anomalies found: " + dai_graph.getDAIs().size() + "");
-					printBaseAnomaly(iter, pot_dai, c1, c2);
+					System.out
+							.println("\nRound #" + (iter++) + " (anomalies found: " + dai_graph.getDAIs().size() + ")");
+					if (Constants._VERBOSE_ANALYSIS)
+						printBaseAnomaly(iter, pot_dai, c1, c2);
 					long begin = System.currentTimeMillis();
 					Status status = local_z3_driver.generateDAI(program, 4, pot_dai, c1, c2);
 					long end = System.currentTimeMillis();
@@ -120,8 +120,8 @@ public class Encoding_Engine {
 		String status_string = (status == Status.SATISFIABLE) ? "SAT" : "UNSAT";
 		if (status == Status.UNKNOWN)
 			status_string = "UNKNOWN";
-		System.out.println("" + status_string + " (" + (time) + "ms)\n\n");
-		this.printer.append(String.valueOf(time) + "\n");
+		System.out.println("" + status_string + " (" + (time) + "ms)");
+		this.printer.append(String.valueOf(time));
 		this.printer.flush();
 	}
 
