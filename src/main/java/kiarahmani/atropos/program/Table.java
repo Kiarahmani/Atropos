@@ -86,7 +86,6 @@ public class Table {
 		for (FieldName fn : fieldNames)
 			if (fn.isSK())
 				return fn;
-		assert (false) : "unexpected state: table does not include a shard key";
 		return null;
 	}
 

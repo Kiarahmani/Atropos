@@ -147,7 +147,7 @@ public class Program {
 
 	public void printProgram() {
 		System.out.println(
-				"\n\n\n\n##############################################################################################################################");
+				"\n\n\n\n\n\n\n##############################################################################################################################");
 		System.out.println("### " + programName.toUpperCase() + "(" + version + ")");
 		System.out.println("## COMMENTS: " + comment);
 		System.out.println("\n## SCHEMA:");

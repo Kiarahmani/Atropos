@@ -254,7 +254,10 @@ public class Refactoring_Engine {
 	private Program_Utils apply_intro_r(Program_Utils input_pu, INTRO_R intro_r) {
 		logger.debug("applying INTRO_R refactoring");
 		String table_name = intro_r.getNewTableName();
-		input_pu.mkTable(table_name);
+		if (!intro_r.isCRDT())
+			input_pu.mkTable(table_name);
+		else
+			input_pu.mkCRDTTable(table_name);
 		return input_pu;
 	}
 
@@ -310,7 +313,8 @@ public class Refactoring_Engine {
 	 */
 	private Program_Utils apply_chsk(Program_Utils input_pu, CHSK chsk) {
 		logger.debug("applying CHSK refactoring");
-		chsk.getOldSK().setSK(false);
+		if (chsk.getOldSK() != null)
+			chsk.getOldSK().setSK(false);
 		chsk.getNewSK().setSK(true);
 		logger.debug("schema updated");
 		for (Transaction txn : input_pu.getTrasnsactionMap().values())

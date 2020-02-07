@@ -12,13 +12,19 @@ package kiarahmani.atropos.refactoring_engine.deltas;
 
 public class INTRO_R extends Delta {
 	private String new_table_name;
+	private boolean isCRDT;
 
-	public INTRO_R(String ntn) {
+	public INTRO_R(String ntn, boolean isCRDT) {
 		this.new_table_name = ntn;
+		this.isCRDT = isCRDT;
 	}
 
 	public String getNewTableName() {
 		return this.new_table_name;
+	}
+
+	public boolean isCRDT() {
+		return this.isCRDT;
 	}
 
 	/*

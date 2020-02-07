@@ -26,6 +26,7 @@ import kiarahmani.atropos.refactoring_engine.Modifiers.OTT.UPDATE_Duplicator;
 import kiarahmani.atropos.refactoring_engine.Modifiers.OTT.UPDATE_Splitter;
 import kiarahmani.atropos.refactoring_engine.Modifiers.TTO.SELECT_Merger;
 import kiarahmani.atropos.refactoring_engine.Modifiers.TTO.UPDATE_Merger;
+import kiarahmani.atropos.refactoring_engine.deltas.ADDPK;
 import kiarahmani.atropos.refactoring_engine.deltas.CHSK;
 import kiarahmani.atropos.refactoring_engine.deltas.Delta;
 import kiarahmani.atropos.refactoring_engine.deltas.INTRO_F;
@@ -48,8 +49,8 @@ public class Atropos {
 		Refactoring_Engine re = new Refactoring_Engine();
 		Set<Program> results = new HashSet<>();
 		Program_Utils pu = new Program_Utils("SmallBank");
-		Program program = (new SmallBankProgramGenerator(pu)).generate("Balance", "Amalgamate", "TransactSavings",
-				"DepositChecking", "SendPayment", "WriteCheck");
+		Program program = (new SmallBankProgramGenerator(pu)).generate("Balance1", "Amalgamate1", "TransactSavings1",
+				"DepositChecking", "SendPayment1", "WriteCheck1");
 		program.printProgram();
 		pu.lock();
 
@@ -74,7 +75,34 @@ public class Atropos {
 
 		re.shrink(pu);
 		re.cleanUp(pu);
+		program = pu.generateProgram();
+		program.printProgram();
+		analyze(program);
 
+		// introduce a CRDT table for checking balance
+		Delta delta_5 = new INTRO_R("checkin_bal_crdt", true);
+		re.refactor_schema(pu, delta_5);
+
+		// introduce new fields in checkin_bal_crdt
+		Delta delta_6 = new INTRO_F("checkin_bal_crdt", "cbc_custid", F_Type.NUM);
+		Delta delta_7 = new INTRO_F("checkin_bal_crdt", "cbc_uuids", F_Type.NUM, true, false);
+		Delta delta_8 = new INTRO_F("checkin_bal_crdt", "cbc_bal", F_Type.NUM, false, true);
+
+		re.refactor_schema_seq(pu, new Delta[] { delta_6, delta_7, delta_8 });
+
+		Delta delta_9 = new ADDPK(pu, "checkin_bal_crdt", "cbc_custid");
+		Delta delta_10 = new ADDPK(pu, "checkin_bal_crdt", "cbc_uuids");
+		Delta delta_11 = new CHSK(pu, "checkin_bal_crdt", "cbc_custid");
+		re.refactor_schema_seq(pu, new Delta[] { delta_9, delta_10, delta_11 });
+
+		// introduce vc between accounts and checkin_bal_crdt
+		INTRO_VC delta_12 = new INTRO_VC(pu, "accounts", "checkin_bal_crdt", VC_Agg.VC_SUM, VC_Type.VC_OTM);
+		delta_12.addKeyCorrespondenceToVC("a_custid", "cbc_custid");
+		delta_12.addFieldTupleToVC("a_check_bal", "cbc_bal");
+		re.refactor_schema_seq(pu, new Delta[] { delta_12 });
+
+		// re.shrink(pu);
+		// re.cleanUp(pu);
 		program = pu.generateProgram();
 		program.printProgram();
 		analyze(program);

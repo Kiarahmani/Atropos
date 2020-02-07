@@ -43,8 +43,9 @@ public class CHSK extends Delta {
 	 */
 	@Override
 	public String getDesc() {
-		return "shard key of table \"" + table.getTableName().getName() + "\" is changed from " + old_sk.getName()
-				+ " to " + new_sk.getName();
+		String old_desc = (old_sk == null) ? "NULL" : old_sk.getName();
+		return "shard key of table \"" + table.getTableName().getName() + "\" is changed from " + old_desc + " to "
+				+ new_sk.getName();
 	}
 
 }
