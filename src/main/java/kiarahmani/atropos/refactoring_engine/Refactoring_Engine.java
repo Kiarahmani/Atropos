@@ -50,11 +50,33 @@ public class Refactoring_Engine {
 	// Functions for shrinking the program
 	/*****************************************************************************************************************/
 	/*
-	 * Main function called from the outside
+	 * Main functions called from the outside
 	 */
 	public void shrink(Program_Utils pu) {
+		for (Transaction txn : pu.getTrasnsactionMap().values()) {
+			ArrayList<Query> all_queries = txn.getAllQueries();
+			int qry_cnt = all_queries.size();
+			for (int i = 0; i < qry_cnt; i++)
+				for (int j = i + 1; j < qry_cnt; j++) {
+					Query q1 = all_queries.get(i);
+					Query q2 = all_queries.get(j);
+					int po1 = q1.getPo();
+					int po2 = q2.getPo();
+					// reorder and,
+					boolean swap_success = swap_queries(pu, txn.getName(), po1 + 1, po2, false);
+					// if merge is successful continue
+					if (attempt_merge_query(pu, txn.getName(), po1, false))
+						continue;
+					// otherwise, revert the attempted reordering
+					if (swap_success)
+						swap_queries(pu, txn.getName(), po1 + 1, po2, true);
+				}
+		}
+	}
+
+	public void cleanUp(Program_Utils pu) {
 		/*
-		 * DELETE REDUNDANT SUB-ROUTINE: get rid of unread tables and updates on them
+		 * DELETE REDUNDANT: get rid of unread tables and updates on them
 		 */
 		ArrayList<Table> tables_to_be_removed = new ArrayList<>();
 		for (Table t : pu.getTables().values())
@@ -64,43 +86,72 @@ public class Refactoring_Engine {
 			}
 		for (Table t : tables_to_be_removed)
 			pu.rmTable(t.getTableName().getName());
-
-		/*
-		 * SWAP MERGE Consecutive Queries
-		 */
-
-		for (Transaction txn : pu.getTrasnsactionMap().values()) {
-			ArrayList<Query> all_queries = txn.getAllQueries();
-			int qry_cnt = all_queries.size();
-			for (int i = 0; i < qry_cnt; i++)
-				for (int j = i + 1; j < qry_cnt; j++) {
-					Query q1 = all_queries.get(i);
-					Query q2 = all_queries.get(j);
-					// reorder
-					boolean swap_success = swap_queries(pu, txn.getName(), q1.getPo() + 1, q2.getPo(), false);
-					if (attempt_merge_query(pu, txn.getName(), q1.getPo(), false))
-						continue;
-					if (swap_success)
-						swap_queries(pu, txn.getName(), q2.getPo(), q1.getPo() + 1, true);
-				}
-		}
-
 	}
 
+	/*
+	 * Helping functions used in above funtions
+	 */
 	private boolean attempt_merge_query(Program_Utils input_pu, String txn_name, int qry_po, boolean isRevert) {
+		logger.debug("");
 		Query q1 = input_pu.getQueryByPo(txn_name, qry_po);
 		Query q2 = input_pu.getQueryByPo(txn_name, qry_po + 1);
 		if (q1 == null || q2 == null)
 			return false;
+		if (!input_pu.getBlockByPo(txn_name, qry_po).isEqual(input_pu.getBlockByPo(txn_name, qry_po+1)))
+			return false;
+		logger.debug("attempting to merge queries q1(" + q1.getId() + ") and q2(" + q2.getId() + ")");
+		logger.debug("q1: " + q1);
+		logger.debug("q2: " + q2);
 
+		TableName t1 = q1.getTableName();
+		TableName t2 = q2.getTableName();
+
+		VC vc = input_pu.getVCByTables(t1, t2);
 		if (q1.getKind() == Kind.UPDATE && q2.getKind() == Kind.UPDATE) {
 			UPDATE_Merger success = merge_update(input_pu, txn_name, qry_po, isRevert);
+			logger.debug("updates merging attempted. result: " + (success != null));
 			return (success != null);
+
 		} else if (q1.getKind() == Kind.SELECT && q2.getKind() == Kind.SELECT) {
 			SELECT_Merger success = merge_select(input_pu, txn_name, qry_po, isRevert);
+			logger.debug("selects merging attempted. result: " + (success != null));
 			if (success != null)
 				return true;
-			// try redirecting: TODO
+			logger.debug("merge was unsuccessful");
+			// if there is vc between q1 and q2
+			if (vc != null) {
+				/*
+				 * try redirecting q2 to q1's table
+				 */
+				logger.debug("VC exits between tables: " + vc);
+				logger.debug("redirecting q2(" + q2.getId() + ") from " + t2 + " to " + t1);
+				SELECT_Redirector x = redirect_select(input_pu, txn_name, t2.getName(), t1.getName(), q2.getPo(),
+						false);
+				logger.debug("redirect(1) attempted. desc: " + x.getDesc());
+				logger.debug("attempt merging the redirected q2 with original q1");
+				success = merge_select(input_pu, txn_name, qry_po, isRevert);
+				logger.debug("selects merging attempted. result: " + (success != null));
+				if (success != null)
+					return true;
+				logger.debug("merge was unsuccessful: revert the redirection and try the opposit direction");
+				// if unsuccessful revert the redirect
+				x = redirect_select(input_pu, txn_name, t1.getName(), t2.getName(), q2.getPo(), true);
+				logger.debug("REVERT(1) DESC: " + x.getDesc());
+				/*
+				 * repeat the opposit way; try redirecting q1 to q2's table
+				 */
+				logger.debug("now redirecting q1(" + q1.getId() + ") from " + t1 + " to " + t2);
+				x = redirect_select(input_pu, txn_name, t1.getName(), t2.getName(), q1.getPo(), false);
+				logger.debug("redirect(2) attempted. desc: " + x.getDesc());
+				success = merge_select(input_pu, txn_name, qry_po, isRevert);
+				if (success != null)
+					return true;
+				logger.debug("merge was again unsuccessful: revert the last redirection and exit");
+				// if unsuccessful revert the redirect
+				x = redirect_select(input_pu, txn_name, t2.getName(), t1.getName(), q1.getPo(), true);
+				logger.debug("REVERT(2) DESC: " + x.getDesc());
+			} else
+				logger.debug("no vc exits for redirection: exit.");
 		}
 		return false;
 	}
@@ -798,13 +849,15 @@ public class Refactoring_Engine {
 		assert (modifier.isSet()) : "cannot apply the modifier since it is not set";
 		Block fst_block = input_pu.getBlockByPo(txnName, apply_at_po_fst);
 		Block sec_block = input_pu.getBlockByPo(txnName, apply_at_po_sec);
-		assert (fst_block.isEqual(sec_block)) : "can only apply TTO modifiers on queries in the same block";
-		logger.debug("the original queries are found in block: " + fst_block);
-
 		logger.debug(
 				"Applying the modifer " + modifier + " at indexes: " + apply_at_po_fst + " and " + apply_at_po_sec);
 		Query fst_qry = input_pu.getQueryByPo(txnName, apply_at_po_fst);
 		Query sec_qry = input_pu.getQueryByPo(txnName, apply_at_po_sec);
+		assert (fst_block.isEqual(sec_block)) : "can only apply TTO modifiers on queries in the same block ("
+				+ fst_qry + ") and ("+ sec_qry + ")";
+		logger.debug("the original queries are found in block: " + fst_block);
+
+		
 		// define new query
 		Query new_qry = modifier.atIndexModification(fst_qry, sec_qry);
 		logger.debug("old queries (" + fst_qry.getId() + ") and (" + sec_qry.getId()

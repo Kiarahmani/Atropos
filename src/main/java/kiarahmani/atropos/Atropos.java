@@ -48,8 +48,8 @@ public class Atropos {
 		Refactoring_Engine re = new Refactoring_Engine();
 		Set<Program> results = new HashSet<>();
 		Program_Utils pu = new Program_Utils("SmallBank");
-		Program program = (new SmallBankProgramGenerator(pu)).generate("Balance1", "Amalgamate", "TransactSavings1",
-				"DepositChecking1", "SendPayment1", "WriteCheck1");
+		Program program = (new SmallBankProgramGenerator(pu)).generate("Balance1", "Amalgamate1", "TransactSavings1",
+				"DepositChecking1", "SendPayment", "WriteCheck1");
 		program.printProgram();
 		pu.lock();
 
@@ -69,31 +69,25 @@ public class Atropos {
 		delta_4.addFieldTupleToVC("s_bal", "a_save_bal");
 		re.refactor_schema_seq(pu, new Delta[] { delta_3, delta_4 });
 
-		// redirect both selects to account table
-		re.redirect_select(pu, "Amalgamate", "savings", "accounts", 2, false);
-		re.redirect_select(pu, "Amalgamate", "checking", "accounts", 3, false);
-
 		// get rid of unnecessary operations and tables
 		program = pu.generateProgram();
 		program.printProgram();
-		re.shrink(pu);		
+		
+		re.cleanUp(pu);
+		re.shrink(pu);
+		re.cleanUp(pu);
 		program = pu.generateProgram();
 		program.printProgram();
-		
-		
-		
-		
-		
 
 		/*
 		 * Initial analysis
 		 */
-		//Conflict_Graph cg = new Conflict_Graph(program);
-		//Encoding_Engine ee = new Encoding_Engine(program.getName());
-		//DAI_Graph dai_graph = ee.constructInitialDAIGraph(program, cg);
-		//program.printProgram();
-		//cg.printGraph();
-		//dai_graph.printDAIGraph();
+		// Conflict_Graph cg = new Conflict_Graph(program);
+		// Encoding_Engine ee = new Encoding_Engine(program.getName());
+		// DAI_Graph dai_graph = ee.constructInitialDAIGraph(program, cg);
+		// program.printProgram();
+		// cg.printGraph();
+		// dai_graph.printDAIGraph();
 
 		/*
 		 * apply a sequence of refactorings on SmallBank to make it more atomic
