@@ -77,10 +77,11 @@ public class Refactoring_Engine {
 					Query q1 = all_queries.get(i);
 					Query q2 = all_queries.get(j);
 					// reorder
-					swap_queries(pu, txn.getName(), q1.getPo() + 1, q2.getPo(), false);
+					boolean swap_success = swap_queries(pu, txn.getName(), q1.getPo() + 1, q2.getPo(), false);
 					if (attempt_merge_query(pu, txn.getName(), q1.getPo(), false))
 						continue;
-					swap_queries(pu, txn.getName(), q2.getPo(), q1.getPo() + 1, true);
+					if (swap_success)
+						swap_queries(pu, txn.getName(), q2.getPo(), q1.getPo() + 1, true);
 				}
 		}
 

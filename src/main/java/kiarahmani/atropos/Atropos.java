@@ -76,9 +76,14 @@ public class Atropos {
 		// get rid of unnecessary operations and tables
 		program = pu.generateProgram();
 		program.printProgram();
-		re.shrink(pu);
+		re.shrink(pu);		
 		program = pu.generateProgram();
 		program.printProgram();
+		
+		
+		
+		
+		
 
 		/*
 		 * Initial analysis
