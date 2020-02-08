@@ -76,15 +76,19 @@ public class Refactoring_Engine {
 	}
 
 	public void cleanUp(Program_Utils pu) {
-		/*
-		 * DELETE REDUNDANT: get rid of unread tables and updates on them
-		 */
+		while (cleanUp_iter(pu))// clean up untill no further cleanups occur
+			;
+	}
+
+	public boolean cleanUp_iter(Program_Utils pu) {
 		ArrayList<Table> tables_to_be_removed = new ArrayList<>();
+		boolean result = false;
 		out_loop: for (Table t : pu.getTables().values()) {
 			HashMap<Select_Query, String> pot_sels_map = isTableRedundant(pu, t);
 			if (pot_sels_map.size() == 0) {
 				deleteUnreadUpdates(pu, t);
 				tables_to_be_removed.add(t);
+				result = true;
 			} else { // try to make the table redundant
 				for (Table t_dest : pu.getTables().values()) {
 					if (t.getTableName().equalsWith(t_dest.getTableName()) || tables_to_be_removed.contains(t_dest)
@@ -93,6 +97,7 @@ public class Refactoring_Engine {
 					if (mkTableRedundant(pu, t, t_dest, pot_sels_map) == true) {
 						deleteUnreadUpdates(pu, t);
 						tables_to_be_removed.add(t);
+						result = true;
 						continue out_loop;
 					}
 				}
@@ -101,6 +106,7 @@ public class Refactoring_Engine {
 		for (Table t : tables_to_be_removed)
 			pu.rmTable(t.getTableName().getName());
 
+		return result;
 	}
 
 	/*
