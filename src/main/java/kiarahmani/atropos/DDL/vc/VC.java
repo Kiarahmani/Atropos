@@ -103,7 +103,7 @@ public class VC {
 	}
 
 	public void addConstraint(VC_Constraint vcc) {
-		fieldTuples.add(new Tuple<FieldName, FieldName>(vcc.getF_1(), vcc.getF_2()));
+		//fieldTuples.add(new Tuple<FieldName, FieldName>(vcc.getF_1(), vcc.getF_2()));
 		this.vc_constraints.add(vcc);
 	}
 

@@ -319,6 +319,16 @@ public class Program_Utils {
 			return result.get(0);
 	}
 
+	public VC getVCByOrderedTables(TableName TN1, TableName TN2) {
+		List<VC> result = this.vcMap.values().stream()
+				.filter(vc -> ((vc.getTableName(1).equals(TN1)) && (vc.getTableName(2).equals(TN2))))
+				.collect(Collectors.toList());
+		if (result.size() == 0)
+			return null; // returns null if no VC is found
+		else
+			return result.get(0);
+	}
+
 	public void addFieldTupleToVC(String vcName, String F_1, String F_2) {
 		assert (this.vcMap.get(vcName) != null) : "cannot add tuple to a non-existing VC";
 		this.vcMap.get(vcName).addFieldTuple(getFieldName(F_1), getFieldName(F_2));

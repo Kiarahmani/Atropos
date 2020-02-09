@@ -23,6 +23,8 @@ ASSUMPTIONS:
   - CRDT tables only have 3 columns
   - CRDT-able operations must have the following form: fn=op(proj(fn,_,_),exp):
     order matters. op must be commutative
+  - T1 in a newly defined VC is always an existing table
+
 
 ====================================================================================================
 IMPROVEMENTS:

@@ -113,11 +113,13 @@ public class Atropos {
 
 		program = pu.generateProgram();
 		program.printProgram();
-		String txn = "DepositChecking";
-		re.redirect_select(pu, txn, "checking", "accounts", 1, false);
-		re.redirect_select(pu, txn, "accounts", "checkin_bal_crdt", 1, false);
-		re.deleteQuery(pu, 2, txn);
+		//String txn = "DepositChecking";
+		//re.redirect_select(pu, txn, "checking", "accounts", 1, false);
+		//re.redirect_select(pu, txn, "accounts", "checkin_bal_crdt", 1, false);
+		//re.deleteQuery(pu, 2, txn);
 
+		re.atomicize(pu);
+		
 		program = pu.generateProgram();
 		program.printProgram();
 

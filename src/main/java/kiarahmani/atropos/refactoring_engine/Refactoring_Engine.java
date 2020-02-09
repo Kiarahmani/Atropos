@@ -51,17 +51,97 @@ public class Refactoring_Engine {
 	// Functions for shrinking the program
 	/*****************************************************************************************************************/
 	public void atomicize(Program_Utils pu) {
-		HashMap<TableName, Integer> table_weight_map = pu.getTableWieght();
-		System.out.println(table_weight_map);
 		decompose(pu); // split and redirect all selects to tables with lower wights
-		// shrink(pu);
 	}
 
 	public void decompose(Program_Utils pu) {
+		while (decompose_iter(pu)) // decompose untill fixed-point is reached
+			;
+	}
 
+	// single iteration of decomposition
+	private boolean decompose_iter(Program_Utils pu) {
+		boolean result = false;
+		// iterate over all selects, if any part of it can be redirected to a newer
+		// table, do it
+		for (Transaction txn : pu.getTrasnsactionMap().values()) {
+			String txn_name = txn.getName();
+			ArrayList<Query> all_queries = txn.getAllQueries();
+			for (Query q : all_queries) {
+				int po = q.getPo();
+				if (!q.isWrite()) {
+					Select_Query sq = (Select_Query) q;
+					Table t_src = pu.getTable(q.getTableName().getName());
+					for (Table t_dest : pu.getTables().values()) {
+						ArrayList<FieldName> must_be_redirected = must_redirect(pu, sq, t_src, t_dest);
+						if (must_be_redirected != null) { // some subset of fn accesses must be redirected
+							int red_size = must_be_redirected.size();
+							int total_size = sq.getSelectedFieldNames().size();
+							if (red_size < total_size) {
+								if (red_size > 0) {
+									split_select(pu, txn_name, must_be_redirected, po, false);
+									redirect_select(pu, txn_name, t_src.getTableName().getName(),
+											t_dest.getTableName().getName(), po + 1, false);
+									result = true;
+								}
+							} else {
+								redirect_select(pu, txn_name, t_src.getTableName().getName(),
+										t_dest.getTableName().getName(), po, false);
+								result = true;
+							}
+						}
+					}
+				}
+			}
+		}
+		return result;
+	}
+
+	private ArrayList<FieldName> must_redirect(Program_Utils pu, Select_Query q, Table src, Table dest) {
+		ArrayList<FieldName> result = new ArrayList<>();
+		VC vc = pu.getVCByOrderedTables(src.getTableName(), dest.getTableName());
+		logger.debug("vc between " + src.getTableName() + " and " + dest.getTableName() + ": " + vc);
+		if (vc != null) {
+			for (FieldName fn : q.getSelectedFieldNames())
+				if (vc.getCorrespondingFN(fn) != null)
+					result.add(fn);
+		} else
+			return null;
+		return result;
 	}
 
 	/*
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
 	 * Main functions called from the outside
 	 */
 	public void shrink(Program_Utils pu) {
