@@ -6,6 +6,8 @@
 package kiarahmani.atropos.refactoring_engine.Modifiers.OTO;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -128,8 +130,14 @@ public class SELECT_Redirector extends One_to_One_Query_Modifier {
 		new_select = new Select_Query(old_po, new_select_id, new_isAtomic, targetTable.getTableName(),
 				new_selected_fieldNames, new_var, new_whc);
 		new_select.setPathCondition(old_select.getPathCondition());
-		this.desc = "Old query " + input_query.getId() + " in " + txnName + " is redirected to table ("+targetTable.getTableName()+") as a new query ("
-				+ new_select.getId() + ")";
+		this.desc = "Old query " + input_query.getId() + " in " + txnName + " is redirected to table ("
+				+ targetTable.getTableName() + ") as a new query (" + new_select.getId() + ")";
+
+		// set the implicitly read fields for the new queries
+		HashSet<FieldName> new_implicit_fns = new HashSet<>();
+		for (FieldName fn : old_select.getImplicitlyUsed())
+			new_implicit_fns.add(vc.getCorrespondingFN(fn));
+		new_select.setImplicitlyUsed(new_implicit_fns);
 		logger.debug("final select query to return: " + new_select);
 		// return
 		return new_select;

@@ -6,6 +6,7 @@
 package kiarahmani.atropos.refactoring_engine.Modifiers.TTO;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -129,6 +130,10 @@ public class SELECT_Merger extends Two_to_One_Query_Modifier {
 		this.desc = "Old queries (" + input_query_1.getId() + ") and (" + input_query_2.getId() + ") in " + txnName
 				+ " are merged into query (" + new_select.getId() + ")";
 		new_select.setPathCondition(old_select1.getPathCondition());
+		HashSet<FieldName> new_implicit_fns = new HashSet<>();
+		new_implicit_fns.addAll(old_select1.getImplicitlyUsed());
+		new_implicit_fns.addAll(old_select2.getImplicitlyUsed());
+		new_select.setImplicitlyUsed(new_implicit_fns);
 		return new_select;
 	}
 

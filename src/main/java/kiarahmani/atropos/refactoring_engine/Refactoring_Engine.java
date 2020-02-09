@@ -3,6 +3,7 @@ package kiarahmani.atropos.refactoring_engine;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -52,9 +53,99 @@ public class Refactoring_Engine {
 	/*****************************************************************************************************************/
 	public void atomicize(Program_Utils pu) {
 		decompose(pu); // split and redirect all selects to tables with lower wights
+		delete_redundant(pu);
 	}
 
-	public void decompose(Program_Utils pu) {
+	private void delete_redundant(Program_Utils pu) {
+		while (delete_redundant_iter(pu))
+			;
+	}
+
+	private boolean delete_redundant_iter(Program_Utils pu) {
+		boolean result = false;
+		HashMap<Table, HashSet<FieldName>> accessed_fn_map = mkTableMap(pu);
+		result |= delete_redundant_tables(pu, accessed_fn_map);
+		result |= delete_redundant_writes(pu, accessed_fn_map);
+		result |= delete_redundant_reads(pu);
+		return result;
+	}
+
+	private boolean delete_redundant_tables(Program_Utils pu, HashMap<Table, HashSet<FieldName>> accessed_fn_map) {
+		boolean result = false;
+		ArrayList<Table> tables_to_be_removed = new ArrayList<>();
+		for (Table t : pu.getTables().values())
+			if (accessed_fn_map.get(t).size() == 0) {
+				tables_to_be_removed.add(t);
+				result = true;
+			}
+		for (Table t : tables_to_be_removed)
+			pu.rmTable(t.getTableName().getName());
+		return result;
+	}
+
+	private boolean delete_redundant_writes(Program_Utils pu, HashMap<Table, HashSet<FieldName>> accessed_fn_map) {
+		boolean result = false;
+		for (Transaction txn : pu.getTrasnsactionMap().values())
+			for (Query q : txn.getAllQueries())
+				if (q.isWrite()) {
+					Table curr_t = pu.getTable(q.getTableName().getName());
+					if (curr_t == null) { // table has already been removed
+						deleteQuery(pu, q.getPo(), txn.getName());
+						result = true;
+					} else {
+						HashSet<FieldName> currr_accessed = accessed_fn_map.get(curr_t);
+						ArrayList<FieldName> curr_written = q.getWrittenFieldNames();
+						ArrayList<FieldName> excluded_fns = new ArrayList<>();
+						// figure out which fns are not used elsewhere
+						for (FieldName fn : curr_written)
+							if (!currr_accessed.contains(fn))
+								excluded_fns.add(fn);
+						if (excluded_fns.size() == curr_written.size()) { // if NONE of the updated fields is used
+							deleteQuery(pu, q.getPo(), txn.getName());
+							result = true;
+						} else if (excluded_fns.size() > 0) { // if only part of the written fns are used
+							int po = q.getPo();
+							split_update(pu, txn.getName(), excluded_fns, po, false);
+							deleteQuery(pu, po + 1, txn.getName());
+						}
+					}
+				}
+		return result;
+	}
+
+	private boolean delete_redundant_reads(Program_Utils pu) {
+		boolean result = false;
+		t_loop: for (Transaction txn : pu.getTrasnsactionMap().values())
+			q_loop: for (Query q : txn.getAllQueries())
+				if (!q.isWrite()) {
+					Select_Query sq = (Select_Query) q;
+					// check if sq is implicitly used
+					if (sq.getImplicitlyUsed().size() > 0)
+						continue q_loop;
+					// check if sq is explicitly used
+					Variable v = sq.getVariable();
+					if (var_is_used_in_txn(pu, txn.getName(), v))
+						continue q_loop;
+					// at this point we know q is not either explicitly or implicitly used
+					//deleteQuery(pu, q.getPo(), txn.getName());
+					result = true;
+				}
+		return result;
+	}
+
+	private boolean var_is_used_in_txn(Program_Utils pu, String txnName, Variable v) {
+		Transaction txn = pu.getTrasnsactionMap().get(txnName);
+		for (Query q : txn.getAllQueries()) {
+			if (q.getAllRefferencedVars().contains(v)) {
+				logger.error(v + " is used in " + q.getId());
+				return true;
+			} else
+				logger.error(v + " is NOT used in " + q.getId());
+		}
+		return false;
+	}
+
+	private void decompose(Program_Utils pu) {
 		while (decompose_iter(pu)) // decompose untill fixed-point is reached
 			;
 	}
@@ -166,39 +257,26 @@ public class Refactoring_Engine {
 		}
 	}
 
-	public void cleanUp(Program_Utils pu) {
-		while (cleanUp_iter(pu))// clean up untill no further cleanups occur
-			;
-	}
-
-	public boolean cleanUp_iter(Program_Utils pu) {
-		ArrayList<Table> tables_to_be_removed = new ArrayList<>();
-		boolean result = false;
-		out_loop: for (Table t : pu.getTables().values()) {
-			HashMap<Select_Query, String> pot_sels_map = isTableRedundant(pu, t);
-			if (pot_sels_map.size() == 0) {
-				deleteUnreadUpdates(pu, t);
-				tables_to_be_removed.add(t);
-				result = true;
-			} else { // try to make the table redundant
-				for (Table t_dest : pu.getTables().values()) {
-					if (t.getTableName().equalsWith(t_dest.getTableName()) || tables_to_be_removed.contains(t_dest)
-							|| pu.getVCByTables(t.getTableName(), t_dest.getTableName()) == null)
-						continue;
-					if (mkTableRedundant(pu, t, t_dest, pot_sels_map) == true) {
-						deleteUnreadUpdates(pu, t);
-						tables_to_be_removed.add(t);
-						result = true;
-						continue out_loop;
-					}
-				}
-			}
-		}
-		for (Table t : tables_to_be_removed)
-			pu.rmTable(t.getTableName().getName());
-		return result;
-	}
-
+	/*
+	 * public void cleanUp(Program_Utils pu) { while (cleanUp_iter(pu))// clean up
+	 * untill no further cleanups occur ; }
+	 */
+	/*
+	 * public boolean cleanUp_iter(Program_Utils pu) { ArrayList<Table>
+	 * tables_to_be_removed = new ArrayList<>(); boolean result = false; out_loop:
+	 * for (Table t : pu.getTables().values()) { HashMap<Select_Query, String>
+	 * pot_sels_map = mkQueryToTableMap(pu, t); if (pot_sels_map.size() == 0) {
+	 * deleteUnreadUpdates(pu, t); tables_to_be_removed.add(t); result = true; }
+	 * else { // try to make the table redundant for (Table t_dest :
+	 * pu.getTables().values()) { if
+	 * (t.getTableName().equalsWith(t_dest.getTableName()) ||
+	 * tables_to_be_removed.contains(t_dest) || pu.getVCByTables(t.getTableName(),
+	 * t_dest.getTableName()) == null) continue; if (mkTableRedundant(pu, t, t_dest,
+	 * pot_sels_map) == true) { deleteUnreadUpdates(pu, t);
+	 * tables_to_be_removed.add(t); result = true; continue out_loop; } } } } for
+	 * (Table t : tables_to_be_removed) pu.rmTable(t.getTableName().getName());
+	 * return result; }
+	 */
 	/*
 	 * Helping functions used in above funtions
 	 */
@@ -297,13 +375,22 @@ public class Refactoring_Engine {
 		return false;
 	}
 
-	private HashMap<Select_Query, String> isTableRedundant(Program_Utils pu, Table t) {
-		HashMap<Select_Query, String> pot_sels_map = new HashMap<>();
+	private HashMap<Table, HashSet<FieldName>> mkTableMap(Program_Utils pu) {
+		HashMap<Table, HashSet<FieldName>> touched_field_names = new HashMap<>();
+		for (Table tt : pu.getTables().values())
+			touched_field_names.put(tt, new HashSet<>());
+
 		for (Transaction txn : pu.getTrasnsactionMap().values())
 			for (Query q : txn.getAllQueries())
-				if (!q.isWrite() && q.getTableName().equalsWith(t.getTableName()))
-					pot_sels_map.put((Select_Query) q, txn.getName());
-		return pot_sels_map;
+				if (!q.isWrite()) {
+					Table curr_t = pu.getTable(q.getTableName().getName());
+					HashSet<FieldName> old_set = touched_field_names.get(curr_t);
+					old_set.addAll(q.getReadFieldNames());
+					old_set.addAll(((Select_Query) q).getImplicitlyUsed());
+					touched_field_names.put(curr_t, old_set);
+				}
+
+		return touched_field_names;
 	}
 
 	/*****************************************************************************************************************/

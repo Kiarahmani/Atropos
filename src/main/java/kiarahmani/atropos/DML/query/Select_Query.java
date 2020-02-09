@@ -14,6 +14,15 @@ public class Select_Query extends Query {
 	private TableName tableName;
 	private Variable variable;
 	private ArrayList<FieldName> fieldNames;
+	private HashSet<FieldName> implicitlyUsed;
+
+	public HashSet<FieldName> getImplicitlyUsed() {
+		return implicitlyUsed;
+	}
+
+	public void setImplicitlyUsed(HashSet<FieldName> implicitlyUsed) {
+		this.implicitlyUsed = implicitlyUsed;
+	}
 
 	public Select_Query(int po, int id, boolean isAtomic, TableName tableName, ArrayList<FieldName> fieldNames,
 			Variable variable, WHC whc) {
@@ -27,6 +36,7 @@ public class Select_Query extends Query {
 		this.isAtomic = isAtomic;
 		this.where_clause = whc;
 		this.po = po;
+		this.implicitlyUsed = new HashSet<>();
 	}
 
 	public String getId() {

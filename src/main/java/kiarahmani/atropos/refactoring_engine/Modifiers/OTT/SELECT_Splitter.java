@@ -6,6 +6,8 @@
 package kiarahmani.atropos.refactoring_engine.Modifiers.OTT;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -91,6 +93,15 @@ public class SELECT_Splitter extends One_to_Two_Query_Modifier {
 		logger.debug("New SELECT (2): " + new_select_2);
 		this.desc = "Old query (" + input_query.getId() + ") in " + txnName + " is splitted into queries ("
 				+ new_select_1.getId() + ") and (" + new_select_2.getId() + ")";
+		// set the implicitly read fields for the new queries
+		HashSet<FieldName> new_implicit_fns_1 = new HashSet<>();
+		HashSet<FieldName> new_implicit_fns_2 = new HashSet<>();
+		new_implicit_fns_1.addAll(old_select.getImplicitlyUsed());
+		new_implicit_fns_2.addAll(old_select.getImplicitlyUsed());
+		new_implicit_fns_1.removeAll(excluded_fns);
+		new_implicit_fns_2.stream().filter(fn -> excluded_fns.contains(fn)).collect(Collectors.toSet());
+		new_select_1.setImplicitlyUsed(new_implicit_fns_1);
+		new_select_2.setImplicitlyUsed(new_implicit_fns_2);
 		// return
 		return new Tuple<Query, Query>(new_select_1, new_select_2);
 	}
