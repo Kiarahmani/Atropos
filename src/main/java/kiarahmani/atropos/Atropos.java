@@ -55,7 +55,13 @@ public class Atropos {
 		pu.lock();
 
 		// analyze the initial program
-		analyze(program);
+		// analyze(program);
+
+		/*
+		 * 
+		 * Manual Schema Refactoring
+		 * 
+		 */
 
 		// introduce new fields
 		Delta delta_1 = new INTRO_F("accounts", "a_check_bal", F_Type.NUM);
@@ -73,11 +79,9 @@ public class Atropos {
 		delta_4.addFieldTupleToVC("s_bal", "a_save_bal");
 		re.refactor_schema_seq(pu, new Delta[] { delta_3, delta_4 });
 
-		re.shrink(pu);
-		re.cleanUp(pu);
-		program = pu.generateProgram();
-		program.printProgram();
-		analyze(program);
+		// program = pu.generateProgram();
+		// program.printProgram();
+		// analyze(program);
 
 		// introduce a CRDT table for checking balance
 		Delta delta_5 = new INTRO_R("checkin_bal_crdt", true);
@@ -101,11 +105,23 @@ public class Atropos {
 		delta_12.addFieldTupleToVC("a_check_bal", "cbc_bal");
 		re.refactor_schema_seq(pu, new Delta[] { delta_12 });
 
-		// re.shrink(pu);
-		// re.cleanUp(pu);
+		/*
+		 * 
+		 * End of refactoring
+		 * 
+		 */
+
 		program = pu.generateProgram();
 		program.printProgram();
-		analyze(program);
+		String txn = "DepositChecking";
+		re.redirect_select(pu, txn, "checking", "accounts", 1, false);
+		re.redirect_select(pu, txn, "accounts", "checkin_bal_crdt", 1, false);
+		re.deleteQuery(pu, 2, txn);
+
+		program = pu.generateProgram();
+		program.printProgram();
+
+		// analyze(program);
 
 		// print stats and exit
 		printStats(System.currentTimeMillis() - time_begin, results);

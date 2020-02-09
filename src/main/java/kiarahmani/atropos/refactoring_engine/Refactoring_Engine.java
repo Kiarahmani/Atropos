@@ -50,6 +50,17 @@ public class Refactoring_Engine {
 	/*****************************************************************************************************************/
 	// Functions for shrinking the program
 	/*****************************************************************************************************************/
+	public void atomicize(Program_Utils pu) {
+		HashMap<TableName, Integer> table_weight_map = pu.getTableWieght();
+		System.out.println(table_weight_map);
+		decompose(pu); // split and redirect all selects to tables with lower wights
+		// shrink(pu);
+	}
+
+	public void decompose(Program_Utils pu) {
+
+	}
+
 	/*
 	 * Main functions called from the outside
 	 */
@@ -105,7 +116,6 @@ public class Refactoring_Engine {
 		}
 		for (Table t : tables_to_be_removed)
 			pu.rmTable(t.getTableName().getName());
-
 		return result;
 	}
 

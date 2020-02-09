@@ -456,6 +456,20 @@ public class Program_Utils {
 		return result;
 	}
 
+	public HashMap<TableName, Integer> getTableWieght() {
+		HashMap<TableName, Integer> table_weight_map = new HashMap<>();
+		for (Table t : this.tableMap.values())
+			table_weight_map.put(t.getTableName(), 0);
+		for (Transaction txn : this.trasnsactionMap.values())
+			for (Query q : txn.getAllQueries())
+				if (q.isWrite()) {
+					int old_weight = table_weight_map.get(q.getTableName());
+					table_weight_map.put(q.getTableName(), old_weight + 1);
+				}
+
+		return table_weight_map;
+	}
+
 	/*****************************************************************************************************************/
 	// Meta Data interface
 	/*****************************************************************************************************************/
