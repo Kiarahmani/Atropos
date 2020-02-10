@@ -134,10 +134,8 @@ public class SELECT_Redirector extends One_to_One_Query_Modifier {
 				+ targetTable.getTableName() + ") as a new query (" + new_select.getId() + ")";
 
 		// set the implicitly read fields for the new queries
-		HashSet<FieldName> new_implicit_fns = new HashSet<>();
 		for (FieldName fn : old_select.getImplicitlyUsed())
-			new_implicit_fns.add(vc.getCorrespondingFN(fn));
-		new_select.setImplicitlyUsed(new_implicit_fns);
+			new_select.setImplicitlyUsed(vc.getCorrespondingFN(fn));
 		logger.debug("final select query to return: " + new_select);
 		// return
 		return new_select;

@@ -133,7 +133,8 @@ public class SELECT_Merger extends Two_to_One_Query_Modifier {
 		HashSet<FieldName> new_implicit_fns = new HashSet<>();
 		new_implicit_fns.addAll(old_select1.getImplicitlyUsed());
 		new_implicit_fns.addAll(old_select2.getImplicitlyUsed());
-		new_select.setImplicitlyUsed(new_implicit_fns);
+		for (FieldName fn : new_implicit_fns)
+			new_select.setImplicitlyUsed(fn);
 		return new_select;
 	}
 
@@ -195,10 +196,12 @@ public class SELECT_Merger extends Two_to_One_Query_Modifier {
 
 	@Override
 	public Query_Statement propagatedQueryModification(Query_Statement input_qry_stmt) {
+		logger.debug("redirecting: " + input_qry_stmt.getQuery().getId());
 		for (FieldName fn : old_select1.getSelectedFieldNames())
 			input_qry_stmt.getQuery().redirectProjs(old_var1, fn, new_var, fn);
 		for (FieldName fn : old_select2.getSelectedFieldNames())
 			input_qry_stmt.getQuery().redirectProjs(old_var2, fn, new_var, fn);
+		logger.debug("redirected query: " + input_qry_stmt.getQuery());
 		return input_qry_stmt;
 	}
 

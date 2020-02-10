@@ -18,6 +18,7 @@ public class Delete_Query extends Query {
 	private ArrayList<Tuple<FieldName, Expression>> update_expressions;
 
 	public Delete_Query(int po, int id, boolean isAtomic, TableName tableName, FieldName is_alive, WHC whc) {
+		super();
 		this.kind = Kind.DELETE;
 		this.po = po;
 		this.id = id;

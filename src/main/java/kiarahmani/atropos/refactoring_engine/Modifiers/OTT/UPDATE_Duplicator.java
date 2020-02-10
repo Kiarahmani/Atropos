@@ -99,6 +99,7 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 			((Insert_Query) new_qry).addPKExp(whcc_array);
 			for (WHC_Constraint pk : whcc_array)
 				((Insert_Query) new_qry).addInsertExp(pk.getFieldName(), pk.getExpression());
+			new_qry.setcanBeRemoved(false);
 
 		} else {// handle other (non-CRDT) cases
 			// generate new query's components
@@ -123,6 +124,9 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 	 * @return
 	 */
 	private WHC_Constraint[] mkInsert(WHC old_whc) {
+		if (!targetTable.isCrdt())
+			return null;
+
 		List<FieldName> pk_fields = sourceTable.getPKFields();
 		logger.debug("PK fields of the source table: " + pk_fields);
 		int pk_fields_size = pk_fields.size();
@@ -142,6 +146,8 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 		logger.debug("Insert Exps after adding UUID: " + Arrays.toString(result));
 		// set delta field
 		Expression delta_exp = extractDeltaExp();
+		if (delta_exp == null)
+			return null;
 		result[pk_fields_size + 1] = new WHC_Constraint(targetTable.getTableName(), targetTable.getDeltaField(),
 				BinOp.EQ, delta_exp);
 		logger.debug("Final insert Exps: " + Arrays.toString(result));
@@ -168,8 +174,9 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 					result = new E_BinOp(BinOp.MULT, new E_Const_Num(-1), bin_exp.oper2);
 				}
 		}
-		if (result == null)
-			assert (false) : "no delta expression can be extracted from: " + old_exps.toString();
+		// if (result == null)
+		// assert (false) : "no delta expression can be extracted from: " +
+		// old_exps.toString();
 		logger.debug("Final extracted delta: " + result);
 		return result;
 	}
@@ -248,6 +255,9 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 		} else
 			return false;
 
+		boolean assumption0 = !(vc.getType() == VC_Type.VC_OTM && vc.get_agg() == VC_Agg.VC_SUM)
+				|| (mkInsert(input_update.getWHC()) != null);
+
 		// all keys used as the WHC of duplicating UPDATE must be constrained by vc
 		boolean assumption1 = vc.containsWHC(input_update.getWHC());
 		// there must be a correspondence from src table to target table, for every
@@ -258,7 +268,7 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 		// binary operations)
 		boolean assumption3 = input_update.getWHC().hasOnlyEq();
 
-		boolean result = assumption1 && assumption2 && assumption3;
+		boolean result = assumption0 && assumption1 && assumption2 && assumption3;
 		logger.debug("modificationIsValid returned result: " + result);
 		return result;
 	}

@@ -19,8 +19,21 @@ public abstract class Query {
 	protected Kind kind;
 	protected WHC where_clause;
 	protected boolean isAtomic;
+	protected boolean canBeRemoved;
 	protected int id;
 	protected int po;
+
+	public boolean canBeRemoved() {
+		return this.canBeRemoved;
+	}
+
+	public Query() {
+		this.canBeRemoved = true;
+	}
+
+	public void setcanBeRemoved(boolean r) {
+		this.canBeRemoved = r;
+	}
 
 	public boolean isAtomic() {
 		return this.isAtomic;

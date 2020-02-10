@@ -22,6 +22,7 @@ public class Insert_Query extends Query {
 	private ArrayList<Tuple<FieldName, Expression>> insert_expressions;
 
 	public Insert_Query(int po, int id, Table table, FieldName is_alive) {
+		super();
 		this.kind = Kind.INSERT;
 		this.po = po;
 		this.table = table;
@@ -174,6 +175,7 @@ public class Insert_Query extends Query {
 	public void redirectProjs(Variable oldVar, FieldName oldFn, Variable newVar, FieldName newFn) {
 		for (Tuple<FieldName, Expression> t : this.insert_expressions)
 			t.y.redirectProjs(newVar, newFn, newVar, newFn);
+		this.where_clause.redirectProjs(oldVar, oldFn, newVar, newFn);
 	}
 
 	@Override

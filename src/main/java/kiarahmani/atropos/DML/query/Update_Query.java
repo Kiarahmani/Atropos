@@ -17,6 +17,7 @@ public class Update_Query extends Query {
 	private ArrayList<Tuple<FieldName, Expression>> update_expressions;
 
 	public Update_Query(int po, int id, boolean isAtomic, TableName tableName, WHC whc) {
+		super();
 		this.kind = Kind.UPDATE;
 		this.id = id;
 		this.isAtomic = isAtomic;
@@ -75,7 +76,7 @@ public class Update_Query extends Query {
 
 	@Override
 	public Expression getPathCondition() {
-		assert (this.path_condition != null) : "cannot return null"+this;
+		assert (this.path_condition != null) : "cannot return null" + this;
 		return this.path_condition;
 	}
 

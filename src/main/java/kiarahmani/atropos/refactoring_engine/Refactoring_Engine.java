@@ -22,6 +22,7 @@ import kiarahmani.atropos.program.Statement;
 import kiarahmani.atropos.program.Table;
 import kiarahmani.atropos.program.Transaction;
 import kiarahmani.atropos.program.Block.BlockType;
+import kiarahmani.atropos.program.Program;
 import kiarahmani.atropos.program.statements.If_Statement;
 import kiarahmani.atropos.program.statements.Query_Statement;
 import kiarahmani.atropos.refactoring_engine.Modifiers.Query_Modifier;
@@ -54,6 +55,7 @@ public class Refactoring_Engine {
 	public void atomicize(Program_Utils pu) {
 		decompose(pu); // split and redirect all selects to tables with lower wights
 		delete_redundant(pu);
+		shrink(pu);
 	}
 
 	private void delete_redundant(Program_Utils pu) {
@@ -74,7 +76,7 @@ public class Refactoring_Engine {
 		boolean result = false;
 		ArrayList<Table> tables_to_be_removed = new ArrayList<>();
 		for (Table t : pu.getTables().values())
-			if (accessed_fn_map.get(t).size() == 0) {
+			if (t.canBeRemoved() && accessed_fn_map.get(t).size() == 0) {
 				tables_to_be_removed.add(t);
 				result = true;
 			}
@@ -87,7 +89,7 @@ public class Refactoring_Engine {
 		boolean result = false;
 		for (Transaction txn : pu.getTrasnsactionMap().values())
 			for (Query q : txn.getAllQueries())
-				if (q.isWrite()) {
+				if (q.canBeRemoved() && q.isWrite()) {
 					Table curr_t = pu.getTable(q.getTableName().getName());
 					if (curr_t == null) { // table has already been removed
 						deleteQuery(pu, q.getPo(), txn.getName());
@@ -113,21 +115,29 @@ public class Refactoring_Engine {
 		return result;
 	}
 
-	private boolean delete_redundant_reads(Program_Utils pu) {
+	public boolean delete_redundant_reads(Program_Utils pu) {
 		boolean result = false;
-		t_loop: for (Transaction txn : pu.getTrasnsactionMap().values())
+		for (Transaction txn : pu.getTrasnsactionMap().values())
 			q_loop: for (Query q : txn.getAllQueries())
-				if (!q.isWrite()) {
+				if (q.canBeRemoved() && !q.isWrite()) {
+					logger.debug("---- checking if " + q.getId() + " can be deleted");
 					Select_Query sq = (Select_Query) q;
 					// check if sq is implicitly used
-					if (sq.getImplicitlyUsed().size() > 0)
+					if (sq.getImplicitlyUsed().size() > 0) {
+						logger.debug(q.getId() + " cannot be deleted because it is implicitly used");
 						continue q_loop;
+					}
 					// check if sq is explicitly used
 					Variable v = sq.getVariable();
-					if (var_is_used_in_txn(pu, txn.getName(), v))
+					if (var_is_used_in_txn(pu, txn.getName(), v)) {
+						logger.debug(v + " is used in " + txn.getName());
+						logger.debug(q.getId() + " cannot be deleted because it is explicitly used");
 						continue q_loop;
+					}
+					logger.debug(v + " is NOT used in " + txn.getName());
+					logger.debug(q.getId() + " can be deleted");
 					// at this point we know q is not either explicitly or implicitly used
-					//deleteQuery(pu, q.getPo(), txn.getName());
+					deleteQuery(pu, q.getPo(), txn.getName());
 					result = true;
 				}
 		return result;
@@ -136,12 +146,15 @@ public class Refactoring_Engine {
 	private boolean var_is_used_in_txn(Program_Utils pu, String txnName, Variable v) {
 		Transaction txn = pu.getTrasnsactionMap().get(txnName);
 		for (Query q : txn.getAllQueries()) {
-			if (q.getAllRefferencedVars().contains(v)) {
-				logger.error(v + " is used in " + q.getId());
+			if (q.getAllRefferencedVars().contains(v))
 				return true;
-			} else
-				logger.error(v + " is NOT used in " + q.getId());
 		}
+		for (Statement stmt : txn.getStatements())
+			if (stmt instanceof If_Statement) {
+				If_Statement ifstmt = (If_Statement) stmt;
+				if (ifstmt.getCondition().getAllRefferencedVars().contains(v))
+					return true;
+			}
 		return false;
 	}
 
@@ -153,7 +166,7 @@ public class Refactoring_Engine {
 	// single iteration of decomposition
 	private boolean decompose_iter(Program_Utils pu) {
 		boolean result = false;
-		// iterate over all selects, if any part of it can be redirected to a newer
+		// iterate over all selects, if any part of it should be redirected to a newer
 		// table, do it
 		for (Transaction txn : pu.getTrasnsactionMap().values()) {
 			String txn_name = txn.getName();
@@ -188,6 +201,12 @@ public class Refactoring_Engine {
 		return result;
 	}
 
+	/*
+	 * Based on some notion of weight, decide if a query must be redirection to
+	 * another table or not Currently the only notion of weight used is the
+	 * direction in the newly introduced VCs (newly introduced vc must be redirected
+	 * to)
+	 */
 	private ArrayList<FieldName> must_redirect(Program_Utils pu, Select_Query q, Table src, Table dest) {
 		ArrayList<FieldName> result = new ArrayList<>();
 		VC vc = pu.getVCByOrderedTables(src.getTableName(), dest.getTableName());
@@ -202,38 +221,8 @@ public class Refactoring_Engine {
 	}
 
 	/*
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * Main functions called from the outside
+	 * try swapping queries and attempt merging them (undo the swap if merge is
+	 * unsuccessful)
 	 */
 	public void shrink(Program_Utils pu) {
 		for (Transaction txn : pu.getTrasnsactionMap().values()) {
@@ -258,27 +247,7 @@ public class Refactoring_Engine {
 	}
 
 	/*
-	 * public void cleanUp(Program_Utils pu) { while (cleanUp_iter(pu))// clean up
-	 * untill no further cleanups occur ; }
-	 */
-	/*
-	 * public boolean cleanUp_iter(Program_Utils pu) { ArrayList<Table>
-	 * tables_to_be_removed = new ArrayList<>(); boolean result = false; out_loop:
-	 * for (Table t : pu.getTables().values()) { HashMap<Select_Query, String>
-	 * pot_sels_map = mkQueryToTableMap(pu, t); if (pot_sels_map.size() == 0) {
-	 * deleteUnreadUpdates(pu, t); tables_to_be_removed.add(t); result = true; }
-	 * else { // try to make the table redundant for (Table t_dest :
-	 * pu.getTables().values()) { if
-	 * (t.getTableName().equalsWith(t_dest.getTableName()) ||
-	 * tables_to_be_removed.contains(t_dest) || pu.getVCByTables(t.getTableName(),
-	 * t_dest.getTableName()) == null) continue; if (mkTableRedundant(pu, t, t_dest,
-	 * pot_sels_map) == true) { deleteUnreadUpdates(pu, t);
-	 * tables_to_be_removed.add(t); result = true; continue out_loop; } } } } for
-	 * (Table t : tables_to_be_removed) pu.rmTable(t.getTableName().getName());
-	 * return result; }
-	 */
-	/*
-	 * Helping functions used in above funtions
+	 * attempt to merge two queries at qry_po and qry_po+1
 	 */
 	private boolean attempt_merge_query(Program_Utils input_pu, String txn_name, int qry_po, boolean isRevert) {
 		logger.debug("");
@@ -292,10 +261,6 @@ public class Refactoring_Engine {
 		logger.debug("q1: " + q1);
 		logger.debug("q2: " + q2);
 
-		TableName t1 = q1.getTableName();
-		TableName t2 = q2.getTableName();
-
-		VC vc = input_pu.getVCByTables(t1, t2);
 		if (q1.getKind() == Kind.UPDATE && q2.getKind() == Kind.UPDATE) {
 			UPDATE_Merger success = merge_update(input_pu, txn_name, qry_po, isRevert);
 			logger.debug("updates merging attempted. result: " + (success != null));
@@ -308,78 +273,17 @@ public class Refactoring_Engine {
 				return true;
 			logger.debug("merge was unsuccessful");
 			// if there is vc between q1 and q2
-			if (vc != null) {
-				/*
-				 * try redirecting q2 to q1's table
-				 */
-				logger.debug("VC exits between tables: " + vc);
-				logger.debug("redirecting q2(" + q2.getId() + ") from " + t2 + " to " + t1);
-				SELECT_Redirector x = redirect_select(input_pu, txn_name, t2.getName(), t1.getName(), q2.getPo(),
-						false);
-				logger.debug("redirect(1) attempted. desc: " + x.getDesc());
-				logger.debug("attempt merging the redirected q2 with original q1");
-				success = merge_select(input_pu, txn_name, qry_po, isRevert);
-				logger.debug("selects merging attempted. result: " + (success != null));
-				if (success != null)
-					return true;
-				logger.debug("merge was unsuccessful: revert the redirection and try the opposit direction");
-				// if unsuccessful revert the redirect
-				x = redirect_select(input_pu, txn_name, t1.getName(), t2.getName(), q2.getPo(), true);
-				logger.debug("REVERT(1) DESC: " + x.getDesc());
-				/*
-				 * repeat the opposit way; try redirecting q1 to q2's table
-				 */
-				logger.debug("now redirecting q1(" + q1.getId() + ") from " + t1 + " to " + t2);
-				x = redirect_select(input_pu, txn_name, t1.getName(), t2.getName(), q1.getPo(), false);
-				logger.debug("redirect(2) attempted. desc: " + x.getDesc());
-				success = merge_select(input_pu, txn_name, qry_po, isRevert);
-				if (success != null)
-					return true;
-				logger.debug("merge was again unsuccessful: revert the last redirection and exit");
-				// if unsuccessful revert the redirect
-				x = redirect_select(input_pu, txn_name, t2.getName(), t1.getName(), q1.getPo(), true);
-				logger.debug("REVERT(2) DESC: " + x.getDesc());
-			} else
-				logger.debug("no vc exits for redirection: exit.");
 		}
 		return false;
 	}
 
-	private void deleteUnreadUpdates(Program_Utils pu, Table t) {
-		for (Transaction txn : pu.getTrasnsactionMap().values())
-			for (Query q : txn.getAllQueries())
-				if (q.isWrite() && q.getTableName().equalsWith(t.getTableName()))
-					deleteQuery(pu, q.getPo(), txn.getName());
-	}
-
-	private boolean mkTableRedundant(Program_Utils pu, Table t, Table dest_t,
-			HashMap<Select_Query, String> pot_sels_map) {
-		ArrayList<SELECT_Redirector> attempted_reds = new ArrayList<>();
-		logger.debug("attempting to redirect all selects from " + t.getTableName() + " to " + dest_t.getTableName());
-		boolean success = true;
-		for (Select_Query q : pot_sels_map.keySet()) {
-			// attempt redirecting q from t to dest_t
-			SELECT_Redirector attempted_red = redirect_select(pu, pot_sels_map.get(q), t.getTableName().getName(),
-					dest_t.getTableName().getName(), q.getPo(), false);
-			attempted_reds.add(attempted_red);
-			success &= (attempted_red != null);
-		}
-		if (success)
-			return true;
-		else {// revert
-			for (SELECT_Redirector attempted_red : attempted_reds) {
-				if (attempted_red != null)
-					revert_redirect_select(pu, attempted_red);
-			}
-		}
-		return false;
-	}
-
+	/*
+	 * return a map form each table to the set of fields that are currently tougched
+	 */
 	private HashMap<Table, HashSet<FieldName>> mkTableMap(Program_Utils pu) {
 		HashMap<Table, HashSet<FieldName>> touched_field_names = new HashMap<>();
 		for (Table tt : pu.getTables().values())
 			touched_field_names.put(tt, new HashSet<>());
-
 		for (Transaction txn : pu.getTrasnsactionMap().values())
 			for (Query q : txn.getAllQueries())
 				if (!q.isWrite()) {
@@ -389,7 +293,6 @@ public class Refactoring_Engine {
 					old_set.addAll(((Select_Query) q).getImplicitlyUsed());
 					touched_field_names.put(curr_t, old_set);
 				}
-
 		return touched_field_names;
 	}
 
@@ -437,10 +340,13 @@ public class Refactoring_Engine {
 	private Program_Utils apply_intro_r(Program_Utils input_pu, INTRO_R intro_r) {
 		logger.debug("applying INTRO_R refactoring");
 		String table_name = intro_r.getNewTableName();
-		if (!intro_r.isCRDT())
-			input_pu.mkTable(table_name);
-		else
-			input_pu.mkCRDTTable(table_name);
+		if (!intro_r.isCRDT()) {
+			Table t = input_pu.mkTable(table_name);
+			t.setCanBeRemoved(false);
+		} else {
+			Table t = input_pu.mkCRDTTable(table_name);
+			t.setCanBeRemoved(false);
+		}
 		return input_pu;
 	}
 

@@ -20,12 +20,14 @@ public class Select_Query extends Query {
 		return implicitlyUsed;
 	}
 
-	public void setImplicitlyUsed(HashSet<FieldName> implicitlyUsed) {
-		this.implicitlyUsed = implicitlyUsed;
+	public void setImplicitlyUsed(FieldName... implicitlyUsed) {
+		for (FieldName fn : implicitlyUsed)
+			this.implicitlyUsed.add(fn);
 	}
 
 	public Select_Query(int po, int id, boolean isAtomic, TableName tableName, ArrayList<FieldName> fieldNames,
 			Variable variable, WHC whc) {
+		super();
 		assert (!(tableName == null));
 		assert (!(fieldNames == null));
 		this.id = id;

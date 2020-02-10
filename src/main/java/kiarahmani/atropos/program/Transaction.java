@@ -65,6 +65,8 @@ public class Transaction {
 			result.addAll(q.getAllProjExps());
 		return result;
 	}
+	
+	
 
 	public String[] getAllStmtTypes() {
 		List<String> result = new ArrayList<String>();

@@ -11,6 +11,15 @@ public class Table {
 	private ArrayList<FieldName> fieldNames;
 	private TableName name;
 	private boolean crdt;
+	private boolean canBeRemoved;
+
+	public boolean canBeRemoved() {
+		return canBeRemoved;
+	}
+
+	public void setCanBeRemoved(boolean canBeRemoved) {
+		this.canBeRemoved = canBeRemoved;
+	}
 
 	public boolean isCrdt() {
 		return crdt;
@@ -49,6 +58,7 @@ public class Table {
 		for (FieldName fn : fns)
 			this.fieldNames.add(fn);
 		this.fieldNames.add(is_alive);
+		canBeRemoved = true;
 	}
 
 	public void addFieldName(FieldName fn) {

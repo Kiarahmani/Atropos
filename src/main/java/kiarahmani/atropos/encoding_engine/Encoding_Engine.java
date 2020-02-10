@@ -112,6 +112,7 @@ public class Encoding_Engine {
 			}
 			logger.debug("end of analysis for DAI: " + pot_dai);
 		}
+		System.out.println("Anomalies found: " + dai_graph.getDAIs().size());
 		return dai_graph;
 
 	}
