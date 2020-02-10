@@ -8,6 +8,7 @@ package kiarahmani.atropos.refactoring_engine.deltas;
 import java.util.ArrayList;
 import java.util.HashSet;
 
+import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DDL.vc.VC;
 import kiarahmani.atropos.DDL.vc.VC.VC_Agg;
 import kiarahmani.atropos.DDL.vc.VC.VC_Type;
@@ -54,6 +55,10 @@ public class INTRO_VC extends Delta {
 	 */
 	public void addFieldTupleToVC(String string, String string2) {
 		pu.addFieldTupleToVC(this.vc.getName(), string, string2);
+	}
+
+	public void addFieldTupleToVC(FieldName fn1, FieldName fn2) {
+		pu.addFieldTupleToVC(this.vc.getName(), fn1, fn2);
 	}
 
 	/*

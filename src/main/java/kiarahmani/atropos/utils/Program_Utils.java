@@ -334,6 +334,11 @@ public class Program_Utils {
 		this.vcMap.get(vcName).addFieldTuple(getFieldName(F_1), getFieldName(F_2));
 	}
 
+	public void addFieldTupleToVC(String vcName, FieldName F_1, FieldName F_2) {
+		assert (this.vcMap.get(vcName) != null) : "cannot add tuple to a non-existing VC";
+		this.vcMap.get(vcName).addFieldTuple(F_1, F_2);
+	}
+
 	public void addKeyCorrespondenceToVC(String vcName, String F_1, String F_2) {
 		assert (this.vcMap.get(vcName) != null) : "cannot add tuple to a non-existing VC";
 		VC_Constraint vcc = new VC_Constraint(getFieldName(F_1), getFieldName(F_2));

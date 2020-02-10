@@ -468,6 +468,10 @@ public class Refactoring_Engine {
 	}
 
 	public Program_Utils refactor_schema(Program_Utils input_pu, Delta delta) {
+		if (delta == null) {
+			logger.error("null refactoring is requested. Aborting.");
+			return input_pu;
+		}
 		input_pu.incVersion();
 		input_pu.addComment(
 				"\n" + input_pu.getProgramName() + "(" + input_pu.getVersion() + "):	" + delta.getDesc());
