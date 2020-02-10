@@ -2,7 +2,12 @@
 TODO:
  
 
-  
+  - BUG: when an update sets a constant value to a field, when a CRDT schema
+    change is proposed, the duplication is not
+    performed (since DELTA cannot be extracted from a constant set) however the
+    schema change is accepted (which is wrong, since the constant assignment is
+    not reflected in the CRDT table). For now I change the programs to not
+    include such cases. This should be addressed later. 
   - Add support for inbuilt agg functions (instead of having size, sum, etc.)
   - Add a comment section to each program to capture its refactoring history 
   - Analyze the encoding engine and figure out why it works so slowly on CRDT

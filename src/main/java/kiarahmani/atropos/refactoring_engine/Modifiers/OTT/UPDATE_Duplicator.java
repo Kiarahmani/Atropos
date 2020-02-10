@@ -173,9 +173,6 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 					result = new E_BinOp(BinOp.MULT, new E_Const_Num(-1), bin_exp.oper2);
 				}
 		}
-		// if (result == null)
-		// assert (false) : "no delta expression can be extracted from: " +
-		// old_exps.toString();
 		logger.debug("Final extracted delta: " + result);
 		return result;
 	}

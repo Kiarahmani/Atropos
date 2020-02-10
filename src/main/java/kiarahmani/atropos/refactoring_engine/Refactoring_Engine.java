@@ -67,8 +67,6 @@ public class Refactoring_Engine {
 		boolean result = false;
 		HashMap<Table, HashSet<FieldName>> accessed_fn_map = mkTableMap(pu);
 		result |= delete_redundant_tables(pu, accessed_fn_map);
-		Program program = pu.generateProgram();
-		program.printProgram();
 		result |= delete_redundant_writes(pu, accessed_fn_map);
 		result |= delete_redundant_reads(pu);
 		return result;
