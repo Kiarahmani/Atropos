@@ -57,7 +57,7 @@ public class Naive_search_engine extends Search_engine {
 		Table random_table = getRandomTable();
 		String new_fn = ng.newFieldName();
 		INTRO_F result = new INTRO_F(random_table.getTableName().getName(), new_fn, F_Type.NUM);
-		logger.error("Randomly generated (non-crdt) INTRO_F: " + new_fn + " on " + random_table.getTableName());
+		logger.debug("Randomly generated (non-crdt) INTRO_F: " + new_fn + " on " + random_table.getTableName());
 		return result;
 	}
 
@@ -79,7 +79,7 @@ public class Naive_search_engine extends Search_engine {
 			assert (src_pks.size() == dest_pks.size()) : "unexpected pks in tables when VC_OTO is chosen";
 			for (int i = 0; i < src_pks.size(); i++)
 				result.addKeyCorrespondenceToVC(src_pks.get(i).getName(), dest_pks.get(i).getName());
-			FieldName random_fn_from_src_table = getRandomFieldName(src);
+			FieldName random_fn_from_src_table = getRandomNonPKFieldName(src);
 			result.addFieldTupleToVC(random_fn_from_src_table, intro_f.getNewName());
 			break;
 
@@ -89,7 +89,7 @@ public class Naive_search_engine extends Search_engine {
 		default:
 			break;
 		}
-
+		logger.debug("Randomly generated (non-crdt) INTRO_VC: " + result.getVC());
 		return result;
 	}
 
@@ -104,10 +104,17 @@ public class Naive_search_engine extends Search_engine {
 		return (Table) pu.getTables().values().toArray()[random_index];
 	}
 
-	private FieldName getRandomFieldName(Table t) {
-		int field_cnt = t.getFieldNames().size();
-		int random_index = (int) (Math.random() * field_cnt);
-		return t.getFieldNames().get(random_index);
+	private FieldName getRandomNonPKFieldName(Table t) {
+		FieldName result = null;
+
+		while (true) {
+			int field_cnt = t.getFieldNames().size();
+			int random_index = (int) (Math.random() * field_cnt);
+			result = t.getFieldNames().get(random_index);
+			if (!result.isPK() && !result.getName().contains("alive"))
+				break;
+		}
+		return result;
 	}
 
 	@Override

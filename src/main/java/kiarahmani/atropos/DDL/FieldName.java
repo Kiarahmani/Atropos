@@ -58,6 +58,8 @@ public class FieldName {
 	}
 
 	public boolean equals(FieldName other) {
+		if (other == null)
+			return false;
 		return this.name.contains(other.getName());
 	}
 

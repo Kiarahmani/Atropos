@@ -92,10 +92,14 @@ public class Encoding_Engine {
 					z3logger.reset();
 					local_z3_driver = new Z3Driver();
 					// check if it is actualy a valid instance
-					System.out
-							.println("\nRound #" + (iter++) + " (anomalies found: " + dai_graph.getDAIs().size() + ")");
-					if (Constants._VERBOSE_ANALYSIS)
+
+					if (Constants._VERBOSE_ANALYSIS) {
+						System.out.println(
+								"\nRound #" + (iter++) + " (anomalies found: " + dai_graph.getDAIs().size() + ")");
 						printBaseAnomaly(iter, pot_dai, c1, c2);
+					} else {
+
+					}
 					long begin = System.currentTimeMillis();
 					Status status = local_z3_driver.generateDAI(program, 4, pot_dai, c1, c2);
 					long end = System.currentTimeMillis();
@@ -121,7 +125,10 @@ public class Encoding_Engine {
 		String status_string = (status == Status.SATISFIABLE) ? "SAT" : "UNSAT";
 		if (status == Status.UNKNOWN)
 			status_string = "UNKNOWN";
-		System.out.println("" + status_string + " (" + (time) + "ms)");
+		if (Constants._VERBOSE_ANALYSIS) {
+			System.out.println("" + status_string + " (" + (time) + "ms)");
+		} else
+			System.out.print(" " + status_string);
 		this.printer.append(String.valueOf(time));
 		this.printer.flush();
 	}

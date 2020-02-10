@@ -97,17 +97,17 @@ public class Z3Driver {
 		addArFunc(program);
 		constrainArFunc(program);
 		addAssertion("both_queries_are_executed", em.mk_cycle_exists_constrained_1(dai));
-		// addWRFuncs(program);
-		// constrainWRFuncs(program);
-		// addRWFuncs(program);
-		// constrainRWFuncs(program);
-		// addWWFuncs(program);
-		// constrainWWFuncs(program);
-		// addDepFunc(program);
-		// constrainDepFunc(program);
-		// addDepSTFunc(program);
-		// constrainUUIDFunc();
-		// constrainDepSTFunc(program);
+//		addWRFuncs(program);
+//		constrainWRFuncs(program);
+//		addRWFuncs(program);
+//		constrainRWFuncs(program);
+//		addWWFuncs(program);
+//		constrainWWFuncs(program);
+//		addDepFunc(program);
+//		constrainDepFunc(program);
+//		addDepSTFunc(program);
+//		constrainUUIDFunc();
+//		constrainDepSTFunc(program);
 		//
 		// final query
 		// addAssertion("cycle", em.mk_cycle_exists_constrained(dependency_length, dai,
@@ -178,7 +178,8 @@ public class Z3Driver {
 		if (status == Status.SATISFIABLE) {
 			// record the generated model
 			model = slv.getModel();
-			//System.out.println("\n~~~> " + model.getSortUniverse(objs.getSort("Rec")).length + "\n");
+			// System.out.println("\n~~~> " +
+			// model.getSortUniverse(objs.getSort("Rec")).length + "\n");
 			File file = new File("smt2/model.smt2");
 			PrintWriter printer;
 			FileWriter writer;
@@ -1247,7 +1248,7 @@ public class Z3Driver {
 			Expr bv2int_val = ctx.mkBV2Int((BitVecExpr) translateExpressionsToZ3Expr(txnName, transaction, p_exp.e, po),
 					false);
 			Expr order = ctx.mkApp(objs.getfuncs("ro_from_int"), bv2int_val);
-						
+
 			Expr var_time = ctx.mkApp(objs.getfuncs(txnName + "_var_" + p_exp.v.getName() + "_gen_time"), transaction);
 			Expr rec_expr = ctx.mkApp(objs.getfuncs(txnName + "_var_" + p_exp.v.getName()), transaction, order);
 			return ctx.mkApp(objs.getfuncs("proj_" + p_exp.v.getTableName() + "_" + p_exp.f.getName()), rec_expr,

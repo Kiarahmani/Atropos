@@ -58,11 +58,13 @@ public class Refactoring_Engine {
 	/*****************************************************************************************************************/
 	// Functions for shrinking the program
 	/*****************************************************************************************************************/
-	public void atomicize(Program_Utils pu) {
-		pre_analysis(pu); // get rid of non-crdt-able updates
+	public Query_Modifier[] atomicize(Program_Utils pu) {
+		// pre_analysis(pu); // get rid of non-crdt-able updates
 		decompose(pu); // split and redirect all selects to tables with lower wights
 		delete_redundant(pu);
 		shrink(pu);
+		Query_Modifier[] result = new Query_Modifier[0];
+		return result;
 	}
 
 	private void pre_analysis(Program_Utils input_pu) {
@@ -526,14 +528,16 @@ public class Refactoring_Engine {
 								+ ") and must be duplicated on T2 (" + t2.getName() + ")");
 						UPDATE_Duplicator ud = duplicate_update(input_pu, txn.getName(), t1.getName(), t2.getName(),
 								q.getPo());
-						intro_vc.addAppliedUpDup(ud);
+						if (ud != null)
+							intro_vc.addAppliedUpDup(ud);
 
 					} else if (q.getTableName().equalsWith(intro_vc.getVC().getTableName(2))) {
 						logger.debug("query " + q.getId() + " is a write on T2 (" + t1.getName()
 								+ ") and must be duplicated on T1 (" + t2.getName() + ")");
 						UPDATE_Duplicator ud = duplicate_update(input_pu, txn.getName(), t2.getName(), t1.getName(),
 								q.getPo());
-						intro_vc.addAppliedUpDup(ud);
+						if (ud != null)
+							intro_vc.addAppliedUpDup(ud);
 					}
 		return input_pu;
 	}
@@ -678,8 +682,8 @@ public class Refactoring_Engine {
 	 */
 
 	public void revert_refactor_program_seq(Program_Utils input_pu, Query_Modifier... qms) {
-		for (Query_Modifier qm : qms)
-			revert_refactor_program(input_pu, qm);
+		for (int i = qms.length - 1; i >= 0; i--)
+			revert_refactor_program(input_pu, qms[i]);
 	}
 
 	public void revert_refactor_program(Program_Utils input_pu, Query_Modifier qm) {

@@ -26,9 +26,13 @@ public class DAI_Graph {
 
 	public void printDAIGraph() {
 		System.out.println("\n## DAI GRAPH");
-		int iter=1;
+		int iter = 1;
 		for (DAI dai : this.dais)
-			System.out.println("("+(iter++)+") "+dai);
+			System.out.println("(" + (iter++) + ") " + dai);
+	}
+
+	public int getDAICnt() {
+		return this.dais.size();
 	}
 
 }
