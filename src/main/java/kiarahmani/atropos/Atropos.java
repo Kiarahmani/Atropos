@@ -44,7 +44,7 @@ public class Atropos {
 		pu.lock();
 
 		// analyze the initial program
-		 analyze(program);
+		// analyze(program);
 
 		/*
 		 * 
@@ -57,7 +57,7 @@ public class Atropos {
 		Delta delta_2 = new INTRO_F("accounts", "a_save_bal", F_Type.NUM);
 		re.refactor_schema_seq(pu, new Delta[] { delta_1, delta_2 });
 
-		// introduce vc between checking and accounts
+		// introduce vc between checking and accountss
 		INTRO_VC delta_3 = new INTRO_VC(pu, "checking", "accounts", VC_Agg.VC_ID, VC_Type.VC_OTO);
 		delta_3.addKeyCorrespondenceToVC("c_custid", "a_custid");
 		delta_3.addFieldTupleToVC("c_bal", "a_check_bal");
@@ -68,31 +68,51 @@ public class Atropos {
 		delta_4.addFieldTupleToVC("s_bal", "a_save_bal");
 		re.refactor_schema_seq(pu, new Delta[] { delta_3, delta_4 });
 
-		// program = pu.generateProgram();
-		// program.printProgram();
-		// analyze(program);
-
-		// introduce a CRDT table for checking balance
-		//Delta delta_5 = new INTRO_R("checkin_bal_crdt", true);
-		//re.refactor_schema(pu, delta_5);
+		/*
+		 * introduce a CRDT table for checking balance
+		 */
+		Delta delta_5 = new INTRO_R("checkin_bal_crdt", true);
+		re.refactor_schema(pu, delta_5);
 
 		// introduce new fields in checkin_bal_crdt
-		//Delta delta_6 = new INTRO_F("checkin_bal_crdt", "cbc_custid", F_Type.NUM);
-		//Delta delta_7 = new INTRO_F("checkin_bal_crdt", "cbc_uuids", F_Type.NUM, true, false);
-		//Delta delta_8 = new INTRO_F("checkin_bal_crdt", "cbc_bal", F_Type.NUM, false, true);
+		Delta delta_6 = new INTRO_F("checkin_bal_crdt", "cbc_custid", F_Type.NUM);
+		Delta delta_7 = new INTRO_F("checkin_bal_crdt", "cbc_uuids", F_Type.NUM, true, false);
+		Delta delta_8 = new INTRO_F("checkin_bal_crdt", "cbc_bal", F_Type.NUM, false, true);
 
-		//re.refactor_schema_seq(pu, new Delta[] { delta_6, delta_7, delta_8 });
+		re.refactor_schema_seq(pu, new Delta[] { delta_6, delta_7, delta_8 });
 
-		//Delta delta_9 = new ADDPK(pu, "checkin_bal_crdt", "cbc_custid");
-		//Delta delta_10 = new ADDPK(pu, "checkin_bal_crdt", "cbc_uuids");
-		//Delta delta_11 = new CHSK(pu, "checkin_bal_crdt", "cbc_custid");
-		//re.refactor_schema_seq(pu, new Delta[] { delta_9, delta_10, delta_11 });
+		Delta delta_9 = new ADDPK(pu, "checkin_bal_crdt", "cbc_custid");
+		Delta delta_10 = new ADDPK(pu, "checkin_bal_crdt", "cbc_uuids");
+		Delta delta_11 = new CHSK(pu, "checkin_bal_crdt", "cbc_custid");
+		re.refactor_schema_seq(pu, new Delta[] { delta_9, delta_10, delta_11 });
 
 		// introduce vc between accounts and checkin_bal_crdt
-		//INTRO_VC delta_12 = new INTRO_VC(pu, "accounts", "checkin_bal_crdt", VC_Agg.VC_SUM, VC_Type.VC_OTM);
-		//delta_12.addKeyCorrespondenceToVC("a_custid", "cbc_custid");
-		//delta_12.addFieldTupleToVC("a_check_bal", "cbc_bal");
-		//re.refactor_schema_seq(pu, new Delta[] { delta_12 });
+		INTRO_VC delta_19 = new INTRO_VC(pu, "accounts", "checkin_bal_crdt", VC_Agg.VC_SUM, VC_Type.VC_OTM);
+		delta_19.addKeyCorrespondenceToVC("a_custid", "cbc_custid");
+		delta_19.addFieldTupleToVC("a_check_bal", "cbc_bal");
+		re.refactor_schema_seq(pu, new Delta[] { delta_19 });
+
+		/*
+		 * introduce a CRDT table for savings balance
+		 */
+		Delta delta_12 = new INTRO_R("savings_bal_crdt", true);
+		re.refactor_schema(pu, delta_12);
+
+		// introduce new fields in savings_bal_crdt
+		Delta delta_13 = new INTRO_F("savings_bal_crdt", "sbc_custid", F_Type.NUM);
+		Delta delta_14 = new INTRO_F("savings_bal_crdt", "sbc_uuids", F_Type.NUM, true, false);
+		Delta delta_15 = new INTRO_F("savings_bal_crdt", "sbc_bal", F_Type.NUM, false, true);
+		re.refactor_schema_seq(pu, new Delta[] { delta_13, delta_14, delta_15 });
+
+		Delta delta_16 = new ADDPK(pu, "savings_bal_crdt", "sbc_custid");
+		Delta delta_17 = new ADDPK(pu, "savings_bal_crdt", "sbc_uuids");
+		Delta delta_18 = new CHSK(pu, "savings_bal_crdt", "sbc_custid");
+		re.refactor_schema_seq(pu, new Delta[] { delta_16, delta_17, delta_18 });
+		// introduce vc between accounts and checkin_bal_crdt
+		INTRO_VC delta_20 = new INTRO_VC(pu, "accounts", "savings_bal_crdt", VC_Agg.VC_SUM, VC_Type.VC_OTM);
+		delta_20.addKeyCorrespondenceToVC("a_custid", "sbc_custid");
+		delta_20.addFieldTupleToVC("a_save_bal", "sbc_bal");
+		re.refactor_schema_seq(pu, new Delta[] { delta_20 });
 
 		/*
 		 * 
@@ -135,7 +155,7 @@ public class Atropos {
 		Conflict_Graph cg = new Conflict_Graph(program);
 		Encoding_Engine ee = new Encoding_Engine(program.getName());
 		DAI_Graph dai_graph = ee.constructInitialDAIGraph(program, cg);
-		cg.printGraph();
+		// cg.printGraph();
 		dai_graph.printDAIGraph();
 	}
 

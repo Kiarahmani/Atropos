@@ -1247,7 +1247,7 @@ public class Z3Driver {
 			Expr bv2int_val = ctx.mkBV2Int((BitVecExpr) translateExpressionsToZ3Expr(txnName, transaction, p_exp.e, po),
 					false);
 			Expr order = ctx.mkApp(objs.getfuncs("ro_from_int"), bv2int_val);
-
+						
 			Expr var_time = ctx.mkApp(objs.getfuncs(txnName + "_var_" + p_exp.v.getName() + "_gen_time"), transaction);
 			Expr rec_expr = ctx.mkApp(objs.getfuncs(txnName + "_var_" + p_exp.v.getName()), transaction, order);
 			return ctx.mkApp(objs.getfuncs("proj_" + p_exp.v.getTableName() + "_" + p_exp.f.getName()), rec_expr,

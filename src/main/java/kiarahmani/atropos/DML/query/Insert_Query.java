@@ -187,6 +187,7 @@ public class Insert_Query extends Query {
 			new_update_expressions.add(newTuple);
 		}
 		this.insert_expressions = new_update_expressions;
+		this.where_clause.substituteExps(oldExp, newExp);
 	}
 
 }

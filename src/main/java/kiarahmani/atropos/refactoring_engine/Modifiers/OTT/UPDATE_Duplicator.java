@@ -94,7 +94,7 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 		Query new_qry = null;
 		// handle the CRDT case
 		if (vc.getType() == VC_Type.VC_OTM && vc.get_agg() == VC_Agg.VC_SUM) {
-			WHC_Constraint[] whcc_array = mkInsert(old_whc);
+			WHC_Constraint[] whcc_array = mkInsert(old_update);
 			new_qry = new Insert_Query(-1, pu.getNewUpdateId(txnName), targetTable, targetTable.getIsAliveFN());
 			((Insert_Query) new_qry).addPKExp(whcc_array);
 			for (WHC_Constraint pk : whcc_array)
@@ -123,10 +123,9 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 	/**
 	 * @return
 	 */
-	private WHC_Constraint[] mkInsert(WHC old_whc) {
+	private WHC_Constraint[] mkInsert(Update_Query old_update) {
 		if (!targetTable.isCrdt())
 			return null;
-
 		List<FieldName> pk_fields = sourceTable.getPKFields();
 		logger.debug("PK fields of the source table: " + pk_fields);
 		int pk_fields_size = pk_fields.size();
@@ -136,7 +135,7 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 		logger.debug("For each PK a new expression will be added to the beginning of the ISNERT:");
 		for (FieldName pk_fn : pk_fields) {
 			result[index] = new WHC_Constraint(targetTable.getTableName(), targetTable.getPKFields().get(index),
-					BinOp.EQ, old_whc.getConstraintByFieldName(pk_fn).getExpression());
+					BinOp.EQ, old_update.getWHC().getConstraintByFieldName(pk_fn).getExpression());
 			index++;
 		}
 		logger.debug("Insert Exps after adding PKs: " + Arrays.toString(result));
@@ -145,7 +144,7 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 				new E_UUID());
 		logger.debug("Insert Exps after adding UUID: " + Arrays.toString(result));
 		// set delta field
-		Expression delta_exp = extractDeltaExp();
+		Expression delta_exp = extractDeltaExp(old_update);
 		if (delta_exp == null)
 			return null;
 		result[pk_fields_size + 1] = new WHC_Constraint(targetTable.getTableName(), targetTable.getDeltaField(),
@@ -154,7 +153,7 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 		return result;
 	}
 
-	private Expression extractDeltaExp() {
+	private Expression extractDeltaExp(Update_Query old_update) {
 		Expression result = null;
 		ArrayList<Tuple<FieldName, Expression>> old_exps = old_update.getUpdateExps();
 		assert (old_exps
@@ -256,7 +255,7 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 			return false;
 
 		boolean assumption0 = !(vc.getType() == VC_Type.VC_OTM && vc.get_agg() == VC_Agg.VC_SUM)
-				|| (mkInsert(input_update.getWHC()) != null);
+				|| (mkInsert(input_update) != null);
 
 		// all keys used as the WHC of duplicating UPDATE must be constrained by vc
 		boolean assumption1 = vc.containsWHC(input_update.getWHC());
