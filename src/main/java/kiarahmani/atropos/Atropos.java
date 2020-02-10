@@ -43,9 +43,6 @@ public class Atropos {
 		program.printProgram();
 		pu.lock();
 
-		// analyze the initial program
-		// analyze(program);
-
 		/*
 		 * 
 		 * Manual Schema Refactoring
@@ -119,15 +116,12 @@ public class Atropos {
 		 * End of refactoring
 		 * 
 		 */
-		program = pu.generateProgram();
-		program.printProgram();
 
 		re.atomicize(pu);
-
 		program = pu.generateProgram();
 		program.printProgram();
 
-		//analyze(program);
+		// analyze(program);
 
 		// print stats and exit
 		printStats(System.currentTimeMillis() - time_begin, results);

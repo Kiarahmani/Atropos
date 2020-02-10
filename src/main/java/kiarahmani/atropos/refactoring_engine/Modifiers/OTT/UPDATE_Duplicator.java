@@ -159,7 +159,7 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 		assert (old_exps
 				.size() == 1) : "assumption failed: CRDT duplication can only be called on single field updates";
 		logger.debug("Extracting delta from: " + old_exps);
-		// FieldName fn = old_exps.get(0).x;
+		FieldName fn = old_exps.get(0).x;
 		Expression exp = old_exps.get(0).y;
 		if (exp instanceof E_BinOp) {
 			// TODO: Generalize CRDT tables and supported operations

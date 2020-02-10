@@ -14,8 +14,14 @@ import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DDL.TableName;
 import kiarahmani.atropos.DDL.vc.VC;
 import kiarahmani.atropos.DML.Variable;
+import kiarahmani.atropos.DML.expression.BinOp;
+import kiarahmani.atropos.DML.expression.E_BinOp;
+import kiarahmani.atropos.DML.expression.E_Proj;
+import kiarahmani.atropos.DML.expression.Expression;
+import kiarahmani.atropos.DML.expression.constants.E_Const_Num;
 import kiarahmani.atropos.DML.query.Query;
 import kiarahmani.atropos.DML.query.Select_Query;
+import kiarahmani.atropos.DML.query.Update_Query;
 import kiarahmani.atropos.DML.query.Query.Kind;
 import kiarahmani.atropos.program.Block;
 import kiarahmani.atropos.program.Statement;
@@ -53,10 +59,114 @@ public class Refactoring_Engine {
 	// Functions for shrinking the program
 	/*****************************************************************************************************************/
 	public void atomicize(Program_Utils pu) {
+		pre_analysis(pu); // get rid of non-crdt-able updates
 		decompose(pu); // split and redirect all selects to tables with lower wights
 		delete_redundant(pu);
 		shrink(pu);
 	}
+
+	private void pre_analysis(Program_Utils input_pu) {
+		for (Transaction txn : input_pu.getTrasnsactionMap().values())
+			for (Query q : txn.getAllQueries()) {
+				if (q instanceof Update_Query) {
+					Update_Query uq = (Update_Query) q;
+					if (is_non_crdt_able(uq)) {
+						Table dest = there_is_a_crdt_table(input_pu, uq);
+						if (dest != null) {
+							String txn_name = txn.getName();
+							int u_po = uq.getPo();
+							Block u_block = input_pu.getBlockByPo(txn_name, u_po);
+							Select_Query new_select = mk_crdt_able_select(input_pu, uq, txn_name);
+							Update_Query new_update = mk_crdt_able_update(input_pu, uq, new_select.getVariable(),
+									txn_name);
+							deleteQuery(input_pu, u_po, txn_name);
+							InsertQueriesAtPO(u_block, input_pu, txn_name, u_po, new Query_Statement(u_po, new_update));
+							duplicate_update(input_pu, txn_name, new_update.getTableName().getName(),
+									dest.getTableName().getName(), u_po);
+							deleteQuery(input_pu, u_po, txn_name);
+							InsertQueriesAtPO(u_block, input_pu, txn_name, u_po - 1,
+									new Query_Statement(u_po - 1, new_select));
+						}
+					}
+				}
+			}
+	}
+
+	private Table there_is_a_crdt_table(Program_Utils input_pu, Update_Query uq) {
+		for (Table dest : input_pu.getTables().values()) {
+			VC vc = input_pu.getVCByOrderedTables(uq.getTableName(), dest.getTableName());
+			if (vc != null)
+				return dest;
+		}
+		return null;
+	}
+
+	private boolean is_non_crdt_able(Update_Query uq) {
+		ArrayList<Tuple<FieldName, Expression>> old_exps = uq.getUpdateExps();
+		if (old_exps.size() == 1) {
+			Expression exp = old_exps.get(0).y;
+			if (exp instanceof E_Const_Num) {
+				E_Const_Num nexp = (E_Const_Num) exp;
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private Select_Query mk_crdt_able_select(Program_Utils input_pu, Update_Query uq, String txn_name) {
+		ArrayList<Tuple<FieldName, Expression>> old_exps = uq.getUpdateExps();
+		assert (old_exps.size() == 1) : "unexpected state";
+		Tuple<FieldName, Expression> old_exp = old_exps.get(0);
+		String table_name = uq.getTableName().getName();
+		Variable new_var = input_pu.mkVariable(table_name, txn_name);
+		ArrayList<FieldName> new_fns = new ArrayList<>();
+		new_fns.add(old_exp.x);
+		Select_Query result = new Select_Query(-1, input_pu.getNewSelectId(txn_name), uq.isAtomic(), uq.getTableName(),
+				new_fns, new_var, uq.getWHC());
+		result.setPathCondition(uq.getPathCondition());
+		return result;
+	}
+
+	private Update_Query mk_crdt_able_update(Program_Utils input_pu, Update_Query uq, Variable new_var,
+			String txn_name) {
+		Update_Query new_qry = new Update_Query(-1, input_pu.getNewUpdateId(txn_name), uq.isAtomic(), uq.getTableName(),
+				uq.getWHC());
+		Tuple<FieldName, Expression> new_exp = get_crdt_able_exps(input_pu, uq, new_var);
+		new_qry.addUpdateExp(new_exp.x, new_exp.y);
+		new_qry.setPathCondition(uq.getPathCondition());
+		return new_qry;
+	}
+
+	private Tuple<FieldName, Expression> get_crdt_able_exps(Program_Utils input_pu, Update_Query uq, Variable new_var) {
+		ArrayList<Tuple<FieldName, Expression>> old_exps = uq.getUpdateExps();
+		assert (old_exps.size() == 1) : "unexpected state";
+		Tuple<FieldName, Expression> old_exp = old_exps.get(0);
+		E_Const_Num nexp = (E_Const_Num) old_exp.y;
+		int const_val = nexp.val;
+		Expression proj_exp = new E_Proj(new_var, old_exp.x, new E_Const_Num(1));
+		Expression new_exp = new E_BinOp(BinOp.PLUS, proj_exp,
+				new E_BinOp(BinOp.MINUS, new E_Const_Num(const_val), proj_exp));
+
+		Tuple<FieldName, Expression> result = new Tuple<FieldName, Expression>(old_exp.x, new_exp);
+		return result;
+	}
+
+	/*
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 */
 
 	private void delete_redundant(Program_Utils pu) {
 		while (delete_redundant_iter(pu))
