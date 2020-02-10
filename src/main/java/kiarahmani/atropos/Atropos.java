@@ -127,7 +127,7 @@ public class Atropos {
 		program = pu.generateProgram();
 		program.printProgram();
 
-		analyze(program);
+		//analyze(program);
 
 		// print stats and exit
 		printStats(System.currentTimeMillis() - time_begin, results);

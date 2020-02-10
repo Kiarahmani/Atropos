@@ -85,11 +85,13 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 			WHC GetAccount0_WHC = new WHC(pu.getIsAliveFieldName("accounts"), new WHC_Constraint(
 					pu.getTableName("accounts"), pu.getFieldName("a_custid"), BinOp.EQ, pu.getArg("am_custId0")));
 			Select_Query GetAccount0 = pu.addSelectQuery("Amalgamate", "accounts", GetAccount0_WHC, "a_name");
+			GetAccount0.setImplicitlyUsed(pu.getFieldName("a_name"));
 			pu.addQueryStatement("Amalgamate", GetAccount0);
 			// retrieve customer1's name by id
 			WHC GetAccount1_WHC = new WHC(pu.getIsAliveFieldName("accounts"), new WHC_Constraint(
 					pu.getTableName("accounts"), pu.getFieldName("a_custid"), BinOp.EQ, pu.getArg("am_custId1")));
 			Select_Query GetAccount1 = pu.addSelectQuery("Amalgamate", "accounts", GetAccount1_WHC, "a_name");
+			GetAccount1.setImplicitlyUsed(pu.getFieldName("a_name"));
 			pu.addQueryStatement("Amalgamate", GetAccount1);
 
 			// retrieve savings balance of cust0

@@ -67,6 +67,8 @@ public class Refactoring_Engine {
 		boolean result = false;
 		HashMap<Table, HashSet<FieldName>> accessed_fn_map = mkTableMap(pu);
 		result |= delete_redundant_tables(pu, accessed_fn_map);
+		Program program = pu.generateProgram();
+		program.printProgram();
 		result |= delete_redundant_writes(pu, accessed_fn_map);
 		result |= delete_redundant_reads(pu);
 		return result;
@@ -90,18 +92,26 @@ public class Refactoring_Engine {
 		for (Transaction txn : pu.getTrasnsactionMap().values())
 			for (Query q : txn.getAllQueries())
 				if (q.canBeRemoved() && q.isWrite()) {
+					logger.debug("--------------");
+					logger.debug("analyzing if " + txn.getName() + "." + q.getId() + " can be removed");
 					Table curr_t = pu.getTable(q.getTableName().getName());
 					if (curr_t == null) { // table has already been removed
+						logger.debug("removing " + txn.getName() + "." + q.getId() + " because table " + curr_t
+								+ " has already been removed");
 						deleteQuery(pu, q.getPo(), txn.getName());
 						result = true;
 					} else {
+
 						HashSet<FieldName> currr_accessed = accessed_fn_map.get(curr_t);
 						ArrayList<FieldName> curr_written = q.getWrittenFieldNames();
 						ArrayList<FieldName> excluded_fns = new ArrayList<>();
+						logger.debug("currr_accessed: " + currr_accessed);
+						logger.debug("curr_written: " + curr_written);
 						// figure out which fns are not used elsewhere
 						for (FieldName fn : curr_written)
 							if (!currr_accessed.contains(fn))
 								excluded_fns.add(fn);
+						logger.debug("excluded_fns: " + excluded_fns);
 						if (excluded_fns.size() == curr_written.size()) { // if NONE of the updated fields is used
 							deleteQuery(pu, q.getPo(), txn.getName());
 							result = true;
@@ -222,7 +232,7 @@ public class Refactoring_Engine {
 
 	/*
 	 * try swapping queries and attempt merging them (undo the swap if merge is
-	 * unsuccessful)
+	 * unsuccessful) -- called only once
 	 */
 	public void shrink(Program_Utils pu) {
 		for (Transaction txn : pu.getTrasnsactionMap().values()) {
@@ -250,7 +260,7 @@ public class Refactoring_Engine {
 	 * attempt to merge two queries at qry_po and qry_po+1
 	 */
 	private boolean attempt_merge_query(Program_Utils input_pu, String txn_name, int qry_po, boolean isRevert) {
-		logger.debug("");
+		HashMap<Table, HashSet<FieldName>> accessed_fn_map = mkTableMap(input_pu);
 		Query q1 = input_pu.getQueryByPo(txn_name, qry_po);
 		Query q2 = input_pu.getQueryByPo(txn_name, qry_po + 1);
 		if (q1 == null || q2 == null)
@@ -273,6 +283,44 @@ public class Refactoring_Engine {
 				return true;
 			logger.debug("merge was unsuccessful");
 			// if there is vc between q1 and q2
+			TableName t1 = q1.getTableName();
+			TableName t2 = q2.getTableName();
+
+			VC vc = input_pu.getVCByTables(t1, t2);
+			if (null != null) { // TODO: right now we don't try redirecting at all. However, it is possible to
+								// attempt this by first making sure that no un-used field will become used
+				/*
+				 * try redirecting q2 to q1's table
+				 */
+				logger.debug("VC exits between tables: " + vc);
+				logger.debug("redirecting q2(" + q2.getId() + ") from " + t2 + " to " + t1);
+				SELECT_Redirector x = redirect_select(input_pu, txn_name, t2.getName(), t1.getName(), q2.getPo(),
+						false);
+				logger.debug("redirect(1) attempted. desc: " + x.getDesc());
+				logger.debug("attempt merging the redirected q2 with original q1");
+				success = merge_select(input_pu, txn_name, qry_po, isRevert);
+				logger.debug("selects merging attempted. result: " + (success != null));
+				if (success != null)
+					return true;
+				logger.debug("merge was unsuccessful: revert the redirection and try the opposit direction");
+				// if unsuccessful revert the redirect
+				x = redirect_select(input_pu, txn_name, t1.getName(), t2.getName(), q2.getPo(), true);
+				logger.debug("REVERT(1) DESC: " + x.getDesc());
+				/*
+				 * repeat the opposit way; try redirecting q1 to q2's table
+				 */
+				logger.debug("now redirecting q1(" + q1.getId() + ") from " + t1 + " to " + t2);
+				x = redirect_select(input_pu, txn_name, t1.getName(), t2.getName(), q1.getPo(), false);
+				logger.debug("redirect(2) attempted. desc: " + x.getDesc());
+				success = merge_select(input_pu, txn_name, qry_po, isRevert);
+				if (success != null)
+					return true;
+				logger.debug("merge was again unsuccessful: revert the last redirection and exit");
+				// if unsuccessful revert the redirect
+				x = redirect_select(input_pu, txn_name, t2.getName(), t1.getName(), q1.getPo(), true);
+				logger.debug("REVERT(2) DESC: " + x.getDesc());
+			} else
+				logger.debug("no vc exits for redirection: exit.");
 		}
 		return false;
 	}
