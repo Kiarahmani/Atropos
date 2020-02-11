@@ -88,7 +88,7 @@ public class Atropos {
 
 		program = pu.generateProgram();
 		program.printProgram();
-		// print stats and exit
+		// print stats and exit 
 		printStats(System.currentTimeMillis() - time_begin, results, min_anomalies_cnt);
 	}
 
@@ -102,7 +102,6 @@ public class Atropos {
 			logger.debug("proposed program is rejected (because " + anm_cnt + ">=" + min_anomalies_cnt
 					+ "): ready to revert");
 			return false;
-
 		}
 	}
 
