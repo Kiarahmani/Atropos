@@ -50,14 +50,13 @@ public class Atropos {
 			logger.error("candidate refactorings are proposed");
 			re.refactor_schema_seq(pu, refactorings);
 			logger.error("candidate refactorings are applied");
-			Query_Modifier[] atomicizing_steps = re.atomicize(pu);
+			re.atomicize(pu);
 			logger.error("program is atomicized");
 			program = pu.generateProgram();
 			program.printProgram();
 			if (!programIsAccepted(pu.generateProgram())) {
 				logger.error("refactoring rejected: ready to revert");
 				re.revert_refactor_schema_seq(pu, refactorings);
-				re.revert_refactor_program_seq(pu, atomicizing_steps);
 				logger.error("revert successful");
 			}
 		}

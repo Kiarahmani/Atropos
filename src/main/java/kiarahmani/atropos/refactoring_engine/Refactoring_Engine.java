@@ -58,13 +58,11 @@ public class Refactoring_Engine {
 	/*****************************************************************************************************************/
 	// Functions for shrinking the program
 	/*****************************************************************************************************************/
-	public Query_Modifier[] atomicize(Program_Utils pu) {
+	public void atomicize(Program_Utils pu) {
 		// pre_analysis(pu); // get rid of non-crdt-able updates
 		decompose(pu); // split and redirect all selects to tables with lower wights
 		delete_redundant(pu);
 		shrink(pu);
-		Query_Modifier[] result = new Query_Modifier[0];
-		return result;
 	}
 
 	private void pre_analysis(Program_Utils input_pu) {
