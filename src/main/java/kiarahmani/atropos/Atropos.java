@@ -7,6 +7,9 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import kiarahmani.atropos.DDL.F_Type;
+import kiarahmani.atropos.DDL.vc.VC.VC_Agg;
+import kiarahmani.atropos.DDL.vc.VC.VC_Type;
 import kiarahmani.atropos.dependency.Conflict_Graph;
 import kiarahmani.atropos.dependency.DAI_Graph;
 import kiarahmani.atropos.encoding_engine.Encoding_Engine;
@@ -14,7 +17,12 @@ import kiarahmani.atropos.program.Program;
 import kiarahmani.atropos.program_generators.SmallBank.SmallBankProgramGenerator;
 import kiarahmani.atropos.refactoring_engine.Refactoring_Engine;
 import kiarahmani.atropos.refactoring_engine.Modifiers.Query_Modifier;
+import kiarahmani.atropos.refactoring_engine.deltas.ADDPK;
+import kiarahmani.atropos.refactoring_engine.deltas.CHSK;
 import kiarahmani.atropos.refactoring_engine.deltas.Delta;
+import kiarahmani.atropos.refactoring_engine.deltas.INTRO_F;
+import kiarahmani.atropos.refactoring_engine.deltas.INTRO_R;
+import kiarahmani.atropos.refactoring_engine.deltas.INTRO_VC;
 import kiarahmani.atropos.search_engine.Naive_search_engine;
 import kiarahmani.atropos.utils.Constants;
 import kiarahmani.atropos.utils.Program_Utils;
@@ -25,7 +33,7 @@ public class Atropos {
 	static int min_anomalies_cnt = Integer.MAX_VALUE;
 
 	public static void main(String[] args) {
-		int _refactoring_depth = 10;
+		int _refactoring_depth = 15;
 
 		long time_begin = System.currentTimeMillis();
 		try {
@@ -41,40 +49,61 @@ public class Atropos {
 		// min_anomalies_cnt = analyze(program);
 		min_anomalies_cnt = 24;
 		pu.lock();
+		Program_Utils snapshot_pu = pu.mkSnapShot();
 		// search the refactoring space
 		Naive_search_engine nse = new Naive_search_engine(pu);
 		for (int i = 0; i < _refactoring_depth; i++) {
-			logger.error("======== ITER " + i + " (current min: " + min_anomalies_cnt + ")");
+			System.gc();
+			logger.debug("======== ITER " + i + " (current min: " + min_anomalies_cnt + ")   (current pu: " + pu + ")");
+			logger.debug("current vc map: " + pu.getVCMap());
 			nse.reset();
-			Delta[] refactorings = nse.nextRefactorings();
-			logger.error("candidate refactorings are proposed");
+			logger.debug("snapshot of pu before refactoring is created");
+			Delta[] refactorings = nse.nextRefactorings(pu);
+			if (refactorings == null) {
+				logger.debug("no refactoring was returned");
+				continue;
+			}
+			logger.debug("candidate refactorings are proposed");
 			re.refactor_schema_seq(pu, refactorings);
-			logger.error("candidate refactorings are applied");
+			logger.debug("proposed refactorings are applied");
 			re.atomicize(pu);
-			logger.error("program is atomicized");
+			logger.debug("proposed program is atomicized (printed below)");
 			program = pu.generateProgram();
 			program.printProgram();
 			if (!programIsAccepted(pu.generateProgram())) {
-				logger.error("refactoring rejected: ready to revert");
-				re.revert_refactor_schema_seq(pu, refactorings);
-				logger.error("revert successful");
+				logger.debug("current pu: " + pu);
+				logger.debug("last snapshot: " + snapshot_pu);
+				pu = snapshot_pu.mkSnapShot();
+				logger.debug("new pu: " + pu);
+				logger.debug("successfully reverted to the last snapshot");
+			} else {
+				logger.debug("current pu: " + pu);
+				logger.debug("last snapshot: " + snapshot_pu);
+				snapshot_pu = pu.mkSnapShot();
+				logger.debug("new snapshot: " + snapshot_pu);
+				logger.debug("successfully created a new snapshot of the refactored pu");
 			}
+			System.out.println("\n\n\n");
 		}
 
 		program = pu.generateProgram();
 		program.printProgram();
 		// print stats and exit
-		printStats(System.currentTimeMillis() - time_begin, results);
+		printStats(System.currentTimeMillis() - time_begin, results, min_anomalies_cnt);
 	}
 
 	private static boolean programIsAccepted(Program candidate) {
-		logger.error("before analyze");
 		int anm_cnt = analyze(candidate);
 		if (anm_cnt < min_anomalies_cnt) {
+			logger.debug("proposed program is accepted (because " + anm_cnt + "<" + min_anomalies_cnt + ")");
 			min_anomalies_cnt = anm_cnt;
 			return true;
-		} else
+		} else {
+			logger.debug("proposed program is rejected (because " + anm_cnt + ">=" + min_anomalies_cnt
+					+ "): ready to revert");
 			return false;
+
+		}
 	}
 
 	/*
@@ -99,11 +128,11 @@ public class Atropos {
 		// dai_graph.printDAIGraph();
 	}
 
-	private static void printStats(long time, Set<Program> results) {
+	private static void printStats(long time, Set<Program> results, int anml_cnt) {
 		System.out.println(
 				"\n\n\n\n============================================================================================");
 		System.out.println();
-		System.out.println("Final Programs Count: " + results.size());
+		System.out.println("Final Anomaly Count: " + anml_cnt);
 		System.out.println(results);
 		System.out.println("Total Memory: "
 				+ (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1000000 + " MB");

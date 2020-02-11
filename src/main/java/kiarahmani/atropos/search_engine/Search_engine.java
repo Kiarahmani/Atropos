@@ -9,7 +9,7 @@ import kiarahmani.atropos.refactoring_engine.deltas.Delta;
 import kiarahmani.atropos.utils.Program_Utils;
 
 public abstract class Search_engine {
-	public abstract Delta[] nextRefactorings();
+	public abstract Delta[] nextRefactorings(Program_Utils pu);
 
 	public abstract void reset();
 

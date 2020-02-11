@@ -81,4 +81,14 @@ public class E_Arg extends Expression {
 		else
 			return this;
 	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see kiarahmani.atropos.DML.expression.Expression#mkSnapshot()
+	 */
+	@Override
+	public Expression mkSnapshot() {
+		return this;
+	}
 }

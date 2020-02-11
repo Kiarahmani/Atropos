@@ -64,20 +64,24 @@ public class Encoding_Engine {
 				}
 		}
 		System.out.println("Number of potential DAIs: " + potential_dais.size());
+		logger.debug("entering the dais_loop to iterate over all potential dais");
 		int iter = 0;
 		dais_loop: for (DAI pot_dai : potential_dais) {
 			logger.debug(" begin analysis for DAI: " + pot_dai);
 			// pre-analysis on the potential dai
 			z3logger.reset();
+			System.gc();
 			Z3Driver local_z3_driver = new Z3Driver();
+			logger.debug("new z3 driver created");
 			for (Transaction txn : program.getTransactions())
 				txn.is_included = true;
 			Status valid = local_z3_driver.validDAI(program, pot_dai);
 			if (valid == Status.UNSATISFIABLE) {
-				logger.debug(" discarding the potential DAI due to conflicting path conditions");
+				logger.debug(
+						" discarding the potential DAI due to conflicting path conditions. continue to the next dai");
 				continue dais_loop;
-			}
-
+			} else
+				logger.debug("potential DAI was pre-analyzed and found valid. Further analysis is needed");
 			// could not rule out the potential dai: must perform full analysis
 			for (Conflict c1 : cg.getConfsFromQuery(pot_dai.getQuery(1), pot_dai.getTransaction())) {
 				for (Conflict c2 : cg.getConfsFromQuery(pot_dai.getQuery(2), pot_dai.getTransaction())) {
@@ -91,6 +95,7 @@ public class Encoding_Engine {
 							txn.is_included = false;
 					z3logger.reset();
 					local_z3_driver = new Z3Driver();
+					logger.debug("new z3 driver is created");
 					// check if it is actualy a valid instance
 
 					if (Constants._VERBOSE_ANALYSIS) {
@@ -98,10 +103,13 @@ public class Encoding_Engine {
 								"\nRound #" + (iter++) + " (anomalies found: " + dai_graph.getDAIs().size() + ")");
 						printBaseAnomaly(iter, pot_dai, c1, c2);
 					} else {
-
+						String init = (iter % 10 != 0) ? "" : "\n";
+						System.out.print(init + "(rd" + (iter++) + ":");
 					}
 					long begin = System.currentTimeMillis();
+					logger.debug("before running the SAT query");
 					Status status = local_z3_driver.generateDAI(program, 4, pot_dai, c1, c2);
+					logger.debug("after running the SAT query: "+status);
 					long end = System.currentTimeMillis();
 					printResults(status, end - begin);
 					// if SAT, add the potential DAI to the graph
@@ -116,7 +124,7 @@ public class Encoding_Engine {
 			}
 			logger.debug("end of analysis for DAI: " + pot_dai);
 		}
-		System.out.println("Anomalies found: " + dai_graph.getDAIs().size());
+		System.out.println("\nAnomalies found: " + dai_graph.getDAIs().size() + "\n");
 		return dai_graph;
 
 	}
@@ -128,7 +136,7 @@ public class Encoding_Engine {
 		if (Constants._VERBOSE_ANALYSIS) {
 			System.out.println("" + status_string + " (" + (time) + "ms)");
 		} else
-			System.out.print(" " + status_string);
+			System.out.print("" + status_string + ") ");
 		this.printer.append(String.valueOf(time));
 		this.printer.flush();
 	}

@@ -21,4 +21,6 @@ public abstract class Expression {
 
 	public abstract boolean isEqual(Expression other);
 
+	public abstract Expression mkSnapshot();
+
 }

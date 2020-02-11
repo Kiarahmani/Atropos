@@ -13,6 +13,11 @@ public class E_UUID extends Expression {
 	}
 
 	@Override
+	public Expression mkSnapshot() {
+		return this;
+	}
+
+	@Override
 	public HashSet<Variable> getAllRefferencedVars() {
 		return new HashSet<>();
 	}

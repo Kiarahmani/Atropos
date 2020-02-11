@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Logger;
 import kiarahmani.atropos.Atropos;
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DML.Variable;
+import kiarahmani.atropos.DML.expression.constants.E_Const_Text;
 
 public class E_BinOp extends Expression {
 
@@ -19,6 +20,11 @@ public class E_BinOp extends Expression {
 		this.oper1 = e1;
 		this.oper2 = e2;
 		this.op = o;
+	}
+
+	@Override
+	public Expression mkSnapshot() {
+		return new E_BinOp(op, oper1.mkSnapshot(), oper2.mkSnapshot());
 	}
 
 	@Override

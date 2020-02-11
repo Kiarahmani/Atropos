@@ -230,19 +230,14 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 	}
 
 	private Redirection_Type get_redirection_type() {
-		if (this.vc.getTableName(1).equals(this.sourceTable.getTableName()))
+		logger.debug("current source table is: " + this.sourceTable);
+		logger.debug("detecting redirection type for: " + this.vc);
+		if (this.vc.getTableName(1).equalsWith(this.sourceTable.getTableName()))
 			return Redirection_Type.T1_TO_T2;
 		else
 			return Redirection_Type.T2_TO_T1;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * kiarahmani.atropos.refactoring_engine.Modifiers.OTT.One_to_Two_Query_Modifier
-	 * #isValid(kiarahmani.atropos.DML.query.Query)
-	 */
 	@Override
 	public boolean isValid(Query input_query) {
 		Update_Query input_update = null;

@@ -537,6 +537,7 @@ public class Refactoring_Engine {
 						if (ud != null)
 							intro_vc.addAppliedUpDup(ud);
 					}
+		// input_pu.mkVC(intro_vc.getVC());
 		return input_pu;
 	}
 

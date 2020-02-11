@@ -309,19 +309,26 @@ public class Program_Utils {
 	}
 
 	public VC getVCByTables(TableName TN1, TableName TN2) {
+		logger.debug("current pu: " + this);
+		logger.debug("finding a VC between " + TN1 + " and " + TN2);
+		logger.debug("current list of VCs: " + this.vcMap.values());
 		List<VC> result = this.vcMap.values().stream()
-				.filter(vc -> ((vc.getTableName(1).equals(TN1)) && (vc.getTableName(2).equals(TN2))
-						|| ((vc.getTableName(1).equals(TN2)) && (vc.getTableName(2).equals(TN1)))))
+				.filter(vc -> ((vc.getTableName(1).equalsWith(TN1)) && (vc.getTableName(2).equalsWith(TN2))
+						|| ((vc.getTableName(1).equalsWith(TN2)) && (vc.getTableName(2).equalsWith(TN1)))))
 				.collect(Collectors.toList());
-		if (result.size() == 0)
+		if (result.size() == 0) {
+			logger.debug("no such VC was found. returning null");
 			return null; // returns null if no VC is found
-		else
+
+		} else {
+			logger.debug("desired VC is found. returning " + result.get(0));
 			return result.get(0);
+		}
 	}
 
 	public VC getVCByOrderedTables(TableName TN1, TableName TN2) {
 		List<VC> result = this.vcMap.values().stream()
-				.filter(vc -> ((vc.getTableName(1).equals(TN1)) && (vc.getTableName(2).equals(TN2))))
+				.filter(vc -> ((vc.getTableName(1).equalsWith(TN1)) && (vc.getTableName(2).equalsWith(TN2))))
 				.collect(Collectors.toList());
 		if (result.size() == 0)
 			return null; // returns null if no VC is found
@@ -348,7 +355,7 @@ public class Program_Utils {
 	/*****************************************************************************************************************/
 	// Basic Getters
 	/*****************************************************************************************************************/
- 
+
 	/*
 	 * Tables and TableNames
 	 */
@@ -490,6 +497,10 @@ public class Program_Utils {
 	/*****************************************************************************************************************/
 	public void incVersion() {
 		this.version++;
+	}
+
+	public HashMap<String, VC> getVCMap() {
+		return this.vcMap;
 	}
 
 	public int getVersion() {
@@ -708,6 +719,69 @@ public class Program_Utils {
 		Table newTable = new Table(tn, fresh_fn_list);
 		this.tableMap.put(tn_name, newTable);
 		return newTable;
+	}
+
+	/*
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 */
+
+	public Program_Utils mkSnapShot() {
+		Program_Utils snapshot = new Program_Utils(program_name);
+		snapshot.version = this.version;
+		snapshot.comments = this.comments;
+		snapshot.lock = this.lock;
+		snapshot.argsMap = this.argsMap;
+		snapshot.ifStatementMap = this.ifStatementMap;
+		snapshot.transactionToSelectCount = this.transactionToSelectCount;
+		snapshot.transactionToUpdateCount = this.transactionToUpdateCount;
+		snapshot.transactionToStmtCount = this.transactionToStmtCount;
+		snapshot.transactionToIfCount = this.transactionToIfCount;
+		snapshot.transactionToPoCount = this.transactionToPoCount;
+		snapshot.transactionToVarCount = this.transactionToVarCount;
+		// tableNameMap
+		for (String key : this.tableNameMap.keySet()) {
+			TableName val = this.tableNameMap.get(key);
+			snapshot.tableNameMap.put(key, val);
+		}
+
+		// tableMap
+		for (String key : this.tableMap.keySet()) {
+			Table val = this.tableMap.get(key);
+			snapshot.tableMap.put(key, val.mkSnapshot());
+		}
+
+		// fieldNameMap
+		for (String key : this.fieldNameMap.keySet()) {
+			FieldName val = this.fieldNameMap.get(key);
+			snapshot.fieldNameMap.put(key, val);
+		}
+
+		// transactionMap
+		for (String key : this.trasnsactionMap.keySet()) {
+			Transaction val = this.trasnsactionMap.get(key);
+			snapshot.trasnsactionMap.put(key, val.mkSnapshot());
+		}
+
+		// variableMap
+		for (String key : this.variableMap.keySet()) {
+			Variable val = this.variableMap.get(key);
+			snapshot.variableMap.put(key, val);
+		}
+
+		// VCMap
+		for (String key : this.vcMap.keySet()) {
+			VC val = this.vcMap.get(key);
+			snapshot.vcMap.put(key, val.mkSnapshot());
+		}
+
+		return snapshot;
 	}
 
 }

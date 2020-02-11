@@ -16,6 +16,7 @@ import kiarahmani.atropos.utils.Tuple;
 public class Delete_Query extends Query {
 	private TableName tableName;
 	private ArrayList<Tuple<FieldName, Expression>> update_expressions;
+	FieldName is_alive;
 
 	public Delete_Query(int po, int id, boolean isAtomic, TableName tableName, FieldName is_alive, WHC whc) {
 		super();
@@ -27,6 +28,17 @@ public class Delete_Query extends Query {
 		this.tableName = tableName;
 		this.update_expressions = new ArrayList<>();
 		this.update_expressions.add(new Tuple<FieldName, Expression>(is_alive, new E_Const_Bool(false)));
+		this.is_alive = is_alive;
+	}
+
+	@Override
+	public Query mkSnapshot() {
+		Query result = new Delete_Query(this.po, this.id, this.isAtomic, this.tableName, this.is_alive,
+				this.where_clause.mkSnapshot());
+		result.path_condition = this.path_condition.mkSnapshot();
+		result.canBeRemoved = this.canBeRemoved;
+		result.kind = this.kind;
+		return result;
 	}
 
 	public Expression getUpdateExpressionByFieldName(FieldName fn) {
@@ -134,6 +146,7 @@ public class Delete_Query extends Query {
 	@Override
 	public void redirectProjs(Variable oldVar, FieldName oldFn, Variable newVar, FieldName newFn) {
 		this.where_clause.redirectProjs(oldVar, oldFn, newVar, newFn);
+		this.path_condition.redirectProjs(oldVar, oldFn, newVar, newFn);
 	}
 
 	/*
@@ -146,5 +159,13 @@ public class Delete_Query extends Query {
 	@Override
 	public void substituteExps(Expression oldExp, Expression newExp) {
 		this.where_clause.substituteExps(oldExp, newExp);
+		this.path_condition.substitute(oldExp, newExp);
 	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see kiarahmani.atropos.DML.query.Query#mkSnapshot()
+	 */
+
 }

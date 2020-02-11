@@ -65,8 +65,6 @@ public class Transaction {
 			result.addAll(q.getAllProjExps());
 		return result;
 	}
-	
-	
 
 	public String[] getAllStmtTypes() {
 		List<String> result = new ArrayList<String>();
@@ -116,4 +114,22 @@ public class Transaction {
 			stmt.printStatemenet("  ");
 		System.out.println("}");
 	}
+
+	public Transaction mkSnapshot() {
+		Transaction result = new Transaction(this.getName());
+		// assertions
+		for (Expression exp : this.assertions)
+			result.addAssertion(exp.mkSnapshot());
+		// statements
+		for (Statement stmt : this.statements)
+			result.addStatement(stmt.mkSnapshot());
+		// args
+		for (E_Arg arg : this.args)
+			result.addArg((E_Arg) arg.mkSnapshot());
+		
+		
+		result.is_included = this.is_included;
+		return result;
+	}
+
 }

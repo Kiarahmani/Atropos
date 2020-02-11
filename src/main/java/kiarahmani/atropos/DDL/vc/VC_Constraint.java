@@ -23,4 +23,9 @@ public class VC_Constraint {
 	public String toString() {
 		return F_1 + "=" + F_2;
 	}
+
+	public VC_Constraint mkSnapshot() {
+		return new VC_Constraint(this.F_1, this.F_2);
+	}
+
 }

@@ -14,6 +14,11 @@ public class E_Size extends Expression {
 	}
 
 	@Override
+	public Expression mkSnapshot() {
+		return new E_Size(this.v);
+	}
+
+	@Override
 	public String toString() {
 		return "size(" + v + ")";
 	}

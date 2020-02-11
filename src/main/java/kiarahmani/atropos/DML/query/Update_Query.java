@@ -27,6 +27,18 @@ public class Update_Query extends Query {
 		this.po = po;
 	}
 
+	@Override
+	public Query mkSnapshot() {
+		Update_Query result = new Update_Query(this.po, this.id, this.isAtomic, this.tableName,
+				this.where_clause.mkSnapshot());
+		for (Tuple<FieldName, Expression> fne : this.update_expressions)
+			result.update_expressions.add(new Tuple<FieldName, Expression>(fne.x, fne.y.mkSnapshot()));
+		result.where_clause = this.where_clause.mkSnapshot();
+		result.path_condition = this.path_condition.mkSnapshot();
+		result.canBeRemoved = this.canBeRemoved;
+		return result;
+	}
+
 	public Expression getUpdateExpressionByFieldName(FieldName fn) {
 		for (Tuple<FieldName, Expression> tp : this.update_expressions)
 			if (tp.x == fn)
@@ -149,6 +161,7 @@ public class Update_Query extends Query {
 		for (Tuple<FieldName, Expression> fn_exp : update_expressions)
 			fn_exp.y.redirectProjs(oldVar, oldFn, newVar, newFn);
 		this.where_clause.redirectProjs(oldVar, oldFn, newVar, newFn);
+		this.path_condition.redirectProjs(oldVar, oldFn, newVar, newFn);
 	}
 
 	/*
@@ -168,5 +181,6 @@ public class Update_Query extends Query {
 		}
 		this.update_expressions = new_update_expressions;
 		this.where_clause.substituteExps(oldExp, newExp);
+		this.path_condition.substitute(oldExp, newExp);
 	}
 }

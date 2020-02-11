@@ -13,6 +13,16 @@ public class E_UnOp extends Expression {
 	public UnOp un_op;
 	public Expression exp;
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see kiarahmani.atropos.DML.expression.Expression#mkSnapshot()
+	 */
+	@Override
+	public Expression mkSnapshot() {
+		return new E_UnOp(this.un_op, this.exp.mkSnapshot());
+	}
+
 	public E_UnOp(UnOp un_op, Expression exp) {
 		this.un_op = un_op;
 		this.exp = exp;
@@ -80,4 +90,5 @@ public class E_UnOp extends Expression {
 			return this;
 		}
 	}
+
 }

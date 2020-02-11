@@ -47,11 +47,20 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 			txns.add(txn);
 
 		pu.mkTable("accounts", new FieldName("a_custid", true, true, F_Type.NUM),
-				new FieldName("a_name", false, false, F_Type.TEXT));
+				new FieldName("a_name", false, false, F_Type.TEXT),
+				new FieldName("a_joined_date", false, false, F_Type.NUM),
+				new FieldName("a_credit_score", false, false, F_Type.NUM),
+				new FieldName("a_district_code", false, false, F_Type.NUM),
+				new FieldName("a_age", false, false, F_Type.NUM), new FieldName("a_sex", false, false, F_Type.NUM));
+
 		pu.mkTable("savings", new FieldName("s_custid", true, true, F_Type.NUM),
-				new FieldName("s_bal", false, false, F_Type.NUM));
+				new FieldName("s_bal", false, false, F_Type.NUM), new FieldName("s_credit", false, false, F_Type.NUM),
+				new FieldName("s_opened_date", false, false, F_Type.NUM)
+
+		);
 		pu.mkTable("checking", new FieldName("c_custid", true, true, F_Type.NUM),
-				new FieldName("c_bal", false, false, F_Type.NUM));
+				new FieldName("c_bal", false, false, F_Type.NUM), new FieldName("c_credit", false, false, F_Type.NUM),
+				new FieldName("c_opened_date", false, false, F_Type.NUM));
 		/*
 		 * pu.mkTable("car", new FieldName("car_id", true, true, F_Type.NUM), new
 		 * FieldName("car_maker", false, false, F_Type.NUM), new FieldName("car_model",

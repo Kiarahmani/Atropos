@@ -35,6 +35,18 @@ public class Insert_Query extends Query {
 		this.insert_expressions.add(new Tuple<FieldName, Expression>(is_alive, new E_Const_Bool(true)));
 	}
 
+	@Override
+	public Query mkSnapshot() {
+		Insert_Query result = new Insert_Query(this.po, this.id, this.table, this.is_alive);
+		result.where_clause = this.where_clause.mkSnapshot();
+		result.path_condition = this.path_condition.mkSnapshot();
+		result.canBeRemoved = this.canBeRemoved;
+		result.kind = this.kind;
+		for (Tuple<FieldName, Expression> fne : this.insert_expressions)
+			result.insert_expressions.add(new Tuple<FieldName, Expression>(fne.x, fne.y.mkSnapshot()));
+		return result;
+	}
+
 	public Expression getInsertExpressionByFieldName(FieldName fn) {
 		for (Tuple<FieldName, Expression> tp : this.insert_expressions)
 			if (tp.x == fn)
@@ -70,7 +82,7 @@ public class Insert_Query extends Query {
 			delim = ",";
 		}
 		return isAtomicString + "INSERT" + this.id + " INTO " + String.format("%-10s", this.tableName) + " VALUES ("
-				+ updateTuplesList + ")"+ "				PC=" + this.path_condition;
+				+ updateTuplesList + ")" + "				PC=" + this.path_condition;
 	}
 
 	@Override
@@ -176,6 +188,7 @@ public class Insert_Query extends Query {
 		for (Tuple<FieldName, Expression> t : this.insert_expressions)
 			t.y.redirectProjs(newVar, newFn, newVar, newFn);
 		this.where_clause.redirectProjs(oldVar, oldFn, newVar, newFn);
+		this.path_condition.redirectProjs(oldVar, oldFn, newVar, newFn);
 	}
 
 	@Override
@@ -188,6 +201,7 @@ public class Insert_Query extends Query {
 		}
 		this.insert_expressions = new_update_expressions;
 		this.where_clause.substituteExps(oldExp, newExp);
+		this.path_condition.substitute(oldExp, newExp);
 	}
 
 }

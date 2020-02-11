@@ -12,6 +12,16 @@ import kiarahmani.atropos.DML.expression.Expression;
 public class E_Const_Bool extends E_Const {
 	public boolean val;
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see kiarahmani.atropos.DML.expression.Expression#mkSnapshot()
+	 */
+	@Override
+	public Expression mkSnapshot() {
+		return new E_Const_Bool(this.val);
+	}
+
 	public E_Const_Bool(boolean b) {
 		this.val = b;
 	}

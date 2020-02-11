@@ -16,6 +16,11 @@ public class E_Const_Num extends E_Const {
 	}
 
 	@Override
+	public Expression mkSnapshot() {
+		return new E_Const_Num(this.val);
+	}
+
+	@Override
 	public String toString() {
 		return "" + this.val;
 	}

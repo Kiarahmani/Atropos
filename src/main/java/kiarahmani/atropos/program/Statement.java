@@ -24,4 +24,6 @@ public abstract class Statement {
 
 	public abstract Expression getPathCondition();
 
+	public abstract Statement mkSnapshot();
+
 }

@@ -15,6 +15,11 @@ public class E_Proj extends Expression {
 		return this.e;
 	}
 
+	@Override
+	public Expression mkSnapshot() {
+		return new E_Proj(this.v, this.f, this.e.mkSnapshot());
+	}
+
 	public E_Proj(Variable v, FieldName f, Expression e) {
 		this.f = f;
 		this.e = e;
@@ -33,7 +38,6 @@ public class E_Proj extends Expression {
 		return result;
 	}
 
-	
 	@Override
 	public Expression substitute(Expression oldExp, Expression newExp) {
 		if (this.isEqual(oldExp))
@@ -43,8 +47,7 @@ public class E_Proj extends Expression {
 			return this;
 		}
 	}
-	
-	
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -76,6 +79,5 @@ public class E_Proj extends Expression {
 		} else
 			return false;
 	}
-	
 
 }

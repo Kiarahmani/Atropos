@@ -69,4 +69,14 @@ public class E_Const_Text extends E_Const {
 		else
 			return this;
 	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see kiarahmani.atropos.DML.expression.Expression#mkSnapshot()
+	 */
+	@Override
+	public Expression mkSnapshot() {
+		return new E_Const_Text(val);
+	}
 }

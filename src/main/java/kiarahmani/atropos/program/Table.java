@@ -110,4 +110,13 @@ public class Table {
 		result += ")";
 		return result;
 	}
+
+	public Table mkSnapshot() {
+		Table result = new Table(this.name, this.getIsAliveFN());
+		for (FieldName fn : this.fieldNames)
+			if (!fn.getName().contains("alive"))
+				result.addFieldName(fn);
+		return result;
+	}
+
 }

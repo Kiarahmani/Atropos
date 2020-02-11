@@ -46,6 +46,17 @@ public class Select_Query extends Query {
 		this.implicitlyUsed = new HashSet<>();
 	}
 
+	@Override
+	public Query mkSnapshot() {
+		Select_Query result = new Select_Query(this.po, this.id, this.isAtomic, this.tableName, this.fieldNames,
+				this.variable, this.where_clause.mkSnapshot());
+		result.where_clause = this.where_clause.mkSnapshot();
+		result.path_condition = this.path_condition.mkSnapshot();
+		result.canBeRemoved = this.canBeRemoved;
+		result.implicitlyUsed = this.implicitlyUsed;
+		return result;
+	}
+
 	public String getId() {
 		return this.kind.toString() + "#" + this.id;
 	}
@@ -160,6 +171,7 @@ public class Select_Query extends Query {
 	@Override
 	public void redirectProjs(Variable oldVar, FieldName oldFn, Variable newVar, FieldName newFn) {
 		this.where_clause.redirectProjs(oldVar, oldFn, newVar, newFn);
+		this.path_condition.redirectProjs(oldVar, oldFn, newVar, newFn);
 	}
 
 	/*
@@ -182,6 +194,7 @@ public class Select_Query extends Query {
 	@Override
 	public void substituteExps(Expression oldExp, Expression newExp) {
 		this.where_clause.substituteExps(oldExp, newExp);
+		this.path_condition.substitute(oldExp, newExp);
 	}
 
 }

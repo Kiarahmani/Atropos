@@ -147,7 +147,7 @@ public class Program {
 
 	public void printProgram() {
 		System.out.println(
-				"\n\n\n\n\n\n\n##############################################################################################################################");
+				"\n\n\n\n#####################################################################################################################################################");
 		System.out.println("### " + programName.toUpperCase() + "(" + version + ")");
 		System.out.println("## COMMENTS: " + comment);
 		System.out.println("\n## SCHEMA:");
@@ -159,5 +159,8 @@ public class Program {
 		System.out.println("\n\n## TRANSACTIONS:");
 		for (Transaction txn : this.transactions)
 			txn.printTransaction();
+		System.out.println(
+				"#####################################################################################################################################################");
+		System.out.println("\n\n\n\n");
 	}
 }

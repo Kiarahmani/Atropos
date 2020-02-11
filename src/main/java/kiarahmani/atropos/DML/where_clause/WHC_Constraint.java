@@ -29,6 +29,10 @@ public class WHC_Constraint {
 		this.alive_constraint = this.f.getName().contains("alive");
 	}
 
+	public WHC_Constraint mkSnapshot() {
+		return new WHC_Constraint(this.tn, this.f, this.op, this.exp.mkSnapshot());
+	}
+
 	public boolean isAliveConstraint() {
 		return alive_constraint;
 	}

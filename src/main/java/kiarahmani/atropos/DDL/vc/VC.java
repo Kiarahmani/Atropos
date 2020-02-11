@@ -33,6 +33,15 @@ public class VC {
 		}
 	}
 
+	public VC mkSnapshot() {
+		VC result = new VC(this.name, this.T_1, this.T_2, this.vc_agg, this.vc_type);
+		for (Tuple<FieldName, FieldName> ff : this.fieldTuples)
+			result.fieldTuples.add(ff);
+		for (VC_Constraint vcc : this.vc_constraints)
+			result.vc_constraints.add(vcc.mkSnapshot());
+		return result;
+	}
+
 	private static final Logger logger = LogManager.getLogger(Atropos.class);
 	private VC_Type vc_type;
 	private VC_Agg vc_agg;

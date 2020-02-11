@@ -19,10 +19,10 @@ public class NameGenerator {
 	}
 
 	public String newRelationName() {
-		return "new_table_" + (r_cnt++);
+		return "nt_" + (r_cnt++);
 	}
 
 	public String newFieldName() {
-		return "new_field_" + (f_cnt++);
+		return "nf_" + (f_cnt++);
 	}
 }

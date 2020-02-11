@@ -86,4 +86,6 @@ public abstract class Query {
 
 	public abstract void substituteExps(Expression oldExp, Expression newExp);
 
+	public abstract Query mkSnapshot();
+
 }

@@ -45,6 +45,13 @@ public class WHC {
 		// all where cluases included a special constraint on is_alive
 	}
 
+	public WHC mkSnapshot() {
+		WHC result = new WHC();
+		for (WHC_Constraint whcc : this.whc_constraints)
+			result.whc_constraints.add(whcc.mkSnapshot());
+		return result;
+	}
+
 	public ArrayList<WHC_Constraint> getConstraints() {
 		return this.whc_constraints;
 	}

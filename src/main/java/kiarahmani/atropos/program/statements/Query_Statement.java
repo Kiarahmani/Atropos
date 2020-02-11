@@ -76,6 +76,15 @@ public class Query_Statement extends Statement {
 		return this.query.getId() + "(po:" + this.query.getPo() + ")";
 	}
 
-
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see kiarahmani.atropos.program.Statement#mkSnapshot()
+	 */
+	@Override
+	public Statement mkSnapshot() {
+		Query_Statement result = new Query_Statement(this.id, this.query.mkSnapshot());
+		return result;
+	}
 
 }

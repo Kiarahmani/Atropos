@@ -154,4 +154,19 @@ public class If_Statement extends Statement {
 		return "IF-" + this.getIntId();
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see kiarahmani.atropos.program.Statement#mkSnapshot()
+	 */
+	@Override
+	public Statement mkSnapshot() {
+		If_Statement result = new If_Statement(this.id, this.condition.mkSnapshot());
+		for (Statement stmt : this.if_statements)
+			result.addStatementInIf(stmt.mkSnapshot());
+		for (Statement stmt : this.else_statements)
+			result.addStatementInElse(stmt.mkSnapshot());
+		return result;
+	}
+
 }
