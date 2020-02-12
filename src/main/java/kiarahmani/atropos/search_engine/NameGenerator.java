@@ -17,7 +17,7 @@ public class NameGenerator {
 	public NameGenerator() {
 		r_cnt = 0;
 		f_cnt = 0;
-		uuid_cnt=0;
+		uuid_cnt = 0;
 	}
 
 	public String newRelationName() {
@@ -25,14 +25,17 @@ public class NameGenerator {
 	}
 
 	public String newRelationName(String source_table) {
-		return source_table + "_crdt" + (r_cnt++);
+		return scramble(source_table) + "_crdt" + (r_cnt++);
 	}
 
 	public String newFieldName(String source_fn) {
-		return "copy_of_" + source_fn + "" + (f_cnt++);
+		return "copy_of_" + scramble(source_fn) + "" + (f_cnt++);
 	}
-	
-	
+
+	private String scramble(String s) {
+		return "X" + s.substring(2) + "X";
+	}
+
 	public String newUUIDName() {
 		return "uuid_" + "" + (uuid_cnt++);
 	}

@@ -47,39 +47,28 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 			txns.add(txn);
 
 		pu.mkTable("accounts", new FieldName("a_custid", true, true, F_Type.NUM),
-				new FieldName("a_name", false, false, F_Type.TEXT),
-				new FieldName("a_joined_date", false, false, F_Type.NUM),
-				new FieldName("a_credit_score", false, false, F_Type.NUM),
-				new FieldName("a_district_code", false, false, F_Type.NUM),
-				new FieldName("a_age", false, false, F_Type.NUM), new FieldName("a_sex", false, false, F_Type.NUM));
+				new FieldName("a_name", false, false, F_Type.TEXT), new FieldName("a_age", false, false, F_Type.NUM),
+				new FieldName("a_dist", false, false, F_Type.NUM),
+				new FieldName("a_sex", false, false, F_Type.NUM)
+				);
+
+		 pu.mkTable("dist", new FieldName("d_distid", true, true, F_Type.NUM),
+		new FieldName("d_city", false, false, F_Type.NUM)
+		, 
+		new FieldName("d_state",
+		 false, false, F_Type.NUM)
+		);
 
 		pu.mkTable("savings", new FieldName("s_custid", true, true, F_Type.NUM),
-				new FieldName("s_bal", false, false, F_Type.NUM), new FieldName("s_credit", false, false, F_Type.NUM),
-				new FieldName("s_opened_date", false, false, F_Type.NUM)
+				new FieldName("s_bal", false, false, F_Type.NUM), new FieldName("s_history", false, false, F_Type.NUM)
 
 		);
 		pu.mkTable("checking", new FieldName("c_custid", true, true, F_Type.NUM),
-				new FieldName("c_bal", false, false, F_Type.NUM), new FieldName("c_credit", false, false, F_Type.NUM),
-				new FieldName("c_opened_date", false, false, F_Type.NUM));
-		/*
-		 * pu.mkTable("car", new FieldName("car_id", true, true, F_Type.NUM), new
-		 * FieldName("car_maker", false, false, F_Type.NUM), new FieldName("car_model",
-		 * false, false, F_Type.NUM), new FieldName("car_year", false, false,
-		 * F_Type.NUM), new FieldName("car_type", false, false, F_Type.NUM));
-		 * 
-		 * pu.mkTable("makers", new FieldName("maker_id", true, true, F_Type.NUM), new
-		 * FieldName("maker_name", false, false, F_Type.NUM), new
-		 * FieldName("maker_budget", false, false, F_Type.NUM), new
-		 * FieldName("maker_country", false, false, F_Type.NUM), new
-		 * FieldName("maker_age", false, false, F_Type.NUM));
-		 * 
-		 * FieldName fn_mbc_maker_id = new FieldName("mbc_maker_id", true, true,
-		 * F_Type.NUM); FieldName fn_mbc_uuid = new FieldName("mbc_uuid", true, false,
-		 * F_Type.NUM); fn_mbc_uuid.setUUID(); FieldName fn_mbc_amnt = new
-		 * FieldName("mbc_amnt", false, false, F_Type.NUM); fn_mbc_amnt.setDelta();
-		 * pu.mkCRDTTable("makers_budget_crdt", fn_mbc_maker_id, fn_mbc_uuid,
-		 * fn_mbc_amnt);
-		 */
+				new FieldName("c_bal", false, false, F_Type.NUM)
+				,new FieldName("c_history", false, false, F_Type.NUM)
+
+		);
+
 		/*
 		 * /*
 		 * 
@@ -331,12 +320,14 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 					pu.getTableName("accounts"), pu.getFieldName("a_custid"), BinOp.EQ, pu.getArg("sp_sendAcct")));
 			Select_Query SendPayment_GetAccount_send = pu.addSelectQuery("SendPayment", "accounts",
 					SendPayment_GetAccount_send_WHC, "a_name");
+			SendPayment_GetAccount_send.setcanBeRemoved(false);
 			pu.addQueryStatement("SendPayment", SendPayment_GetAccount_send);
 
 			WHC SendPayment_GetAccount_dest_WHC = new WHC(pu.getIsAliveFieldName("accounts"), new WHC_Constraint(
 					pu.getTableName("accounts"), pu.getFieldName("a_custid"), BinOp.EQ, pu.getArg("sp_destAcct")));
 			Select_Query SendPayment_GetAccount_dest = pu.addSelectQuery("SendPayment", "accounts",
 					SendPayment_GetAccount_dest_WHC, "a_name");
+			SendPayment_GetAccount_send.setcanBeRemoved(false);
 			pu.addQueryStatement("SendPayment", SendPayment_GetAccount_dest);
 
 			// retrieve sender's old checking balance
@@ -386,6 +377,7 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 					pu.getTableName("accounts"), pu.getFieldName("a_name"), BinOp.EQ, pu.getArg("ts_custName")));
 			Select_Query TransactSavings_GetAccount0 = pu.addSelectQuery("TransactSavings", "accounts",
 					TransactSavings_GetAccount0_WHC, "a_custid");
+			
 			pu.addQueryStatement("TransactSavings", TransactSavings_GetAccount0);
 
 			// retrieve customer's old savings balance

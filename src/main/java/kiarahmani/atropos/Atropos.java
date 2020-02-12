@@ -1,7 +1,11 @@
 package kiarahmani.atropos;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -32,36 +36,28 @@ public class Atropos {
 		Program_Utils pu = new Program_Utils("SmallBank");
 		Program program = (new SmallBankProgramGenerator(pu)).generate("Balance", "Amalgamate", "TransactSavings",
 				"DepositChecking", "SendPayment", "WriteCheck");
-		program.printProgram();
 		pu.lock();
+		program.printProgram();
+		re.pre_analysis(pu);
+		re.atomicize(pu);
+
+
 		// search the refactoring space
 		Naive_search_engine nse = new Naive_search_engine(pu);
-		// define constants
-		int _max_iterations = 1;
-		int _refactoring_depth = 1;
-		for (int i = 0; i < _max_iterations; i++) {
-			ArrayList<Delta> all_refs = new ArrayList<>();
-			for (int j = 0; j < _refactoring_depth; j++)
-				for (Delta d : nse.nextRefactorings(pu))
-					all_refs.add(d);
-			re.refactor_schema_seq(pu, all_refs);
+		int _refactoring_depth = 4;
+		ArrayList<Delta> history = new ArrayList<>();
+		for (int j = 0; j < _refactoring_depth; j++) {
+			history.addAll(re.refactor_schema_seq(pu, nse.nextRefactorings(pu, history)));
 			re.atomicize(pu);
-			program = pu.generateProgram();
-			program.printProgram();
-			analyze(program);
-			System.gc();
 		}
-		// print stats and exit
-		printStats(System.currentTimeMillis() - time_begin);
-	}
+		program = pu.generateProgram();
+		program.printProgram();
+		int anml_cnt = analyze(program);
+		System.gc();
 
-	/*
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 */
+		// print stats and exit
+		printStats(System.currentTimeMillis() - time_begin, anml_cnt);
+	}
 
 	private static int analyze(Program program) {
 		Conflict_Graph cg = new Conflict_Graph(program);
@@ -70,12 +66,20 @@ public class Atropos {
 		return dai_graph.getDAICnt();
 	}
 
-	private static void printStats(long time) {
+	private static void printStats(long time, int number_of_anomalies) {
+
 		System.out.println(
 				"\n\n\n\n============================================================================================");
 		System.out.println();
 		System.out.println("Total Memory: "
 				+ (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1000000 + " MB");
 		System.out.println("Total Time:   " + time / 1000.0 + " s\n");
+		try {
+			Files.write(Paths.get("results.atropos"), ("\n" + number_of_anomalies + "," + (time / 1000.0)).getBytes(),
+					StandardOpenOption.APPEND);
+		} catch (IOException e) {
+			// exception handling left as an exercise for the reader
+		}
+
 	}
 }

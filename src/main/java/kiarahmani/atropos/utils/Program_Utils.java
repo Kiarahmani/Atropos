@@ -364,7 +364,11 @@ public class Program_Utils {
 	}
 
 	public TableName getTableName(String tn) {
-		assert (this.tableNameMap.get(tn) != null);
+		// assert (this.tableNameMap.get(tn) != null) : "table " + tn + " does not exist
+		// in "+this.tableNameMap ;
+		if (this.tableNameMap.get(tn) == null)
+			return new TableName("NULL");
+
 		return this.tableNameMap.get(tn);
 	}
 
@@ -614,6 +618,7 @@ public class Program_Utils {
 	/*****************************************************************************************************************/
 	// Analyze properties of Schema
 	/*****************************************************************************************************************/
+
 	public boolean checkPotKeyForFn(TableName tn, ArrayList<FieldName> pot_keys, FieldName fn) {
 		// cases: either pot_keys are PK of tn, or there are VCs that state
 		// pot_keys are sufficient for uniquness

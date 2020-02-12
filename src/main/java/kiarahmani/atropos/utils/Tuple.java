@@ -33,7 +33,9 @@ public class Tuple<X, Y> implements Serializable {
 
 	@Override
 	public String toString() {
-		return "(" + x.toString().replaceAll("!val!", "") + "," + y.toString().replaceAll("!val!", "") + ")";
+		String xs = (x==null)? "null":x.toString().replaceAll("!val!", "");
+		String ys = (x==null)? "null":y.toString().replaceAll("!val!", "");
+		return "(" + xs + "," + ys + ")";
 	}
 
 }

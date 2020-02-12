@@ -65,9 +65,9 @@ public class VC {
 
 	public FieldName getCorrespondingFN(Program_Utils pu, FieldName input_fn) {
 		for (Tuple<String, String> fnt : this.fieldTuples)
-			if (fnt.x.equals(input_fn))
+			if (fnt.x.equals(input_fn.getName()))
 				return pu.getFieldName(fnt.y);
-			else if (fnt.y.equals(input_fn))
+			else if (fnt.y.equals(input_fn.getName()))
 				return pu.getFieldName(fnt.x);
 		return null;
 	}
@@ -91,7 +91,7 @@ public class VC {
 			break;
 		}
 		assert (false) : "input must be either 1 or 2";
-		return null;
+		return new TableName("NULL");
 	}
 
 	public VC_Type getType() {

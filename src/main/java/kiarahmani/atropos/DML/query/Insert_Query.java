@@ -82,7 +82,7 @@ public class Insert_Query extends Query {
 			delim = ",";
 		}
 		return isAtomicString + "INSERT" + this.id + " INTO " + String.format("%-10s", this.tableName) + " VALUES ("
-				+ updateTuplesList + ")" + "				PC=" + this.path_condition;
+				+ updateTuplesList + ")" ;// + "				PC=" + this.path_condition;
 	}
 
 	@Override

@@ -2,9 +2,9 @@
 SAMPLE REFACTORINGS TO BE USED IN THE ATROPOS LEVEL
 ==============================================================================
 
+	// analyze(program);
 
-
-	// introduce new fields
+		// introduce new fields
 		INTRO_F delta_1 = new INTRO_F("accounts", "a_check_bal", F_Type.NUM);
 		INTRO_F delta_2 = new INTRO_F("accounts", "a_save_bal", F_Type.NUM);
 		re.refactor_schema_seq(pu, new Delta[] { delta_1, delta_2 });
@@ -19,8 +19,6 @@ SAMPLE REFACTORINGS TO BE USED IN THE ATROPOS LEVEL
 		delta_4.addKeyCorrespondenceToVC("s_custid", "a_custid");
 		delta_4.addFieldTupleToVC("s_bal", "a_save_bal");
 		re.refactor_schema_seq(pu, new Delta[] { delta_3, delta_4 });
-
-		// analyze(program);
 
 		// introduce a CRDT table for checking balance
 		Delta delta_5 = new INTRO_R("checkin_bal_crdt", true);
@@ -43,3 +41,28 @@ SAMPLE REFACTORINGS TO BE USED IN THE ATROPOS LEVEL
 		delta_12.addKeyCorrespondenceToVC("a_custid", "cbc_custid");
 		delta_12.addFieldTupleToVC("a_check_bal", "cbc_bal");
 		re.refactor_schema_seq(pu, new Delta[] { delta_12 });
+
+		/*
+		 * 
+		 * introduce a CRDT table for savings balance
+		 */
+		Delta delta_25 = new INTRO_R("savings_bal_crdt", true);
+		re.refactor_schema(pu, delta_25);
+
+		// introduce new fields in checkin_bal_crdt
+		Delta delta_26 = new INTRO_F("savings_bal_crdt", "sbc_custid", F_Type.NUM);
+		Delta delta_27 = new INTRO_F("savings_bal_crdt", "sbc_uuids", F_Type.NUM, true, false);
+		Delta delta_28 = new INTRO_F("savings_bal_crdt", "sbc_bal", F_Type.NUM, false, true);
+
+		re.refactor_schema_seq(pu, new Delta[] { delta_26, delta_27, delta_28 });
+
+		Delta delta_29 = new ADDPK(pu, "savings_bal_crdt", "sbc_custid");
+		Delta delta_210 = new ADDPK(pu, "savings_bal_crdt", "sbc_uuids");
+		Delta delta_211 = new CHSK(pu, "savings_bal_crdt", "sbc_custid");
+		re.refactor_schema_seq(pu, new Delta[] { delta_29, delta_210, delta_211 });
+
+		// introduce vc between accounts and checkin_bal_crdt
+		INTRO_VC delta_212 = new INTRO_VC(pu, "accounts", "savings_bal_crdt", VC_Agg.VC_SUM, VC_Type.VC_OTM);
+		delta_212.addKeyCorrespondenceToVC("a_custid", "sbc_custid");
+		delta_212.addFieldTupleToVC("a_save_bal", "sbc_bal");
+		re.refactor_schema_seq(pu, new Delta[] { delta_212 });

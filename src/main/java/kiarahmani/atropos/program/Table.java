@@ -12,6 +12,7 @@ public class Table {
 	private TableName name;
 	private boolean crdt;
 	private boolean canBeRemoved;
+	public boolean isNew;
 
 	public boolean canBeRemoved() {
 		return canBeRemoved;
@@ -52,6 +53,7 @@ public class Table {
 	}
 
 	public Table(TableName tn, FieldName is_alive, FieldName... fns) {
+		this.isNew = false;
 		this.crdt = false; // must be set explicitly
 		fieldNames = new ArrayList<>();
 		name = tn;

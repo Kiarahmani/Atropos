@@ -9,6 +9,7 @@ import org.apache.logging.log4j.Logger;
 import kiarahmani.atropos.Atropos;
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DDL.vc.VC;
+import kiarahmani.atropos.utils.Constants;
 
 public class Program {
 	private static final Logger logger = LogManager.getLogger(Atropos.class);
@@ -149,7 +150,8 @@ public class Program {
 		System.out.println(
 				"\n\n\n\n#####################################################################################################################################################");
 		System.out.println("### " + programName.toUpperCase() + "(" + version + ")");
-		System.out.println("## COMMENTS: " + comment);
+		if (Constants._PRINT_COMMENTS_IN_PROG)
+			System.out.println("## COMMENTS: " + comment);
 		System.out.println("\n## SCHEMA:");
 		for (Table t : tables)
 			System.out.println(t.toString());

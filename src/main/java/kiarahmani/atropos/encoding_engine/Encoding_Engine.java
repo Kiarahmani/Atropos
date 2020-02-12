@@ -69,7 +69,7 @@ public class Encoding_Engine {
 		dais_loop: for (DAI pot_dai : potential_dais) {
 			logger.debug(" begin analysis for DAI: " + pot_dai);
 			// pre-analysis on the potential dai
-			 z3logger.reset();
+			z3logger.reset();
 			System.gc();
 			Z3Driver local_z3_driver = new Z3Driver();
 			logger.debug("new z3 driver created");
@@ -82,8 +82,7 @@ public class Encoding_Engine {
 				continue dais_loop;
 			} else
 				logger.debug("potential DAI was pre-analyzed and found valid. Further analysis is needed");
-			
-			
+
 			// could not rule out the potential dai: must perform full analysis
 			for (Conflict c1 : cg.getConfsFromQuery(pot_dai.getQuery(1), pot_dai.getTransaction())) {
 				for (Conflict c2 : cg.getConfsFromQuery(pot_dai.getQuery(2), pot_dai.getTransaction())) {
@@ -115,6 +114,7 @@ public class Encoding_Engine {
 					// if SAT, add the potential DAI to the graph
 					if (status == Status.SATISFIABLE) {
 						dai_graph.addDAI(pot_dai);
+						System.out.println("\n" + dai_graph.getDAICnt());
 						if (!Constants._IS_TEST)
 							continue dais_loop;
 					}

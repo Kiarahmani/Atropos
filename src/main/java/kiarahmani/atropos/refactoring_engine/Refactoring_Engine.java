@@ -59,46 +59,31 @@ public class Refactoring_Engine {
 	// Functions for shrinking the program
 	/*****************************************************************************************************************/
 	public void atomicize(Program_Utils pu) {
-		// pre_analysis(pu); // get rid of non-crdt-able updates
 		decompose(pu); // split and redirect all selects to tables with lower wights
 		delete_redundant(pu);
 		shrink(pu);
 	}
 
-	private void pre_analysis(Program_Utils input_pu) {
+	public void pre_analysis(Program_Utils input_pu) {
 		for (Transaction txn : input_pu.getTrasnsactionMap().values())
 			for (Query q : txn.getAllQueries()) {
 				if (q instanceof Update_Query) {
 					Update_Query uq = (Update_Query) q;
 					if (is_non_crdt_able(uq)) {
-						Table dest = there_is_a_crdt_table(input_pu, uq);
-						if (dest != null) {
-							String txn_name = txn.getName();
-							int u_po = uq.getPo();
-							Block u_block = input_pu.getBlockByPo(txn_name, u_po);
-							Select_Query new_select = mk_crdt_able_select(input_pu, uq, txn_name);
-							Update_Query new_update = mk_crdt_able_update(input_pu, uq, new_select.getVariable(),
-									txn_name);
-							deleteQuery(input_pu, u_po, txn_name);
-							InsertQueriesAtPO(u_block, input_pu, txn_name, u_po, new Query_Statement(u_po, new_update));
-							duplicate_update(input_pu, txn_name, new_update.getTableName().getName(),
-									dest.getTableName().getName(), u_po);
-							deleteQuery(input_pu, u_po, txn_name);
-							InsertQueriesAtPO(u_block, input_pu, txn_name, u_po - 1,
-									new Query_Statement(u_po - 1, new_select));
-						}
-					}
+						logger.debug(q.getId() + " is not crdt-able!");
+						String txn_name = txn.getName();
+						int u_po = uq.getPo();
+						Block u_block = input_pu.getBlockByPo(txn_name, u_po);
+						Select_Query new_select = mk_crdt_able_select(input_pu, uq, txn_name);
+						Update_Query new_update = mk_crdt_able_update(input_pu, uq, new_select.getVariable(), txn_name);
+						deleteQuery(input_pu, u_po, txn_name);
+						InsertQueriesAtPO(u_block, input_pu, txn_name, u_po, new Query_Statement(u_po, new_select));
+						InsertQueriesAtPO(u_block, input_pu, txn_name, u_po + 1,
+								new Query_Statement(u_po + 1, new_update));
+					} else
+						logger.debug(q.getId() + " is crdt-able!");
 				}
 			}
-	}
-
-	private Table there_is_a_crdt_table(Program_Utils input_pu, Update_Query uq) {
-		for (Table dest : input_pu.getTables().values()) {
-			VC vc = input_pu.getVCByOrderedTables(uq.getTableName(), dest.getTableName());
-			if (vc != null)
-				return dest;
-		}
-		return null;
 	}
 
 	private boolean is_non_crdt_able(Update_Query uq) {
@@ -345,21 +330,32 @@ public class Refactoring_Engine {
 	public void shrink(Program_Utils pu) {
 		for (Transaction txn : pu.getTrasnsactionMap().values()) {
 			ArrayList<Query> all_queries = txn.getAllQueries();
+			String txn_name = txn.getName();
 			int qry_cnt = all_queries.size();
 			for (int i = 0; i < qry_cnt; i++)
 				for (int j = i + 1; j < qry_cnt; j++) {
 					Query q1 = all_queries.get(i);
 					Query q2 = all_queries.get(j);
+
 					int po1 = q1.getPo();
 					int po2 = q2.getPo();
-					// reorder and,
-					boolean swap_success = swap_queries(pu, txn.getName(), po1 + 1, po2, false);
-					// if merge is successful continue
-					if (attempt_merge_query(pu, txn.getName(), po1, false))
+					logger.debug("checking if " + q1.getId() + "(@" + po1 + ") and " + q2.getId() + "(@" + po2
+							+ ") can be merged");
+					Block b1 = pu.getBlockByPo(txn_name, po1);
+					Block b2= pu.getBlockByPo(txn_name, po2);
+					if (!b1.isEqual(b2))
 						continue;
-					// otherwise, revert the attempted reordering
-					if (swap_success)
-						swap_queries(pu, txn.getName(), po1 + 1, po2, true);
+					if (swapChecks(pu, txn, po1 + 1, po2)) {
+						deleteQuery(pu, po2, txn_name);
+						InsertQueriesAtPO(b1, pu, txn_name, po1 + 1, new Query_Statement(po1 + 1, q2));
+						if (attempt_merge_query(pu, txn.getName(), po1, false))
+							continue;
+						deleteQuery(pu, po1 + 1, txn_name);
+						InsertQueriesAtPO(b1, pu, txn_name, po2, new Query_Statement(po2, q2));
+					} else {
+						logger.debug("query at " + (po1 + 1) + "cannot be swapped with query at " + po2);
+						attempt_merge_query(pu, txn.getName(), po1, false);
+					}
 				}
 		}
 	}
@@ -386,49 +382,15 @@ public class Refactoring_Engine {
 
 		} else if (q1.getKind() == Kind.SELECT && q2.getKind() == Kind.SELECT) {
 			SELECT_Merger success = merge_select(input_pu, txn_name, qry_po, isRevert);
-			logger.debug("selects merging attempted. result: " + (success != null));
-			if (success != null)
+			logger.debug("selects merging attempted on " + q1.getId() + " and " + q2.getId() + " result: "
+					+ (success != null));
+			if (success != null) {
 				return true;
-			logger.debug("merge was unsuccessful");
+			}
 			// if there is vc between q1 and q2
 			TableName t1 = q1.getTableName();
 			TableName t2 = q2.getTableName();
-
 			VC vc = input_pu.getVCByTables(t1, t2);
-			if (null != null) { // TODO: right now we don't try redirecting at all. However, it is possible to
-								// attempt this by first making sure that no un-used field will become used
-				/*
-				 * try redirecting q2 to q1's table
-				 */
-				logger.debug("VC exits between tables: " + vc);
-				logger.debug("redirecting q2(" + q2.getId() + ") from " + t2 + " to " + t1);
-				SELECT_Redirector x = redirect_select(input_pu, txn_name, t2.getName(), t1.getName(), q2.getPo(),
-						false);
-				logger.debug("redirect(1) attempted. desc: " + x.getDesc());
-				logger.debug("attempt merging the redirected q2 with original q1");
-				success = merge_select(input_pu, txn_name, qry_po, isRevert);
-				logger.debug("selects merging attempted. result: " + (success != null));
-				if (success != null)
-					return true;
-				logger.debug("merge was unsuccessful: revert the redirection and try the opposit direction");
-				// if unsuccessful revert the redirect
-				x = redirect_select(input_pu, txn_name, t1.getName(), t2.getName(), q2.getPo(), true);
-				logger.debug("REVERT(1) DESC: " + x.getDesc());
-				/*
-				 * repeat the opposit way; try redirecting q1 to q2's table
-				 */
-				logger.debug("now redirecting q1(" + q1.getId() + ") from " + t1 + " to " + t2);
-				x = redirect_select(input_pu, txn_name, t1.getName(), t2.getName(), q1.getPo(), false);
-				logger.debug("redirect(2) attempted. desc: " + x.getDesc());
-				success = merge_select(input_pu, txn_name, qry_po, isRevert);
-				if (success != null)
-					return true;
-				logger.debug("merge was again unsuccessful: revert the last redirection and exit");
-				// if unsuccessful revert the redirect
-				x = redirect_select(input_pu, txn_name, t2.getName(), t1.getName(), q1.getPo(), true);
-				logger.debug("REVERT(2) DESC: " + x.getDesc());
-			} else
-				logger.debug("no vc exits for redirection: exit.");
 		}
 		return false;
 	}
@@ -461,10 +423,13 @@ public class Refactoring_Engine {
 	 * Main functions called to apply updates on the *schema*
 	 */
 
-	public Program_Utils refactor_schema_seq(Program_Utils input_pu, Delta... deltas) {
-		for (Delta d : deltas)
+	public ArrayList<Delta> refactor_schema_seq(Program_Utils input_pu, Delta... deltas) {
+		ArrayList<Delta> result = new ArrayList<>();
+		for (Delta d : deltas) {
 			input_pu = refactor_schema(input_pu, d);
-		return input_pu;
+			result.add(d);
+		}
+		return result;
 	}
 
 	public Program_Utils refactor_schema_seq(Program_Utils input_pu, ArrayList<Delta> deltas) {
@@ -475,7 +440,7 @@ public class Refactoring_Engine {
 
 	public Program_Utils refactor_schema(Program_Utils input_pu, Delta delta) {
 		if (delta == null) {
-			logger.error("null refactoring is requested. Aborting.");
+			logger.debug("null refactoring is requested. Aborting.");
 			return input_pu;
 		}
 		input_pu.incVersion();
@@ -509,10 +474,13 @@ public class Refactoring_Engine {
 		if (!intro_r.isCRDT()) {
 			Table t = input_pu.mkTable(table_name);
 			t.setCanBeRemoved(false);
+			t.isNew = true;
 		} else {
 			Table t = input_pu.mkCRDTTable(table_name);
 			t.setCanBeRemoved(false);
+			t.isNew = true;
 		}
+
 		return input_pu;
 	}
 
