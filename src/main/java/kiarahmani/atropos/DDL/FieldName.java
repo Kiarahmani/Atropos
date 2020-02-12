@@ -33,6 +33,10 @@ public class FieldName {
 		return this.isPK;
 	}
 
+	public boolean isAliveField() {
+		return this.name.contains("alive");
+	}
+
 	public boolean isSK() {
 		return this.isSK;
 	}

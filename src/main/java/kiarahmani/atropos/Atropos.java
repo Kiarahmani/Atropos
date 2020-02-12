@@ -56,7 +56,6 @@ public class Atropos {
 			System.gc();
 			logger.debug("======== ITER " + i + " (current min: " + min_anomalies_cnt + ")   (current pu: " + pu + ")");
 			logger.debug("current vc map: " + pu.getVCMap());
-			nse.reset();
 			logger.debug("snapshot of pu before refactoring is created");
 			Delta[] refactorings = nse.nextRefactorings(pu);
 			if (refactorings == null) {
@@ -88,7 +87,7 @@ public class Atropos {
 
 		program = pu.generateProgram();
 		program.printProgram();
-		// print stats and exit 
+		// print stats and exit
 		printStats(System.currentTimeMillis() - time_begin, results, min_anomalies_cnt);
 	}
 

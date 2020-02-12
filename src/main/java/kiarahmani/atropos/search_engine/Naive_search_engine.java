@@ -6,7 +6,11 @@
 package kiarahmani.atropos.search_engine;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.Stack;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -14,7 +18,6 @@ import org.apache.logging.log4j.Logger;
 import kiarahmani.atropos.Atropos;
 import kiarahmani.atropos.DDL.F_Type;
 import kiarahmani.atropos.DDL.FieldName;
-import kiarahmani.atropos.DDL.vc.VC;
 import kiarahmani.atropos.DDL.vc.VC.VC_Agg;
 import kiarahmani.atropos.DDL.vc.VC.VC_Type;
 import kiarahmani.atropos.program.Table;
@@ -31,84 +34,75 @@ public class Naive_search_engine extends Search_engine {
 	private static final Logger logger = LogManager.getLogger(Atropos.class);
 	private NameGenerator ng;
 	private int iter;
-	private boolean curr_is_crdt;
+	private VC_Type type;
+	private VC_Agg agg;
+	private Table source_table, target_table;
+	private FieldName source_fn;
 
+	/*
+	 * Constructor
+	 */
 	public Naive_search_engine(Program_Utils pu) {
-		iter = 0;
 		ng = new NameGenerator();
+		reset(pu);
 	}
 
+	/*
+	 * Function called iteratively from the mainS
+	 */
 	@Override
 	public Delta[] nextRefactorings(Program_Utils pu) {
-		Delta[] result = null;
-		if (curr_is_crdt) {
-			result = new Delta[2];
-		} else {
-			logger.debug("next refactoring is introduction of a non_crdt table");
-			result = new Delta[2];
-			INTRO_F new_intro_f = getRandomNonCRDTIntroF(pu);
-			logger.debug("first refactoring: introduction of new field " + new_intro_f.getNewName() + " in table "
-					+ new_intro_f.getTableName());
-			INTRO_VC new_intro_vc = getRandomNonCRDTIntroVC(pu, new_intro_f);
-			if (new_intro_vc == null)
-				return null;
-			result[0] = new_intro_f;
-			result[1] = new_intro_vc;
-			VC new_vc = new_intro_vc.getVC();
-			logger.debug("second refactoring: introduction of new VC (" + new_vc.getName() + ") between "
-					+ new_vc.getTableName(1) + " and " + new_vc.getTableName(2) + ": " + new_vc);
-		}
-		return result;
-	}
-
-	private INTRO_F getRandomNonCRDTIntroF(Program_Utils pu) {
-		Table random_table = getRandomTable(pu);
-		String new_fn = ng.newFieldName();
-		INTRO_F result = new INTRO_F(random_table.getTableName().getName(), new_fn, F_Type.NUM);
-		return result;
-	}
-
-	private INTRO_VC getRandomNonCRDTIntroVC(Program_Utils pu, INTRO_F intro_f) {
-		INTRO_VC result = null;
-		if (pu.getTables().size() <= 1)
-			return result;
-		String table_with_new_field = intro_f.getTableName();
-		String src_table_name = table_with_new_field;
-		while (src_table_name.equals(table_with_new_field)) {// find a random table which is != table_with_new_field
-			src_table_name = getRandomTable(pu).getTableName().getName();
-			logger.debug("a new source table is proposed: " + src_table_name);
-		}
-		logger.debug("source and target tables determined: a vc must be returned between " + src_table_name + " and "
-				+ table_with_new_field);
-		Table src = pu.getTable(src_table_name);
-		Table dest = pu.getTable(table_with_new_field);
-
-		VC_Type random_type = getRandomVCType();
-		switch (random_type) {
-		case VC_OTO:
-			result = new INTRO_VC(pu, src_table_name, table_with_new_field, VC_Agg.VC_ID, VC_Type.VC_OTO);
-			List<FieldName> src_pks = src.getPKFields();
-			List<FieldName> dest_pks = dest.getPKFields();
-			assert (src_pks.size() == dest_pks.size()) : "unexpected pks in tables when VC_OTO is chosen";
-			for (int i = 0; i < src_pks.size(); i++)
-				result.addKeyCorrespondenceToVC(src_pks.get(i).getName(), dest_pks.get(i).getName());
-			FieldName random_fn_from_src_table = getRandomNonPKFieldName(src);
-			result.addFieldTupleToVC(random_fn_from_src_table, intro_f.getNewName());
-			break;
-
-		case VC_OTM:
-			// TODO
-			break;
+		reset(pu);
+		switch (agg) {
+		case VC_SUM:
+			return next_SUM_OTM_refactorings(pu);
+		case VC_ID:
+			switch (type) {
+			case VC_OTO:
+				return next_ID_OTO_refactorings(pu);
+			case VC_OTM:
+				return next_ID_OTM_refactorings(pu);
+			default:
+				break;
+			}
 		default:
 			break;
 		}
+		return null;
+	}
+
+	/*
+	 * Helping functions that are called in different cases above
+	 */
+
+	private Delta[] next_ID_OTO_refactorings(Program_Utils pu) {
+		Delta[] result = new Delta[2];
+		String new_fn = ng.newFieldName();
+		String target_table_name = target_table.getTableName().getName();
+		INTRO_F intro_f = new INTRO_F(target_table_name, new_fn, F_Type.NUM);
+		result[0] = intro_f;
+		result[1] = mk_ID_OTO_INTRO_VC(pu, intro_f.getNewName());
 		return result;
 	}
 
-	private VC_Type getRandomVCType() {
-		return VC_Type.VC_OTO;
-		// return (Math.random() < 0.5) ? VC_Type.VC_OTO : VC_Type.VC_OTM;
+	private Delta[] next_ID_OTM_refactorings(Program_Utils pu) {
+		Delta[] result = new Delta[2];
+		String new_fn = ng.newFieldName();
+		String target_table_name = target_table.getTableName().getName();
+		INTRO_F intro_f = new INTRO_F(target_table_name, new_fn, F_Type.NUM);
+		result[0] = intro_f;
+		result[1] = mk_ID_OTM_INTRO_VC(pu, intro_f.getNewName());
+		return result;
 	}
+
+	private Delta[] next_SUM_OTM_refactorings(Program_Utils pu) {
+		// TODO
+		return null;
+	}
+
+	/*
+	 * Random Component Selecting
+	 */
 
 	private Table getRandomTable(Program_Utils pu) {
 		int table_cnt = pu.getTables().size();
@@ -116,23 +110,122 @@ public class Naive_search_engine extends Search_engine {
 		return (Table) pu.getTables().values().toArray()[random_index];
 	}
 
-	private FieldName getRandomNonPKFieldName(Table t) {
-		FieldName result = null;
+	private Table getRandomTable(Program_Utils pu, Table other_than_this) {
+		ArrayList<Table> filtered_table_list = new ArrayList<>();
+		for (Table t : pu.getTables().values())
+			if (!t.is_equal(other_than_this))
+				filtered_table_list.add(t);
+		int filtered_table_cnt = filtered_table_list.size();
+		int random_index = (int) (Math.random() * filtered_table_cnt);
+		return filtered_table_list.get(random_index);
+	}
 
-		while (true) {
-			int field_cnt = t.getFieldNames().size();
-			int random_index = (int) (Math.random() * field_cnt);
-			result = t.getFieldNames().get(random_index);
-			if (!result.isPK() && !result.getName().contains("alive"))
-				break;
+	private FieldName getRandomFieldName(Program_Utils pu, Table from_this, boolean pk) {
+		List<FieldName> fns = from_this.getFieldNames().stream().filter(fn -> (!fn.isAliveField() && fn.isPK() == pk))
+				.collect(Collectors.toList());
+		int filtered_fns_cnt = fns.size();
+		int random_index = (int) (Math.random() * filtered_fns_cnt);
+		return fns.get(random_index);
+	}
+
+	private FieldName getRandomFieldName(Program_Utils pu, Table from_this) {
+		List<FieldName> fns = from_this.getFieldNames().stream().filter(fn -> (!fn.isAliveField()))
+				.collect(Collectors.toList());
+		int filtered_fns_cnt = fns.size();
+		int random_index = (int) (Math.random() * filtered_fns_cnt);
+		return fns.get(random_index);
+	}
+
+	private ArrayList<FieldName> getNRandomFieldNames(Program_Utils pu, Table from_this, int n) {
+		assert (from_this.getFieldNames().size() > n) : "cannot request n>number_of_fields";
+		ArrayList<FieldName> result = new ArrayList<>();
+		for (int i = 0; i < n; i++) {
+			FieldName candidate_fn = getRandomFieldName(pu, from_this);
+			while (result.contains(candidate_fn)) {
+				candidate_fn = getRandomFieldName(pu, from_this);
+			}
+			result.add(candidate_fn);
 		}
 		return result;
 	}
 
+	/*
+	 * INTRO_VC builders
+	 */
+
+	private INTRO_VC mk_ID_OTO_INTRO_VC(Program_Utils pu, FieldName new_fn) {
+		String source_table_name = source_table.getTableName().getName();
+		String target_table_name = target_table.getTableName().getName();
+		INTRO_VC result = new INTRO_VC(pu, source_table_name, target_table_name, VC_Agg.VC_ID, VC_Type.VC_OTO);
+		// set key correspondence
+		List<FieldName> source_pks = source_table.getPKFields();
+		List<FieldName> target_pks = target_table.getPKFields();
+		assert (source_pks.size() == target_pks.size()) : "unexpected pks in tables when VC_OTO is chosen";
+		for (int i = 0; i < source_pks.size(); i++)
+			result.addKeyCorrespondenceToVC(source_pks.get(i).getName(), target_pks.get(i).getName());
+		// set value correspondence
+		result.addFieldTupleToVC(source_fn, new_fn);
+		return result;
+	}
+
+	private INTRO_VC mk_ID_OTM_INTRO_VC(Program_Utils pu, FieldName new_fn) {
+		String source_table_name = source_table.getTableName().getName();
+		String target_table_name = target_table.getTableName().getName();
+		INTRO_VC result = new INTRO_VC(pu, source_table_name, target_table_name, VC_Agg.VC_ID, VC_Type.VC_OTM);
+		// set key correspondence
+		List<FieldName> source_pks = source_table.getPKFields();
+		ArrayList<FieldName> target_pks = getNRandomFieldNames(pu, target_table, source_pks.size());
+		for (int i = 0; i < source_pks.size(); i++)
+			result.addKeyCorrespondenceToVC(source_pks.get(i).getName(), target_pks.get(i).getName());
+		// set value correspondence
+		result.addFieldTupleToVC(source_fn, new_fn);
+		return result;
+	}
+
+	private INTRO_VC mk_SUM_OTM_INTRO_VC(Program_Utils pu) {
+		// TODO
+		return null;
+	}
+
+	/*
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 */
+
 	@Override
-	public void reset() {
+	// returns true if successful
+	public boolean reset(Program_Utils pu) {
 		this.iter = 0;
-		this.curr_is_crdt = false; // Math.random() < 0.5;
+		this.source_table = getRandomTable(pu);
+		this.source_fn = getRandomFieldName(pu, source_table, false);
+		this.target_table = getRandomTable(pu, source_table);
+		if (Math.random() < 0.5) { // CRDT or not
+			// next refactoring is introduction of CRDT table and corresponding fields
+			this.agg = VC_Agg.VC_SUM;
+		} else {
+			// next introduction is a non CRDT field into an existing table
+			this.agg = VC_Agg.VC_ID;
+			if (Math.random() < 0.5) { // OTO or not
+				// the decided relationship between source and target table is OTO
+				this.type = VC_Type.VC_OTO;
+			} else {
+				// the decided relatinship between source and target table is OTM
+				this.type = VC_Type.VC_OTM;
+			}
+		}
+		return true;
 	}
 
 }

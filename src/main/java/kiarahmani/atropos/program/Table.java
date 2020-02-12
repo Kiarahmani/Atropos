@@ -119,4 +119,8 @@ public class Table {
 		return result;
 	}
 
+	public boolean is_equal(Table other) {
+		return this.getTableName().equalsWith(other.getTableName());
+	}
+
 }
