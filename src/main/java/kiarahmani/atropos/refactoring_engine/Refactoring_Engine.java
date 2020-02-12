@@ -467,6 +467,12 @@ public class Refactoring_Engine {
 		return input_pu;
 	}
 
+	public Program_Utils refactor_schema_seq(Program_Utils input_pu, ArrayList<Delta> deltas) {
+		for (Delta d : deltas)
+			input_pu = refactor_schema(input_pu, d);
+		return input_pu;
+	}
+
 	public Program_Utils refactor_schema(Program_Utils input_pu, Delta delta) {
 		if (delta == null) {
 			logger.error("null refactoring is requested. Aborting.");

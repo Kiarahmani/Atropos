@@ -232,7 +232,7 @@ public class Naive_search_engine extends Search_engine {
 		this.source_table = getRandomTable(pu);
 		this.source_fn = getRandomFieldName(pu, source_table, false);
 		this.target_table = getRandomTable(pu, source_table);
-		if (Math.random() < 0.5) { // CRDT or not
+		if (Math.random() < -100) { // CRDT or not
 			// next refactoring is introduction of CRDT table and corresponding fields
 			this.agg = VC_Agg.VC_SUM;
 		} else {
