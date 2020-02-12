@@ -110,11 +110,6 @@ public class Atropos {
 	 * 
 	 * 
 	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
 	 */
 
 	private static int analyze(Program program) {

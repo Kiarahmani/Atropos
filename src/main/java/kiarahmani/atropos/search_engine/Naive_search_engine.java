@@ -101,7 +101,7 @@ public class Naive_search_engine extends Search_engine {
 	}
 
 	/*
-	 * Random Component Selecting
+	 * Random Table Selection
 	 */
 
 	private Table getRandomTable(Program_Utils pu) {
@@ -120,13 +120,9 @@ public class Naive_search_engine extends Search_engine {
 		return filtered_table_list.get(random_index);
 	}
 
-	private FieldName getRandomFieldName(Program_Utils pu, Table from_this, boolean pk) {
-		List<FieldName> fns = from_this.getFieldNames().stream().filter(fn -> (!fn.isAliveField() && fn.isPK() == pk))
-				.collect(Collectors.toList());
-		int filtered_fns_cnt = fns.size();
-		int random_index = (int) (Math.random() * filtered_fns_cnt);
-		return fns.get(random_index);
-	}
+	/*
+	 * Random FieldName Selection
+	 */
 
 	private FieldName getRandomFieldName(Program_Utils pu, Table from_this) {
 		List<FieldName> fns = from_this.getFieldNames().stream().filter(fn -> (!fn.isAliveField()))
@@ -136,14 +132,39 @@ public class Naive_search_engine extends Search_engine {
 		return fns.get(random_index);
 	}
 
+	private FieldName getRandomFieldName(Program_Utils pu, Table from_this, F_Type tp) {
+		List<FieldName> fns = from_this.getFieldNames().stream()
+				.filter(fn -> (!fn.isAliveField() && fn.getType() == tp)).collect(Collectors.toList());
+		int filtered_fns_cnt = fns.size();
+		int random_index = (int) (Math.random() * filtered_fns_cnt);
+		return fns.get(random_index);
+	}
+
+	private FieldName getRandomFieldName(Program_Utils pu, Table from_this, boolean pk) {
+		List<FieldName> fns = from_this.getFieldNames().stream().filter(fn -> (!fn.isAliveField() && fn.isPK() == pk))
+				.collect(Collectors.toList());
+		int filtered_fns_cnt = fns.size();
+		int random_index = (int) (Math.random() * filtered_fns_cnt);
+		return fns.get(random_index);
+	}
+
+	private FieldName getRandomFieldName(Program_Utils pu, Table from_this, boolean pk, F_Type tp) {
+		List<FieldName> fns = from_this.getFieldNames().stream()
+				.filter(fn -> (!fn.isAliveField() && fn.isPK() == pk && fn.getType() == tp))
+				.collect(Collectors.toList());
+		int filtered_fns_cnt = fns.size();
+		int random_index = (int) (Math.random() * filtered_fns_cnt);
+		return fns.get(random_index);
+	}
+
+	// returns only NUM type
 	private ArrayList<FieldName> getNRandomFieldNames(Program_Utils pu, Table from_this, int n) {
 		assert (from_this.getFieldNames().size() > n) : "cannot request n>number_of_fields";
 		ArrayList<FieldName> result = new ArrayList<>();
 		for (int i = 0; i < n; i++) {
-			FieldName candidate_fn = getRandomFieldName(pu, from_this);
-			while (result.contains(candidate_fn)) {
+			FieldName candidate_fn = getRandomFieldName(pu, from_this, F_Type.NUM);
+			while (result.contains(candidate_fn))
 				candidate_fn = getRandomFieldName(pu, from_this);
-			}
 			result.add(candidate_fn);
 		}
 		return result;

@@ -65,8 +65,10 @@ public class Z3Driver {
 		cfg.put("unsat_core", "true");
 		ctx = new Context(cfg);
 		objs = new DeclaredObjects();
+		logger.debug("context and object manager created");
 		// begin encoding the context
 		slv = ctx.mkSolver();
+		logger.debug("solver created");
 		addInitialHeader();
 		addInitialStaticSorts();
 		addNumericEnumSorts("Po", Constants._MAX_EXECUTION_PO);
@@ -97,25 +99,10 @@ public class Z3Driver {
 		addArFunc(program);
 		constrainArFunc(program);
 		addAssertion("both_queries_are_executed", em.mk_cycle_exists_constrained_1(dai));
-//		addWRFuncs(program);
-//		constrainWRFuncs(program);
-//		addRWFuncs(program);
-//		constrainRWFuncs(program);
-//		addWWFuncs(program);
-//		constrainWWFuncs(program);
-//		addDepFunc(program);
-//		constrainDepFunc(program);
-//		addDepSTFunc(program);
-//		constrainUUIDFunc();
-//		constrainDepSTFunc(program);
-		//
-		// final query
-		// addAssertion("cycle", em.mk_cycle_exists_constrained(dependency_length, dai,
-		// c1, c2));
-		//
-		//
+		logger.debug("all functions and assertions added: ready to check satisfiability");
 		// check satisfiability
 		Status status = slv.check();
+		logger.debug("Z3 returned: " + status);
 		return status;
 	}
 
@@ -123,11 +110,13 @@ public class Z3Driver {
 
 		HashMap<String, String> cfg = new HashMap<String, String>();
 		cfg.put("model", "true");
-		cfg.put("unsat_core", "true");
+		cfg.put("unsat_core", "false");
 		ctx = new Context(cfg);
 		objs = new DeclaredObjects();
+		logger.debug("new context and object manager created");
 		// begin encoding the context
 		slv = ctx.mkSolver();
+		logger.debug("new solver created");
 		addInitialHeader();
 		addInitialStaticSorts();
 		addNumericEnumSorts("Po", Constants._MAX_EXECUTION_PO);
@@ -142,6 +131,7 @@ public class Z3Driver {
 		addUUIDFunc();
 		addProjFuncsAndBounds(program);
 		this.em = new Expression_Maker(program, ctx, objs);
+		logger.debug("Constant functions added");
 		Z3Logger.SubHeaderZ3("Properties of query functions");
 		addAssertion("bound_on_txn_instances", em.mk_bound_on_txn_instances(dependency_length));
 		constrainPKs(program, em);
@@ -168,18 +158,19 @@ public class Z3Driver {
 		addDepSTFunc(program);
 		constrainUUIDFunc();
 		constrainDepSTFunc(program);
+		logger.debug("All functions added");
 		//
 		// final query
 		addAssertion("cycle", em.mk_cycle_exists_constrained(dependency_length, dai, c1, c2));
+		logger.debug("final assertion (cycle) added: ready to check satisfiability");
 		//
 		//
 		// check satisfiability
 		Status status = slv.check();
+		logger.debug("Z3 returned: " + status);
 		if (status == Status.SATISFIABLE) {
 			// record the generated model
 			model = slv.getModel();
-			// System.out.println("\n~~~> " +
-			// model.getSortUniverse(objs.getSort("Rec")).length + "\n");
 			File file = new File("smt2/model.smt2");
 			PrintWriter printer;
 			FileWriter writer;
