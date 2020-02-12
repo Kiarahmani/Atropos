@@ -78,7 +78,7 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 		this.sourceTable = pu.getTable(sourceTableName);
 		this.targetTable = pu.getTable(targetTableName);
 		this.vc = pu.getVCByTables(sourceTable.getTableName(), targetTable.getTableName());
-		this.type = get_redirection_type();
+		this.type = get_redirection_type(pu);
 		super.set();
 	}
 
@@ -180,7 +180,7 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 	private ArrayList<Tuple<FieldName, Expression>> updateUE(ArrayList<Tuple<FieldName, Expression>> old_ue) {
 		ArrayList<Tuple<FieldName, Expression>> result = new ArrayList<>();
 		for (Tuple<FieldName, Expression> fe : old_ue)
-			result.add(new Tuple<FieldName, Expression>(vc.getCorrespondingFN(fe.x), fe.y));
+			result.add(new Tuple<FieldName, Expression>(vc.getCorrespondingFN(pu, fe.x), fe.y));
 		return result;
 	}
 
@@ -197,14 +197,15 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 		WHC_Constraint result = old_whcc;
 		switch (vc.getType()) {
 		case VC_OTO:
-			result = new WHC_Constraint(targetTable.getTableName(), vc.getCorrespondingKey(old_whcc.getFieldName()),
+			result = new WHC_Constraint(targetTable.getTableName(), vc.getCorrespondingKey(pu, old_whcc.getFieldName()),
 					old_whcc.getOp(), old_whcc.getExpression());
 			break;
 		case VC_OTM:
 			switch (vc.get_agg()) {
 			case VC_ID:
-				result = new WHC_Constraint(targetTable.getTableName(), vc.getCorrespondingKey(old_whcc.getFieldName()),
-						old_whcc.getOp(), old_whcc.getExpression());
+				result = new WHC_Constraint(targetTable.getTableName(),
+						vc.getCorrespondingKey(pu, old_whcc.getFieldName()), old_whcc.getOp(),
+						old_whcc.getExpression());
 				break;
 			case VC_SUM:
 				assert (false) : "unexpected state";
@@ -229,10 +230,10 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 		return input_qry_stmt;
 	}
 
-	private Redirection_Type get_redirection_type() {
+	private Redirection_Type get_redirection_type(Program_Utils pu) {
 		logger.debug("current source table is: " + this.sourceTable);
 		logger.debug("detecting redirection type for: " + this.vc);
-		if (this.vc.getTableName(1).equalsWith(this.sourceTable.getTableName()))
+		if (this.vc.getTableName(pu, 1).equalsWith(this.sourceTable.getTableName()))
 			return Redirection_Type.T1_TO_T2;
 		else
 			return Redirection_Type.T2_TO_T1;
@@ -250,11 +251,12 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 				|| (mkInsert(input_update) != null);
 
 		// all keys used as the WHC of duplicating UPDATE must be constrained by vc
-		boolean assumption1 = vc.containsWHC(input_update.getWHC());
+		boolean assumption1 = vc.containsWHC(pu, input_update.getWHC());
 		// there must be a correspondence from src table to target table, for every
 		// field
 		// updated by the duplicating UPDATE
-		boolean assumption2 = vc.correspondsAllFns(input_update.getTableName(), input_update.getWrittenFieldNames());
+		boolean assumption2 = vc.correspondsAllFns(pu, input_update.getTableName(),
+				input_update.getWrittenFieldNames());
 		// redirecting UPDATE's where clause has only = (and not other comparison
 		// binary operations)
 		boolean assumption3 = input_update.getWHC().hasOnlyEq();

@@ -313,8 +313,8 @@ public class Program_Utils {
 		logger.debug("finding a VC between " + TN1 + " and " + TN2);
 		logger.debug("current list of VCs: " + this.vcMap.values());
 		List<VC> result = this.vcMap.values().stream()
-				.filter(vc -> ((vc.getTableName(1).equalsWith(TN1)) && (vc.getTableName(2).equalsWith(TN2))
-						|| ((vc.getTableName(1).equalsWith(TN2)) && (vc.getTableName(2).equalsWith(TN1)))))
+				.filter(vc -> ((vc.getTableName(this, 1).equalsWith(TN1)) && (vc.getTableName(this, 2).equalsWith(TN2))
+						|| ((vc.getTableName(this, 1).equalsWith(TN2)) && (vc.getTableName(this, 2).equalsWith(TN1)))))
 				.collect(Collectors.toList());
 		if (result.size() == 0) {
 			logger.debug("no such VC was found. returning null");
@@ -327,8 +327,8 @@ public class Program_Utils {
 	}
 
 	public VC getVCByOrderedTables(TableName TN1, TableName TN2) {
-		List<VC> result = this.vcMap.values().stream()
-				.filter(vc -> ((vc.getTableName(1).equalsWith(TN1)) && (vc.getTableName(2).equalsWith(TN2))))
+		List<VC> result = this.vcMap.values().stream().filter(
+				vc -> ((vc.getTableName(this, 1).equalsWith(TN1)) && (vc.getTableName(this, 2).equalsWith(TN2))))
 				.collect(Collectors.toList());
 		if (result.size() == 0)
 			return null; // returns null if no VC is found
@@ -338,17 +338,17 @@ public class Program_Utils {
 
 	public void addFieldTupleToVC(String vcName, String F_1, String F_2) {
 		assert (this.vcMap.get(vcName) != null) : "cannot add tuple to a non-existing VC";
-		this.vcMap.get(vcName).addFieldTuple(getFieldName(F_1), getFieldName(F_2));
+		this.vcMap.get(vcName).addFieldTuple(F_1, F_2);
 	}
 
 	public void addFieldTupleToVC(String vcName, FieldName F_1, FieldName F_2) {
 		assert (this.vcMap.get(vcName) != null) : "cannot add tuple to a non-existing VC";
-		this.vcMap.get(vcName).addFieldTuple(F_1, F_2);
+		this.vcMap.get(vcName).addFieldTuple(F_1.getName(), F_2.getName());
 	}
 
 	public void addKeyCorrespondenceToVC(String vcName, String F_1, String F_2) {
 		assert (this.vcMap.get(vcName) != null) : "cannot add tuple to a non-existing VC";
-		VC_Constraint vcc = new VC_Constraint(getFieldName(F_1), getFieldName(F_2));
+		VC_Constraint vcc = new VC_Constraint(F_1, F_2);
 		this.vcMap.get(vcName).addConstraint(vcc);
 	}
 
@@ -635,12 +635,12 @@ public class Program_Utils {
 						logger.debug("a vc found between " + other_t.getTableName() + " and " + t.getTableName());
 						logger.debug(
 								"must now check if " + pot_keys + " has corresponding PK in " + other_t.getTableName());
-						List<FieldName> constrained_fns = vc.getVCC().stream().map(vcc -> vcc.getF_1())
+						List<FieldName> constrained_fns = vc.getVCC().stream().map(vcc -> vcc.getF_1(this))
 								.collect(Collectors.toList());
 						logger.debug(
 								"constrained fields in table " + other_t.getTableName() + " are: " + constrained_fns);
 						List<FieldName> corresponding_constrained_fns = constrained_fns.stream()
-								.map(mfn -> vc.getCorrespondingFN(mfn)).collect(Collectors.toList());
+								.map(mfn -> vc.getCorrespondingFN(this, mfn)).collect(Collectors.toList());
 						logger.debug("corresponding fields for above fields are " + other_t.getTableName() + " are: "
 								+ corresponding_constrained_fns);
 						if (pot_keys.containsAll(corresponding_constrained_fns))

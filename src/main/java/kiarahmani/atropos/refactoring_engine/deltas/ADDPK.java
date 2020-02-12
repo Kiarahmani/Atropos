@@ -15,15 +15,15 @@ import kiarahmani.atropos.utils.Program_Utils;
  */
 public class ADDPK extends Delta {
 
-	private Table table;
+	private String table_name;
 	private Program_Utils pu;
-	private FieldName new_pk;
+	private String new_pk;
 
-	public Table getTable() {
-		return this.table;
+	public String getTable() {
+		return this.table_name;
 	}
 
-	public FieldName getNewPK() {
+	public String getNewPK() {
 		return this.new_pk;
 	}
 
@@ -31,9 +31,8 @@ public class ADDPK extends Delta {
 	 * 
 	 */
 	public ADDPK(Program_Utils pu, String tn, String new_pkn) {
-		this.table = pu.getTable(tn);
-		this.new_pk = pu.getFieldName(new_pkn);
-		assert (table.getFieldNames().contains(new_pk));
+		this.table_name = tn;
+		this.new_pk = new_pkn;
 	}
 
 	/*
@@ -43,7 +42,7 @@ public class ADDPK extends Delta {
 	 */
 	@Override
 	public String getDesc() {
-		return "field " + new_pk + " is added as PK of table " + table.getTableName().getName();
+		return "field " + new_pk + " is added as PK of table " + table_name;
 	}
 
 }

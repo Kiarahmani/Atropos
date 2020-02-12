@@ -1,21 +1,22 @@
 package kiarahmani.atropos.DDL.vc;
 
 import kiarahmani.atropos.DDL.FieldName;
+import kiarahmani.atropos.utils.Program_Utils;
 
 public class VC_Constraint {
 
-	private FieldName F_1, F_2;
+	private String F_1, F_2;
 
-	public FieldName getF_1() {
-		return this.F_1;
+	public FieldName getF_1(Program_Utils pu) {
+		return pu.getFieldName(F_1);
 	}
 
-	public FieldName getF_2() {
-		return this.F_2;
+	public FieldName getF_2(Program_Utils pu) {
+		return pu.getFieldName(F_2);
 	}
 
 	/* constructor */
-	public VC_Constraint(FieldName F_1, FieldName F_2) {
+	public VC_Constraint(String F_1, String F_2) {
 		this.F_1 = F_1;
 		this.F_2 = F_2;
 	}

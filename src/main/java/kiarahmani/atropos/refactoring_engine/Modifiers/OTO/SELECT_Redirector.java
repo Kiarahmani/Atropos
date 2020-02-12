@@ -135,7 +135,7 @@ public class SELECT_Redirector extends One_to_One_Query_Modifier {
 
 		// set the implicitly read fields for the new queries
 		for (FieldName fn : old_select.getImplicitlyUsed())
-			new_select.setImplicitlyUsed(vc.getCorrespondingFN(fn));
+			new_select.setImplicitlyUsed(vc.getCorrespondingFN(pu, fn));
 		logger.debug("final select query to return: " + new_select);
 		// return
 		return new_select;
@@ -147,7 +147,7 @@ public class SELECT_Redirector extends One_to_One_Query_Modifier {
 	@Override
 	public Expression propagatedExpModification(Expression input_exp) {
 		for (FieldName old_fn : old_select.getSelectedFieldNames())
-			input_exp.redirectProjs(old_select.getVariable(), old_fn, new_var, vc.getCorrespondingFN(old_fn));
+			input_exp.redirectProjs(old_select.getVariable(), old_fn, new_var, vc.getCorrespondingFN(pu, old_fn));
 		return input_exp;
 	}
 
@@ -168,7 +168,7 @@ public class SELECT_Redirector extends One_to_One_Query_Modifier {
 		} else {
 			// handle other cases
 			for (FieldName old_fn : old_select.getSelectedFieldNames())
-				input_qry.getQuery().redirectProjs(old_var, old_fn, new_var, vc.getCorrespondingFN(old_fn));
+				input_qry.getQuery().redirectProjs(old_var, old_fn, new_var, vc.getCorrespondingFN(pu, old_fn));
 
 		}
 		return input_qry;
@@ -179,7 +179,7 @@ public class SELECT_Redirector extends One_to_One_Query_Modifier {
 	 */
 
 	private Redirection_Type get_redirection_type() {
-		if (this.vc.getTableName(1).equals(this.sourceTable.getTableName()))
+		if (this.vc.getTableName(pu, 1).equals(this.sourceTable.getTableName()))
 			return Redirection_Type.T1_TO_T2;
 		else
 			return Redirection_Type.T2_TO_T1;
@@ -188,7 +188,7 @@ public class SELECT_Redirector extends One_to_One_Query_Modifier {
 	private ArrayList<FieldName> updateFNs(TableName old_table, ArrayList<FieldName> old_fns) {
 		ArrayList<FieldName> result = new ArrayList<>();
 		for (FieldName old_fn : old_fns)
-			result.add(vc.getCorrespondingFN(old_fn));
+			result.add(vc.getCorrespondingFN(pu, old_fn));
 		return result;
 	}
 
@@ -205,18 +205,20 @@ public class SELECT_Redirector extends One_to_One_Query_Modifier {
 		WHC_Constraint result = null;
 		switch (vc.getType()) {
 		case VC_OTO:
-			result = new WHC_Constraint(targetTable.getTableName(), vc.getCorrespondingKey(old_whcc.getFieldName()),
+			result = new WHC_Constraint(targetTable.getTableName(), vc.getCorrespondingKey(pu, old_whcc.getFieldName()),
 					old_whcc.getOp(), old_whcc.getExpression());
 			break;
 		case VC_OTM:
 			switch (vc.get_agg()) {
 			case VC_ID:
-				result = new WHC_Constraint(targetTable.getTableName(), vc.getCorrespondingKey(old_whcc.getFieldName()),
-						old_whcc.getOp(), old_whcc.getExpression());
+				result = new WHC_Constraint(targetTable.getTableName(),
+						vc.getCorrespondingKey(pu, old_whcc.getFieldName()), old_whcc.getOp(),
+						old_whcc.getExpression());
 				break;
 			case VC_SUM:
-				result = new WHC_Constraint(targetTable.getTableName(), vc.getCorrespondingKey(old_whcc.getFieldName()),
-						old_whcc.getOp(), old_whcc.getExpression());
+				result = new WHC_Constraint(targetTable.getTableName(),
+						vc.getCorrespondingKey(pu, old_whcc.getFieldName()), old_whcc.getOp(),
+						old_whcc.getExpression());
 				break;
 			default:
 				assert (false) : "unhandled agg function";
@@ -249,11 +251,12 @@ public class SELECT_Redirector extends One_to_One_Query_Modifier {
 			return false;
 
 		// all keys used as the WHC of redirecting SELECT must be constrained by vc
-		boolean assumption1 = vc.containsWHC(input_query.getWHC());
+		boolean assumption1 = vc.containsWHC(pu, input_query.getWHC());
 
 		// there must be a correspondence from old table to new table, for every field
 		// selected by the redirecting SELCET
-		boolean assumption2 = vc.correspondsAllFns(input_query.getTableName(), input_select.getSelectedFieldNames());
+		boolean assumption2 = vc.correspondsAllFns(pu, input_query.getTableName(),
+				input_select.getSelectedFieldNames());
 
 		// redirecting SELECTS's where clause has only = (and not other comparison
 		// binary operations)

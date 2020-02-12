@@ -35,7 +35,7 @@ public class INTRO_VC extends Delta {
 
 	public INTRO_VC(Program_Utils pu, String T_1, String T_2, VC_Agg vc_agg, VC_Type vc_type) {
 		name = "vc_" + pu.getVCCnt();
-		vc = new VC(name, pu.getTableName(T_1), pu.getTableName(T_2), vc_agg, vc_type);
+		vc = new VC(name, T_1, T_2, vc_agg, vc_type);
 		pu.mkVC(vc);
 		this.pu = pu;
 		applied_update_dups = new ArrayList<>();
@@ -68,7 +68,8 @@ public class INTRO_VC extends Delta {
 	 */
 	@Override
 	public String getDesc() {
-		return this.name + " (between " + vc.getTableName(1) + " and " + vc.getTableName(2) + ") added to the schema";
+		return this.name + " (between " + vc.getTableName(pu, 1).getName() + " and " + vc.getTableName(pu, 2).getName()
+				+ ") added to the schema";
 	}
 
 }

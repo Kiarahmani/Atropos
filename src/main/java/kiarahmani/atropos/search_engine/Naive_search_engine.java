@@ -21,8 +21,11 @@ import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DDL.vc.VC.VC_Agg;
 import kiarahmani.atropos.DDL.vc.VC.VC_Type;
 import kiarahmani.atropos.program.Table;
+import kiarahmani.atropos.refactoring_engine.deltas.ADDPK;
+import kiarahmani.atropos.refactoring_engine.deltas.CHSK;
 import kiarahmani.atropos.refactoring_engine.deltas.Delta;
 import kiarahmani.atropos.refactoring_engine.deltas.INTRO_F;
+import kiarahmani.atropos.refactoring_engine.deltas.INTRO_R;
 import kiarahmani.atropos.refactoring_engine.deltas.INTRO_VC;
 import kiarahmani.atropos.utils.Program_Utils;
 
@@ -77,7 +80,7 @@ public class Naive_search_engine extends Search_engine {
 
 	private Delta[] next_ID_OTO_refactorings(Program_Utils pu) {
 		Delta[] result = new Delta[2];
-		String new_fn = ng.newFieldName();
+		String new_fn = ng.newFieldName(source_fn.getName());
 		String target_table_name = target_table.getTableName().getName();
 		INTRO_F intro_f = new INTRO_F(target_table_name, new_fn, F_Type.NUM);
 		result[0] = intro_f;
@@ -87,7 +90,7 @@ public class Naive_search_engine extends Search_engine {
 
 	private Delta[] next_ID_OTM_refactorings(Program_Utils pu) {
 		Delta[] result = new Delta[2];
-		String new_fn = ng.newFieldName();
+		String new_fn = ng.newFieldName(source_fn.getName());
 		String target_table_name = target_table.getTableName().getName();
 		INTRO_F intro_f = new INTRO_F(target_table_name, new_fn, F_Type.NUM);
 		result[0] = intro_f;
@@ -96,8 +99,42 @@ public class Naive_search_engine extends Search_engine {
 	}
 
 	private Delta[] next_SUM_OTM_refactorings(Program_Utils pu) {
-		// TODO
-		return null;
+		int pk_cnt = source_table.getPKFields().size();
+		int index = 0;
+		String source_table_name = source_table.getTableName().getName();
+		Delta[] result = new Delta[6 + 2 * pk_cnt];
+		// intro_r
+		String new_table_name = ng.newRelationName(source_table_name);
+		INTRO_R intro_r = new INTRO_R(new_table_name, true);
+		result[index++] = intro_r;
+		// intro_f (pks)
+		ArrayList<INTRO_F> newly_added_introf = new ArrayList<>();
+		for (int i = 0; i < pk_cnt; i++)
+			newly_added_introf.add(new INTRO_F(new_table_name,
+					ng.newFieldName(source_table.getPKFields().get(i).getName()), F_Type.NUM, false, false));
+		// intro_f (uuid)
+		newly_added_introf.add(new INTRO_F(new_table_name, ng.newUUIDName(), F_Type.NUM, true, false));
+		// intro_f (delta)
+		String newly_added_fn_name = ng.newFieldName(source_fn.getName());
+		newly_added_introf.add(new INTRO_F(new_table_name, newly_added_fn_name, F_Type.NUM, false, true));
+		// add all above to the result
+		for (INTRO_F introf : newly_added_introf)
+			result[index++] = introf;
+		// add pks
+		for (int i = 0; i < pk_cnt; i++)
+			result[index++] = new ADDPK(pu, new_table_name, newly_added_introf.get(i).getNewName().getName());
+		result[index++] = new ADDPK(pu, new_table_name, newly_added_introf.get(pk_cnt).getNewName().getName());
+		// add shard key
+		result[index++] = new CHSK(pu, new_table_name, newly_added_introf.get(0).getNewName().getName());
+
+		// add intro_vc
+		INTRO_VC intro_vc = new INTRO_VC(pu, source_table_name, new_table_name, VC_Agg.VC_SUM, VC_Type.VC_OTM);
+		for (int i = 0; i < pk_cnt; i++)
+			intro_vc.addKeyCorrespondenceToVC(source_table.getPKFields().get(i).getName(),
+					newly_added_introf.get(i).getNewName().getName());
+		intro_vc.addFieldTupleToVC(source_fn.getName(), newly_added_fn_name);
+		result[index++] = intro_vc;
+		return result;
 	}
 
 	/*
@@ -229,12 +266,13 @@ public class Naive_search_engine extends Search_engine {
 	// returns true if successful
 	public boolean reset(Program_Utils pu) {
 		this.iter = 0;
-		this.source_table = getRandomTable(pu);
+		this.source_table =  getRandomTable(pu);
 		this.source_fn = getRandomFieldName(pu, source_table, false);
 		this.target_table = getRandomTable(pu, source_table);
-		if (Math.random() < -100) { // CRDT or not
+		if (Math.random() < 100) { // CRDT or not
 			// next refactoring is introduction of CRDT table and corresponding fields
 			this.agg = VC_Agg.VC_SUM;
+			this.type = VC_Type.VC_OTM;
 		} else {
 			// next introduction is a non CRDT field into an existing table
 			this.agg = VC_Agg.VC_ID;

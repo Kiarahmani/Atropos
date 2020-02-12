@@ -16,26 +16,32 @@ import kiarahmani.atropos.utils.Program_Utils;
 public class CHSK extends Delta {
 
 	private Table table;
-	private Program_Utils pu;
 	private FieldName old_sk, new_sk;
+	private String new_table_name, new_sk_name;
 
 	public CHSK(Program_Utils pu, String tn, String new_skn) {
 		this.table = pu.getTable(tn);
-		this.old_sk = table.getShardKey();
-		this.new_sk = pu.getFieldName(new_skn);
-		assert (table.getFieldNames().contains(new_sk));
+		if (table != null) {
+			this.old_sk = table.getShardKey();
+			this.new_sk = pu.getFieldName(new_skn);
+			assert (table.getFieldNames().contains(new_sk));
+		} else {
+			new_table_name = tn;
+			new_sk_name = new_skn;
+		}
+
 	}
 
-	public Table getTable() {
-		return this.table;
+	public Table getTable(Program_Utils pu) {
+		return (this.table != null) ? this.table : pu.getTable(new_table_name);
 	}
 
 	public FieldName getOldSK() {
 		return this.old_sk;
 	}
 
-	public FieldName getNewSK() {
-		return this.new_sk;
+	public FieldName getNewSK(Program_Utils pu) {
+		return (this.new_sk != null) ? this.new_sk : pu.getFieldName(new_sk_name);
 	}
 
 	/*
@@ -44,8 +50,7 @@ public class CHSK extends Delta {
 	@Override
 	public String getDesc() {
 		String old_desc = (old_sk == null) ? "NULL" : old_sk.getName();
-		return "shard key of table \"" + table.getTableName().getName() + "\" is changed from " + old_desc + " to "
-				+ new_sk.getName();
+		return "shard key of table \"" + new_table_name + "\" is changed from " + old_desc + " to " + new_sk_name;
 	}
 
 }

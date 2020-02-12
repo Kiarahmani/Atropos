@@ -1080,11 +1080,13 @@ public class Z3Driver {
 		// objs.getSort("Bool")));
 		// definition of projection functions
 		for (Table t : program.getTables()) {
+			logger.debug("setting projection functions for " + t.getTableName());
 			Z3Logger.SubHeaderZ3(t.getTableName().getName().toUpperCase());
 			for (FieldName fn : t.getFieldNames()) {
 				funcName = "proj_" + t.getTableName().getName() + "_" + fn.getName();
 				writen_proj_func = "written_val_" + t.getTableName().getName() + "_" + fn.getName();
 				Z3Logger.LogZ3(";; definition of projection functions " + funcName);
+				logger.debug("adding the definition of " + funcName + " and " + writen_proj_func);
 				switch (fn.getType()) {
 				case NUM:
 					// define function1
@@ -1097,15 +1099,17 @@ public class Z3Driver {
 							ctx.mkFuncDecl(writen_proj_func,
 									new Sort[] { objs.getSort("Rec"), objs.getSort("Txn"), objs.getEnum("Po") },
 									objs.getSort("Fld")));
-
+					logger.debug("functions added");
 					// define bounds1
 					Z3Logger.LogZ3(";; constrain the values of " + funcName + " for unrelated tables");
+					logger.debug("constraining the values of " + funcName);
 					Expr func_ret_val = ctx.mkApp(objs.getfuncs(funcName), rec1, txn1, po1);
 					int number_of_unrelated_tables = program.getTables().size() - 1;
+					logger.debug("number of unrelated tables: " + number_of_unrelated_tables);
 					BoolExpr[] num_eqs = new BoolExpr[number_of_unrelated_tables];
 					int iter = 0;
 					for (Table unrelated_table : program.getTables())
-						if (!unrelated_table.getTableName().getName().contains(t.getTableName().getName()))
+						if (!unrelated_table.getTableName().equalsWith(t.getTableName()))
 							num_eqs[iter++] = ctx.mkEq(ctx.mkApp(objs.getfuncs("rec_type"), rec1),
 									objs.getEnumConstructor("RecType", unrelated_table.getTableName().getName()));
 					BoolExpr num_body = ctx.mkEq(func_ret_val, ctx.mkBV(0, Constants._MAX_FIELD_INT));
@@ -1120,7 +1124,7 @@ public class Z3Driver {
 					BoolExpr[] num_eqs2 = new BoolExpr[number_of_unrelated_tables2];
 					int iter2 = 0;
 					for (Table unrelated_table2 : program.getTables())
-						if (!unrelated_table2.getTableName().getName().contains(t.getTableName().getName()))
+						if (!unrelated_table2.getTableName().equalsWith(t.getTableName()))
 							num_eqs2[iter2++] = ctx.mkEq(ctx.mkApp(objs.getfuncs("rec_type"), rec1),
 									objs.getEnumConstructor("RecType", unrelated_table2.getTableName().getName()));
 					BoolExpr num_body2 = ctx.mkEq(func_ret_val2, ctx.mkBV(0, Constants._MAX_FIELD_INT));

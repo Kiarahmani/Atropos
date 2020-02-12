@@ -331,7 +331,7 @@ public class Refactoring_Engine {
 		logger.debug("vc between " + src.getTableName() + " and " + dest.getTableName() + ": " + vc);
 		if (vc != null) {
 			for (FieldName fn : q.getSelectedFieldNames())
-				if (vc.getCorrespondingFN(fn) != null)
+				if (vc.getCorrespondingFN(pu, fn) != null)
 					result.add(fn);
 		} else
 			return null;
@@ -521,8 +521,8 @@ public class Refactoring_Engine {
 	 */
 	private Program_Utils apply_intro_vc(Program_Utils input_pu, INTRO_VC intro_vc) {
 		logger.debug("applying INTRO_VC refactoring");
-		TableName t1 = intro_vc.getVC().getTableName(1);
-		TableName t2 = intro_vc.getVC().getTableName(2);
+		TableName t1 = intro_vc.getVC().getTableName(input_pu, 1);
+		TableName t2 = intro_vc.getVC().getTableName(input_pu, 2);
 		// vc is already generated and added to pu; must now deal with the program
 		for (Transaction txn : input_pu.getTrasnsactionMap().values())
 			for (Query q : txn.getAllQueries())
@@ -535,7 +535,7 @@ public class Refactoring_Engine {
 						if (ud != null)
 							intro_vc.addAppliedUpDup(ud);
 
-					} else if (q.getTableName().equalsWith(intro_vc.getVC().getTableName(2))) {
+					} else if (q.getTableName().equalsWith(intro_vc.getVC().getTableName(input_pu, 2))) {
 						logger.debug("query " + q.getId() + " is a write on T2 (" + t1.getName()
 								+ ") and must be duplicated on T1 (" + t2.getName() + ")");
 						UPDATE_Duplicator ud = duplicate_update(input_pu, txn.getName(), t2.getName(), t1.getName(),
@@ -561,7 +561,8 @@ public class Refactoring_Engine {
 	 */
 	private Program_Utils apply_addpk(Program_Utils input_pu, ADDPK addpk) {
 		logger.debug("applying ADDPK refactoring");
-		addpk.getNewPK().setPK(true);
+		FieldName fn = input_pu.getFieldName(addpk.getNewPK());
+		fn.setPK(true);
 		logger.debug("schema updated. No need to update the program");
 		return input_pu;
 	}
@@ -573,11 +574,11 @@ public class Refactoring_Engine {
 		logger.debug("applying CHSK refactoring");
 		if (chsk.getOldSK() != null)
 			chsk.getOldSK().setSK(false);
-		chsk.getNewSK().setSK(true);
+		chsk.getNewSK(input_pu).setSK(true);
 		logger.debug("schema updated");
 		for (Transaction txn : input_pu.getTrasnsactionMap().values())
 			for (Query q : txn.getAllQueries())
-				if (q.getTableName().equalsWith(chsk.getTable().getTableName()))
+				if (q.getTableName().equalsWith(chsk.getTable(input_pu).getTableName()))
 					reAtomicize_qry(input_pu, txn.getName(), q.getPo(), false);
 		logger.debug("program updated");
 		return input_pu;
@@ -656,7 +657,8 @@ public class Refactoring_Engine {
 	 */
 	private Program_Utils revert_apply_addpk(Program_Utils input_pu, ADDPK addpk) {
 		logger.debug("reverting ADDPK refactoring");
-		addpk.getNewPK().setPK(false);
+		FieldName fn = input_pu.getFieldName(addpk.getNewPK());
+		fn.setPK(false);
 		logger.debug("schema updated. No need to update the program");
 		return input_pu;
 	}
@@ -667,11 +669,11 @@ public class Refactoring_Engine {
 	private Program_Utils revert_apply_chsk(Program_Utils input_pu, CHSK chsk) {
 		logger.debug("reverting CHSK refactoring");
 		chsk.getOldSK().setSK(true);
-		chsk.getNewSK().setSK(false);
+		chsk.getNewSK(input_pu).setSK(false);
 		logger.debug("schema updated");
 		for (Transaction txn : input_pu.getTrasnsactionMap().values())
 			for (Query q : txn.getAllQueries())
-				if (q.getTableName().equalsWith(chsk.getTable().getTableName()))
+				if (q.getTableName().equalsWith(chsk.getTable(input_pu).getTableName()))
 					reAtomicize_qry(input_pu, txn.getName(), q.getPo(), true);
 		logger.debug("program updated");
 		return input_pu;

@@ -38,7 +38,7 @@ public class Atropos {
 		Naive_search_engine nse = new Naive_search_engine(pu);
 		// define constants
 		int _max_iterations = 1;
-		int _refactoring_depth = 4;
+		int _refactoring_depth = 1;
 		for (int i = 0; i < _max_iterations; i++) {
 			ArrayList<Delta> all_refs = new ArrayList<>();
 			for (int j = 0; j < _refactoring_depth; j++)
