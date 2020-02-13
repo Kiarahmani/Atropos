@@ -69,7 +69,7 @@ public class Atropos {
 	private static void printStats(long time, int number_of_anomalies) {
 
 		System.out.println(
-				"\n\n\n\n============================================================================================");
+				"\n\n\n\n============================================================================================" );
 		System.out.println();
 		System.out.println("Total Memory: "
 				+ (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1000000 + " MB");
