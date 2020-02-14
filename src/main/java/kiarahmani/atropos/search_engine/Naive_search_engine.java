@@ -37,11 +37,13 @@ public class Naive_search_engine extends Search_engine {
 	private static final Logger logger = LogManager.getLogger(Atropos.class);
 	private NameGenerator ng;
 	private int iter;
+	private int max_iter;
 	private VC_Type type;
 	private VC_Agg agg;
 	private Table source_table, target_table;
 	private FieldName source_fn;
 	private ArrayList<Delta> history;
+	private Delta[] result;
 
 	/*
 	 * Constructor
@@ -50,12 +52,15 @@ public class Naive_search_engine extends Search_engine {
 		ng = new NameGenerator();
 	}
 
+	public boolean hasNext() {
+		return (++iter) < max_iter;
+	}
+
 	/*
 	 * Function called iteratively from the mainS
 	 */
 	@Override
-	public Delta[] nextRefactorings(Program_Utils pu) {
-		reset(pu);
+	public Delta nextRefactoring(Program_Utils pu) {
 		this.history = history;
 		switch (agg) {
 		case VC_SUM:
@@ -79,63 +84,66 @@ public class Naive_search_engine extends Search_engine {
 	 * Helping functions that are called in different cases above
 	 */
 
-	private Delta[] next_ID_OTO_refactorings(Program_Utils pu) {
-		Delta[] result = new Delta[2];
-		String new_fn = ng.newFieldName(source_fn.getName());
-		String target_table_name = target_table.getTableName().getName();
-		INTRO_F intro_f = new INTRO_F(target_table_name, new_fn, F_Type.NUM);
-		result[0] = intro_f;
-		result[1] = mk_ID_OTO_INTRO_VC(pu, intro_f.getNewName());
-		return result;
+	private Delta next_ID_OTO_refactorings(Program_Utils pu) {
+		if (iter == 0) {
+			String new_fn = ng.newFieldName(source_fn.getName());
+			String target_table_name = target_table.getTableName().getName();
+			INTRO_F intro_f = new INTRO_F(target_table_name, new_fn, F_Type.NUM);
+			result[0] = intro_f;
+			result[1] = mk_ID_OTO_INTRO_VC(pu, intro_f.getNewName());
+		}
+		return result[iter];
 	}
 
-	private Delta[] next_ID_OTM_refactorings(Program_Utils pu) {
-		Delta[] result = new Delta[2];
-		String new_fn = ng.newFieldName(source_fn.getName());
-		String target_table_name = target_table.getTableName().getName();
-		INTRO_F intro_f = new INTRO_F(target_table_name, new_fn, F_Type.NUM);
-		result[0] = intro_f;
-		result[1] = mk_ID_OTM_INTRO_VC(pu, intro_f.getNewName());
-		return result;
+	private Delta next_ID_OTM_refactorings(Program_Utils pu) {
+		if (iter == 0) {
+			String new_fn = ng.newFieldName(source_fn.getName());
+			String target_table_name = target_table.getTableName().getName();
+			INTRO_F intro_f = new INTRO_F(target_table_name, new_fn, F_Type.NUM);
+			result[0] = intro_f;
+			result[1] = mk_ID_OTM_INTRO_VC(pu, intro_f.getNewName());
+		}
+		return result[iter];
 	}
 
-	private Delta[] next_SUM_OTM_refactorings(Program_Utils pu) {
-		int pk_cnt = source_table.getPKFields().size();
-		int index = 0;
-		String source_table_name = source_table.getTableName().getName();
-		Delta[] result = new Delta[6 + 2 * pk_cnt];
-		// intro_r
-		String new_table_name = ng.newRelationName(source_table_name);
-		INTRO_R intro_r = new INTRO_R(new_table_name, true);
-		result[index++] = intro_r;
-		// intro_f (pks)
-		ArrayList<INTRO_F> newly_added_introf = new ArrayList<>();
-		for (int i = 0; i < pk_cnt; i++)
-			newly_added_introf.add(new INTRO_F(new_table_name,
-					ng.newFieldName(source_table.getPKFields().get(i).getName()), F_Type.NUM, false, false));
-		// intro_f (uuid)
-		newly_added_introf.add(new INTRO_F(new_table_name, ng.newUUIDName(), F_Type.NUM, true, false));
-		// intro_f (delta)
-		String newly_added_fn_name = ng.newFieldName(source_fn.getName());
-		newly_added_introf.add(new INTRO_F(new_table_name, newly_added_fn_name, F_Type.NUM, false, true));
-		// add all above to the result
-		for (INTRO_F introf : newly_added_introf)
-			result[index++] = introf;
-		// add pks
-		for (int i = 0; i < pk_cnt; i++)
-			result[index++] = new ADDPK(pu, new_table_name, newly_added_introf.get(i).getNewName().getName());
-		result[index++] = new ADDPK(pu, new_table_name, newly_added_introf.get(pk_cnt).getNewName().getName());
-		// add shard key
-		result[index++] = new CHSK(pu, new_table_name, newly_added_introf.get(0).getNewName().getName());
+	private Delta next_SUM_OTM_refactorings(Program_Utils pu) {
+		if (iter == 0) {
+			int pk_cnt = source_table.getPKFields().size();
+			int index = 0;
+			String source_table_name = source_table.getTableName().getName();
+			// intro_r
+			String new_table_name = ng.newRelationName(source_table_name);
+			INTRO_R intro_r = new INTRO_R(new_table_name, true);
+			result[index++] = intro_r;
+			// intro_f (pks)
+			ArrayList<INTRO_F> newly_added_introf = new ArrayList<>();
+			for (int i = 0; i < pk_cnt; i++)
+				newly_added_introf.add(new INTRO_F(new_table_name,
+						ng.newFieldName(source_table.getPKFields().get(i).getName()), F_Type.NUM, false, false));
+			// intro_f (uuid)
+			newly_added_introf.add(new INTRO_F(new_table_name, ng.newUUIDName(), F_Type.NUM, true, false));
+			// intro_f (delta)
+			String newly_added_fn_name = ng.newFieldName(source_fn.getName());
+			newly_added_introf.add(new INTRO_F(new_table_name, newly_added_fn_name, F_Type.NUM, false, true));
+			// add all above to the result
+			for (INTRO_F introf : newly_added_introf)
+				result[index++] = introf;
+			// add pks
+			for (int i = 0; i < pk_cnt; i++)
+				result[index++] = new ADDPK(pu, new_table_name, newly_added_introf.get(i).getNewName().getName());
+			result[index++] = new ADDPK(pu, new_table_name, newly_added_introf.get(pk_cnt).getNewName().getName());
+			// add shard key
+			result[index++] = new CHSK(pu, new_table_name, newly_added_introf.get(0).getNewName().getName());
 
-		// add intro_vc
-		INTRO_VC intro_vc = new INTRO_VC(pu, source_table_name, new_table_name, VC_Agg.VC_SUM, VC_Type.VC_OTM);
-		for (int i = 0; i < pk_cnt; i++)
-			intro_vc.addKeyCorrespondenceToVC(source_table.getPKFields().get(i).getName(),
-					newly_added_introf.get(i).getNewName().getName());
-		intro_vc.addFieldTupleToVC(source_fn.getName(), newly_added_fn_name);
-		result[index++] = intro_vc;
-		return result;
+			// add intro_vc
+			INTRO_VC intro_vc = new INTRO_VC(pu, source_table_name, new_table_name, VC_Agg.VC_SUM, VC_Type.VC_OTM);
+			for (int i = 0; i < pk_cnt; i++)
+				intro_vc.addKeyCorrespondenceToVC(source_table.getPKFields().get(i).getName(),
+						newly_added_introf.get(i).getNewName().getName());
+			intro_vc.addFieldTupleToVC(source_fn.getName(), newly_added_fn_name);
+			result[index++] = intro_vc;
+		}
+		return result[iter];
 	}
 
 	/*
@@ -143,7 +151,7 @@ public class Naive_search_engine extends Search_engine {
 	 */
 
 	private Table getRandomTable(Program_Utils pu) {
-		List<Table> filteredList = pu.getTables().values().stream().filter(t -> !t.isNew).collect(Collectors.toList());
+		List<Table> filteredList = pu.getTables().values().stream().filter(t -> true).collect(Collectors.toList());
 		int table_cnt = filteredList.size();
 		int random_index = (int) (Math.random() * table_cnt);
 		return filteredList.get(random_index);
@@ -153,7 +161,7 @@ public class Naive_search_engine extends Search_engine {
 	private Table getRandomTable(Program_Utils pu, Table other_than_this) {
 		ArrayList<Table> filtered_table_list = new ArrayList<>();
 		for (Table t : pu.getTables().values())
-			if (!t.is_equal(other_than_this) && !t.isNew)
+			if (!t.is_equal(other_than_this) )
 				filtered_table_list.add(t);
 		int filtered_table_cnt = filtered_table_list.size();
 		int random_index = (int) (Math.random() * filtered_table_cnt);
@@ -250,12 +258,14 @@ public class Naive_search_engine extends Search_engine {
 		this.source_table = getRandomTable(pu);
 		this.source_fn = getRandomFieldName(pu, source_table, false);
 		this.target_table = getRandomTable(pu, source_table);
-		if (Math.random() < 0.3) { // CRDT or not
+		if (Math.random() < 10.3) { // CRDT or not
 			// next refactoring is introduction of CRDT table and corresponding fields
+			max_iter = 6 + 2 * source_table.getPKFields().size();
 			this.agg = VC_Agg.VC_SUM;
 			this.type = VC_Type.VC_OTM;
 		} else {
 			// next introduction is a non CRDT field into an existing table
+			max_iter = 2;
 			this.agg = VC_Agg.VC_ID;
 			if (Math.random() < 0.5) { // OTO or not
 				// the decided relationship between source and target table is OTO
@@ -265,6 +275,7 @@ public class Naive_search_engine extends Search_engine {
 				this.type = VC_Type.VC_OTM;
 			}
 		}
+		result = new Delta[max_iter];
 		return true;
 	}
 

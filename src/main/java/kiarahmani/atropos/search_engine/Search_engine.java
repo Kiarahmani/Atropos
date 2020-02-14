@@ -11,7 +11,7 @@ import kiarahmani.atropos.refactoring_engine.deltas.Delta;
 import kiarahmani.atropos.utils.Program_Utils;
 
 public abstract class Search_engine {
-	public abstract Delta[] nextRefactorings(Program_Utils pu);
+	public abstract Delta nextRefactoring(Program_Utils pu);
 
 	public abstract boolean reset(Program_Utils pu);
 
