@@ -70,7 +70,7 @@ public class Refactoring_Engine {
 				if (q instanceof Update_Query) {
 					Update_Query uq = (Update_Query) q;
 					if (is_non_crdt_able(uq)) {
-						logger.debug(q.getId() + " is not crdt-able!");
+						logger.error(q.getId() + " is not crdt-able!");
 						String txn_name = txn.getName();
 						int u_po = uq.getPo();
 						Block u_block = input_pu.getBlockByPo(txn_name, u_po);
@@ -81,7 +81,7 @@ public class Refactoring_Engine {
 						InsertQueriesAtPO(u_block, input_pu, txn_name, u_po + 1,
 								new Query_Statement(u_po + 1, new_update));
 					} else
-						logger.debug(q.getId() + " is crdt-able!");
+						logger.error(q.getId() + " is crdt-able!");
 				}
 			}
 	}
@@ -181,15 +181,16 @@ public class Refactoring_Engine {
 	}
 
 	private boolean delete_redundant_writes(Program_Utils pu, HashMap<Table, HashSet<FieldName>> accessed_fn_map) {
+
 		boolean result = false;
 		for (Transaction txn : pu.getTrasnsactionMap().values())
 			for (Query q : txn.getAllQueries())
 				if (q.canBeRemoved() && q.isWrite()) {
-					logger.debug("--------------");
-					logger.debug("analyzing if " + txn.getName() + "." + q.getId() + " can be removed");
+					logger.error("--------------");
+					logger.error("analyzing if " + txn.getName() + "." + q.getId() + " can be removed");
 					Table curr_t = pu.getTable(q.getTableName().getName());
 					if (curr_t == null) { // table has already been removed
-						logger.debug("removing " + txn.getName() + "." + q.getId() + " because table " + curr_t
+						logger.error("removing " + txn.getName() + "." + q.getId() + " because table " + curr_t
 								+ " has already been removed");
 						deleteQuery(pu, q.getPo(), txn.getName());
 						result = true;
@@ -198,13 +199,13 @@ public class Refactoring_Engine {
 						HashSet<FieldName> currr_accessed = accessed_fn_map.get(curr_t);
 						ArrayList<FieldName> curr_written = q.getWrittenFieldNames();
 						ArrayList<FieldName> excluded_fns = new ArrayList<>();
-						logger.debug("currr_accessed: " + currr_accessed);
-						logger.debug("curr_written: " + curr_written);
+						logger.error("currr_accessed: " + currr_accessed);
+						logger.error("curr_written: " + curr_written);
 						// figure out which fns are not used elsewhere
 						for (FieldName fn : curr_written)
 							if (!currr_accessed.contains(fn))
 								excluded_fns.add(fn);
-						logger.debug("excluded_fns: " + excluded_fns);
+						logger.error("excluded_fns: " + excluded_fns);
 						if (excluded_fns.size() == curr_written.size()) { // if NONE of the updated fields is used
 							deleteQuery(pu, q.getPo(), txn.getName());
 							result = true;
@@ -223,22 +224,22 @@ public class Refactoring_Engine {
 		for (Transaction txn : pu.getTrasnsactionMap().values())
 			q_loop: for (Query q : txn.getAllQueries())
 				if (q.canBeRemoved() && !q.isWrite()) {
-					logger.debug("---- checking if " + q.getId() + " can be deleted");
+					logger.error("---- checking if " + q.getId() + " can be deleted");
 					Select_Query sq = (Select_Query) q;
 					// check if sq is implicitly used
 					if (sq.getImplicitlyUsed().size() > 0) {
-						logger.debug(q.getId() + " cannot be deleted because it is implicitly used");
+						logger.error(q.getId() + " cannot be deleted because it is implicitly used");
 						continue q_loop;
 					}
 					// check if sq is explicitly used
 					Variable v = sq.getVariable();
 					if (var_is_used_in_txn(pu, txn.getName(), v)) {
-						logger.debug(v + " is used in " + txn.getName());
-						logger.debug(q.getId() + " cannot be deleted because it is explicitly used");
+						logger.error(v + " is used in " + txn.getName());
+						logger.error(q.getId() + " cannot be deleted because it is explicitly used");
 						continue q_loop;
 					}
-					logger.debug(v + " is NOT used in " + txn.getName());
-					logger.debug(q.getId() + " can be deleted");
+					logger.error(v + " is NOT used in " + txn.getName());
+					logger.error(q.getId() + " can be deleted");
 					// at this point we know q is not either explicitly or implicitly used
 					deleteQuery(pu, q.getPo(), txn.getName());
 					result = true;
@@ -268,6 +269,7 @@ public class Refactoring_Engine {
 
 	// single iteration of decomposition
 	private boolean decompose_iter(Program_Utils pu) {
+		
 		boolean result = false;
 		// iterate over all selects, if any part of it should be redirected to a newer
 		// table, do it
@@ -281,17 +283,20 @@ public class Refactoring_Engine {
 					Table t_src = pu.getTable(q.getTableName().getName());
 					for (Table t_dest : pu.getTables().values()) {
 						ArrayList<FieldName> must_be_redirected = must_redirect(pu, sq, t_src, t_dest);
-						if (must_be_redirected != null) { // some subset of fn accesses must be redirected
+						if (must_be_redirected != null) { // 
+							logger.error("some subset of fn accesses must be redirected in "+q.getId()+"---->  "+must_be_redirected);
 							int red_size = must_be_redirected.size();
 							int total_size = sq.getSelectedFieldNames().size();
 							if (red_size < total_size) {
 								if (red_size > 0) {
+									logger.error("the subset of fns which must be redirected is proper subset");
 									split_select(pu, txn_name, must_be_redirected, po, false);
 									redirect_select(pu, txn_name, t_src.getTableName().getName(),
 											t_dest.getTableName().getName(), po + 1, false);
 									result = true;
 								}
 							} else {
+								logger.error("all fns must be redirected");
 								redirect_select(pu, txn_name, t_src.getTableName().getName(),
 										t_dest.getTableName().getName(), po, false);
 								result = true;
@@ -313,7 +318,7 @@ public class Refactoring_Engine {
 	private ArrayList<FieldName> must_redirect(Program_Utils pu, Select_Query q, Table src, Table dest) {
 		ArrayList<FieldName> result = new ArrayList<>();
 		VC vc = pu.getVCByOrderedTables(src.getTableName(), dest.getTableName());
-		logger.debug("vc between " + src.getTableName() + " and " + dest.getTableName() + ": " + vc);
+		logger.error("vc between " + src.getTableName() + " and " + dest.getTableName() + ": " + vc);
 		if (vc != null) {
 			for (FieldName fn : q.getSelectedFieldNames())
 				if (vc.getCorrespondingFN(pu, fn) != null)
@@ -339,10 +344,10 @@ public class Refactoring_Engine {
 
 					int po1 = q1.getPo();
 					int po2 = q2.getPo();
-					logger.debug("checking if " + q1.getId() + "(@" + po1 + ") and " + q2.getId() + "(@" + po2
+					logger.error("checking if " + q1.getId() + "(@" + po1 + ") and " + q2.getId() + "(@" + po2
 							+ ") can be merged");
 					Block b1 = pu.getBlockByPo(txn_name, po1);
-					Block b2= pu.getBlockByPo(txn_name, po2);
+					Block b2 = pu.getBlockByPo(txn_name, po2);
 					if (!b1.isEqual(b2))
 						continue;
 					if (swapChecks(pu, txn, po1 + 1, po2)) {
@@ -353,7 +358,7 @@ public class Refactoring_Engine {
 						deleteQuery(pu, po1 + 1, txn_name);
 						InsertQueriesAtPO(b1, pu, txn_name, po2, new Query_Statement(po2, q2));
 					} else {
-						logger.debug("query at " + (po1 + 1) + "cannot be swapped with query at " + po2);
+						logger.error("query at " + (po1 + 1) + "cannot be swapped with query at " + po2);
 						attempt_merge_query(pu, txn.getName(), po1, false);
 					}
 				}
@@ -371,18 +376,18 @@ public class Refactoring_Engine {
 			return false;
 		if (!input_pu.getBlockByPo(txn_name, qry_po).isEqual(input_pu.getBlockByPo(txn_name, qry_po + 1)))
 			return false;
-		logger.debug("attempting to merge queries q1(" + q1.getId() + ") and q2(" + q2.getId() + ")");
-		logger.debug("q1: " + q1);
-		logger.debug("q2: " + q2);
+		logger.error("attempting to merge queries q1(" + q1.getId() + ") and q2(" + q2.getId() + ")");
+		logger.error("q1: " + q1);
+		logger.error("q2: " + q2);
 
 		if (q1.getKind() == Kind.UPDATE && q2.getKind() == Kind.UPDATE) {
 			UPDATE_Merger success = merge_update(input_pu, txn_name, qry_po, isRevert);
-			logger.debug("updates merging attempted. result: " + (success != null));
+			logger.error("updates merging attempted. result: " + (success != null));
 			return (success != null);
 
 		} else if (q1.getKind() == Kind.SELECT && q2.getKind() == Kind.SELECT) {
 			SELECT_Merger success = merge_select(input_pu, txn_name, qry_po, isRevert);
-			logger.debug("selects merging attempted on " + q1.getId() + " and " + q2.getId() + " result: "
+			logger.error("selects merging attempted on " + q1.getId() + " and " + q2.getId() + " result: "
 					+ (success != null));
 			if (success != null) {
 				return true;
@@ -440,9 +445,10 @@ public class Refactoring_Engine {
 
 	public Program_Utils refactor_schema(Program_Utils input_pu, Delta delta) {
 		if (delta == null) {
-			logger.debug("null refactoring is requested. Aborting.");
+			logger.error("null refactoring is requested. Aborting.");
 			return input_pu;
 		}
+
 		input_pu.incVersion();
 		input_pu.addComment(
 				"\n" + input_pu.getProgramName() + "(" + input_pu.getVersion() + "):	" + delta.getDesc());
@@ -469,7 +475,7 @@ public class Refactoring_Engine {
 	 * case: Schema Delta was INTRO_R
 	 */
 	private Program_Utils apply_intro_r(Program_Utils input_pu, INTRO_R intro_r) {
-		logger.debug("applying INTRO_R refactoring");
+		logger.error("applying INTRO_R refactoring");
 		String table_name = intro_r.getNewTableName();
 		if (!intro_r.isCRDT()) {
 			Table t = input_pu.mkTable(table_name);
@@ -488,7 +494,7 @@ public class Refactoring_Engine {
 	 * case: Schema Delta was INTRO_VC
 	 */
 	private Program_Utils apply_intro_vc(Program_Utils input_pu, INTRO_VC intro_vc) {
-		logger.debug("applying INTRO_VC refactoring");
+		logger.error("applying INTRO_VC refactoring");
 		TableName t1 = intro_vc.getVC().getTableName(input_pu, 1);
 		TableName t2 = intro_vc.getVC().getTableName(input_pu, 2);
 		// vc is already generated and added to pu; must now deal with the program
@@ -496,7 +502,7 @@ public class Refactoring_Engine {
 			for (Query q : txn.getAllQueries())
 				if (q.isWrite())
 					if (q.getTableName().equalsWith(t1)) {
-						logger.debug("query " + q.getId() + " is a write on T1 (" + t1.getName()
+						logger.error("query " + q.getId() + "(" + q.getPo() + ")" + "is a write on T1 (" + t1.getName()
 								+ ") and must be duplicated on T2 (" + t2.getName() + ")");
 						UPDATE_Duplicator ud = duplicate_update(input_pu, txn.getName(), t1.getName(), t2.getName(),
 								q.getPo());
@@ -504,7 +510,7 @@ public class Refactoring_Engine {
 							intro_vc.addAppliedUpDup(ud);
 
 					} else if (q.getTableName().equalsWith(intro_vc.getVC().getTableName(input_pu, 2))) {
-						logger.debug("query " + q.getId() + " is a write on T2 (" + t1.getName()
+						logger.error("query " + q.getId() + " is a write on T2 (" + t1.getName()
 								+ ") and must be duplicated on T1 (" + t2.getName() + ")");
 						UPDATE_Duplicator ud = duplicate_update(input_pu, txn.getName(), t2.getName(), t1.getName(),
 								q.getPo());
@@ -519,7 +525,7 @@ public class Refactoring_Engine {
 	 * case: Schema Delta was INTRO_F
 	 */
 	private Program_Utils apply_intro_f(Program_Utils input_pu, INTRO_F intro_f) {
-		logger.debug("applying INTRO_F refactoring");
+		logger.error("applying INTRO_F refactoring");
 		input_pu.addFieldNameToTable(intro_f.getTableName(), intro_f.getNewName());
 		return input_pu;
 	}
@@ -528,10 +534,10 @@ public class Refactoring_Engine {
 	 * case: Schema Delta was ADDPK
 	 */
 	private Program_Utils apply_addpk(Program_Utils input_pu, ADDPK addpk) {
-		logger.debug("applying ADDPK refactoring");
+		logger.error("applying ADDPK refactoring");
 		FieldName fn = input_pu.getFieldName(addpk.getNewPK());
 		fn.setPK(true);
-		logger.debug("schema updated. No need to update the program");
+		logger.error("schema updated. No need to update the program");
 		return input_pu;
 	}
 
@@ -539,16 +545,16 @@ public class Refactoring_Engine {
 	 * case: Schema Delta was CHSK
 	 */
 	private Program_Utils apply_chsk(Program_Utils input_pu, CHSK chsk) {
-		logger.debug("applying CHSK refactoring");
+		logger.error("applying CHSK refactoring");
 		if (chsk.getOldSK() != null)
 			chsk.getOldSK().setSK(false);
 		chsk.getNewSK(input_pu).setSK(true);
-		logger.debug("schema updated");
+		logger.error("schema updated");
 		for (Transaction txn : input_pu.getTrasnsactionMap().values())
 			for (Query q : txn.getAllQueries())
 				if (q.getTableName().equalsWith(chsk.getTable(input_pu).getTableName()))
 					reAtomicize_qry(input_pu, txn.getName(), q.getPo(), false);
-		logger.debug("program updated");
+		logger.error("program updated");
 		return input_pu;
 	}
 
@@ -592,7 +598,7 @@ public class Refactoring_Engine {
 	 * case: Schema Delta was INTRO_R
 	 */
 	private Program_Utils revert_apply_intro_r(Program_Utils input_pu, INTRO_R intro_r) {
-		logger.debug("reverting INTRO_R refactoring");
+		logger.error("reverting INTRO_R refactoring");
 		String table_name = intro_r.getNewTableName();
 		input_pu.rmTable(table_name);
 		return input_pu;
@@ -602,7 +608,7 @@ public class Refactoring_Engine {
 	 * case: Schema Delta was INTRO_VC
 	 */
 	private Program_Utils revert_apply_intro_vc(Program_Utils input_pu, INTRO_VC intro_vc) {
-		logger.debug("reverting INTRO_VC refactoring");
+		logger.error("reverting INTRO_VC refactoring");
 		input_pu.rmVC(intro_vc.getVC());
 		for (int i = intro_vc.getAppliedUpDup().size() - 1; i >= 0; i--) // must be traversed reversely to make sure POs
 																			// are not messed up
@@ -615,7 +621,7 @@ public class Refactoring_Engine {
 	 * case: Schema Delta was INTRO_F
 	 */
 	private Program_Utils revert_apply_intro_f(Program_Utils input_pu, INTRO_F intro_f) {
-		logger.debug("reverting INTRO_F refactoring");
+		logger.error("reverting INTRO_F refactoring");
 		input_pu.removeFieldNameFromTable(intro_f.getTableName(), intro_f.getNewName());
 		return input_pu;
 	}
@@ -624,10 +630,10 @@ public class Refactoring_Engine {
 	 * case: Schema Delta was ADDPK
 	 */
 	private Program_Utils revert_apply_addpk(Program_Utils input_pu, ADDPK addpk) {
-		logger.debug("reverting ADDPK refactoring");
+		logger.error("reverting ADDPK refactoring");
 		FieldName fn = input_pu.getFieldName(addpk.getNewPK());
 		fn.setPK(false);
-		logger.debug("schema updated. No need to update the program");
+		logger.error("schema updated. No need to update the program");
 		return input_pu;
 	}
 
@@ -635,15 +641,15 @@ public class Refactoring_Engine {
 	 * case: Schema Delta was CHSK
 	 */
 	private Program_Utils revert_apply_chsk(Program_Utils input_pu, CHSK chsk) {
-		logger.debug("reverting CHSK refactoring");
+		logger.error("reverting CHSK refactoring");
 		chsk.getOldSK().setSK(true);
 		chsk.getNewSK(input_pu).setSK(false);
-		logger.debug("schema updated");
+		logger.error("schema updated");
 		for (Transaction txn : input_pu.getTrasnsactionMap().values())
 			for (Query q : txn.getAllQueries())
 				if (q.getTableName().equalsWith(chsk.getTable(input_pu).getTableName()))
 					reAtomicize_qry(input_pu, txn.getName(), q.getPo(), true);
-		logger.debug("program updated");
+		logger.error("program updated");
 		return input_pu;
 	}
 
@@ -756,10 +762,13 @@ public class Refactoring_Engine {
 
 	public SELECT_Redirector redirect_select(Program_Utils input_pu, String txn_name, String src_table,
 			String dest_table, int qry_po, boolean isRevert) {
+		
 		SELECT_Redirector select_red = new SELECT_Redirector();
 		select_red.set(input_pu, txn_name, src_table, dest_table);
 		if (select_red.isValid(input_pu.getQueryByPo(txn_name, qry_po))) {
+			
 			applyAndPropagate(input_pu, select_red, qry_po, txn_name);
+			
 			String begin;
 			if (isRevert) {
 				input_pu.decVersion();
@@ -769,8 +778,9 @@ public class Refactoring_Engine {
 				begin = input_pu.getProgramName() + "(" + input_pu.getVersion() + "):	";
 			}
 			input_pu.addComment("\n" + begin + select_red.getDesc());
-
+			
 			select_red.setApplied_po(qry_po);
+			
 			return select_red;
 		} else
 			return null;
@@ -895,7 +905,7 @@ public class Refactoring_Engine {
 			upd_dup.setOrgDupPo(qry_po);
 			return upd_dup;
 		} else {
-			logger.debug("attempted duplication of po#" + qry_po + "from " + source_table + " to " + target_table
+			logger.error("attempted duplication of po#" + qry_po + "from " + source_table + " to " + target_table
 					+ " but failed");
 			return null;
 		}
@@ -1053,27 +1063,29 @@ public class Refactoring_Engine {
 		switch (modifier.type) {
 		case OTO:
 			One_to_One_Query_Modifier otoqm = (One_to_One_Query_Modifier) modifier;
-			logger.debug("First calling applyAtIndex to apply the desired modification at index");
+			logger.error("First calling applyAtIndex to apply the desired modification at index");
 			applyAtIndex(input_pu, otoqm, apply_at_po, txnName);
-			logger.debug(
+			
+			logger.error(
 					"Now calling propagateToRange to apply the deisred modifications at all subsequent statements");
 			propagateToRange(input_pu, modifier, apply_at_po, txnName);
 			break;
 
 		case OTT:
 			One_to_Two_Query_Modifier ottqm = (One_to_Two_Query_Modifier) modifier;
-			logger.debug("First calling applyAtIndex to apply the desired modification at index");
+			logger.error("First calling applyAtIndex to apply the desired modification at index");
 			applyAtIndex(input_pu, ottqm, apply_at_po, txnName);
-			logger.debug(
+
+			logger.error(
 					"Now calling propagateToRange to apply the deisred modifications at all subsequent statements");
 			propagateToRange(input_pu, modifier, apply_at_po, txnName);
 			break;
 
 		case TTO:
 			Two_to_One_Query_Modifier ttoqm = (Two_to_One_Query_Modifier) modifier;
-			logger.debug("First calling applyAtIndex to apply the desired modification at index");
+			logger.error("First calling applyAtIndex to apply the desired modification at index");
 			applyAtIndex(input_pu, ttoqm, apply_at_po, apply_at_po + 1, txnName);
-			logger.debug(
+			logger.error(
 					"Now calling propagateToRange to apply the deisred modifications at all subsequent statements");
 			propagateToRange(input_pu, modifier, apply_at_po, txnName);
 			break;
@@ -1094,16 +1106,18 @@ public class Refactoring_Engine {
 	public Program_Utils applyAtIndex(Program_Utils input_pu, One_to_One_Query_Modifier modifier, int apply_at_po,
 			String txnName) {
 		assert (modifier.isSet()) : "cannot apply the modifier since it is not set";
-		logger.debug("Applying the modifer " + modifier + " at index: " + apply_at_po);
+		logger.error("Applying the modifer " + modifier + " at index: " + apply_at_po);
 		Query old_qry = input_pu.getQueryByPo(txnName, apply_at_po);
 		Query new_qry = modifier.atIndexModification(old_qry);
-		logger.debug(
+		logger.error(
 				"old query (" + old_qry.getId() + ") is going to be replaced with new query (" + new_qry.getId() + ")");
 		Block orig_block = input_pu.getBlockByPo(txnName, apply_at_po);
-		logger.debug("the old query was found in block: " + orig_block);
-		logger.debug("applyAtIndex: new Calling deleteQuery to remove the old query from the transaction");
+		logger.error("the old query was found in block: " + orig_block);
+		logger.error("applyAtIndex: new Calling deleteQuery to remove the old query from the transaction");
+		
 		deleteQuery(input_pu, apply_at_po, txnName);
-		logger.debug("new Calling InsertQueriesAtPO to add the new query to the transaction");
+		
+		logger.error("new Calling InsertQueriesAtPO to add the new query to the transaction");
 		InsertQueriesAtPO(orig_block, input_pu, txnName, apply_at_po, new Query_Statement(apply_at_po, new_qry));
 		return input_pu;
 	}
@@ -1120,29 +1134,29 @@ public class Refactoring_Engine {
 		assert (modifier.isSet()) : "cannot apply the modifier since it is not set";
 		Block fst_block = input_pu.getBlockByPo(txnName, apply_at_po_fst);
 		Block sec_block = input_pu.getBlockByPo(txnName, apply_at_po_sec);
-		logger.debug(
+		logger.error(
 				"Applying the modifer " + modifier + " at indexes: " + apply_at_po_fst + " and " + apply_at_po_sec);
 		Query fst_qry = input_pu.getQueryByPo(txnName, apply_at_po_fst);
 		Query sec_qry = input_pu.getQueryByPo(txnName, apply_at_po_sec);
 		assert (fst_block.isEqual(sec_block)) : "can only apply TTO modifiers on queries in the same block (" + fst_qry
 				+ ") and (" + sec_qry + ")";
-		logger.debug("the original queries are found in block: " + fst_block);
+		logger.error("the original queries are found in block: " + fst_block);
 
 		// define new query
 		Query new_qry = modifier.atIndexModification(fst_qry, sec_qry);
-		logger.debug("old queries (" + fst_qry.getId() + ") and (" + sec_qry.getId()
+		logger.error("old queries (" + fst_qry.getId() + ") and (" + sec_qry.getId()
 				+ ") are going to be replaced with new query (" + new_qry.getId() + ")");
 
-		logger.debug("now calling deleteQuery (twice) to remove the old queries from the transaction");
+		logger.error("now calling deleteQuery (twice) to remove the old queries from the transaction");
 		deleteQuery(input_pu, apply_at_po_fst, txnName);
-		logger.debug("po=" + apply_at_po_fst + " is removed");
+		logger.error("po=" + apply_at_po_fst + " is removed");
 		deleteQuery(input_pu, apply_at_po_fst, txnName); // BE CAREFUL! SINCE apply_at_po_fst is already deleted,
 															// now what used to be at apply_at_po_sec resides at
 															// po=apply_at_po_fst and hence the function is called on
 															// apply_at_po_fst again
-		logger.debug("po=" + apply_at_po_sec + " is removed");
+		logger.error("po=" + apply_at_po_sec + " is removed");
 
-		logger.debug("now calling InsertQueriesAtPO to add the new query to the transaction");
+		logger.error("now calling InsertQueriesAtPO to add the new query to the transaction");
 		InsertQueriesAtPO(fst_block, input_pu, txnName, apply_at_po_fst, new Query_Statement(apply_at_po_fst, new_qry));
 
 		// return
@@ -1158,16 +1172,17 @@ public class Refactoring_Engine {
 	public Program_Utils applyAtIndex(Program_Utils input_pu, One_to_Two_Query_Modifier modifier, int apply_at_po,
 			String txnName) {
 		assert (modifier.isSet()) : "cannot apply the modifier since it is not set";
-		logger.debug("Applying the modifer " + modifier + " at index: " + apply_at_po);
+		logger.error("Applying the modifer " + modifier + " at index: " + apply_at_po);
 		Query old_qry = input_pu.getQueryByPo(txnName, apply_at_po);
 		Tuple<Query, Query> new_qry_tuple = modifier.atIndexModification(old_qry);
-		logger.debug("old query (" + old_qry.getId() + ") is going to be replaced with new queries ("
+		logger.error("old query (" + old_qry.getId() + ") is going to be replaced with new queries ("
 				+ new_qry_tuple.x.getId() + ") and (" + new_qry_tuple.y.getId() + ")");
 		Block orig_block = input_pu.getBlockByPo(txnName, apply_at_po);
-		logger.debug("the old query was found in block: " + orig_block);
-		logger.debug("applyAtIndex: new Calling deleteQuery to remove the old query from the transaction");
+		logger.error("the old query was found in block: " + orig_block);
+		logger.error("applyAtIndex: new Calling deleteQuery to remove the old query from the transaction");
 		deleteQuery(input_pu, apply_at_po, txnName);
-		logger.debug("new Calling InsertQueriesAtPO to add the new query to the transaction");
+		logger.error("new Calling InsertQueriesAtPO to add the new query to the transaction");
+
 		InsertQueriesAtPO(orig_block, input_pu, txnName, apply_at_po, new Query_Statement(apply_at_po, new_qry_tuple.x),
 				new Query_Statement(apply_at_po, new_qry_tuple.y));
 
@@ -1190,24 +1205,24 @@ public class Refactoring_Engine {
 	private void propagateToRange_rec(Program_Utils input_pu, Query_Modifier modifier, int po_to_apply_after,
 			ArrayList<Statement> inputList) {
 		boolean found_flag = false;
-		logger.debug("propagateToRange_rec: input list: "
+		logger.error("propagateToRange_rec: input list: "
 				+ inputList.stream().map(stmt -> stmt.getSimpleName()).collect(Collectors.toList()));
 		for (int index = 0; index < inputList.size(); index++) {
 			Statement stmt = inputList.get(index);
 			switch (stmt.getClass().getSimpleName()) {
 			case "Query_Statement":
 				Query_Statement qry_stmt = (Query_Statement) stmt;
-				logger.debug("analyzing query statement: " + qry_stmt.getSimpleName());
+				logger.error("analyzing query statement: " + qry_stmt.getSimpleName());
 				if (qry_stmt.getQuery().getPo() > po_to_apply_after) {
-					logger.debug("Current query must be updated");
+					logger.error("Current query must be updated");
 					inputList.remove(index);
 					Query_Statement new_query = modifier.propagatedQueryModification(qry_stmt);
 					new_query.updatePO(qry_stmt.getQuery().getPo());
 					inputList.add(index, new_query);
-					logger.debug("updated query: " + new_query.getSimpleName());
+					logger.error("updated query: " + new_query.getSimpleName());
 					found_flag = true;
 				} else {
-					logger.debug("Current query was not affected");
+					logger.error("Current query was not affected");
 				}
 				if (qry_stmt.getQuery().getPo() == po_to_apply_after)
 					found_flag = true;
@@ -1215,33 +1230,33 @@ public class Refactoring_Engine {
 				break;
 			case "If_Statement":
 				If_Statement if_stmt = (If_Statement) stmt;
-				logger.debug("Current if statement: " + if_stmt.getSimpleName());
+				logger.error("Current if statement: " + if_stmt.getSimpleName());
 				if (!found_flag) {
-					logger.debug("found_flag=false: " + "calling self on if statements (of size: "
+					logger.error("found_flag=false: " + "calling self on if statements (of size: "
 							+ if_stmt.getIfStatements().size() + ")");
 
 					propagateToRange_rec(input_pu, modifier, po_to_apply_after, if_stmt.getIfStatements());
-					logger.debug("found_flag=false: " + "calling self on else statements *of size: "
+					logger.error("found_flag=false: " + "calling self on else statements *of size: "
 							+ if_stmt.getElseStatements().size() + ")");
 					propagateToRange_rec(input_pu, modifier, po_to_apply_after, if_stmt.getElseStatements());
 				} else {
-					logger.debug("found_flag=true: the if condition must be updated: "
+					logger.error("found_flag=true: the if condition must be updated: "
 							+ "first calling self on if statements of size: " + if_stmt.getIfStatements().size());
 					propagateToRange_rec(input_pu, modifier, po_to_apply_after, if_stmt.getIfStatements());
-					logger.debug("found_flag=true: " + "first calling self on else statements of size: "
+					logger.error("found_flag=true: " + "first calling self on else statements of size: "
 							+ if_stmt.getElseStatements().size());
 					propagateToRange_rec(input_pu, modifier, po_to_apply_after, if_stmt.getElseStatements());
-					logger.debug("now removing old if statement");
+					logger.error("now removing old if statement");
 					inputList.remove(index);
 					If_Statement new_if_stmt = new If_Statement(if_stmt.getIntId(),
 							modifier.propagatedExpModification(if_stmt.getCondition()));
-					logger.debug("new if statement is created: " + new_if_stmt.getSimpleName());
+					logger.error("new if statement is created: " + new_if_stmt.getSimpleName());
 					for (Statement updated_stmt : if_stmt.getIfStatements()) {
-						logger.debug("adding statement (" + updated_stmt.getSimpleName() + ") in new if");
+						logger.error("adding statement (" + updated_stmt.getSimpleName() + ") in new if");
 						new_if_stmt.addStatementInIf(updated_stmt);
 					}
 					for (Statement updated_stmt : if_stmt.getElseStatements()) {
-						logger.debug("adding statement (" + updated_stmt.getSimpleName() + ") in new else");
+						logger.error("adding statement (" + updated_stmt.getSimpleName() + ") in new else");
 						new_if_stmt.addStatementInElse(updated_stmt);
 					}
 					inputList.add(index, new_if_stmt);
@@ -1258,50 +1273,59 @@ public class Refactoring_Engine {
 
 	public void deleteQuery(Program_Utils input_pu, int to_be_deleted_qry_po, String txnName) {
 		Transaction txn = (Transaction) input_pu.getTrasnsactionMap().get(txnName);
+		// System.out.println("\n"+txnName);
 		deleteQuery_rec(new Block(BlockType.INIT, 0, -1), false, input_pu, to_be_deleted_qry_po, txn.getStatements());
-
 	}
 
-	private void deleteQuery_rec(Block current_block, boolean is_found, Program_Utils input_pu,
+	private boolean deleteQuery_rec(Block current_block, boolean is_found, Program_Utils input_pu,
 			int to_be_deleted_qry_po, ArrayList<Statement> inputList) {
-		logger.debug("current block: " + current_block);
+		logger.error("current block: " + current_block);
 		boolean deleted_flag = false;
 		int index = 0;
 		int remove_index = 0;
-		logger.debug("input list size: " + inputList.size());
+		logger.error("input list size: " + inputList.size());
+		boolean next_call_is_found = is_found;
+
 		for (Statement stmt : inputList) {
 			switch (stmt.getClass().getSimpleName()) {
 			case "Query_Statement":
 				Query_Statement qry_stmt = (Query_Statement) stmt;
 				Query qry = qry_stmt.getQuery();
-				if (is_found) {
+				logger.error("analyzing " + qry.getId()
+						+ "  it must be either deleted, or if it is after a deletion, it's po must be decreased");
+				if (next_call_is_found) {
+					logger.error("the deleted query is already found: must decrease this one's po");
 					// update PO (because one query has been removed)
-					logger.debug("analyzing query: " + qry.getId() + "(po:" + qry.getPo() + ")"
-							+ "---> po will be decremented since the deleted query has already been found");
-					qry_stmt.updatePO(qry.getPo() - 1);
-					logger.debug("deleteQuery_rec: new PO: " + qry.getPo());
-				}
-				if (!is_found && !deleted_flag && qry.getPo() == to_be_deleted_qry_po) {
-					// remove the query from the list
-					logger.debug("query to be deleted (" + qry.getId() + ") is found at index: " + index);
-					remove_index = index;
-					deleted_flag = true;
-					is_found = true;
+					logger.error("analyzing query: " + qry.getId() + "(po:" + qry.getPo() + ")"
+							+ "+ po will be decremented since the deleted query has already been found");
+					qry.updatePO(qry.getPo() - 1);
+					logger.error("deleteQuery_rec: new PO: " + qry.getPo());
+				} else {
+					logger.error("this one's po does not change: " + qry.getId());
+					if (!deleted_flag && qry.getPo() == to_be_deleted_qry_po) {
+						// remove the query from the list
+						logger.error("query to be deleted (" + qry.getId() + ") is found at index: " + index);
+						remove_index = index;
+						deleted_flag = true;
+						next_call_is_found = true;
+					}
 				}
 				break;
 			case "If_Statement":
 				If_Statement if_stmt = (If_Statement) stmt;
-				logger.debug("analyzing if: " + if_stmt.getSimpleName());
-				deleteQuery_rec(new Block(BlockType.IF, current_block.getDepth() + 1, if_stmt.getIntId()), is_found,
+				logger.error("analyzing if: " + if_stmt.getSimpleName());
+				next_call_is_found = deleteQuery_rec(
+						new Block(BlockType.IF, current_block.getDepth() + 1, if_stmt.getIntId()), next_call_is_found,
 						input_pu, to_be_deleted_qry_po, if_stmt.getIfStatements());
-				deleteQuery_rec(new Block(BlockType.ELSE, current_block.getDepth() + 1, if_stmt.getIntId()), is_found,
-						input_pu, to_be_deleted_qry_po, if_stmt.getElseStatements());
+				deleteQuery_rec(new Block(BlockType.ELSE, current_block.getDepth() + 1, if_stmt.getIntId()),
+						next_call_is_found, input_pu, to_be_deleted_qry_po, if_stmt.getElseStatements());
 				break;
 			}
 			index++;
 		}
 		if (deleted_flag)
 			inputList.remove(remove_index);
+		return next_call_is_found;
 	}
 
 	/*
@@ -1320,10 +1344,10 @@ public class Refactoring_Engine {
 	private boolean InsertQueriesAtPO_rec(boolean must_inc_po, Block desired_block, Block current_block,
 			ArrayList<Statement> inputList, Program_Utils input_pu, int insert_index_po,
 			Query_Statement... newQueryStatements) {
-		logger.debug(
+		logger.error(
 				"input list: " + inputList.stream().map(stmt -> stmt.getSimpleName()).collect(Collectors.toList()));
 		int new_qry_cnt = newQueryStatements.length;
-		logger.debug("new query count: " + new_qry_cnt);
+		logger.error("new query count: " + new_qry_cnt);
 		assert (new_qry_cnt > 0) : "cannot insert an empty array";
 		int found_index = 0;
 		for (int index = 0; index < inputList.size(); index++) {
@@ -1334,13 +1358,13 @@ public class Refactoring_Engine {
 				Query qry = qry_stmt.getQuery();
 
 				if (must_inc_po) {
-					logger.debug("analyzing query: " + qry.getId() + "(po:" + qry.getPo() + ")"
-							+ "---> po will be increased since insert has already been occured");
+					logger.error("analyzing query: " + qry.getId() + "(po:" + qry.getPo() + ")"
+							+ "+ po will be increased since insert has already been occured");
 					qry_stmt.updatePO(qry_stmt.getQuery().getPo() + new_qry_cnt);
-					logger.debug("new PO:" + qry.getPo());
+					logger.error("new PO:" + qry.getPo());
 				}
 				if (qry.getPo() == insert_index_po - 1) {
-					logger.debug("found the query right before where the new queries will be added: " + qry.getId());
+					logger.error("found the query right before where the new queries will be added: " + qry.getId());
 					must_inc_po = true;
 					found_index = index + 1;
 				}
@@ -1353,13 +1377,12 @@ public class Refactoring_Engine {
 				InsertQueriesAtPO_rec(must_inc_po, desired_block,
 						new Block(BlockType.ELSE, current_block.getDepth() + 1, if_stmt.getIntId()),
 						if_stmt.getElseStatements(), input_pu, insert_index_po, newQueryStatements);
-
 				break;
 			}
 		}
 
 		if (current_block.isEqual(desired_block)) {
-			logger.debug("injecting the new queries to the current list of statements");
+			logger.error("injecting the new queries to the current list of statements");
 			int iter = 0;
 			for (Query_Statement stmt : newQueryStatements) {
 				stmt.updatePO(insert_index_po + iter);

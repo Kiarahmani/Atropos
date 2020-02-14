@@ -6,3 +6,4 @@ z3-encoding.smt2
 .project
 .settings/
 analytics/
+logs/

@@ -46,16 +46,15 @@ public class Naive_search_engine extends Search_engine {
 	/*
 	 * Constructor
 	 */
-	public Naive_search_engine(Program_Utils pu) {
+	public Naive_search_engine() {
 		ng = new NameGenerator();
-		reset(pu);
 	}
 
 	/*
 	 * Function called iteratively from the mainS
 	 */
 	@Override
-	public Delta[] nextRefactorings(Program_Utils pu, ArrayList<Delta> history) {
+	public Delta[] nextRefactorings(Program_Utils pu) {
 		reset(pu);
 		this.history = history;
 		switch (agg) {
@@ -148,7 +147,7 @@ public class Naive_search_engine extends Search_engine {
 		int table_cnt = filteredList.size();
 		int random_index = (int) (Math.random() * table_cnt);
 		return filteredList.get(random_index);
-		//(Table) pu.getTables().values().toArray()[random_index];
+		// (Table) pu.getTables().values().toArray()[random_index];
 	}
 
 	private Table getRandomTable(Program_Utils pu, Table other_than_this) {

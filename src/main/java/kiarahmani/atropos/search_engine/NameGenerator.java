@@ -33,7 +33,7 @@ public class NameGenerator {
 	}
 
 	private String scramble(String s) {
-		return "X" + s.substring(2) + "X";
+		return s.substring(0, 1) + s.substring(1, 2) + s.substring(1);
 	}
 
 	public String newUUIDName() {

@@ -47,25 +47,22 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 			txns.add(txn);
 
 		pu.mkTable("accounts", new FieldName("a_custid", true, true, F_Type.NUM),
-				new FieldName("a_name", false, false, F_Type.TEXT), new FieldName("a_age", false, false, F_Type.NUM),
-				new FieldName("a_dist", false, false, F_Type.NUM),
-				new FieldName("a_sex", false, false, F_Type.NUM)
+				new FieldName("a_name", false, false, F_Type.TEXT)
+				//, new FieldName("a_age", false, false, F_Type.NUM),
+				//new FieldName("a_dist", false, false, F_Type.NUM), new FieldName("a_sex", false, false, F_Type.NUM)
 				);
 
-		 pu.mkTable("dist", new FieldName("d_distid", true, true, F_Type.NUM),
-		new FieldName("d_city", false, false, F_Type.NUM)
-		, 
-		new FieldName("d_state",
-		 false, false, F_Type.NUM)
-		);
+		//pu.mkTable("dist", new FieldName("d_distid", true, true, F_Type.NUM),
+		//		new FieldName("d_city", false, false, F_Type.NUM), new FieldName("d_state", false, false, F_Type.NUM));
 
 		pu.mkTable("savings", new FieldName("s_custid", true, true, F_Type.NUM),
-				new FieldName("s_bal", false, false, F_Type.NUM), new FieldName("s_history", false, false, F_Type.NUM)
+				new FieldName("s_bal", false, false, F_Type.NUM)
+				//, new FieldName("s_history", false, false, F_Type.NUM)
 
 		);
 		pu.mkTable("checking", new FieldName("c_custid", true, true, F_Type.NUM),
 				new FieldName("c_bal", false, false, F_Type.NUM)
-				,new FieldName("c_history", false, false, F_Type.NUM)
+				//, new FieldName("c_history", false, false, F_Type.NUM)
 
 		);
 
@@ -377,7 +374,7 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 					pu.getTableName("accounts"), pu.getFieldName("a_name"), BinOp.EQ, pu.getArg("ts_custName")));
 			Select_Query TransactSavings_GetAccount0 = pu.addSelectQuery("TransactSavings", "accounts",
 					TransactSavings_GetAccount0_WHC, "a_custid");
-			
+
 			pu.addQueryStatement("TransactSavings", TransactSavings_GetAccount0);
 
 			// retrieve customer's old savings balance

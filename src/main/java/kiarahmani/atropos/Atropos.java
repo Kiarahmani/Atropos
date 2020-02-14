@@ -17,6 +17,7 @@ import kiarahmani.atropos.program_generators.SmallBank.SmallBankProgramGenerator
 import kiarahmani.atropos.refactoring_engine.Refactoring_Engine;
 import kiarahmani.atropos.refactoring_engine.deltas.Delta;
 import kiarahmani.atropos.search_engine.Naive_search_engine;
+import kiarahmani.atropos.search_engine.Optimal_search_engine;
 import kiarahmani.atropos.utils.Constants;
 import kiarahmani.atropos.utils.Program_Utils;
 
@@ -41,15 +42,14 @@ public class Atropos {
 		re.pre_analysis(pu);
 		re.atomicize(pu);
 
-
 		// search the refactoring space
-		Naive_search_engine nse = new Naive_search_engine(pu);
-		int _refactoring_depth = 4;
-		ArrayList<Delta> history = new ArrayList<>();
+		Optimal_search_engine se = new Optimal_search_engine();
+		int _refactoring_depth = 1;
 		for (int j = 0; j < _refactoring_depth; j++) {
-			history.addAll(re.refactor_schema_seq(pu, nse.nextRefactorings(pu, history)));
+			re.refactor_schema_seq(pu, se.nextRefactorings(pu));
 			re.atomicize(pu);
 		}
+		
 		program = pu.generateProgram();
 		program.printProgram();
 		int anml_cnt = analyze(program);
@@ -63,13 +63,14 @@ public class Atropos {
 		Conflict_Graph cg = new Conflict_Graph(program);
 		Encoding_Engine ee = new Encoding_Engine(program.getName());
 		DAI_Graph dai_graph = ee.constructInitialDAIGraph(program, cg);
+		dai_graph.printDAIGraph();
 		return dai_graph.getDAICnt();
 	}
 
 	private static void printStats(long time, int number_of_anomalies) {
 
 		System.out.println(
-				"\n\n\n\n============================================================================================" );
+				"\n\n\n\n============================================================================================");
 		System.out.println();
 		System.out.println("Total Memory: "
 				+ (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1000000 + " MB");

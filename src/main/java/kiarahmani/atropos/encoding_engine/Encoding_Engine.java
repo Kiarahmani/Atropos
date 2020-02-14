@@ -76,6 +76,7 @@ public class Encoding_Engine {
 			for (Transaction txn : program.getTransactions())
 				txn.is_included = true;
 			Status valid = local_z3_driver.validDAI(program, pot_dai);
+			
 			if (valid == Status.UNSATISFIABLE) {
 				logger.debug(
 						" discarding the potential DAI due to conflicting path conditions. continue to the next dai");
@@ -114,7 +115,7 @@ public class Encoding_Engine {
 					// if SAT, add the potential DAI to the graph
 					if (status == Status.SATISFIABLE) {
 						dai_graph.addDAI(pot_dai);
-						System.out.println("\n" + dai_graph.getDAICnt());
+						System.out.println(" >>>> anomely count:" + dai_graph.getDAICnt() + "");
 						if (!Constants._IS_TEST)
 							continue dais_loop;
 					}

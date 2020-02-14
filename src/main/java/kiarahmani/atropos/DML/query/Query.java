@@ -44,6 +44,7 @@ public abstract class Query {
 	}
 
 	public void updatePO(int newPO) {
+		//System.out.println("updating po of "+this.getId() + " from "+ po + " to "+newPO);
 		this.po = newPO;
 	}
 
