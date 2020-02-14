@@ -42,7 +42,6 @@ public class Naive_search_engine extends Search_engine {
 	private VC_Agg agg;
 	private Table source_table, target_table;
 	private FieldName source_fn;
-	private ArrayList<Delta> history;
 	private Delta[] result;
 
 	/*
@@ -61,7 +60,6 @@ public class Naive_search_engine extends Search_engine {
 	 */
 	@Override
 	public Delta nextRefactoring(Program_Utils pu) {
-		this.history = history;
 		switch (agg) {
 		case VC_SUM:
 			return next_SUM_OTM_refactorings(pu);
@@ -151,7 +149,7 @@ public class Naive_search_engine extends Search_engine {
 	 */
 
 	private Table getRandomTable(Program_Utils pu) {
-		List<Table> filteredList = pu.getTables().values().stream().filter(t -> true).collect(Collectors.toList());
+		List<Table> filteredList = pu.getTables().values().stream().filter(t -> !t.isNew).collect(Collectors.toList());
 		int table_cnt = filteredList.size();
 		int random_index = (int) (Math.random() * table_cnt);
 		return filteredList.get(random_index);
@@ -161,7 +159,7 @@ public class Naive_search_engine extends Search_engine {
 	private Table getRandomTable(Program_Utils pu, Table other_than_this) {
 		ArrayList<Table> filtered_table_list = new ArrayList<>();
 		for (Table t : pu.getTables().values())
-			if (!t.is_equal(other_than_this) )
+			if (!t.is_equal(other_than_this) && !t.isNew)
 				filtered_table_list.add(t);
 		int filtered_table_cnt = filtered_table_list.size();
 		int random_index = (int) (Math.random() * filtered_table_cnt);
@@ -202,6 +200,8 @@ public class Naive_search_engine extends Search_engine {
 				.collect(Collectors.toList());
 		int filtered_fns_cnt = fns.size();
 		int random_index = (int) (Math.random() * filtered_fns_cnt);
+		if (filtered_fns_cnt == 0)
+			return null;
 		return fns.get(random_index);
 	}
 
@@ -256,9 +256,11 @@ public class Naive_search_engine extends Search_engine {
 	public boolean reset(Program_Utils pu) {
 		this.iter = 0;
 		this.source_table = getRandomTable(pu);
-		this.source_fn = getRandomFieldName(pu, source_table, false);
+		this.source_fn = getRandomFieldName(pu, source_table, false, F_Type.NUM);
+		if (this.source_fn == null)
+			return false;
 		this.target_table = getRandomTable(pu, source_table);
-		if (Math.random() < 10.3) { // CRDT or not
+		if (Math.random() < 0.3) { // CRDT or not
 			// next refactoring is introduction of CRDT table and corresponding fields
 			max_iter = 6 + 2 * source_table.getPKFields().size();
 			this.agg = VC_Agg.VC_SUM;
@@ -270,6 +272,8 @@ public class Naive_search_engine extends Search_engine {
 			if (Math.random() < 0.5) { // OTO or not
 				// the decided relationship between source and target table is OTO
 				this.type = VC_Type.VC_OTO;
+				if (target_table.getPKFields().size() != source_table.getPKFields().size())
+					reset(pu);
 			} else {
 				// the decided relatinship between source and target table is OTM
 				this.type = VC_Type.VC_OTM;
@@ -278,5 +282,4 @@ public class Naive_search_engine extends Search_engine {
 		result = new Delta[max_iter];
 		return true;
 	}
-
 }

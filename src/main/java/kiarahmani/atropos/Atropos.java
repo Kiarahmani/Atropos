@@ -40,13 +40,12 @@ public class Atropos {
 		pu.lock();
 		program.printProgram();
 		re.pre_analysis(pu);
-		re.atomicize(pu);
-
 		// search the refactoring space
 		Naive_search_engine se = new Naive_search_engine();
 		int _refactoring_depth = 4;
 		for (int j = 0; j < _refactoring_depth; j++) {
-			se.reset(pu);
+			if (!se.reset(pu))
+				continue;
 			do {
 				Delta ref = se.nextRefactoring(pu);
 				re.refactor_schema(pu, ref);

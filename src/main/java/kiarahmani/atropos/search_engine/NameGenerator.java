@@ -29,7 +29,7 @@ public class NameGenerator {
 	}
 
 	public String newFieldName(String source_fn) {
-		return "copy_of_" + scramble(source_fn) + "" + (f_cnt++);
+		return   scramble(source_fn) + "" + (f_cnt++);
 	}
 
 	private String scramble(String s) {
