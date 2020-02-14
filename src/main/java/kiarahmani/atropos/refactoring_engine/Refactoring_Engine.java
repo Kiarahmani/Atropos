@@ -171,12 +171,22 @@ public class Refactoring_Engine {
 		boolean result = false;
 		ArrayList<Table> tables_to_be_removed = new ArrayList<>();
 		for (Table t : pu.getTables().values())
-			if (t.canBeRemoved() && accessed_fn_map.get(t).size() == 0) {
+			if (t.canBeRemoved() && accessed_fn_map.get(t).size() == (t.getPKFields().size() + 1)) {
 				tables_to_be_removed.add(t);
 				result = true;
 			}
 		for (Table t : tables_to_be_removed)
 			pu.rmTable(t.getTableName().getName());
+
+		for (Table t : pu.getTables().values()) {
+			ArrayList<FieldName> fns_to_be_removed = new ArrayList<>();
+			for (FieldName fn : t.getFieldNames())
+				if (!accessed_fn_map.get(t).contains(fn))
+					fns_to_be_removed.add(fn);
+			for (FieldName fn : fns_to_be_removed)
+				pu.removeFieldNameFromTable(t.getTableName().getName(), fn);
+		}
+
 		return result;
 	}
 
@@ -269,7 +279,7 @@ public class Refactoring_Engine {
 
 	// single iteration of decomposition
 	private boolean decompose_iter(Program_Utils pu) {
-		
+
 		boolean result = false;
 		// iterate over all selects, if any part of it should be redirected to a newer
 		// table, do it
@@ -283,8 +293,9 @@ public class Refactoring_Engine {
 					Table t_src = pu.getTable(q.getTableName().getName());
 					for (Table t_dest : pu.getTables().values()) {
 						ArrayList<FieldName> must_be_redirected = must_redirect(pu, sq, t_src, t_dest);
-						if (must_be_redirected != null) { // 
-							logger.error("some subset of fn accesses must be redirected in "+q.getId()+"---->  "+must_be_redirected);
+						if (must_be_redirected != null) { //
+							logger.error("some subset of fn accesses must be redirected in " + q.getId() + "---->  "
+									+ must_be_redirected);
 							int red_size = must_be_redirected.size();
 							int total_size = sq.getSelectedFieldNames().size();
 							if (red_size < total_size) {
@@ -405,8 +416,12 @@ public class Refactoring_Engine {
 	 */
 	private HashMap<Table, HashSet<FieldName>> mkTableMap(Program_Utils pu) {
 		HashMap<Table, HashSet<FieldName>> touched_field_names = new HashMap<>();
-		for (Table tt : pu.getTables().values())
-			touched_field_names.put(tt, new HashSet<>());
+		for (Table tt : pu.getTables().values()) {
+			HashSet<FieldName> new_set = new HashSet<>();
+			new_set.addAll(tt.getPKFields());
+			new_set.add(tt.getIsAliveFN());
+			touched_field_names.put(tt, new_set);
+		}
 		for (Transaction txn : pu.getTrasnsactionMap().values())
 			for (Query q : txn.getAllQueries())
 				if (!q.isWrite()) {
@@ -762,13 +777,13 @@ public class Refactoring_Engine {
 
 	public SELECT_Redirector redirect_select(Program_Utils input_pu, String txn_name, String src_table,
 			String dest_table, int qry_po, boolean isRevert) {
-		
+
 		SELECT_Redirector select_red = new SELECT_Redirector();
 		select_red.set(input_pu, txn_name, src_table, dest_table);
 		if (select_red.isValid(input_pu.getQueryByPo(txn_name, qry_po))) {
-			
+
 			applyAndPropagate(input_pu, select_red, qry_po, txn_name);
-			
+
 			String begin;
 			if (isRevert) {
 				input_pu.decVersion();
@@ -778,9 +793,9 @@ public class Refactoring_Engine {
 				begin = input_pu.getProgramName() + "(" + input_pu.getVersion() + "):	";
 			}
 			input_pu.addComment("\n" + begin + select_red.getDesc());
-			
+
 			select_red.setApplied_po(qry_po);
-			
+
 			return select_red;
 		} else
 			return null;
@@ -1065,7 +1080,7 @@ public class Refactoring_Engine {
 			One_to_One_Query_Modifier otoqm = (One_to_One_Query_Modifier) modifier;
 			logger.error("First calling applyAtIndex to apply the desired modification at index");
 			applyAtIndex(input_pu, otoqm, apply_at_po, txnName);
-			
+
 			logger.error(
 					"Now calling propagateToRange to apply the deisred modifications at all subsequent statements");
 			propagateToRange(input_pu, modifier, apply_at_po, txnName);
@@ -1114,9 +1129,9 @@ public class Refactoring_Engine {
 		Block orig_block = input_pu.getBlockByPo(txnName, apply_at_po);
 		logger.error("the old query was found in block: " + orig_block);
 		logger.error("applyAtIndex: new Calling deleteQuery to remove the old query from the transaction");
-		
+
 		deleteQuery(input_pu, apply_at_po, txnName);
-		
+
 		logger.error("new Calling InsertQueriesAtPO to add the new query to the transaction");
 		InsertQueriesAtPO(orig_block, input_pu, txnName, apply_at_po, new Query_Statement(apply_at_po, new_qry));
 		return input_pu;
