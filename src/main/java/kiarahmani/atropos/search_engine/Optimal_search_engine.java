@@ -60,8 +60,8 @@ public class Optimal_search_engine extends Search_engine {
 		delta_12.addFieldTupleToVC("a_check_bal", "cbc_bal");
 		result[index++] = delta_12;
 
-		 // introduce a CRDT table for savings balance
-		 
+		// introduce a CRDT table for savings balance
+
 		result[index++] = new INTRO_R("savings_bal_crdt", true);
 
 		// introduce new fields in checkin_bal_crdt

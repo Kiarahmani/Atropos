@@ -43,8 +43,8 @@ public class Atropos {
 		re.atomicize(pu);
 
 		// search the refactoring space
-		Optimal_search_engine se = new Optimal_search_engine();
-		int _refactoring_depth = 1;
+		Naive_search_engine se = new Naive_search_engine();
+		int _refactoring_depth = 2;
 		for (int j = 0; j < _refactoring_depth; j++) {
 			re.refactor_schema_seq(pu, se.nextRefactorings(pu));
 			re.atomicize(pu);
