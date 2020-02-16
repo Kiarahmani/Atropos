@@ -51,6 +51,22 @@ public class VC {
 	private ArrayList<VC_Constraint> vc_constraints;
 	private String name;
 
+	public boolean equalsWith(VC other) {
+		boolean base = this.vc_agg == other.vc_agg && this.vc_type == other.vc_type && this.T_1.equals(other.T_1)
+				&& this.T_2.equals(other.T_2);
+		if (!base)
+			return false;
+		for (VC_Constraint vcc : this.vc_constraints)
+			if (other.vc_constraints.stream().filter(oth_vcc -> oth_vcc.equals(vcc)).count() < 1)
+				return false;
+
+		for (Tuple<String, String> ft : this.fieldTuples)
+			if (other.fieldTuples.stream().filter(oth_ft -> (oth_ft.x.equals(ft.x) && oth_ft.y.equals(ft.y)))
+					.count() < 1)
+				return false;
+		return base;
+	}
+
 	/*
 	 * public TableName getOtherTableName(TableName tn) { if (T_1.equalsWith(tn))
 	 * return T_2; else if (T_2.equalsWith(tn)) return T_1; return null; }

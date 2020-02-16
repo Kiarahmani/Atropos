@@ -18,6 +18,7 @@ import org.apache.logging.log4j.Logger;
 import kiarahmani.atropos.Atropos;
 import kiarahmani.atropos.DDL.F_Type;
 import kiarahmani.atropos.DDL.FieldName;
+import kiarahmani.atropos.DDL.vc.VC;
 import kiarahmani.atropos.DDL.vc.VC.VC_Agg;
 import kiarahmani.atropos.DDL.vc.VC.VC_Type;
 import kiarahmani.atropos.program.Table;
@@ -43,12 +44,14 @@ public class Naive_search_engine extends Search_engine {
 	private Table source_table, target_table;
 	private FieldName source_fn;
 	private Delta[] result;
+	private HashSet<VC> history;
 
 	/*
 	 * Constructor
 	 */
-	public Naive_search_engine() {
+	public Naive_search_engine(HashSet<VC> history) {
 		ng = new NameGenerator();
+		this.history = history;
 	}
 
 	public boolean hasNext() {
@@ -88,7 +91,13 @@ public class Naive_search_engine extends Search_engine {
 			String target_table_name = target_table.getTableName().getName();
 			INTRO_F intro_f = new INTRO_F(target_table_name, new_fn, F_Type.NUM);
 			result[0] = intro_f;
-			result[1] = mk_ID_OTO_INTRO_VC(pu, intro_f.getNewName());
+			INTRO_VC new_intro_vc = mk_ID_OTO_INTRO_VC(pu, intro_f.getNewName());
+			if (history.stream().filter(vc -> vc.equalsWith(new_intro_vc.getVC())).count() > 0) {
+				System.out.println("discarding vc because has already been tested: " + new_intro_vc.getVC());
+				System.out.println("history: " + history);
+				return null;
+			}
+			result[1] = new_intro_vc;
 		}
 		return result[iter];
 	}
@@ -99,7 +108,13 @@ public class Naive_search_engine extends Search_engine {
 			String target_table_name = target_table.getTableName().getName();
 			INTRO_F intro_f = new INTRO_F(target_table_name, new_fn, F_Type.NUM);
 			result[0] = intro_f;
-			result[1] = mk_ID_OTM_INTRO_VC(pu, intro_f.getNewName());
+			INTRO_VC new_intro_vc = mk_ID_OTM_INTRO_VC(pu, intro_f.getNewName());
+			if (history.stream().filter(vc -> vc.equalsWith(new_intro_vc.getVC())).count() > 0) {
+				System.out.println("discarding vc because has already been tested: " + new_intro_vc.getVC());
+				System.out.println("history: " + history);
+				return null;
+			}
+			result[1] = new_intro_vc;
 		}
 		return result[iter];
 	}
@@ -139,6 +154,11 @@ public class Naive_search_engine extends Search_engine {
 				intro_vc.addKeyCorrespondenceToVC(source_table.getPKFields().get(i).getName(),
 						newly_added_introf.get(i).getNewName().getName());
 			intro_vc.addFieldTupleToVC(source_fn.getName(), newly_added_fn_name);
+			if (history.stream().filter(vc -> vc.equalsWith(intro_vc.getVC())).count() > 0) {
+				System.out.println("discarding vc because has already been tested: " + intro_vc.getVC());
+				System.out.println("history: " + history);
+				return null;
+			}
 			result[index++] = intro_vc;
 		}
 		return result[iter];

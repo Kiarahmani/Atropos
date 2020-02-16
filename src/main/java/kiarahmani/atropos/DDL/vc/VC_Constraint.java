@@ -29,4 +29,8 @@ public class VC_Constraint {
 		return new VC_Constraint(this.F_1, this.F_2);
 	}
 
+	public boolean equalsWith(VC_Constraint other) {
+		return this.F_1.equals(other.F_1) && this.F_2.equals(other.F_2);
+	}
+
 }
