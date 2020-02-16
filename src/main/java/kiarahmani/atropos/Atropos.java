@@ -5,6 +5,13 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,13 +28,10 @@ import kiarahmani.atropos.search_engine.Optimal_search_engine;
 import kiarahmani.atropos.utils.Constants;
 import kiarahmani.atropos.utils.Program_Utils;
 
-public class Atropos {
+class Analizer implements Callable<Boolean> {
 
-	private static final Logger logger = LogManager.getLogger(Atropos.class);
-	static int min_anomalies_cnt = Integer.MAX_VALUE;
-
-	public static void main(String[] args) {
-
+	@Override
+	public Boolean call() throws Exception {
 		long time_begin = System.currentTimeMillis();
 		try {
 			new Constants();
@@ -42,7 +46,7 @@ public class Atropos {
 		re.pre_analysis(pu);
 		// search the refactoring space
 		Naive_search_engine se = new Naive_search_engine();
-		int _refactoring_depth = 4;
+		int _refactoring_depth = 1;
 		for (int j = 0; j < _refactoring_depth; j++) {
 			if (!se.reset(pu))
 				continue;
@@ -50,7 +54,6 @@ public class Atropos {
 				Delta ref = se.nextRefactoring(pu);
 				re.refactor_schema(pu, ref);
 			} while (se.hasNext());
-			
 		}
 		re.atomicize(pu);
 		program = pu.generateProgram();
@@ -60,6 +63,7 @@ public class Atropos {
 
 		// print stats and exit
 		printStats(System.currentTimeMillis() - time_begin, anml_cnt);
+		return true;
 	}
 
 	private static int analyze(Program program) {
@@ -86,4 +90,22 @@ public class Atropos {
 		}
 
 	}
+
+}
+
+public class Atropos {
+
+	private static final Logger logger = LogManager.getLogger(Atropos.class);
+
+	public static void main(String[] args) {
+		ExecutorService executor = Executors.newSingleThreadExecutor();
+		try {
+			executor.invokeAll(Arrays.asList(new Analizer()), 10, TimeUnit.SECONDS);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} // Timeout of 10 minutes.
+		System.out.println("Time out...");
+		executor.shutdown();
+	}
+
 }

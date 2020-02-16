@@ -199,7 +199,6 @@ public class Naive_search_engine extends Search_engine {
 				.filter(fn -> (!fn.isAliveField() && fn.isPK() == pk && fn.getType() == tp))
 				.collect(Collectors.toList());
 		int filtered_fns_cnt = fns.size();
-		System.out.println(fns);
 		int random_index = (int) (Math.random() * filtered_fns_cnt);
 		if (filtered_fns_cnt == 0)
 			return null;

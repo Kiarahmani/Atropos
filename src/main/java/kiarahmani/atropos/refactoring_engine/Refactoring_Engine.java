@@ -178,10 +178,14 @@ public class Refactoring_Engine {
 		for (Table t : tables_to_be_removed)
 			pu.rmTable(t.getTableName().getName());
 
+		// remove redundant fieldNames
+		// a different map must be used which also considers accesses by updates (unlike
+		// given accessed_fn_map which only considers SELECTs)
+		HashMap<Table, HashSet<FieldName>> accessed_fn_map_all_q = mkTableMap_allQ(pu);
 		for (Table t : pu.getTables().values()) {
 			ArrayList<FieldName> fns_to_be_removed = new ArrayList<>();
 			for (FieldName fn : t.getFieldNames())
-				if (!accessed_fn_map.get(t).contains(fn))
+				if (!accessed_fn_map_all_q.get(t).contains(fn))
 					fns_to_be_removed.add(fn);
 			for (FieldName fn : fns_to_be_removed)
 				pu.removeFieldNameFromTable(t.getTableName().getName(), fn);
@@ -431,6 +435,31 @@ public class Refactoring_Engine {
 					old_set.addAll(((Select_Query) q).getImplicitlyUsed());
 					touched_field_names.put(curr_t, old_set);
 				}
+		return touched_field_names;
+	}
+
+	/*
+	 * return a map form each table to the set of fields that are currently tougched
+	 */
+	private HashMap<Table, HashSet<FieldName>> mkTableMap_allQ(Program_Utils pu) {
+		HashMap<Table, HashSet<FieldName>> touched_field_names = new HashMap<>();
+		for (Table tt : pu.getTables().values()) {
+			HashSet<FieldName> new_set = new HashSet<>();
+			new_set.addAll(tt.getPKFields());
+			new_set.add(tt.getIsAliveFN());
+			touched_field_names.put(tt, new_set);
+		}
+		for (Transaction txn : pu.getTrasnsactionMap().values())
+			for (Query q : txn.getAllQueries()) {
+				Table curr_t = pu.getTable(q.getTableName().getName());
+				if (!touched_field_names.keySet().contains(curr_t))
+					continue;
+				HashSet<FieldName> old_set = touched_field_names.get(curr_t);
+				old_set.addAll(q.getReadFieldNames());
+				if (!q.isWrite())
+					old_set.addAll(((Select_Query) q).getImplicitlyUsed());
+				touched_field_names.put(curr_t, old_set);
+			}
 		return touched_field_names;
 	}
 
