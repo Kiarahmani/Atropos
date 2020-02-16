@@ -52,7 +52,7 @@ public class Atropos {
 			} while (se.hasNext());
 			re.atomicize(pu);
 		}
-
+ 
 		program = pu.generateProgram();
 		program.printProgram();
 		int anml_cnt = analyze(program);
