@@ -50,9 +50,9 @@ public class Atropos {
 				Delta ref = se.nextRefactoring(pu);
 				re.refactor_schema(pu, ref);
 			} while (se.hasNext());
-			re.atomicize(pu);
+			
 		}
- 
+		re.atomicize(pu);
 		program = pu.generateProgram();
 		program.printProgram();
 		int anml_cnt = analyze(program);

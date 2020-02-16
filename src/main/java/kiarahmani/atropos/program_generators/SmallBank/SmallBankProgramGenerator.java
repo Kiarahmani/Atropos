@@ -47,20 +47,50 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 			txns.add(txn);
 
 		pu.mkTable("accounts", new FieldName("a_custid", true, true, F_Type.NUM),
-				new FieldName("a_name", false, false, F_Type.TEXT), new FieldName("a_age", false, false, F_Type.NUM),
-				new FieldName("a_dist", false, false, F_Type.NUM), new FieldName("a_sex", false, false, F_Type.NUM));
+				new FieldName("a_name", false, false, F_Type.TEXT), new FieldName("a_branch", false, false, F_Type.NUM),
+				new FieldName("a_credit_score", false, false, F_Type.NUM),
+				new FieldName("a_age", false, false, F_Type.NUM), new FieldName("a_sex", false, false, F_Type.NUM),
+				new FieldName("a_join_date", false, false, F_Type.NUM),
+				new FieldName("a_web_active", false, false, F_Type.NUM),
+				new FieldName("a_atm_active", false, false, F_Type.NUM),
+				new FieldName("a_phone_active", false, false, F_Type.NUM),
+				new FieldName("a_joint_with", false, false, F_Type.NUM));
 
-		pu.mkTable("dist", new FieldName("d_distid", true, true, F_Type.NUM),
-				new FieldName("d_city", false, false, F_Type.NUM), new FieldName("d_state", false, false, F_Type.NUM));
+		pu.mkTable("branch", new FieldName("b_branchid", true, true, F_Type.NUM),
+				new FieldName("b_name", false, false, F_Type.TEXT),
+				new FieldName("b_address", false, false, F_Type.TEXT),
+				new FieldName("b_state", false, false, F_Type.NUM), new FieldName("b_city", false, false, F_Type.NUM),
+				new FieldName("b_budget", false, false, F_Type.NUM), new FieldName("b_phone", false, false, F_Type.NUM),
+				new FieldName("b_type", false, false, F_Type.NUM),
+				new FieldName("b_open_date", false, false, F_Type.NUM),
+				new FieldName("b_emp_cnt", false, false, F_Type.NUM));
+
+		pu.mkTable("state", new FieldName("st_stateid", true, true, F_Type.NUM),
+				new FieldName("st_name", false, false, F_Type.TEXT), new FieldName("b_state", false, false, F_Type.NUM),
+				new FieldName("st_main_office", false, false, F_Type.NUM),
+				new FieldName("st_total_branches", false, false, F_Type.NUM),
+				new FieldName("st_budget", false, false, F_Type.NUM),
+				new FieldName("st_phone", false, false, F_Type.NUM));
+
+		pu.mkTable("city", new FieldName("ct_cityid", true, true, F_Type.NUM),
+				new FieldName("ct_name", false, false, F_Type.TEXT), new FieldName("b_state", false, false, F_Type.NUM),
+				new FieldName("ct_main_office", false, false, F_Type.NUM),
+				new FieldName("ct_total_branches", false, false, F_Type.NUM),
+				new FieldName("ct_budget", false, false, F_Type.NUM),
+				new FieldName("ct_phone", false, false, F_Type.NUM));
 
 		pu.mkTable("savings", new FieldName("s_custid", true, true, F_Type.NUM),
-				new FieldName("s_bal", false, false, F_Type.NUM), new FieldName("s_history", false, false, F_Type.NUM)
+				new FieldName("s_bal", false, false, F_Type.NUM), new FieldName("s_apr", false, false, F_Type.NUM),
+				new FieldName("s_open_date", false, false, F_Type.NUM),
+				new FieldName("s_max_withdraw", false, false, F_Type.NUM),
+				new FieldName("s_max_txns", false, false, F_Type.NUM));
 
-		);
 		pu.mkTable("checking", new FieldName("c_custid", true, true, F_Type.NUM),
-				new FieldName("c_bal", false, false, F_Type.NUM), new FieldName("c_history", false, false, F_Type.NUM)
-
-		);
+				new FieldName("c_bal", false, false, F_Type.NUM),
+				new FieldName("c_od_protection", false, false, F_Type.NUM),
+				new FieldName("c_open_date", false, false, F_Type.NUM),
+				new FieldName("c_max_txns", false, false, F_Type.NUM),
+				new FieldName("c_max_withdraw", false, false, F_Type.NUM));
 
 		/*
 		 * /*

@@ -163,7 +163,7 @@ public class Naive_search_engine extends Search_engine {
 				filtered_table_list.add(t);
 		int filtered_table_cnt = filtered_table_list.size();
 		int random_index = (int) (Math.random() * filtered_table_cnt);
-		return filtered_table_list.get(random_index);
+		return filtered_table_list.get(random_index); // TODO IOB exception
 	}
 
 	/*
@@ -199,6 +199,7 @@ public class Naive_search_engine extends Search_engine {
 				.filter(fn -> (!fn.isAliveField() && fn.isPK() == pk && fn.getType() == tp))
 				.collect(Collectors.toList());
 		int filtered_fns_cnt = fns.size();
+		System.out.println(fns);
 		int random_index = (int) (Math.random() * filtered_fns_cnt);
 		if (filtered_fns_cnt == 0)
 			return null;
