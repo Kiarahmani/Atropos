@@ -134,6 +134,8 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 		int index = 0;
 		logger.debug("For each PK a new expression will be added to the beginning of the ISNERT:");
 		for (FieldName pk_fn : pk_fields) {
+			if (old_update.getWHC().getConstraintByFieldName(pk_fn) == null)
+				return null;
 			result[index] = new WHC_Constraint(targetTable.getTableName(), targetTable.getPKFields().get(index),
 					BinOp.EQ, old_update.getWHC().getConstraintByFieldName(pk_fn).getExpression());
 			index++;

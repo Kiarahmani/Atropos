@@ -182,7 +182,7 @@ public class VC {
 			logger.debug("The result of correspondence in T2(" + T_2 + ") is: " + result_y);
 			return result_y;
 		}
-		assert (false) : "unexpected state";
+		//assert (false) : "unexpected state";
 		return false;
 	}
 

@@ -60,7 +60,7 @@ public class WHC {
 		for (WHC_Constraint whcc : this.whc_constraints)
 			if (whcc.getFieldName() == fn)
 				return whcc;
-		assert (false) : "unexepected field name " + fn;
+		//assert (false) : "unexepected field name " + fn;
 		return null;
 	}
 

@@ -363,6 +363,8 @@ public class Refactoring_Engine {
 							+ ") can be merged");
 					Block b1 = pu.getBlockByPo(txn_name, po1);
 					Block b2 = pu.getBlockByPo(txn_name, po2);
+					if (b1==null || b2==null)
+						continue;
 					if (!b1.isEqual(b2))
 						continue;
 					if (swapChecks(pu, txn, po1 + 1, po2)) {

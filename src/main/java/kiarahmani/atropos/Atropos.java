@@ -36,13 +36,15 @@ public class Atropos {
 			new Constants();
 		} catch (IOException e) {
 		}
+		int iter = 0;
 		out: while (true) {
+			System.out.println("\n#" + (iter++) + "\n");
 			Refactoring_Engine re = new Refactoring_Engine();
 			Program_Utils pu = new Program_Utils("SmallBank");
 			Program program = (new SmallBankProgramGenerator(pu)).generate("Balance", "Amalgamate", "TransactSavings",
 					"DepositChecking", "SendPayment", "WriteCheck");
 			pu.lock();
-			//program.printProgram();
+			// program.printProgram();
 			re.pre_analysis(pu);
 			// search the refactoring space
 			Naive_search_engine se = new Naive_search_engine(history);
@@ -64,18 +66,17 @@ public class Atropos {
 			}
 			history.addAll(history_local);
 			re.atomicize(pu);
-			program = pu.generateProgram();
-			program.printProgram();
-			//int anml_cnt = analyze(program);
+			// program = pu.generateProgram();
+			// program.printProgram();
+			// int anml_cnt = analyze(program);
 			try {
-				Thread.sleep(100);
+				Thread.sleep(0);
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			System.gc();
 			// print stats and exit
-			//printStats(System.currentTimeMillis() - time_begin, anml_cnt);
+			// printStats(System.currentTimeMillis() - time_begin, anml_cnt);
 		}
 	}
 
