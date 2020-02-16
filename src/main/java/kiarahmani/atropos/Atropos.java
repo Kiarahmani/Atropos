@@ -31,7 +31,6 @@ public class Atropos {
 
 	public static void main(String[] args) {
 		long time_begin = System.currentTimeMillis();
-		HashSet<VC> history = new HashSet<>();
 		try {
 			new Constants();
 		} catch (IOException e) {
@@ -47,27 +46,22 @@ public class Atropos {
 			// program.printProgram();
 			re.pre_analysis(pu);
 			// search the refactoring space
-			Naive_search_engine se = new Naive_search_engine(history);
-			int _refactoring_depth = 4;
-			HashSet<VC> history_local = new HashSet<>();
+			Optimal_search_engine se = new Optimal_search_engine();
+			int _refactoring_depth = 1;
 			for (int j = 0; j < _refactoring_depth; j++) {
 				if (!se.reset(pu))
 					continue out;
+				logger.error("ready to apply ref step " + j);
 				do {
 					Delta ref = se.nextRefactoring(pu);
 					if (ref == null)
 						continue out;
-					if (ref instanceof INTRO_VC) {
-						INTRO_VC introvc = (INTRO_VC) ref;
-						history_local.add(introvc.getVC());
-					}
 					re.refactor_schema(pu, ref);
 				} while (se.hasNext());
 			}
-			history.addAll(history_local);
 			re.atomicize(pu);
-			// program = pu.generateProgram();
-			// program.printProgram();
+			//program = pu.generateProgram();
+		//	program.printProgram();
 			// int anml_cnt = analyze(program);
 			try {
 				Thread.sleep(0);

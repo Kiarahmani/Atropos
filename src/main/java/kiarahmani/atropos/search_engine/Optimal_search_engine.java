@@ -49,6 +49,7 @@ public class Optimal_search_engine extends Search_engine {
 			delta_3.addKeyCorrespondenceToVC("c_custid", "a_custid");
 			delta_3.addFieldTupleToVC("c_bal", "a_check_bal");
 			result[index++] = delta_3;
+			// System.out.println(delta_3.getVC().equalsWith(delta_3.getVC()));
 
 			// introduce vc between savings and accounts
 			INTRO_VC delta_4 = new INTRO_VC(pu, "savings", "accounts", VC_Agg.VC_ID, VC_Type.VC_OTO);
@@ -98,6 +99,7 @@ public class Optimal_search_engine extends Search_engine {
 
 	@Override
 	public boolean reset(Program_Utils pu) {
+		iter = 0;
 		return true;
 	}
 
