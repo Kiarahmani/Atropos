@@ -43,7 +43,6 @@ public class Atropos {
 			history.put(t.getTableName().getName(), newMap);
 		}
 
-
 		long time_begin = System.currentTimeMillis();
 		try {
 			new Constants();
@@ -51,7 +50,7 @@ public class Atropos {
 		}
 		int iter = 0;
 		out: while (true) {
-			System.out.println("\n\n#" + (iter++) + "\n");
+			System.out.println("\n\n#" + (iter) + "\n");
 			Refactoring_Engine re = new Refactoring_Engine();
 			pu = new Program_Utils("SmallBank");
 			program = (new SmallBankProgramGenerator(pu)).generate("Balance", "Amalgamate", "TransactSavings",
@@ -69,10 +68,9 @@ public class Atropos {
 				do {
 					Delta ref = se.nextRefactoring(pu);
 					if (ref == null) {
-						logger.error("null ref is returned: continue");
+						System.out.println(".");
 						continue out;
 					}
-					logger.debug("valid ref is returned: "+ref.getDesc());
 					if (ref instanceof INTRO_VC) {
 						INTRO_VC new_name = (INTRO_VC) ref;
 						local_hist.add(new_name.getVC());
@@ -88,25 +86,16 @@ public class Atropos {
 				history.get(vc.T_1).get(vc.T_2).add(vc);
 			}
 			re.atomicize(pu);
-			//program = pu.generateProgram();
-			//program.printProgram();
-			try {
-				Thread.sleep(50);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			
-			//int anml_cnt = analyze(program);
+			program = pu.generateProgram();
+			program.printProgram();
+			iter++;
+			int anml_cnt = analyze(program);
 			System.gc();
 			// print stats and exit
-			//printStats(System.currentTimeMillis() - time_begin, anml_cnt);
+			printStats(System.currentTimeMillis() - time_begin, anml_cnt);
 		}
 	}
 
-
-	
-	
 	private static int analyze(Program program) {
 		Conflict_Graph cg = new Conflict_Graph(program);
 		Encoding_Engine ee = new Encoding_Engine(program.getName());

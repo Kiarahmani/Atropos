@@ -59,13 +59,10 @@ public class Refactoring_Engine {
 	// Functions for shrinking the program
 	/*****************************************************************************************************************/
 	public void atomicize(Program_Utils pu) {
-		logger.error("before decompose");
-		//decompose(pu); // split and redirect all selects to tables with lower wights
-		logger.error("after decompose");
+		decompose(pu); // split and redirect all selects to tables with lower wights
 		delete_redundant(pu);
-		logger.error("after delete_redundant");
 		shrink(pu);
-		logger.error("after shrink");
+
 	}
 
 	public void pre_analysis(Program_Utils input_pu) {
@@ -281,8 +278,10 @@ public class Refactoring_Engine {
 	}
 
 	public void decompose(Program_Utils pu) {
-		while (decompose_iter(pu)) // decompose untill fixed-point is reached
-			;
+		int iter = 0;
+		while (decompose_iter(pu) && iter++ < 4)
+			; // decompose untill fixed-point is reached
+
 	}
 
 	// single iteration of decomposition
@@ -355,34 +354,51 @@ public class Refactoring_Engine {
 		for (Transaction txn : pu.getTrasnsactionMap().values()) {
 			ArrayList<Query> all_queries = txn.getAllQueries();
 			String txn_name = txn.getName();
-			int qry_cnt = all_queries.size();
-			for (int i = 0; i < qry_cnt; i++)
-				for (int j = i + 1; j < qry_cnt; j++) {
-					Query q1 = all_queries.get(i);
-					Query q2 = all_queries.get(j);
-
+			int i = 0;
+			while (i < txn.getAllQueries().size()) {
+				int j = i + 1;
+				while (j < txn.getAllQueries().size()) {
+					Query q1 = txn.getAllQueries().get(i);
+					Query q2 = txn.getAllQueries().get(j);
 					int po1 = q1.getPo();
 					int po2 = q2.getPo();
 					logger.debug("checking if " + q1.getId() + "(@" + po1 + ") and " + q2.getId() + "(@" + po2
 							+ ") can be merged");
 					Block b1 = pu.getBlockByPo(txn_name, po1);
 					Block b2 = pu.getBlockByPo(txn_name, po2);
-					if (b1==null || b2==null)
+					if (b1 == null || b2 == null) {
+						j++;
 						continue;
-					if (!b1.isEqual(b2))
+					}
+					if (!b1.isEqual(b2)) {
+						j++;
 						continue;
+					}
 					if (swapChecks(pu, txn, po1 + 1, po2)) {
+						logger.debug("query at " + (po1 + 1) + " can be swapped with query at " + po2);
 						deleteQuery(pu, po2, txn_name);
+						// logger.debug("query at " + (po2) + " deleted");
 						InsertQueriesAtPO(b1, pu, txn_name, po1 + 1, new Query_Statement(po1 + 1, q2));
-						if (attempt_merge_query(pu, txn.getName(), po1, false))
+						// logger.debug("same query inserted at " + (po1));
+						logger.debug("ready to attempt merge again between query at " + po1 + " and the next query");
+						if (attempt_merge_query(pu, txn.getName(), po1, false)) {
+							logger.debug("merge was successful");
+							j++;
 							continue;
+						}
+						logger.debug("merge was unsuccessful: ready to revert");
 						deleteQuery(pu, po1 + 1, txn_name);
+						// logger.debug("query at " + (po1 + 1) + " deleted");
 						InsertQueriesAtPO(b1, pu, txn_name, po2, new Query_Statement(po2, q2));
+						// logger.debug("same query inserted at " + (po2));
 					} else {
-						logger.debug("query at " + (po1 + 1) + "cannot be swapped with query at " + po2);
+						logger.debug("query at " + (po1 + 1) + " cannot be swapped with query at " + po2);
 						attempt_merge_query(pu, txn.getName(), po1, false);
 					}
+					j++;
 				}
+				i++;
+			}
 		}
 	}
 
