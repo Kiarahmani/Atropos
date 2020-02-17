@@ -103,13 +103,16 @@ public class Transaction {
 			delim = ", ";
 		}
 
-		System.out.print("){  [");
-		delim = "";
-		for (Expression exp : this.assertions) {
-			System.out.print(delim + "assert:" + exp);
-			delim = "	";
-		}
-		System.out.println("]");
+		if (this.assertions.size() > 0) {
+			System.out.print("){  [");
+			delim = "";
+			for (Expression exp : this.assertions) {
+				System.out.print(delim + "assert:" + exp);
+				delim = "	";
+			}
+			System.out.println("]");
+		} else
+			System.out.print("){  ");
 		for (Statement stmt : this.statements)
 			stmt.printStatemenet("  ");
 		System.out.println("}");
@@ -126,8 +129,7 @@ public class Transaction {
 		// args
 		for (E_Arg arg : this.args)
 			result.addArg((E_Arg) arg.mkSnapshot());
-		
-		
+
 		result.is_included = this.is_included;
 		return result;
 	}
