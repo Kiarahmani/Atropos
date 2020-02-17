@@ -6,6 +6,7 @@
 package kiarahmani.atropos.search_engine;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -44,18 +45,30 @@ public class Naive_search_engine extends Search_engine {
 	private Table source_table, target_table;
 	private FieldName source_fn;
 	private Delta[] result;
-	private HashSet<VC> history;
+	HashMap<String, HashMap<String, HashSet<VC>>> history;
 
 	/*
 	 * Constructor
 	 */
-	public Naive_search_engine(HashSet<VC> history) {
+	public Naive_search_engine(HashMap<String, HashMap<String, HashSet<VC>>> history) {
 		ng = new NameGenerator();
 		this.history = history;
 	}
 
 	public boolean hasNext() {
 		return (++iter) < max_iter;
+	}
+
+	private int eqVCCnt(Program_Utils pu, VC vc) {
+		String src = vc.T_1;
+		String dest = vc.T_2;
+		int cnt = getVCFromHist(src, dest).stream().filter(vcc -> vcc.equalsWith(vc)).collect(Collectors.toSet())
+				.size();
+		return cnt;
+	}
+
+	private HashSet<VC> getVCFromHist(String src, String dest) {
+		return this.history.get(src).get(dest);
 	}
 
 	/*
@@ -92,12 +105,9 @@ public class Naive_search_engine extends Search_engine {
 			INTRO_F intro_f = new INTRO_F(target_table_name, new_fn, F_Type.NUM);
 			result[0] = intro_f;
 			INTRO_VC new_intro_vc = mk_ID_OTO_INTRO_VC(pu, intro_f.getNewName());
-			if (history.stream().filter(vc -> vc.equalsWith(new_intro_vc.getVC())).count() > 0) {
-				System.out.println("discarding vc because has already been tested: " + new_intro_vc.getVC());
-				System.out.println("history: " + history);
-				return null;
-			}
 			result[1] = new_intro_vc;
+			if (eqVCCnt(pu, new_intro_vc.getVC()) > 0)
+				result[1] = null;
 		}
 		return result[iter];
 	}
@@ -109,12 +119,9 @@ public class Naive_search_engine extends Search_engine {
 			INTRO_F intro_f = new INTRO_F(target_table_name, new_fn, F_Type.NUM);
 			result[0] = intro_f;
 			INTRO_VC new_intro_vc = mk_ID_OTM_INTRO_VC(pu, intro_f.getNewName());
-			if (history.stream().filter(vc -> vc.equalsWith(new_intro_vc.getVC())).count() > 0) {
-				System.out.println("discarding vc because has already been tested: " + new_intro_vc.getVC());
-				System.out.println("history: " + history);
-				return null;
-			}
 			result[1] = new_intro_vc;
+			if (eqVCCnt(pu, new_intro_vc.getVC()) > 0)
+				result[1] = null;
 		}
 		return result[iter];
 	}
@@ -154,11 +161,6 @@ public class Naive_search_engine extends Search_engine {
 				intro_vc.addKeyCorrespondenceToVC(source_table.getPKFields().get(i).getName(),
 						newly_added_introf.get(i).getNewName().getName());
 			intro_vc.addFieldTupleToVC(source_fn.getName(), newly_added_fn_name);
-			if (history.stream().filter(vc -> vc.equalsWith(intro_vc.getVC())).count() > 0) {
-				System.out.println("discarding vc because has already been tested: " + intro_vc.getVC());
-				System.out.println("history: " + history);
-				return null;
-			}
 			result[index++] = intro_vc;
 		}
 		return result[iter];

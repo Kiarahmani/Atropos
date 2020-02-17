@@ -7,6 +7,7 @@ package kiarahmani.atropos.DDL.vc;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -46,7 +47,7 @@ public class VC {
 	private static final Logger logger = LogManager.getLogger(Atropos.class);
 	private VC_Type vc_type;
 	private VC_Agg vc_agg;
-	private String T_1, T_2; /* T_1 must be bound to a single record */
+	public String T_1, T_2; /* T_1 must be bound to a single record */
 	private HashSet<Tuple<String, String>> fieldTuples;
 	private ArrayList<VC_Constraint> vc_constraints;
 	private String name;
@@ -57,13 +58,13 @@ public class VC {
 		if (!base)
 			return false;
 		for (VC_Constraint vcc : this.vc_constraints)
-			if (other.vc_constraints.stream().filter(oth_vcc -> oth_vcc.equals(vcc)).count() < 1)
+			if (other.vc_constraints.stream().filter(oth_vcc -> oth_vcc.equalsWith(vcc)).collect(Collectors.toSet())
+					.size() < 1)
+				return false;
+		for (Tuple<String, String> ft : this.fieldTuples)
+			if (other.fieldTuples.stream().filter(oth_ft -> (oth_ft.x.equals(ft.x))).count() < 1)
 				return false;
 
-		for (Tuple<String, String> ft : this.fieldTuples)
-			if (other.fieldTuples.stream().filter(oth_ft -> (oth_ft.x.equals(ft.x) && oth_ft.y.equals(ft.y)))
-					.count() < 1)
-				return false;
 		return base;
 	}
 
@@ -182,7 +183,7 @@ public class VC {
 			logger.debug("The result of correspondence in T2(" + T_2 + ") is: " + result_y);
 			return result_y;
 		}
-		//assert (false) : "unexpected state";
+		// assert (false) : "unexpected state";
 		return false;
 	}
 

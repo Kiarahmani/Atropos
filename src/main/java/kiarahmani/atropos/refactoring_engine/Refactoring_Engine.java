@@ -59,9 +59,13 @@ public class Refactoring_Engine {
 	// Functions for shrinking the program
 	/*****************************************************************************************************************/
 	public void atomicize(Program_Utils pu) {
-		decompose(pu); // split and redirect all selects to tables with lower wights
+		logger.error("before decompose");
+		//decompose(pu); // split and redirect all selects to tables with lower wights
+		logger.error("after decompose");
 		delete_redundant(pu);
+		logger.error("after delete_redundant");
 		shrink(pu);
+		logger.error("after shrink");
 	}
 
 	public void pre_analysis(Program_Utils input_pu) {
@@ -276,7 +280,7 @@ public class Refactoring_Engine {
 		return false;
 	}
 
-	private void decompose(Program_Utils pu) {
+	public void decompose(Program_Utils pu) {
 		while (decompose_iter(pu)) // decompose untill fixed-point is reached
 			;
 	}

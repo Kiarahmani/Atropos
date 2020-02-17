@@ -380,7 +380,7 @@ public class Program_Utils {
 	 * FieldNames
 	 */
 	public FieldName getFieldName(String fn) {
-		assert (this.fieldNameMap.get(fn) != null) : "something unholy happened on (" + fn + ")";
+		//assert (this.fieldNameMap.get(fn) != null) : "something unholy happened on (" + fn + ")";
 		return this.fieldNameMap.get(fn);
 	}
 
