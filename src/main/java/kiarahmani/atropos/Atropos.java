@@ -4,27 +4,15 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.concurrent.Callable;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import kiarahmani.atropos.DDL.vc.VC;
 import kiarahmani.atropos.dependency.Conflict_Graph;
 import kiarahmani.atropos.dependency.DAI_Graph;
 import kiarahmani.atropos.encoding_engine.Encoding_Engine;
 import kiarahmani.atropos.program.Program;
-import kiarahmani.atropos.program.Table;
 import kiarahmani.atropos.program_generators.TPCCProgramGenerator;
-import kiarahmani.atropos.program_generators.SmallBank.SmallBankProgramGenerator;
 import kiarahmani.atropos.refactoring_engine.Refactoring_Engine;
-import kiarahmani.atropos.refactoring_engine.deltas.Delta;
-import kiarahmani.atropos.refactoring_engine.deltas.INTRO_VC;
-import kiarahmani.atropos.search_engine.Naive_search_engine;
-import kiarahmani.atropos.search_engine.Optimal_search_engine;
 import kiarahmani.atropos.utils.Constants;
 import kiarahmani.atropos.utils.Program_Utils;
 
@@ -41,7 +29,7 @@ public class Atropos {
 
 		long time_begin = System.currentTimeMillis();
 		Program_Utils pu = new Program_Utils("TPC-C");
-		Program program = (new TPCCProgramGenerator(pu)).generate("newOrder1", "payment1", "stockLevel1",
+		Program program = (new TPCCProgramGenerator(pu)).generate("newOrder", "payment1", "stockLevel1",
 				"orderStatus1", "delivery");
 		pu.lock();
 		program.printProgram();
