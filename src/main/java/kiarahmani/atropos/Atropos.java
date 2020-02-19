@@ -40,16 +40,21 @@ public class Atropos {
 		}
 
 		long time_begin = System.currentTimeMillis();
-		Program_Utils pu = new Program_Utils("SmallBank");
+		Program_Utils pu = new Program_Utils("TPC-C");
 		Program program = (new TPCCProgramGenerator(pu)).generate("newOrder", "payment", "stockLevel", "orderStatus",
 				"delivery");
 		pu.lock();
 		program.printProgram();
-		int anml_cnt = analyze(program);
-		printStats(System.currentTimeMillis() - time_begin, anml_cnt);
+		// int anml_cnt = analyze(pu);
+		// printStats(System.currentTimeMillis() - time_begin, anml_cnt);
 	}
 
-	private static int analyze(Program program) {
+	private static int analyze(Program_Utils pu) {
+		Refactoring_Engine re = new Refactoring_Engine();
+		Program_Utils snapshot = pu.mkSnapShot();
+		re.atomicize(snapshot);
+		Program program = snapshot.generateProgram();
+		program.printProgram();
 		Conflict_Graph cg = new Conflict_Graph(program);
 		Encoding_Engine ee = new Encoding_Engine(program.getName());
 		DAI_Graph dai_graph = ee.constructInitialDAIGraph(program, cg);

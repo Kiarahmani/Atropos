@@ -112,7 +112,7 @@ public class Transaction {
 			}
 			System.out.println("]");
 		} else
-			System.out.print("){  ");
+			System.out.println("){  ");
 		for (Statement stmt : this.statements)
 			stmt.printStatemenet("  ");
 		System.out.println("}");
