@@ -200,7 +200,7 @@ public class Refactoring_Engine {
 		boolean result = false;
 		for (Transaction txn : pu.getTrasnsactionMap().values())
 			for (Query q : txn.getAllQueries())
-				if (q.canBeRemoved() && q.isWrite()) {
+				if (q.canBeRemoved() && q instanceof Update_Query) {
 					logger.debug("--------------");
 					logger.debug("analyzing if " + txn.getName() + "." + q.getId() + " can be removed");
 					Table curr_t = pu.getTable(q.getTableName().getName());
@@ -210,7 +210,6 @@ public class Refactoring_Engine {
 						deleteQuery(pu, q.getPo(), txn.getName());
 						result = true;
 					} else {
-
 						HashSet<FieldName> currr_accessed = accessed_fn_map.get(curr_t);
 						ArrayList<FieldName> curr_written = q.getWrittenFieldNames();
 						ArrayList<FieldName> excluded_fns = new ArrayList<>();
@@ -239,7 +238,7 @@ public class Refactoring_Engine {
 		for (Transaction txn : pu.getTrasnsactionMap().values())
 			q_loop: for (Query q : txn.getAllQueries())
 				if (q.canBeRemoved() && !q.isWrite()) {
-					logger.debug("---- checking if " + q.getId() + " can be deleted");
+					logger.debug("---- checking if " + txn.getName() + "." + q.getId() + " can be deleted");
 					Select_Query sq = (Select_Query) q;
 					// check if sq is implicitly used
 					if (sq.getImplicitlyUsed().size() > 0) {
@@ -254,9 +253,10 @@ public class Refactoring_Engine {
 						continue q_loop;
 					}
 					logger.debug(v + " is NOT used in " + txn.getName());
-					logger.debug(q.getId() + " can be deleted");
+					logger.debug(q + " can be deleted");
 					// at this point we know q is not either explicitly or implicitly used
 					deleteQuery(pu, q.getPo(), txn.getName());
+
 					result = true;
 				}
 		return result;

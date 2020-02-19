@@ -73,7 +73,7 @@ public class Update_Query extends Query {
 			delim = ",";
 		}
 		return isAtomicString + "UPDATE" + this.id + " " + String.format("%-10s", this.tableName) + " SET "
-				+ updateTuplesList + " WHERE " + this.where_clause;//+ " PC=" + this.path_condition;
+				+ updateTuplesList + " WHERE " + this.where_clause;// + " PC=" + this.path_condition;
 	}
 
 	@Override
