@@ -157,7 +157,7 @@ public class Z3Driver {
 		addDepFunc(program);
 		constrainDepFunc(program);
 		addDepSTFunc(program);
-		constrainUUIDFunc();
+		//constrainUUIDFunc();
 		constrainDepSTFunc(program);
 		logger.debug("All functions added");
 		//

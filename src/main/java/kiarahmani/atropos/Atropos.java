@@ -41,8 +41,8 @@ public class Atropos {
 
 		long time_begin = System.currentTimeMillis();
 		Program_Utils pu = new Program_Utils("TPC-C");
-		Program program = (new TPCCProgramGenerator(pu)).generate("newOrder", "payment", "stockLevel", "orderStatus",
-				"delivery");
+		Program program = (new TPCCProgramGenerator(pu)).generate("newOrder1", "payment1", "stockLevel1",
+				"orderStatus1", "delivery");
 		pu.lock();
 		program.printProgram();
 		int anml_cnt = analyze(pu);

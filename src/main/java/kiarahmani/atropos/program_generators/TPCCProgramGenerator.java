@@ -518,7 +518,7 @@ public class TPCCProgramGenerator implements ProgramGenerator {
 					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("no_oid"), BinOp.EQ,
 							pu.mkProjExpr(txn_name, 0, "no_oid", 1)));
 			Delete_Query delivery3 = pu.addDeleteQuery(txn_name, table_name, delivery_whc_3);
-			pu.addQueryStatement(txn_name, delivery3);
+			pu.addQueryStatement(txn_name, delivery3); //XXX
 
 			// update oorder record
 			table_name = "oorder";
