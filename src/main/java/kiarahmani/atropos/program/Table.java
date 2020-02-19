@@ -13,6 +13,15 @@ public class Table {
 	private boolean crdt;
 	private boolean canBeRemoved;
 	public boolean isNew;
+	private boolean isAllPk;
+
+	public void setIsAllPK(boolean b) {
+		this.isAllPk = b;
+	}
+
+	public boolean isAllPK() {
+		return this.isAllPk;
+	}
 
 	public boolean canBeRemoved() {
 		return canBeRemoved;
@@ -118,6 +127,7 @@ public class Table {
 		for (FieldName fn : this.fieldNames)
 			if (!fn.getName().contains("alive"))
 				result.addFieldName(fn);
+		result.setIsAllPK(this.isAllPk);
 		return result;
 	}
 

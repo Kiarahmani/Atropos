@@ -172,7 +172,7 @@ public class Refactoring_Engine {
 		boolean result = false;
 		ArrayList<Table> tables_to_be_removed = new ArrayList<>();
 		for (Table t : pu.getTables().values())
-			if (t.canBeRemoved() && accessed_fn_map.get(t).size() == (t.getPKFields().size() + 1)) {
+			if (t.canBeRemoved() && accessed_fn_map.get(t).size() == (t.getPKFields().size() + 1) && !t.isAllPK()) {
 				tables_to_be_removed.add(t);
 				result = true;
 			}
@@ -438,7 +438,7 @@ public class Refactoring_Engine {
 	}
 
 	/*
-	 * return a map form each table to the set of fields that are currently tougched
+	 * return a map form each table to the set of fields that are currently touched
 	 */
 	private HashMap<Table, HashSet<FieldName>> mkTableMap(Program_Utils pu) {
 		HashMap<Table, HashSet<FieldName>> touched_field_names = new HashMap<>();

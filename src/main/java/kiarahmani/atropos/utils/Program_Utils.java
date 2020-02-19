@@ -380,7 +380,8 @@ public class Program_Utils {
 	 * FieldNames
 	 */
 	public FieldName getFieldName(String fn) {
-		//assert (this.fieldNameMap.get(fn) != null) : "something unholy happened on (" + fn + ")";
+		// assert (this.fieldNameMap.get(fn) != null) : "something unholy happened on ("
+		// + fn + ")";
 		return this.fieldNameMap.get(fn);
 	}
 
@@ -543,10 +544,25 @@ public class Program_Utils {
 		FieldName is_alive = new FieldName("is_alive", false, false, F_Type.BOOL);
 		this.tableNameMap.put(tn.getName(), tn);
 		Table newTable = new Table(tn, is_alive, fns);
+		newTable.setIsAllPK(false);
 		this.tableMap.put(tn.getName(), newTable);
 		for (FieldName fn : fns)
 			this.fieldNameMap.put(fn.getName(), fn);
 		this.fieldNameMap.put(tn_name + "_is_alive", is_alive);
+		return newTable;
+	}
+
+	public Table mkAllPKTable(String tn_name, FieldName... fns) {
+		TableName tn = new TableName(tn_name);
+		FieldName is_alive = new FieldName("is_alive", false, false, F_Type.BOOL);
+		this.tableNameMap.put(tn.getName(), tn);
+		Table newTable = new Table(tn, is_alive, fns);
+		newTable.setIsAllPK(true);
+		this.tableMap.put(tn.getName(), newTable);
+		for (FieldName fn : fns)
+			this.fieldNameMap.put(fn.getName(), fn);
+		this.fieldNameMap.put(tn_name + "_is_alive", is_alive);
+		logger.debug("adding table " + tn_name + " whose allPK is set to: " + newTable.isAllPK());
 		return newTable;
 	}
 

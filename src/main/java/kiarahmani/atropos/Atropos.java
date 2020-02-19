@@ -45,8 +45,8 @@ public class Atropos {
 				"delivery");
 		pu.lock();
 		program.printProgram();
-		// int anml_cnt = analyze(pu);
-		// printStats(System.currentTimeMillis() - time_begin, anml_cnt);
+		int anml_cnt = analyze(pu);
+		printStats(System.currentTimeMillis() - time_begin, anml_cnt);
 	}
 
 	private static int analyze(Program_Utils pu) {

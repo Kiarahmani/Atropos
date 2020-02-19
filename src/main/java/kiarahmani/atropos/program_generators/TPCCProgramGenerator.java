@@ -6,12 +6,9 @@ import kiarahmani.atropos.DDL.F_Type;
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DML.expression.BinOp;
 import kiarahmani.atropos.DML.expression.E_BinOp;
-import kiarahmani.atropos.DML.expression.E_Proj;
-import kiarahmani.atropos.DML.expression.E_UnOp;
-import kiarahmani.atropos.DML.expression.Expression;
-import kiarahmani.atropos.DML.expression.E_UnOp.UnOp;
 import kiarahmani.atropos.DML.expression.constants.E_Const_Num;
 import kiarahmani.atropos.DML.expression.constants.E_Const_Text;
+import kiarahmani.atropos.DML.query.Delete_Query;
 import kiarahmani.atropos.DML.query.Insert_Query;
 import kiarahmani.atropos.DML.query.Select_Query;
 import kiarahmani.atropos.DML.query.Update_Query;
@@ -19,7 +16,6 @@ import kiarahmani.atropos.DML.where_clause.WHC;
 import kiarahmani.atropos.DML.where_clause.WHC_Constraint;
 import kiarahmani.atropos.program.Program;
 import kiarahmani.atropos.program_generators.ProgramGenerator;
-import kiarahmani.atropos.utils.Program_Utils;
 import kiarahmani.atropos.utils.Program_Utils;
 
 public class TPCCProgramGenerator implements ProgramGenerator {
@@ -111,7 +107,7 @@ public class TPCCProgramGenerator implements ProgramGenerator {
 		fns = new FieldName[] { new FieldName(prefix + "wid", true, true, F_Type.NUM),
 				new FieldName(prefix + "did", true, false, F_Type.NUM),
 				new FieldName(prefix + "oid", true, false, F_Type.NUM) };
-		pu.mkTable(table_name, fns);
+		pu.mkAllPKTable(table_name, fns);
 
 		// history
 		table_name = "history";
@@ -318,24 +314,270 @@ public class TPCCProgramGenerator implements ProgramGenerator {
 		 */
 		if (txns.contains("payment")) {
 			txn_name = "payment";
+			pu.mkTrnasaction(txn_name, "p_wid:int", "p_did:int", "p_cname:string", "p_cwid:int", "p_cdid:int",
+					"p_pay_amount:int", "p_current_t:int");
+
+			// retrieve info by w_id
+			table_name = "warehouse";
+			WHC payment_whc_1 = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(
+					pu.getTableName(table_name), pu.getFieldName("w_id"), BinOp.EQ, pu.getArg("p_wid")));
+			Select_Query payment1 = pu.addSelectQuery(txn_name, table_name, payment_whc_1, "w_ytd", "w_name",
+					"w_street", "w_city", "w_state", "w_zip");
+			pu.addQueryStatement(txn_name, payment1);
+
+			// incremenet w_ytd
+			table_name = "warehouse";
+			WHC payment_whc_2 = payment_whc_1.mkSnapshot();
+			Update_Query payment2 = pu.addUpdateQuery(txn_name, table_name, payment_whc_2);
+			payment2.addUpdateExp(pu.getFieldName("w_ytd"),
+					new E_BinOp(BinOp.PLUS, pu.mkProjExpr(txn_name, 0, "w_ytd", 1), pu.getArg("p_pay_amount")));
+			pu.addQueryStatement(txn_name, payment2);
+
+			// retrieve info by id
+			table_name = "district";
+			WHC payment_whc_3 = new WHC(pu.getIsAliveFieldName(table_name),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("d_wid"), BinOp.EQ,
+							pu.getArg("p_wid")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("d_id"), BinOp.EQ,
+							pu.getArg("p_did")));
+			Select_Query payment3 = pu.addSelectQuery(txn_name, table_name, payment_whc_3, "d_ytd", "d_tax", "d_name",
+					"d_street", "d_city", "d_state", "d_zip");
+			pu.addQueryStatement(txn_name, payment3);
+
+			// incremenet d_ytd
+			table_name = "district";
+			WHC payment_whc_4 = payment_whc_3.mkSnapshot();
+			Update_Query payment4 = pu.addUpdateQuery(txn_name, table_name, payment_whc_4);
+			payment4.addUpdateExp(pu.getFieldName("d_ytd"),
+					new E_BinOp(BinOp.PLUS, pu.mkProjExpr(txn_name, 1, "d_ytd", 1), pu.getArg("p_pay_amount")));
+			pu.addQueryStatement(txn_name, payment4);
+
+			// select customer
+			table_name = "customer";
+			WHC payment_whc_5 = new WHC(pu.getIsAliveFieldName(table_name),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("c_wid"), BinOp.EQ,
+							pu.getArg("p_wid")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("c_did"), BinOp.EQ,
+							pu.getArg("p_did")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("c_last"), BinOp.EQ,
+							pu.getArg("p_cname")));
+
+			Select_Query payment5 = pu.addSelectQuery(txn_name, table_name, payment_whc_5, "c_id", "c_discount",
+					"c_credit", "c_credit_lim", "c_balance", "c_ytd_payment", "c_payment_cnt");
+			pu.addQueryStatement(txn_name, payment5);
+
+			// update customer
+			table_name = "customer";
+			WHC payment_whc_6 = payment_whc_5.mkSnapshot();
+			Update_Query payment6 = pu.addUpdateQuery(txn_name, table_name, payment_whc_6);
+			payment6.addUpdateExp(pu.getFieldName("c_balance"),
+					new E_BinOp(BinOp.MINUS, pu.mkProjExpr(txn_name, 2, "c_balance", 1), pu.getArg("p_pay_amount")));
+			payment6.addUpdateExp(pu.getFieldName("c_ytd_payment"),
+					new E_BinOp(BinOp.PLUS, pu.mkProjExpr(txn_name, 2, "c_ytd_payment", 1), pu.getArg("p_pay_amount")));
+			payment6.addUpdateExp(pu.getFieldName("c_payment_cnt"),
+					new E_BinOp(BinOp.PLUS, pu.mkProjExpr(txn_name, 2, "c_payment_cnt", 1), new E_Const_Num(1)));
+			pu.addQueryStatement(txn_name, payment6);
+
 		}
 		/*
 		 * stockLevel
 		 */
 		if (txns.contains("stockLevel")) {
 			txn_name = "stockLevel";
+			pu.mkTrnasaction(txn_name, "sl_wid:int", "sl_did:int", "sl_threshold:int");
+
+			// retrieve d_next_o_id
+			table_name = "district";
+			WHC stockLevel_whc_1 = new WHC(pu.getIsAliveFieldName(table_name),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("d_wid"), BinOp.EQ,
+							pu.getArg("sl_wid")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("d_id"), BinOp.EQ,
+							pu.getArg("sl_did")));
+			Select_Query stockLevel1 = pu.addSelectQuery(txn_name, table_name, stockLevel_whc_1, "d_next_o_id");
+			stockLevel1.setImplicitlyUsed(pu.getFieldName("d_next_o_id"));
+			pu.addQueryStatement(txn_name, stockLevel1);
+
+			// retrieve item id from corresponding order_line
+			table_name = "order_line";
+			WHC stockLevel_whc_2 = new WHC(pu.getIsAliveFieldName(table_name),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("ol_wid"), BinOp.EQ,
+							pu.getArg("sl_wid")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("ol_did"), BinOp.EQ,
+							pu.getArg("sl_did")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("ol_oid"), BinOp.EQ,
+							pu.mkProjExpr(txn_name, 0, "d_next_o_id", 1)));
+			Select_Query stockLevel2 = pu.addSelectQuery(txn_name, table_name, stockLevel_whc_2, "ol_iid");
+			stockLevel2.setImplicitlyUsed(pu.getFieldName("ol_iid"));
+			pu.addQueryStatement(txn_name, stockLevel2);
+
+			// retrieve the stock for that item
+			table_name = "stock";
+			WHC stockLevel_whc_3 = new WHC(pu.getIsAliveFieldName(table_name),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("s_wid"), BinOp.EQ,
+							pu.getArg("sl_wid")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("s_iid"), BinOp.EQ,
+							pu.mkProjExpr(txn_name, 1, "ol_iid", 1)));
+			Select_Query stockLevel3 = pu.addSelectQuery(txn_name, table_name, stockLevel_whc_3, "s_quantitiy", "s_ytd",
+					"s_order_cnt", "s_remote_cnt", "s_data");
+			stockLevel3.setImplicitlyUsed(pu.getFieldName("s_quantitiy"), pu.getFieldName("s_ytd"),
+					pu.getFieldName("s_order_cnt"));
+			pu.addQueryStatement(txn_name, stockLevel3);
+
 		}
 		/*
 		 * orderStatus
 		 */
 		if (txns.contains("orderStatus")) {
 			txn_name = "orderStatus";
+			pu.mkTrnasaction(txn_name, "os_wid:int", "os_did:int", "os_cname:string");
+
+			// select customer
+			table_name = "customer";
+			WHC orderStatus_whc_1 = new WHC(pu.getIsAliveFieldName(table_name),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("c_wid"), BinOp.EQ,
+							pu.getArg("os_wid")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("c_did"), BinOp.EQ,
+							pu.getArg("os_did")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("c_last"), BinOp.EQ,
+							pu.getArg("os_cname")));
+			Select_Query orderStatus1 = pu.addSelectQuery(txn_name, table_name, orderStatus_whc_1, "c_id", "c_discount",
+					"c_credit", "c_credit_lim", "c_balance", "c_ytd_payment", "c_payment_cnt");
+			orderStatus1.setImplicitlyUsed(pu.getFieldName("c_balance"), pu.getFieldName("c_ytd_payment"));
+			pu.addQueryStatement(txn_name, orderStatus1);
+
+			// retrieve the latest order by above customer
+			table_name = "oorder";
+			WHC orderStatus_whc_2 = new WHC(pu.getIsAliveFieldName(table_name),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("o_wid"), BinOp.EQ,
+							pu.getArg("os_wid")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("o_did"), BinOp.EQ,
+							pu.getArg("os_did")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("o_cid"), BinOp.EQ,
+							pu.mkProjExpr(txn_name, 0, "c_id", 1)));
+			Select_Query orderStatus2 = pu.addSelectQuery(txn_name, table_name, orderStatus_whc_2, "o_id",
+					"o_carrier_id", "o_entry_d");
+			orderStatus2.setImplicitlyUsed(pu.getFieldName("o_id"), pu.getFieldName("o_carrier_id"),
+					pu.getFieldName("o_entry_d"));
+			pu.addQueryStatement(txn_name, orderStatus2);
+
+			// retrieve the orderline info
+			table_name = "order_line";
+			WHC orderStatus_whc_3 = new WHC(pu.getIsAliveFieldName(table_name),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("ol_wid"), BinOp.EQ,
+							pu.getArg("os_wid")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("ol_did"), BinOp.EQ,
+							pu.getArg("os_did")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("ol_oid"), BinOp.EQ,
+							pu.mkProjExpr(txn_name, 1, "o_id", 1)),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("ol_number"), BinOp.EQ,
+							new E_Const_Num(1)));
+
+			Select_Query orderStatus3 = pu.addSelectQuery(txn_name, table_name, orderStatus_whc_3, "ol_iid",
+					"ol_delivery_d", "ol_amount", "ol_supply_wid", "ol_quantity");
+			orderStatus3.setImplicitlyUsed(pu.getFieldName("ol_iid"), pu.getFieldName("ol_delivery_d"),
+					pu.getFieldName("ol_amount"), pu.getFieldName("ol_supply_wid"), pu.getFieldName("ol_quantity"));
+			pu.addQueryStatement(txn_name, orderStatus3);
+
 		}
 		/*
 		 * delivery
 		 */
 		if (txns.contains("delivery")) {
 			txn_name = "delivery";
+			pu.mkTrnasaction(txn_name, "d_wid:int", "d_did:int", "d_carrier_id:int", "d_current_t:int");
+
+			// retrieve (the latest) new order from this warehouse and district
+			table_name = "new_order";
+			WHC delivery_whc_1 = new WHC(pu.getIsAliveFieldName(table_name),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("no_wid"), BinOp.EQ,
+							pu.getArg("d_wid")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("no_did"), BinOp.EQ,
+							pu.getArg("d_did")));
+			Select_Query delivery1 = pu.addSelectQuery(txn_name, table_name, delivery_whc_1, "no_oid");
+			pu.addQueryStatement(txn_name, delivery1);
+
+			// retrieve corresponding order's info
+			table_name = "oorder";
+			WHC delivery_whc_2 = new WHC(pu.getIsAliveFieldName(table_name),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("o_wid"), BinOp.EQ,
+							pu.getArg("d_wid")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("o_did"), BinOp.EQ,
+							pu.getArg("d_did")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("o_id"), BinOp.EQ,
+							pu.mkProjExpr(txn_name, 0, "no_oid", 1)));
+			Select_Query delivery2 = pu.addSelectQuery(txn_name, table_name, delivery_whc_2, "o_cid");
+			pu.addQueryStatement(txn_name, delivery2);
+
+			// delete the new_order record
+			table_name = "new_order";
+			WHC delivery_whc_3 = new WHC(pu.getIsAliveFieldName(table_name),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("no_wid"), BinOp.EQ,
+							pu.getArg("d_wid")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("no_did"), BinOp.EQ,
+							pu.getArg("d_did")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("no_oid"), BinOp.EQ,
+							pu.mkProjExpr(txn_name, 0, "no_oid", 1)));
+			Delete_Query delivery3 = pu.addDeleteQuery(txn_name, table_name, delivery_whc_3);
+			pu.addQueryStatement(txn_name, delivery3);
+
+			// update oorder record
+			table_name = "oorder";
+			WHC delivery_whc_4 = delivery_whc_2.mkSnapshot();
+			Update_Query delivery4 = pu.addUpdateQuery(txn_name, table_name, delivery_whc_4);
+			delivery4.addUpdateExp(pu.getFieldName("o_carrier_id"), pu.getArg("d_carrier_id"));
+			pu.addQueryStatement(txn_name, delivery4);
+
+			// select the order_line record
+			table_name = "order_line";
+			WHC delivery_whc_5 = new WHC(pu.getIsAliveFieldName(table_name),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("ol_wid"), BinOp.EQ,
+							pu.getArg("d_wid")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("ol_did"), BinOp.EQ,
+							pu.getArg("d_did")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("ol_oid"), BinOp.EQ,
+							pu.mkProjExpr(txn_name, 0, "no_oid", 1)),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("ol_number"), BinOp.EQ,
+							new E_Const_Num(1)));
+			Select_Query delivery5 = pu.addSelectQuery(txn_name, table_name, delivery_whc_5, "ol_amount");
+			pu.addQueryStatement(txn_name, delivery5);
+
+			// update oorder_line record
+			table_name = "order_line";
+			WHC delivery_whc_6 = new WHC(pu.getIsAliveFieldName(table_name),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("ol_wid"), BinOp.EQ,
+							pu.getArg("d_wid")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("ol_did"), BinOp.EQ,
+							pu.getArg("d_did")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("ol_oid"), BinOp.EQ,
+							pu.mkProjExpr(txn_name, 0, "no_oid", 1)),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("ol_number"), BinOp.EQ,
+							new E_Const_Num(1)));
+			Update_Query delivery6 = pu.addUpdateQuery(txn_name, table_name, delivery_whc_6);
+			delivery6.addUpdateExp(pu.getFieldName("ol_delivery_d"), pu.getArg("d_current_t"));
+			pu.addQueryStatement(txn_name, delivery6);
+
+			// select customer
+			table_name = "customer";
+			WHC delivery_whc_7 = new WHC(pu.getIsAliveFieldName(table_name),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("c_wid"), BinOp.EQ,
+							pu.getArg("d_wid")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("c_did"), BinOp.EQ,
+							pu.getArg("d_did")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("c_id"), BinOp.EQ,
+							pu.mkProjExpr(txn_name, 1, "o_cid", 1)));
+			Select_Query delivery7 = pu.addSelectQuery(txn_name, table_name, delivery_whc_7, "c_balance",
+					"c_delivery_cnt");
+			pu.addQueryStatement(txn_name, delivery7);
+
+			// update customer
+			WHC delivery_whc_8 = delivery_whc_7.mkSnapshot();
+			Update_Query delivery8 = pu.addUpdateQuery(txn_name, table_name, delivery_whc_8);
+			delivery8.addUpdateExp(pu.getFieldName("c_balance"), new E_BinOp(BinOp.PLUS,
+					pu.mkProjExpr(txn_name, 3, "c_balance", 1), pu.mkProjExpr(txn_name, 2, "ol_amount", 1)));
+			delivery8.addUpdateExp(pu.getFieldName("c_delivery_cnt"),
+					new E_BinOp(BinOp.PLUS, pu.mkProjExpr(txn_name, 3, "c_delivery_cnt", 1), new E_Const_Num(1)));
+			pu.addQueryStatement(txn_name, delivery8);
+
 		}
 		return pu.generateProgram();
 	}
