@@ -17,6 +17,11 @@ public class Transaction {
 	private ArrayList<E_Arg> args;
 	public boolean is_included;
 
+	public void setAllQueriesIncluded(boolean b) {
+		for (Query q : this.getAllQueries())
+			q.setIsIncluded(b);
+	}
+
 	public ArrayList<E_Arg> getArgs() {
 		return this.args;
 	}
@@ -80,7 +85,6 @@ public class Transaction {
 	public void addArg(E_Arg a) {
 		this.args.add(a);
 	}
-
 
 	/*
 	 * Returns the query with requested PO

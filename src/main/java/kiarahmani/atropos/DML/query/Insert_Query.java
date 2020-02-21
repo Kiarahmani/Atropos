@@ -44,6 +44,7 @@ public class Insert_Query extends Query {
 		result.kind = this.kind;
 		for (Tuple<FieldName, Expression> fne : this.insert_expressions)
 			result.insert_expressions.add(new Tuple<FieldName, Expression>(fne.x, fne.y.mkSnapshot()));
+		result.is_included = this.is_included;
 		return result;
 	}
 

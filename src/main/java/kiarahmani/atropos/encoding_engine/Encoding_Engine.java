@@ -54,7 +54,7 @@ public class Encoding_Engine {
 		ArrayList<DAI> potential_dais = new ArrayList<>();
 		// first find all potential dais
 		for (Transaction txn : program.getTransactions()) {
-			logger.error("finding potential DAIs in txn:" + txn.getName());
+			logger.debug("finding potential DAIs in txn:" + txn.getName());
 			ArrayList<Query> all_queries = txn.getAllQueries();
 			for (int i = 0; i < all_queries.size(); i++)
 				for (int j = i + 1; j < all_queries.size(); j++) {
@@ -69,41 +69,58 @@ public class Encoding_Engine {
 				}
 		}
 		System.out.println("Number of potential DAIs: " + potential_dais.size());
-		logger.error("entering the dais_loop to iterate over all potential dais");
+		logger.debug("entering the dais_loop to iterate over all potential dais");
 		int iter = 0;
 		dais_loop: for (DAI pot_dai : potential_dais) {
-			logger.error(" begin analysis for DAI: " + pot_dai);
+			logger.debug(" begin pre-analysis for DAI: " + pot_dai);
 			// pre-analysis on the potential dai
 			z3logger.reset();
 			System.gc();
 			Z3Driver local_z3_driver = new Z3Driver();
-			logger.error("new z3 driver created");
-			for (Transaction txn : pu.getTrasnsactionMap().values())
+			logger.debug("new z3 driver created");
+			for (Transaction txn : pu.getTrasnsactionMap().values()) {
 				txn.is_included = true;
-			Program_Utils snapshot = pu.mkSnapShot();
-			re.delete_unincluded(snapshot);
-			program = snapshot.generateProgram();
+				txn.setAllQueriesIncluded(true);
+			}
 
+			Program_Utils snapshot = pu.mkSnapShot();
+			re.delete_redundant(snapshot);
+			program = snapshot.generateProgram();
 			Status valid = local_z3_driver.validDAI(program, pot_dai);
 			if (valid == Status.UNSATISFIABLE) {
-				logger.error(
+				logger.debug(
 						" discarding the potential DAI due to conflicting path conditions. continue to the next dai");
 				continue dais_loop;
 			} else
-				logger.error("potential DAI was pre-analyzed and found valid. Further analysis is needed");
+				logger.debug("potential DAI was pre-analyzed and found valid. Further analysis is needed");
 
 			// could not rule out the potential dai: must perform full analysis
 			for (Conflict c1 : cg.getConfsFromQuery(pot_dai.getQuery(1), pot_dai.getTransaction())) {
 				for (Conflict c2 : cg.getConfsFromQuery(pot_dai.getQuery(2), pot_dai.getTransaction())) {
-					logger.error(" involved transactions: " + pot_dai.getTransaction().getName() + "-"
+					logger.debug(" involved transactions: " + pot_dai.getTransaction().getName() + "-"
 							+ c1.getTransaction(2).getName() + "-" + c2.getTransaction(2).getName());
-					
+
 					for (Transaction txn : pu.getTrasnsactionMap().values())
 						if (txn.is_equal(pot_dai.getTransaction()) || txn.is_equal(c1.getTransaction(2))
-								|| txn.is_equal(c2.getTransaction(2)))
+								|| txn.is_equal(c2.getTransaction(2))) {
 							txn.is_included = true;
-						else
+							txn.setAllQueriesIncluded(false); // only some will be set to true below
+						} else
 							txn.is_included = false;
+
+					// set included queries to true
+					pot_dai.getQuery(1).setIsIncluded(true);
+					//pot_dai.getQuery(1).setcanBeRemoved(false);
+					pot_dai.getQuery(2).setIsIncluded(true);
+					//pot_dai.getQuery(2).setcanBeRemoved(false);
+					c1.getQuery(1).setIsIncluded(true);
+					//c1.getQuery(1).setcanBeRemoved(false);
+					c1.getQuery(2).setIsIncluded(true);
+					//c1.getQuery(2).setcanBeRemoved(false);
+					c2.getQuery(1).setIsIncluded(true);
+					//c2.getQuery(1).setcanBeRemoved(false);
+					c2.getQuery(2).setIsIncluded(true);
+					//c2.getQuery(2).setcanBeRemoved(false);
 
 					snapshot = pu.mkSnapShot();
 					re.delete_unincluded(snapshot);
@@ -112,7 +129,7 @@ public class Encoding_Engine {
 
 					z3logger.reset();
 					local_z3_driver = new Z3Driver();
-					logger.error("new z3 driver is created");
+					logger.debug("new z3 driver is created");
 					if (Constants._VERBOSE_ANALYSIS) {
 						System.out.println(
 								"\nRound #" + (iter++) + " (anomalies found: " + dai_graph.getDAIs().size() + ")");
