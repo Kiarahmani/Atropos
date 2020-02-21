@@ -76,7 +76,7 @@ public class Encoding_Engine {
 			for (Transaction txn : program.getTransactions())
 				txn.is_included = true;
 			Status valid = local_z3_driver.validDAI(program, pot_dai);
-			
+
 			if (valid == Status.UNSATISFIABLE) {
 				logger.debug(
 						" discarding the potential DAI due to conflicting path conditions. continue to the next dai");
