@@ -62,7 +62,6 @@ public class Refactoring_Engine {
 		decompose(pu); // split and redirect all selects to tables with lower wights
 		delete_redundant(pu);
 		shrink(pu);
-
 	}
 
 	public void pre_analysis(Program_Utils input_pu) {
@@ -154,9 +153,25 @@ public class Refactoring_Engine {
 	 * 
 	 */
 
+	public void delete_unincluded(Program_Utils pu) {
+		delete_unincluded_transactions(pu);
+		while (delete_redundant_iter(pu))
+			;
+	}
+
 	private void delete_redundant(Program_Utils pu) {
 		while (delete_redundant_iter(pu))
 			;
+	}
+
+	private void delete_unincluded_transactions(Program_Utils pu) {
+		HashSet<String> to_be_removed = new HashSet<>();
+		for (Transaction txn : pu.getTrasnsactionMap().values())
+			if (!txn.is_included)
+				to_be_removed.add(txn.getName());
+
+		for (String s : to_be_removed)
+			pu.rmTransaction(s);
 	}
 
 	private boolean delete_redundant_iter(Program_Utils pu) {

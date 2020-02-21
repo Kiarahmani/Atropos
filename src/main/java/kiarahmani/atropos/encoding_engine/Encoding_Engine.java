@@ -22,7 +22,9 @@ import kiarahmani.atropos.encoding_engine.Z3.Z3Driver;
 import kiarahmani.atropos.encoding_engine.Z3.Z3Logger;
 import kiarahmani.atropos.program.Program;
 import kiarahmani.atropos.program.Transaction;
+import kiarahmani.atropos.refactoring_engine.Refactoring_Engine;
 import kiarahmani.atropos.utils.Constants;
+import kiarahmani.atropos.utils.Program_Utils;
 
 public class Encoding_Engine {
 	private static final Logger logger = LogManager.getLogger(Atropos.class);
@@ -44,12 +46,15 @@ public class Encoding_Engine {
 		}
 	}
 
-	public DAI_Graph constructInitialDAIGraph(Program program, Conflict_Graph cg) {
+	public DAI_Graph constructInitialDAIGraph(Program_Utils pu) {
+		Program program = pu.generateProgram();
+		Conflict_Graph cg = new Conflict_Graph(program);
+		Refactoring_Engine re = new Refactoring_Engine();
 		DAI_Graph dai_graph = new DAI_Graph();
 		ArrayList<DAI> potential_dais = new ArrayList<>();
 		// first find all potential dais
 		for (Transaction txn : program.getTransactions()) {
-			logger.debug("finding potential DAIs in txn:" + txn.getName());
+			logger.error("finding potential DAIs in txn:" + txn.getName());
 			ArrayList<Query> all_queries = txn.getAllQueries();
 			for (int i = 0; i < all_queries.size(); i++)
 				for (int j = i + 1; j < all_queries.size(); j++) {
@@ -64,40 +69,50 @@ public class Encoding_Engine {
 				}
 		}
 		System.out.println("Number of potential DAIs: " + potential_dais.size());
-		logger.debug("entering the dais_loop to iterate over all potential dais");
+		logger.error("entering the dais_loop to iterate over all potential dais");
 		int iter = 0;
 		dais_loop: for (DAI pot_dai : potential_dais) {
-			logger.debug(" begin analysis for DAI: " + pot_dai);
+			logger.error(" begin analysis for DAI: " + pot_dai);
 			// pre-analysis on the potential dai
 			z3logger.reset();
 			System.gc();
 			Z3Driver local_z3_driver = new Z3Driver();
-			logger.debug("new z3 driver created");
-			for (Transaction txn : program.getTransactions())
+			logger.error("new z3 driver created");
+			for (Transaction txn : pu.getTrasnsactionMap().values())
 				txn.is_included = true;
-			Status valid = local_z3_driver.validDAI(program, pot_dai);
+			Program_Utils snapshot = pu.mkSnapShot();
+			re.delete_unincluded(snapshot);
+			program = snapshot.generateProgram();
 
+			Status valid = local_z3_driver.validDAI(program, pot_dai);
 			if (valid == Status.UNSATISFIABLE) {
-				logger.debug(
+				logger.error(
 						" discarding the potential DAI due to conflicting path conditions. continue to the next dai");
 				continue dais_loop;
 			} else
-				logger.debug("potential DAI was pre-analyzed and found valid. Further analysis is needed");
+				logger.error("potential DAI was pre-analyzed and found valid. Further analysis is needed");
 
 			// could not rule out the potential dai: must perform full analysis
 			for (Conflict c1 : cg.getConfsFromQuery(pot_dai.getQuery(1), pot_dai.getTransaction())) {
 				for (Conflict c2 : cg.getConfsFromQuery(pot_dai.getQuery(2), pot_dai.getTransaction())) {
-					logger.debug(" involved transactions: " + pot_dai.getTransaction().getName() + "-"
+					logger.error(" involved transactions: " + pot_dai.getTransaction().getName() + "-"
 							+ c1.getTransaction(2).getName() + "-" + c2.getTransaction(2).getName());
-					for (Transaction txn : program.getTransactions())
-						if (txn.hasSameName(pot_dai.getTransaction()) || txn.hasSameName(c1.getTransaction(2))
-								|| txn.hasSameName(c2.getTransaction(2)))
+					
+					for (Transaction txn : pu.getTrasnsactionMap().values())
+						if (txn.is_equal(pot_dai.getTransaction()) || txn.is_equal(c1.getTransaction(2))
+								|| txn.is_equal(c2.getTransaction(2)))
 							txn.is_included = true;
 						else
 							txn.is_included = false;
+
+					snapshot = pu.mkSnapShot();
+					re.delete_unincluded(snapshot);
+					program = snapshot.generateProgram();
+					program.printProgram();
+
 					z3logger.reset();
 					local_z3_driver = new Z3Driver();
-					logger.debug("new z3 driver is created");
+					logger.error("new z3 driver is created");
 					if (Constants._VERBOSE_ANALYSIS) {
 						System.out.println(
 								"\nRound #" + (iter++) + " (anomalies found: " + dai_graph.getDAIs().size() + ")");

@@ -12,6 +12,7 @@ import kiarahmani.atropos.dependency.DAI_Graph;
 import kiarahmani.atropos.encoding_engine.Encoding_Engine;
 import kiarahmani.atropos.program.Program;
 import kiarahmani.atropos.program_generators.TPCCProgramGenerator;
+import kiarahmani.atropos.program_generators.SmallBank.SmallBankProgramGenerator;
 import kiarahmani.atropos.refactoring_engine.Refactoring_Engine;
 import kiarahmani.atropos.utils.Constants;
 import kiarahmani.atropos.utils.Program_Utils;
@@ -29,8 +30,13 @@ public class Atropos {
 
 		long time_begin = System.currentTimeMillis();
 		Program_Utils pu = new Program_Utils("TPC-C");
-		Program program = (new TPCCProgramGenerator(pu)).generate("newOrder", "payment", "stockLevel", "orderStatus",
-				"delivery");
+		Program program = (new TPCCProgramGenerator(pu)).generate("newOrder1", "payment", "stockLevel1", "orderStatus1",
+				"delivery1");
+		
+		//Program_Utils pu = new Program_Utils("SmallBank");
+		//Program program = (new SmallBankProgramGenerator(pu)).generate("Balance", "Amalgamate", "TransactSavings",
+		//		"DepositChecking", "SendPayment", "WriteCheck");
+		
 		pu.lock();
 		program.printProgram();
 		int anml_cnt = analyze(pu);
@@ -38,14 +44,8 @@ public class Atropos {
 	}
 
 	private static int analyze(Program_Utils pu) {
-		Refactoring_Engine re = new Refactoring_Engine();
-		Program_Utils snapshot = pu.mkSnapShot();
-		re.atomicize(snapshot);
-		Program program = snapshot.generateProgram();
-		program.printProgram();
-		Conflict_Graph cg = new Conflict_Graph(program);
-		Encoding_Engine ee = new Encoding_Engine(program.getName());
-		DAI_Graph dai_graph = ee.constructInitialDAIGraph(program, cg);
+		Encoding_Engine ee = new Encoding_Engine(pu.getProgramName());
+		DAI_Graph dai_graph = ee.constructInitialDAIGraph(pu);
 		dai_graph.printDAIGraph();
 		return dai_graph.getDAICnt();
 	}

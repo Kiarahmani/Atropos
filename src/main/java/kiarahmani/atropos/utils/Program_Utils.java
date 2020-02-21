@@ -352,6 +352,10 @@ public class Program_Utils {
 		this.vcMap.get(vcName).addConstraint(vcc);
 	}
 
+	public void rmTransaction(String txn_name) {
+		this.trasnsactionMap.remove(txn_name);
+	}
+
 	/*****************************************************************************************************************/
 	// Basic Getters
 	/*****************************************************************************************************************/
@@ -396,6 +400,10 @@ public class Program_Utils {
 	 */
 	public HashMap<String, Transaction> getTrasnsactionMap() {
 		return trasnsactionMap;
+	}
+
+	public List<Transaction> getIncludedTrasnsactionMap() {
+		return trasnsactionMap.values().stream().filter(txn -> txn.is_included).collect(Collectors.toList());
 	}
 
 	/*

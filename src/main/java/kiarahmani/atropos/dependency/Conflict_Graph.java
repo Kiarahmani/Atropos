@@ -24,16 +24,16 @@ public class Conflict_Graph {
 		ArrayList<Conflict> sorted_conflicts = new ArrayList<>();
 		// first add the conflicts related to t
 		for (Conflict c : this.conflicts)
-			if (c.getTransaction(1).hasSameName(t) && c.getTransaction(2).hasSameName(t))
+			if (c.getTransaction(1).is_equal(t) && c.getTransaction(2).is_equal(t))
 				sorted_conflicts.add(c);
 		// then add conflicts not related to t
 		for (Conflict c : this.conflicts)
-			if (!c.getTransaction(1).hasSameName(t) || !c.getTransaction(2).hasSameName(t))
+			if (!c.getTransaction(1).is_equal(t) || !c.getTransaction(2).is_equal(t))
 				sorted_conflicts.add(c);
 
-		//System.out.println("conflicts: "+conflicts);
-		//System.out.println("soret con: "+sorted_conflicts);
-		
+		// System.out.println("conflicts: "+conflicts);
+		// System.out.println("soret con: "+sorted_conflicts);
+
 		for (Conflict c : sorted_conflicts)
 			if (c.getQuery(1) == q)
 				result.add(c);

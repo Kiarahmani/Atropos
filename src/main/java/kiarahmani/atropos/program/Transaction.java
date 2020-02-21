@@ -81,9 +81,6 @@ public class Transaction {
 		this.args.add(a);
 	}
 
-	public boolean hasSameName(Transaction other) {
-		return this.TransactionName.equals(other.getName());
-	}
 
 	/*
 	 * Returns the query with requested PO
