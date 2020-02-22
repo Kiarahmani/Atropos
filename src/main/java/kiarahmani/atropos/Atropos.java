@@ -36,7 +36,7 @@ public class Atropos {
 		//Program_Utils pu = new Program_Utils("SmallBank");
 		//Program program = (new SmallBankProgramGenerator(pu)).generate("Balance", "Amalgamate", "TransactSavings",
 		//		"DepositChecking", "SendPayment", "WriteCheck");
-		
+		 
 		pu.lock();
 		program.printProgram();
 		int anml_cnt = analyze(pu);

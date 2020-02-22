@@ -8,3 +8,4 @@ z3-encoding.smt2
 analytics/
 logs/
 results.atropos
+bin/
