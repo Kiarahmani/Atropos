@@ -35,9 +35,9 @@ public class Conflict_Graph {
 		// System.out.println("soret con: "+sorted_conflicts);
 
 		for (Conflict c : sorted_conflicts)
-			if (c.getQuery(1) == q)
+			if (c.getTransaction(1).is_equal(t) && c.getQuery(1).equals_ids(q))
 				result.add(c);
-			else if (c.getQuery(2) == q)
+			else if (c.getTransaction(2).is_equal(t) && c.getQuery(2).equals_ids(q))
 				result.add(createReverse(c));
 		return result;
 	}

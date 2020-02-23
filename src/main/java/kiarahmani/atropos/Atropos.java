@@ -30,12 +30,12 @@ public class Atropos {
 
 		long time_begin = System.currentTimeMillis();
 		//Program_Utils pu = new Program_Utils("TPC-C");
-		//Program program = (new TPCCProgramGenerator(pu)).generate("newOrder", "payment", "stockLevel", "orderStatus",
+		//Program program = (new TPCCProgramGenerator(pu)).generate("newOrder1", "payment1", "stockLevel1", "orderStatus",
 		//		"delivery");
 		
 		Program_Utils pu = new Program_Utils("SmallBank");
-		Program program = (new SmallBankProgramGenerator(pu)).generate("Balance1", "Amalgamate", "TransactSavings1",
-				"DepositChecking1", "SendPayment1", "WriteCheck1");
+		Program program = (new SmallBankProgramGenerator(pu)).generate("Balance", "Amalgamate", "TransactSavings",
+				"DepositChecking", "SendPayment", "WriteCheck");
 		 
 		pu.lock();
 		program.printProgram();

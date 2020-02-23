@@ -34,6 +34,7 @@ public abstract class Query {
 
 	public void setIsIncluded(boolean is_included) {
 		this.is_included = is_included;
+		this.canBeRemoved = false;
 	}
 
 	public boolean canBeRemoved() {
@@ -103,5 +104,7 @@ public abstract class Query {
 	public abstract void substituteExps(Expression oldExp, Expression newExp);
 
 	public abstract Query mkSnapshot();
+
+
 
 }

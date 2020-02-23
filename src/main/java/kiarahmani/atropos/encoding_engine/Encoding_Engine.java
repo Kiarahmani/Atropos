@@ -68,11 +68,13 @@ public class Encoding_Engine {
 					potential_dais.add(dai);
 				}
 		}
+
 		System.out.println("Number of potential DAIs: " + potential_dais.size());
 		logger.debug("entering the dais_loop to iterate over all potential dais");
 		int iter = 0;
+		int dais_loop_iter = 0;
 		dais_loop: for (DAI pot_dai : potential_dais) {
-			logger.debug(" begin pre-analysis for DAI: " + pot_dai);
+			logger.debug("DAI #" + (dais_loop_iter++) + ":  " + pot_dai);
 			// pre-analysis on the potential dai
 			z3logger.reset();
 			System.gc();
@@ -99,8 +101,9 @@ public class Encoding_Engine {
 				for (Conflict c2 : cg.getConfsFromQuery(pot_dai.getQuery(2), pot_dai.getTransaction())) {
 					logger.debug(" involved transactions: " + pot_dai.getTransaction().getName() + "-"
 							+ c1.getTransaction(2).getName() + "-" + c2.getTransaction(2).getName());
+					snapshot = pu.mkSnapShot();
 
-					for (Transaction txn : pu.getTrasnsactionMap().values())
+					for (Transaction txn : snapshot.getTrasnsactionMap().values())
 						if (txn.is_equal(pot_dai.getTransaction()) || txn.is_equal(c1.getTransaction(2))
 								|| txn.is_equal(c2.getTransaction(2))) {
 							txn.is_included = true;
@@ -110,42 +113,39 @@ public class Encoding_Engine {
 
 					// XXX for some reason queries are not referenced by c1 and c2 and must directly
 					// be updated
-					for (Transaction txn : pu.getTrasnsactionMap().values())
+					for (Transaction txn : snapshot.getTrasnsactionMap().values())
 						for (Query q : txn.getAllQueries()) {
 							if (txn.is_equal(pot_dai.getTransaction())) {
-								if (q.getId().equals(pot_dai.getQuery(1).getId()))
+								if (q.equals_ids(pot_dai.getQuery(1)))
 									q.setIsIncluded(true);
-								if (q.getId().equals(pot_dai.getQuery(2).getId()))
+								if (q.equals_ids(pot_dai.getQuery(2)))
 									q.setIsIncluded(true);
 							}
-
 							if (txn.is_equal(c1.getTransaction(1)))
-								if (q.getId().equals(c1.getQuery(1).getId()))
+								if (q.equals_ids(c1.getQuery(1)))
 									q.setIsIncluded(true);
 
 							if (txn.is_equal(c1.getTransaction(2)))
-								if (q.getId().equals(c1.getQuery(2).getId()))
+								if (q.equals_ids(c1.getQuery(2)))
 									q.setIsIncluded(true);
 
 							if (txn.is_equal(c2.getTransaction(1)))
-								if (q.getId().equals(c2.getQuery(1).getId()))
+								if (q.equals_ids(c2.getQuery(1)))
 									q.setIsIncluded(true);
 
 							if (txn.is_equal(c2.getTransaction(2)))
-								if (q.getId().equals(c2.getQuery(2).getId()))
+								if (q.equals_ids(c2.getQuery(2)))
 									q.setIsIncluded(true);
-
 						}
 
 					// prune away unrelated components of the program
-					snapshot = pu.mkSnapShot();
 					re.delete_unincluded(snapshot);
 					program = snapshot.generateProgram();
 					program.printProgram();
 
 					// update the po of the queries in dai (since it may have been changed
 					// during the pruning)
-					for (Transaction txn : program.getTransactions())
+					for (Transaction txn : snapshot.getTrasnsactionMap().values())
 						for (Query q : txn.getAllQueries()) {
 							if (txn.is_equal(pot_dai.getTransaction()))
 								if (q.getId().equals(pot_dai.getQuery(1).getId()))
@@ -153,16 +153,16 @@ public class Encoding_Engine {
 								else if (q.getId().equals(pot_dai.getQuery(2).getId()))
 									pot_dai.setQuery2(q);
 							if (txn.is_equal(c1.getTransaction(1)))
-								if (q.getId().equals(c1.getQuery(1).getId()))
+								if (q.equals_ids(c1.getQuery(1)))
 									c1.setQuery1(q);
 							if (txn.is_equal(c1.getTransaction(2)))
-								if (q.getId().equals(c1.getQuery(2).getId()))
+								if (q.equals_ids(c1.getQuery(2)))
 									c1.setQuery2(q);
 							if (txn.is_equal(c2.getTransaction(1)))
-								if (q.getId().equals(c2.getQuery(1).getId()))
+								if (q.equals_ids(c2.getQuery(1)))
 									c2.setQuery1(q);
 							if (txn.is_equal(c2.getTransaction(2)))
-								if (q.getId().equals(c2.getQuery(2).getId()))
+								if (q.equals_ids(c2.getQuery(2)))
 									c2.setQuery2(q);
 						}
 
@@ -187,7 +187,7 @@ public class Encoding_Engine {
 					// if SAT, add the potential DAI to the graph
 					if (status == Status.SATISFIABLE) {
 						dai_graph.addDAI(pot_dai);
-						System.out.println(" >>>> anomely count:" + dai_graph.getDAICnt() + "");
+						continue dais_loop;
 					}
 					// free up solver's memory for the next iteration
 					local_z3_driver = null;
