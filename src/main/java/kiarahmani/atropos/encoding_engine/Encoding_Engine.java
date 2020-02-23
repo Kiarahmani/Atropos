@@ -110,23 +110,44 @@ public class Encoding_Engine {
 
 					// set included queries to true
 					pot_dai.getQuery(1).setIsIncluded(true);
-					//pot_dai.getQuery(1).setcanBeRemoved(false);
 					pot_dai.getQuery(2).setIsIncluded(true);
-					//pot_dai.getQuery(2).setcanBeRemoved(false);
 					c1.getQuery(1).setIsIncluded(true);
-					//c1.getQuery(1).setcanBeRemoved(false);
 					c1.getQuery(2).setIsIncluded(true);
-					//c1.getQuery(2).setcanBeRemoved(false);
 					c2.getQuery(1).setIsIncluded(true);
-					//c2.getQuery(1).setcanBeRemoved(false);
 					c2.getQuery(2).setIsIncluded(true);
-					//c2.getQuery(2).setcanBeRemoved(false);
 
+					// prune away unrelated components of the program
 					snapshot = pu.mkSnapShot();
 					re.delete_unincluded(snapshot);
+					// re.delete_redundant(snapshot);
 					program = snapshot.generateProgram();
 					program.printProgram();
 
+					// update the po of the queries in dai (since it may have been changed
+					// during the pruning)
+
+					for (Transaction txn : program.getTransactions())
+						for (Query q : txn.getAllQueries()) {
+							if (txn.is_equal(pot_dai.getTransaction()))
+								if (q.getId().equals(pot_dai.getQuery(1).getId()))
+									pot_dai.setQuery1(q);
+								else if (q.getId().equals(pot_dai.getQuery(2).getId()))
+									pot_dai.setQuery2(q);
+							if (txn.is_equal(c1.getTransaction(1)))
+								if (q.getId().equals(c1.getQuery(1).getId()))
+									c1.setQuery1(q);
+							if (txn.is_equal(c1.getTransaction(2)))
+								if (q.getId().equals(c1.getQuery(2).getId()))
+									c1.setQuery2(q);
+							if (txn.is_equal(c2.getTransaction(1)))
+								if (q.getId().equals(c2.getQuery(1).getId()))
+									c2.setQuery1(q);
+							if (txn.is_equal(c2.getTransaction(2)))
+								if (q.getId().equals(c2.getQuery(2).getId()))
+									c2.setQuery2(q);
+						}
+
+					// begin encoding the pruned program
 					z3logger.reset();
 					local_z3_driver = new Z3Driver();
 					logger.debug("new z3 driver is created");
@@ -148,8 +169,6 @@ public class Encoding_Engine {
 					if (status == Status.SATISFIABLE) {
 						dai_graph.addDAI(pot_dai);
 						System.out.println(" >>>> anomely count:" + dai_graph.getDAICnt() + "");
-						if (!Constants._IS_TEST)
-							continue dais_loop;
 					}
 					// free up solver's memory for the next iteration
 					local_z3_driver = null;
@@ -185,13 +204,15 @@ public class Encoding_Engine {
 		System.out.println("\n***********************************");
 		System.out.printf("%-20s%s\n", txn1_name, txn_first_name);
 		System.out.printf("%-20s%s\n", txn1_line, txn_first_line);
-		System.out.printf("%-8s ========== %s\n", c1.getQuery(1).getId(), c1.getQuery(2).getId());
+		System.out.printf("%-8s ========== %s\n", c1.getQuery(1).getId() + "(" + c1.getQuery(1).getPo() + ")",
+				c1.getQuery(2).getId() + "(" + c1.getQuery(2).getPo() + ")");
 		//
 		System.out.println();
 		//
 		System.out.printf("%-20s%s\n", "", txn_last_name);
 		System.out.printf("%-20s%s\n", "", txn_last_line);
-		System.out.printf("%-8s ========== %s\n", dai.getQuery(2).getId(), c2.getQuery(2).getId());
+		System.out.printf("%-8s ========== %s\n", dai.getQuery(2).getId() + "(" + dai.getQuery(2).getPo() + ")",
+				c2.getQuery(2).getId() + "(" + c2.getQuery(2).getPo() + ")");
 		System.out.println();
 	}
 

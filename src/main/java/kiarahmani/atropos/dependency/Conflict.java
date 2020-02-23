@@ -53,6 +53,14 @@ public class Conflict {
 		return null;
 	}
 
+	public void setQuery1( Query q) {
+		this.q1 = q;
+	}
+	
+	public void setQuery2( Query q) {
+		this.q2 = q;
+	}
+	
 	@Override
 	public String toString() {
 		return "<" + txn1.getName() + "." + q1.getId() + "," + txn2.getName() + "." + q2.getId() + "," + table_name

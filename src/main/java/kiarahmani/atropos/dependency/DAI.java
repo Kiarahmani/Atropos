@@ -42,6 +42,15 @@ public class DAI {
 		return null;
 	}
 
+	
+	public void setQuery1( Query q) {
+		this.q1 = q;
+	}
+	
+	public void setQuery2( Query q) {
+		this.q2 = q;
+	}
+	
 	public boolean equls(DAI other) {
 		boolean arr1 = true;
 		boolean arr2 = true;
