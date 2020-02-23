@@ -10,7 +10,7 @@ public abstract class Expression {
 
 	public abstract HashSet<Variable> getAllRefferencedVars();
 
-	public abstract void redirectProjs(Variable oldVar, FieldName oldFn, Variable newVar, FieldName newFn);
+	public abstract Expression redirectProjs(Variable oldVar, FieldName oldFn, Variable newVar, FieldName newFn);
 
 	public abstract Expression substitute(Expression oldExp, Expression newExp);
 

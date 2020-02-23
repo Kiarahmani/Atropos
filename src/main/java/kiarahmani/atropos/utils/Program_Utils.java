@@ -352,6 +352,10 @@ public class Program_Utils {
 		this.vcMap.get(vcName).addConstraint(vcc);
 	}
 
+	public void rmTransaction(String txn_name) {
+		this.trasnsactionMap.remove(txn_name);
+	}
+
 	/*****************************************************************************************************************/
 	// Basic Getters
 	/*****************************************************************************************************************/
@@ -396,6 +400,10 @@ public class Program_Utils {
 	 */
 	public HashMap<String, Transaction> getTrasnsactionMap() {
 		return trasnsactionMap;
+	}
+
+	public List<Transaction> getIncludedTrasnsactionMap() {
+		return trasnsactionMap.values().stream().filter(txn -> txn.is_included).collect(Collectors.toList());
 	}
 
 	/*
@@ -544,10 +552,25 @@ public class Program_Utils {
 		FieldName is_alive = new FieldName("is_alive", false, false, F_Type.BOOL);
 		this.tableNameMap.put(tn.getName(), tn);
 		Table newTable = new Table(tn, is_alive, fns);
+		newTable.setIsAllPK(false);
 		this.tableMap.put(tn.getName(), newTable);
 		for (FieldName fn : fns)
 			this.fieldNameMap.put(fn.getName(), fn);
 		this.fieldNameMap.put(tn_name + "_is_alive", is_alive);
+		return newTable;
+	}
+
+	public Table mkAllPKTable(String tn_name, FieldName... fns) {
+		TableName tn = new TableName(tn_name);
+		FieldName is_alive = new FieldName("is_alive", false, false, F_Type.BOOL);
+		this.tableNameMap.put(tn.getName(), tn);
+		Table newTable = new Table(tn, is_alive, fns);
+		newTable.setIsAllPK(true);
+		this.tableMap.put(tn.getName(), newTable);
+		for (FieldName fn : fns)
+			this.fieldNameMap.put(fn.getName(), fn);
+		this.fieldNameMap.put(tn_name + "_is_alive", is_alive);
+		logger.debug("adding table " + tn_name + " whose allPK is set to: " + newTable.isAllPK());
 		return newTable;
 	}
 

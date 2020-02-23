@@ -22,6 +22,20 @@ public abstract class Query {
 	protected boolean canBeRemoved;
 	protected int id;
 	protected int po;
+	protected boolean is_included;
+
+	public boolean equals_ids(Query other) {
+		return this.getId().equalsIgnoreCase(other.getId());
+	}
+
+	public boolean getIsIncluded() {
+		return is_included;
+	}
+
+	public void setIsIncluded(boolean is_included) {
+		this.is_included = is_included;
+		this.canBeRemoved = !is_included;
+	}
 
 	public boolean canBeRemoved() {
 		return this.canBeRemoved;
@@ -29,6 +43,7 @@ public abstract class Query {
 
 	public Query() {
 		this.canBeRemoved = true;
+		this.is_included = true;
 	}
 
 	public void setcanBeRemoved(boolean r) {
@@ -44,7 +59,8 @@ public abstract class Query {
 	}
 
 	public void updatePO(int newPO) {
-		//System.out.println("updating po of "+this.getId() + " from "+ po + " to "+newPO);
+		// System.out.println("updating po of "+this.getId() + " from "+ po + " to
+		// "+newPO);
 		this.po = newPO;
 	}
 
@@ -88,5 +104,7 @@ public abstract class Query {
 	public abstract void substituteExps(Expression oldExp, Expression newExp);
 
 	public abstract Query mkSnapshot();
+
+
 
 }

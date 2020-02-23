@@ -62,7 +62,6 @@ public class Refactoring_Engine {
 		decompose(pu); // split and redirect all selects to tables with lower wights
 		delete_redundant(pu);
 		shrink(pu);
-
 	}
 
 	public void pre_analysis(Program_Utils input_pu) {
@@ -154,9 +153,44 @@ public class Refactoring_Engine {
 	 * 
 	 */
 
-	private void delete_redundant(Program_Utils pu) {
+	public void delete_unincluded(Program_Utils pu) {
+		logger.debug("deleting unincluded transactions and queries");
+		delete_unincluded_transactions(pu);
+		logger.debug("now calling normal delete_redundant");
 		while (delete_redundant_iter(pu))
 			;
+	}
+
+	public void delete_redundant(Program_Utils pu) {
+		while (delete_redundant_iter(pu))
+			;
+	}
+
+	private void delete_unincluded_transactions(Program_Utils pu) {
+		// remove redundant transactions
+		HashSet<String> to_be_removed = new HashSet<>();
+		for (Transaction txn : pu.getTrasnsactionMap().values())
+			if (!txn.is_included)
+				to_be_removed.add(txn.getName());
+
+		for (String s : to_be_removed) {
+			logger.debug("removing transaction " + s);
+			pu.rmTransaction(s);
+		}
+
+		// remove redundant queries
+		for (Transaction txn : pu.getTrasnsactionMap().values()) {
+			if (txn.is_included) {
+				logger.debug("analyzing queries of txn " + txn.getName() + " to remove unincluded ones");
+				for (Query q : txn.getAllQueries())
+					if (!q.getIsIncluded() && q.isWrite()) {
+						logger.debug("removing query " + q.getId() + " from " + txn.getName());
+						deleteQuery(pu, q.getPo(), txn.getName());
+					} else
+						logger.debug("cannot remove  " + q.getId() + " from " + txn.getName());
+			}
+		}
+
 	}
 
 	private boolean delete_redundant_iter(Program_Utils pu) {
@@ -172,9 +206,11 @@ public class Refactoring_Engine {
 		boolean result = false;
 		ArrayList<Table> tables_to_be_removed = new ArrayList<>();
 		for (Table t : pu.getTables().values())
-			if (t.canBeRemoved() && accessed_fn_map.get(t).size() == (t.getPKFields().size() + 1)) {
-				tables_to_be_removed.add(t);
-				result = true;
+			if (t.canBeRemoved() && accessed_fn_map.get(t).size() == (t.getPKFields().size() + 1) && !t.isAllPK()) {
+				if (!table_is_touched_by_included_queries(pu, t)) {
+					tables_to_be_removed.add(t);
+					result = true;
+				}
 			}
 		for (Table t : tables_to_be_removed)
 			pu.rmTable(t.getTableName().getName());
@@ -200,9 +236,13 @@ public class Refactoring_Engine {
 		boolean result = false;
 		for (Transaction txn : pu.getTrasnsactionMap().values())
 			for (Query q : txn.getAllQueries())
-				if (q.canBeRemoved() && q.isWrite()) {
+				if (q.canBeRemoved() && q instanceof Update_Query) {
 					logger.debug("--------------");
 					logger.debug("analyzing if " + txn.getName() + "." + q.getId() + " can be removed");
+					if (q.getIsIncluded()) {
+						logger.debug("it cannot, because it is included in the anomaly");
+						continue;
+					}
 					Table curr_t = pu.getTable(q.getTableName().getName());
 					if (curr_t == null) { // table has already been removed
 						logger.debug("removing " + txn.getName() + "." + q.getId() + " because table " + curr_t
@@ -210,7 +250,6 @@ public class Refactoring_Engine {
 						deleteQuery(pu, q.getPo(), txn.getName());
 						result = true;
 					} else {
-
 						HashSet<FieldName> currr_accessed = accessed_fn_map.get(curr_t);
 						ArrayList<FieldName> curr_written = q.getWrittenFieldNames();
 						ArrayList<FieldName> excluded_fns = new ArrayList<>();
@@ -236,10 +275,11 @@ public class Refactoring_Engine {
 
 	public boolean delete_redundant_reads(Program_Utils pu) {
 		boolean result = false;
-		for (Transaction txn : pu.getTrasnsactionMap().values())
+		for (Transaction txn : pu.getTrasnsactionMap().values()) {
+			logger.debug("analyzing " + txn.getName() + " to delete redundant reads");
 			q_loop: for (Query q : txn.getAllQueries())
 				if (q.canBeRemoved() && !q.isWrite()) {
-					logger.debug("---- checking if " + q.getId() + " can be deleted");
+					logger.debug("---- checking if " + txn.getName() + "." + q.getId() + " can be deleted");
 					Select_Query sq = (Select_Query) q;
 					// check if sq is implicitly used
 					if (sq.getImplicitlyUsed().size() > 0) {
@@ -254,11 +294,13 @@ public class Refactoring_Engine {
 						continue q_loop;
 					}
 					logger.debug(v + " is NOT used in " + txn.getName());
-					logger.debug(q.getId() + " can be deleted");
+					logger.debug(q + " can be deleted");
 					// at this point we know q is not either explicitly or implicitly used
 					deleteQuery(pu, q.getPo(), txn.getName());
+
 					result = true;
 				}
+		}
 		return result;
 	}
 
@@ -437,8 +479,20 @@ public class Refactoring_Engine {
 		return false;
 	}
 
+	private boolean table_is_touched_by_included_queries(Program_Utils pu, Table t) {
+		for (Transaction txn : pu.getTrasnsactionMap().values())
+			if (txn.is_included)
+				for (Query q : txn.getAllQueries())
+					if (q.getIsIncluded()) {
+						Table curr_t = pu.getTable(q.getTableName().getName());
+						if (curr_t.is_equal(t))
+							return true;
+					}
+		return false;
+	}
+
 	/*
-	 * return a map form each table to the set of fields that are currently tougched
+	 * return a map form each table to the set of fields that are currently touched
 	 */
 	private HashMap<Table, HashSet<FieldName>> mkTableMap(Program_Utils pu) {
 		HashMap<Table, HashSet<FieldName>> touched_field_names = new HashMap<>();

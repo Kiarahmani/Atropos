@@ -38,6 +38,7 @@ public class Delete_Query extends Query {
 		result.path_condition = this.path_condition.mkSnapshot();
 		result.canBeRemoved = this.canBeRemoved;
 		result.kind = this.kind;
+		result.is_included = this.is_included;
 		return result;
 	}
 

@@ -36,6 +36,7 @@ public class Update_Query extends Query {
 		result.where_clause = this.where_clause.mkSnapshot();
 		result.path_condition = this.path_condition.mkSnapshot();
 		result.canBeRemoved = this.canBeRemoved;
+		result.is_included = this.is_included;
 		return result;
 	}
 
@@ -73,7 +74,8 @@ public class Update_Query extends Query {
 			delim = ",";
 		}
 		return isAtomicString + "UPDATE" + this.id + " " + String.format("%-10s", this.tableName) + " SET "
-				+ updateTuplesList + " WHERE " + this.where_clause;//+ " PC=" + this.path_condition;
+				+ updateTuplesList + " WHERE " + this.where_clause + "		(" + this.is_included + ")";
+		// + " PC=" + this.path_condition;
 	}
 
 	@Override

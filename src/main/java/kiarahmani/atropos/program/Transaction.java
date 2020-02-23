@@ -17,6 +17,11 @@ public class Transaction {
 	private ArrayList<E_Arg> args;
 	public boolean is_included;
 
+	public void setAllQueriesIncluded(boolean b) {
+		for (Query q : this.getAllQueries())
+			q.setIsIncluded(b);
+	}
+
 	public ArrayList<E_Arg> getArgs() {
 		return this.args;
 	}
@@ -81,10 +86,6 @@ public class Transaction {
 		this.args.add(a);
 	}
 
-	public boolean hasSameName(Transaction other) {
-		return this.TransactionName.equals(other.getName());
-	}
-
 	/*
 	 * Returns the query with requested PO
 	 */
@@ -103,13 +104,16 @@ public class Transaction {
 			delim = ", ";
 		}
 
-		System.out.print("){  [");
-		delim = "";
-		for (Expression exp : this.assertions) {
-			System.out.print(delim + "assert:" + exp);
-			delim = "	";
-		}
-		System.out.println("]");
+		if (this.assertions.size() > 0) {
+			System.out.print("){  [");
+			delim = "";
+			for (Expression exp : this.assertions) {
+				System.out.print(delim + "assert:" + exp);
+				delim = "	";
+			}
+			System.out.println("]");
+		} else
+			System.out.println("){  ");
 		for (Statement stmt : this.statements)
 			stmt.printStatemenet("  ");
 		System.out.println("}");
@@ -126,8 +130,7 @@ public class Transaction {
 		// args
 		for (E_Arg arg : this.args)
 			result.addArg((E_Arg) arg.mkSnapshot());
-		
-		
+
 		result.is_included = this.is_included;
 		return result;
 	}

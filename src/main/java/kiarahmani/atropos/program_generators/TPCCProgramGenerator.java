@@ -6,11 +6,10 @@ import kiarahmani.atropos.DDL.F_Type;
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DML.expression.BinOp;
 import kiarahmani.atropos.DML.expression.E_BinOp;
-import kiarahmani.atropos.DML.expression.E_Proj;
-import kiarahmani.atropos.DML.expression.E_UnOp;
-import kiarahmani.atropos.DML.expression.Expression;
-import kiarahmani.atropos.DML.expression.E_UnOp.UnOp;
 import kiarahmani.atropos.DML.expression.constants.E_Const_Num;
+import kiarahmani.atropos.DML.expression.constants.E_Const_Text;
+import kiarahmani.atropos.DML.query.Delete_Query;
+import kiarahmani.atropos.DML.query.Insert_Query;
 import kiarahmani.atropos.DML.query.Select_Query;
 import kiarahmani.atropos.DML.query.Update_Query;
 import kiarahmani.atropos.DML.where_clause.WHC;
@@ -18,466 +17,567 @@ import kiarahmani.atropos.DML.where_clause.WHC_Constraint;
 import kiarahmani.atropos.program.Program;
 import kiarahmani.atropos.program_generators.ProgramGenerator;
 import kiarahmani.atropos.utils.Program_Utils;
-import kiarahmani.atropos.utils.Program_Utils;
 
 public class TPCCProgramGenerator implements ProgramGenerator {
 
-	/*
-	 * 
-	 * SMALLBANK APPLICATION (FROM OLTPBENCH) GENERATOR
-	 * https://github.com/oltpbenchmark/oltpbench/tree/master/src/com/oltpbenchmark/
-	 * benchmarks/smallbank
-	 * 
-	 */
-
 	private Program_Utils pu;
 
-	public TPCCProgramGenerator(Program_Utils pu2) {
-		this.pu = pu2;
+	public TPCCProgramGenerator(Program_Utils pu) {
+		this.pu = pu;
 	}
 
 	public Program generate(String... args) {
-		/*
-		 * 
-		 * Tables
-		 * 
-		 */
+		String txn_name = "";
 		ArrayList<String> txns = new ArrayList<>();
 		for (String txn : args)
 			txns.add(txn);
 
-		pu.mkTable("accounts", new FieldName("a_custid", true, true, F_Type.NUM),
-				new FieldName("a_name", false, false, F_Type.TEXT), new FieldName("a_branch", false, false, F_Type.NUM),
-				new FieldName("a_credit_score", false, false, F_Type.NUM),
-				new FieldName("a_age", false, false, F_Type.NUM), new FieldName("a_sex", false, false, F_Type.NUM),
-				new FieldName("a_join_date", false, false, F_Type.NUM),
-				new FieldName("a_web_active", false, false, F_Type.NUM),
-				new FieldName("a_atm_active", false, false, F_Type.NUM),
-				new FieldName("a_phone_active", false, false, F_Type.NUM),
-				new FieldName("a_joint_with", false, false, F_Type.NUM));
+		/*
+		 * ****************** Tables ******************
+		 */
+		// warehouse
+		String table_name = "warehouse";
+		String prefix = "w_";
+		FieldName[] fns = new FieldName[] { new FieldName(prefix + "id", true, true, F_Type.NUM),
+				new FieldName(prefix + "ytd", false, false, F_Type.NUM),
+				new FieldName(prefix + "tax", false, false, F_Type.NUM),
+				new FieldName(prefix + "name", false, false, F_Type.TEXT),
+				new FieldName(prefix + "street", false, false, F_Type.TEXT),
+				new FieldName(prefix + "city", false, false, F_Type.TEXT),
+				new FieldName(prefix + "state", false, false, F_Type.NUM),
+				new FieldName(prefix + "zip", false, false, F_Type.NUM) };
+		pu.mkTable(table_name, fns);
 
-		pu.mkTable("branch", new FieldName("b_branchid", true, true, F_Type.NUM),
-				new FieldName("b_name", false, false, F_Type.TEXT),
-				new FieldName("b_address", false, false, F_Type.TEXT),
-				new FieldName("b_state", false, false, F_Type.NUM), new FieldName("b_city", false, false, F_Type.NUM),
-				new FieldName("b_budget", false, false, F_Type.NUM), new FieldName("b_phone", false, false, F_Type.NUM),
-				new FieldName("b_type", false, false, F_Type.NUM),
-				new FieldName("b_open_date", false, false, F_Type.NUM),
-				new FieldName("b_emp_cnt", false, false, F_Type.NUM));
+		// district
+		table_name = "district";
+		prefix = "d_";
+		fns = new FieldName[] { new FieldName(prefix + "wid", true, true, F_Type.NUM),
+				new FieldName(prefix + "id", true, false, F_Type.NUM),
+				new FieldName(prefix + "ytd", false, false, F_Type.NUM),
+				new FieldName(prefix + "tax", false, false, F_Type.NUM),
+				new FieldName(prefix + "next_o_id", false, false, F_Type.NUM),
+				new FieldName(prefix + "name", false, false, F_Type.TEXT),
+				new FieldName(prefix + "street", false, false, F_Type.TEXT),
+				new FieldName(prefix + "city", false, false, F_Type.TEXT),
+				new FieldName(prefix + "state", false, false, F_Type.NUM),
+				new FieldName(prefix + "zip", false, false, F_Type.NUM) };
+		pu.mkTable(table_name, fns);
 
-		pu.mkTable("state", new FieldName("st_stateid", true, true, F_Type.NUM),
-				new FieldName("st_name", false, false, F_Type.TEXT), new FieldName("b_state", false, false, F_Type.NUM),
-				new FieldName("st_main_office", false, false, F_Type.NUM),
-				new FieldName("st_total_branches", false, false, F_Type.NUM),
-				new FieldName("st_budget", false, false, F_Type.NUM),
-				new FieldName("st_phone", false, false, F_Type.NUM));
+		// customer
+		table_name = "customer";
+		prefix = "c_";
+		fns = new FieldName[] { new FieldName(prefix + "wid", true, true, F_Type.NUM),
+				new FieldName(prefix + "did", true, false, F_Type.NUM),
+				new FieldName(prefix + "id", true, false, F_Type.NUM),
+				new FieldName(prefix + "discount", false, false, F_Type.NUM),
+				new FieldName(prefix + "credit", false, false, F_Type.NUM),
+				new FieldName(prefix + "last", false, false, F_Type.TEXT),
+				new FieldName(prefix + "middle", false, false, F_Type.TEXT),
+				new FieldName(prefix + "first", false, false, F_Type.TEXT),
+				new FieldName(prefix + "credit_lim", false, false, F_Type.NUM),
+				new FieldName(prefix + "balance", false, false, F_Type.NUM),
+				new FieldName(prefix + "ytd_payment", false, false, F_Type.NUM),
+				new FieldName(prefix + "payment_cnt", false, false, F_Type.NUM),
+				new FieldName(prefix + "delivery_cnt", false, false, F_Type.NUM),
+				new FieldName(prefix + "street", false, false, F_Type.TEXT),
+				new FieldName(prefix + "city", false, false, F_Type.TEXT),
+				new FieldName(prefix + "state", false, false, F_Type.NUM),
+				new FieldName(prefix + "zip", false, false, F_Type.NUM),
+				new FieldName(prefix + "phone", false, false, F_Type.TEXT),
+				new FieldName(prefix + "since", false, false, F_Type.NUM),
+				new FieldName(prefix + "data", false, false, F_Type.TEXT) };
+		pu.mkTable(table_name, fns);
 
-		pu.mkTable("city", new FieldName("ct_cityid", true, true, F_Type.NUM),
-				new FieldName("ct_name", false, false, F_Type.TEXT), new FieldName("b_state", false, false, F_Type.NUM),
-				new FieldName("ct_main_office", false, false, F_Type.NUM),
-				new FieldName("ct_total_branches", false, false, F_Type.NUM),
-				new FieldName("ct_budget", false, false, F_Type.NUM),
-				new FieldName("ct_phone", false, false, F_Type.NUM));
+		// oorder
+		table_name = "oorder";
+		prefix = "o_";
+		fns = new FieldName[] { new FieldName(prefix + "wid", true, true, F_Type.NUM),
+				new FieldName(prefix + "did", true, false, F_Type.NUM),
+				new FieldName(prefix + "id", true, false, F_Type.NUM),
+				new FieldName(prefix + "cid", false, false, F_Type.NUM),
+				new FieldName(prefix + "carrier_id", false, false, F_Type.NUM),
+				new FieldName(prefix + "ol_cnt", false, false, F_Type.NUM),
+				new FieldName(prefix + "all_local", false, false, F_Type.NUM),
+				new FieldName(prefix + "entry_d", false, false, F_Type.NUM) };
+		pu.mkTable(table_name, fns);
 
-		pu.mkTable("savings", new FieldName("s_custid", true, true, F_Type.NUM),
-				new FieldName("s_bal", false, false, F_Type.NUM), new FieldName("s_apr", false, false, F_Type.NUM),
-				new FieldName("s_open_date", false, false, F_Type.NUM),
-				new FieldName("s_max_withdraw", false, false, F_Type.NUM),
-				new FieldName("s_max_txns", false, false, F_Type.NUM));
+		// new order
+		table_name = "new_order";
+		prefix = "no_";
+		fns = new FieldName[] { new FieldName(prefix + "wid", true, true, F_Type.NUM),
+				new FieldName(prefix + "did", true, false, F_Type.NUM),
+				new FieldName(prefix + "oid", true, false, F_Type.NUM) };
+		pu.mkAllPKTable(table_name, fns);
 
-		pu.mkTable("checking", new FieldName("c_custid", true, true, F_Type.NUM),
-				new FieldName("c_bal", false, false, F_Type.NUM),
-				new FieldName("c_od_protection", false, false, F_Type.NUM),
-				new FieldName("c_open_date", false, false, F_Type.NUM),
-				new FieldName("c_max_txns", false, false, F_Type.NUM),
-				new FieldName("c_max_withdraw", false, false, F_Type.NUM));
+		// history
+		table_name = "history";
+		prefix = "h_";
+		fns = new FieldName[] { new FieldName(prefix + "cid", true, true, F_Type.NUM),
+				new FieldName(prefix + "c_did", false, false, F_Type.NUM),
+				new FieldName(prefix + "c_wid", false, false, F_Type.NUM),
+				new FieldName(prefix + "did", false, false, F_Type.NUM),
+				new FieldName(prefix + "wid", false, true, F_Type.NUM),
+				new FieldName(prefix + "date", false, false, F_Type.NUM),
+				new FieldName(prefix + "amount", false, false, F_Type.NUM),
+				new FieldName(prefix + "data", false, false, F_Type.TEXT) };
+		pu.mkTable(table_name, fns);
+
+		// item
+		table_name = "item";
+		prefix = "i_";
+		fns = new FieldName[] { new FieldName(prefix + "id", true, true, F_Type.NUM),
+				new FieldName(prefix + "name", false, false, F_Type.TEXT),
+				new FieldName(prefix + "price", false, false, F_Type.NUM),
+				new FieldName(prefix + "data", false, false, F_Type.TEXT),
+				new FieldName(prefix + "im_id", false, true, F_Type.NUM) };
+		pu.mkTable(table_name, fns);
+
+		// stock
+		table_name = "stock";
+		prefix = "s_";
+		fns = new FieldName[] { new FieldName(prefix + "wid", true, true, F_Type.NUM),
+				new FieldName(prefix + "iid", true, false, F_Type.NUM),
+				new FieldName(prefix + "quantitiy", false, false, F_Type.NUM),
+				new FieldName(prefix + "ytd", false, false, F_Type.NUM),
+				new FieldName(prefix + "order_cnt", false, false, F_Type.NUM),
+				new FieldName(prefix + "remote_cnt", false, false, F_Type.NUM),
+				new FieldName(prefix + "data", false, false, F_Type.TEXT),
+				new FieldName(prefix + "dist_10", false, false, F_Type.TEXT),
+				new FieldName(prefix + "dist_1", false, false, F_Type.TEXT),
+				new FieldName(prefix + "dist_2", false, false, F_Type.TEXT),
+				new FieldName(prefix + "dist_3", false, false, F_Type.TEXT),
+				new FieldName(prefix + "dist_4", false, false, F_Type.TEXT),
+				new FieldName(prefix + "dist_5", false, false, F_Type.TEXT),
+				new FieldName(prefix + "dist_6", false, false, F_Type.TEXT),
+				new FieldName(prefix + "dist_7", false, false, F_Type.TEXT),
+				new FieldName(prefix + "dist_8", false, false, F_Type.TEXT),
+				new FieldName(prefix + "dist_9", false, false, F_Type.TEXT) };
+		pu.mkTable(table_name, fns);
+
+		// order_line
+		table_name = "order_line";
+		prefix = "ol_";
+		fns = new FieldName[] { new FieldName(prefix + "wid", true, true, F_Type.NUM),
+				new FieldName(prefix + "did", true, false, F_Type.NUM),
+				new FieldName(prefix + "oid", true, false, F_Type.NUM),
+				new FieldName(prefix + "number", true, false, F_Type.NUM),
+				new FieldName(prefix + "iid", false, false, F_Type.NUM),
+				new FieldName(prefix + "delivery_d", false, false, F_Type.NUM),
+				new FieldName(prefix + "amount", false, false, F_Type.NUM),
+				new FieldName(prefix + "supply_wid", false, false, F_Type.NUM),
+				new FieldName(prefix + "quantity", false, false, F_Type.NUM),
+				new FieldName(prefix + "dist_info", false, false, F_Type.TEXT) };
+		pu.mkTable(table_name, fns);
 
 		/*
-		 * /*
 		 * 
-		 * Amalgamate
 		 * 
+		 * 
+		 * 
+		 * 
+		 * ************************ Transactions ************************
+		 *
+		 *
+		 *
+		 *
 		 */
-		if (txns.contains("Amalgamate")) {
-			pu.mkTrnasaction("Amalgamate", "am_custId0:int", "am_custId1:int");
-			pu.mkAssertion("Amalgamate",
-					new E_UnOp(UnOp.NOT, new E_BinOp(BinOp.EQ, pu.getArg("am_custId1"), pu.getArg("am_custId0"))));
-			// retrieve customer0's name by id
-			WHC GetAccount0_WHC = new WHC(pu.getIsAliveFieldName("accounts"), new WHC_Constraint(
-					pu.getTableName("accounts"), pu.getFieldName("a_custid"), BinOp.EQ, pu.getArg("am_custId0")));
-			Select_Query GetAccount0 = pu.addSelectQuery("Amalgamate", "accounts", GetAccount0_WHC, "a_name");
-			GetAccount0.setImplicitlyUsed(pu.getFieldName("a_name"));
-			pu.addQueryStatement("Amalgamate", GetAccount0);
-			// retrieve customer1's name by id
-			WHC GetAccount1_WHC = new WHC(pu.getIsAliveFieldName("accounts"), new WHC_Constraint(
-					pu.getTableName("accounts"), pu.getFieldName("a_custid"), BinOp.EQ, pu.getArg("am_custId1")));
-			Select_Query GetAccount1 = pu.addSelectQuery("Amalgamate", "accounts", GetAccount1_WHC, "a_name");
-			GetAccount1.setImplicitlyUsed(pu.getFieldName("a_name"));
-			pu.addQueryStatement("Amalgamate", GetAccount1);
+		/*
+		 * newOrder
+		 */
+		if (txns.contains("newOrder")) {
+			txn_name = "newOrder";
+			pu.mkTrnasaction(txn_name, "no_wid:int", "no_did:int", "no_cid:int", "no_o_all_local:int",
+					"no_t_current:int", "no_item_id:int", "no_supplier_wid:int", "no_order_quantity:int");
 
-			// retrieve savings balance of cust0
-			WHC GetSavings0_WHC = new WHC(pu.getIsAliveFieldName("savings"), new WHC_Constraint(
-					pu.getTableName("savings"), pu.getFieldName("s_custid"), BinOp.EQ, pu.getArg("am_custId0")));
-			Select_Query GetSavings0 = pu.addSelectQuery("Amalgamate", "savings", GetSavings0_WHC, "s_bal");
-			pu.addQueryStatement("Amalgamate", GetSavings0);
+			// retrieve w_tax name by w_id
+			table_name = "warehouse";
+			WHC newOrder_whc_1 = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(
+					pu.getTableName(table_name), pu.getFieldName("w_id"), BinOp.EQ, pu.getArg("no_wid")));
+			Select_Query newOrder1 = pu.addSelectQuery(txn_name, table_name, newOrder_whc_1, "w_tax");
+			pu.addQueryStatement(txn_name, newOrder1);
 
-			// retrieve checking balance of cust0
-			WHC GetChecking1_WHC = new WHC(pu.getIsAliveFieldName("checking"), new WHC_Constraint(
-					pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ, pu.getArg("am_custId0")));
-			Select_Query GetChecking1 = pu.addSelectQuery("Amalgamate", "checking", GetChecking1_WHC, "c_bal");
-			pu.addQueryStatement("Amalgamate", GetChecking1);
+			// retrieve d_tax and d_next_o_id
+			table_name = "district";
+			WHC newOrder_whc_2 = new WHC(pu.getIsAliveFieldName(table_name),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("d_wid"), BinOp.EQ,
+							pu.getArg("no_wid")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("d_id"), BinOp.EQ,
+							pu.getArg("no_did")));
+			Select_Query newOrder2 = pu.addSelectQuery(txn_name, table_name, newOrder_whc_2, "d_tax", "d_next_o_id");
+			pu.addQueryStatement(txn_name, newOrder2);
 
-			// zero cust0's checking balance
-			WHC ZeroCheckingBalance_WHC = new WHC(pu.getIsAliveFieldName("checking"), new WHC_Constraint(
-					pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ, pu.getArg("am_custId0")));
-			Update_Query ZeroCheckingBalance = pu.addUpdateQuery("Amalgamate", "checking", ZeroCheckingBalance_WHC);
-			ZeroCheckingBalance.addUpdateExp(pu.getFieldName("c_bal"), new E_Const_Num(0));
-			pu.addQueryStatement("Amalgamate", ZeroCheckingBalance);
+			// incremenet d_next_o_id
+			table_name = "district";
+			WHC newOrder_whc_3 = newOrder_whc_2.mkSnapshot();
+			Update_Query newOrder3 = pu.addUpdateQuery(txn_name, table_name, newOrder_whc_3);
+			newOrder3.addUpdateExp(pu.getFieldName("d_next_o_id"),
+					new E_BinOp(BinOp.PLUS, pu.mkProjExpr(txn_name, 1, "d_next_o_id", 1), new E_Const_Num(1)));
+			pu.addQueryStatement(txn_name, newOrder3);
 
-			// zero cust0's savings balance
-			WHC savingsZeroCheckingBalance_WHC = new WHC(pu.getIsAliveFieldName("savings"), new WHC_Constraint(
-					pu.getTableName("savings"), pu.getFieldName("s_custid"), BinOp.EQ, pu.getArg("am_custId0")));
-			Update_Query savingsZeroCheckingBalance = pu.addUpdateQuery("Amalgamate", "savings",
-					savingsZeroCheckingBalance_WHC);
-			savingsZeroCheckingBalance.addUpdateExp(pu.getFieldName("s_bal"), new E_Const_Num(0));
-			pu.addQueryStatement("Amalgamate", savingsZeroCheckingBalance);
+			// insert a new order record
+			table_name = "oorder";
+			Insert_Query newOrder4 = pu.addInsertQuery(txn_name, table_name,
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("o_wid"), BinOp.EQ,
+							pu.getArg("no_wid")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("o_did"), BinOp.EQ,
+							pu.getArg("no_did")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("o_id"), BinOp.EQ,
+							pu.mkProjExpr(txn_name, 1, "d_next_o_id", 1)));
 
-			// incremenet cust1's savings balance
-			WHC UpdateSavingsBalance_WHC = new WHC(pu.getIsAliveFieldName("savings"), new WHC_Constraint(
-					pu.getTableName("savings"), pu.getFieldName("s_custid"), BinOp.EQ, pu.getArg("am_custId1")));
-			Update_Query UpdateSavingsBalance = pu.addUpdateQuery("Amalgamate", "savings", UpdateSavingsBalance_WHC);
-			UpdateSavingsBalance.addUpdateExp(pu.getFieldName("s_bal"), new E_BinOp(BinOp.PLUS,
-					pu.mkProjExpr("Amalgamate", 2, "s_bal", 1), pu.mkProjExpr("Amalgamate", 3, "c_bal", 1)));
-			pu.addQueryStatement("Amalgamate", UpdateSavingsBalance);
+			newOrder4.addInsertExp(pu.getFieldName("o_cid"), pu.getArg("no_cid"));
+			newOrder4.addInsertExp(pu.getFieldName("o_carrier_id"), new E_Const_Num(-1));
+			newOrder4.addInsertExp(pu.getFieldName("o_ol_cnt"), new E_Const_Num(1));
+			newOrder4.addInsertExp(pu.getFieldName("o_all_local"), pu.getArg("no_o_all_local"));
+			newOrder4.addInsertExp(pu.getFieldName("o_entry_d"), pu.getArg("no_t_current"));
+			pu.addQueryStatement(txn_name, newOrder4);
+
+			// insert a new new_order record
+			table_name = "new_order";
+			Insert_Query newOrder5 = pu.addInsertQuery(txn_name, table_name,
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("no_wid"), BinOp.EQ,
+							pu.getArg("no_wid")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("no_did"), BinOp.EQ,
+							pu.getArg("no_did")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("no_oid"), BinOp.EQ,
+							pu.mkProjExpr(txn_name, 1, "d_next_o_id", 1)));
+			pu.addQueryStatement(txn_name, newOrder5);
+
+			// retrieve customer' information
+			table_name = "customer";
+			WHC newOrder_whc_6 = new WHC(pu.getIsAliveFieldName(table_name),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("c_wid"), BinOp.EQ,
+							pu.getArg("no_wid")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("c_did"), BinOp.EQ,
+							pu.getArg("no_did")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("c_id"), BinOp.EQ,
+							pu.getArg("no_cid")));
+			Select_Query newOrder6 = pu.addSelectQuery(txn_name, table_name, newOrder_whc_6, "c_discount", "c_credit",
+					"c_last");
+			pu.addQueryStatement(txn_name, newOrder6);
+
+			// retrieve item' information
+			table_name = "item";
+			WHC newOrder_whc_7 = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(
+					pu.getTableName(table_name), pu.getFieldName("i_id"), BinOp.EQ, pu.getArg("no_item_id")));
+			Select_Query newOrder7 = pu.addSelectQuery(txn_name, table_name, newOrder_whc_7, "i_price", "i_name",
+					"i_data");
+			pu.addQueryStatement(txn_name, newOrder7);
+
+			// retrieve stock' information
+			table_name = "stock";
+			WHC newOrder_whc_8 = new WHC(pu.getIsAliveFieldName(table_name),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("s_wid"), BinOp.EQ,
+							pu.getArg("no_wid")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("s_iid"), BinOp.EQ,
+							pu.getArg("no_item_id")));
+			Select_Query newOrder8 = pu.addSelectQuery(txn_name, table_name, newOrder_whc_8, "s_quantitiy", "s_ytd",
+					"s_order_cnt", "s_remote_cnt", "s_data", "s_dist_1");
+			pu.addQueryStatement(txn_name, newOrder8);
+
+			// update stock's information
+			table_name = "stock";
+			WHC newOrder_whc_9 = newOrder_whc_8.mkSnapshot();
+			Update_Query newOrder9 = pu.addUpdateQuery(txn_name, table_name, newOrder_whc_9);
+			newOrder9.addUpdateExp(pu.getFieldName("s_quantitiy"), new E_BinOp(BinOp.MINUS,
+					pu.mkProjExpr(txn_name, 4, "s_quantitiy", 1), pu.getArg("no_order_quantity")));
+			newOrder9.addUpdateExp(pu.getFieldName("s_ytd"),
+					new E_BinOp(BinOp.PLUS, pu.mkProjExpr(txn_name, 4, "s_ytd", 1), pu.getArg("no_order_quantity")));
+			newOrder9.addUpdateExp(pu.getFieldName("s_order_cnt"),
+					new E_BinOp(BinOp.PLUS, pu.mkProjExpr(txn_name, 4, "s_order_cnt", 1), new E_Const_Num(1)));
+			pu.addQueryStatement(txn_name, newOrder9);
+
+			// insert a new order_line record
+			table_name = "order_line";
+			Insert_Query newOrder10 = pu.addInsertQuery(txn_name, table_name,
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("ol_wid"), BinOp.EQ,
+							pu.getArg("no_wid")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("ol_did"), BinOp.EQ,
+							pu.getArg("no_did")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("ol_oid"), BinOp.EQ,
+							pu.mkProjExpr(txn_name, 1, "d_next_o_id", 1)),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("ol_number"), BinOp.EQ,
+							new E_Const_Num(1)));
+			newOrder10.addInsertExp(pu.getFieldName("ol_iid"), pu.getArg("no_item_id"));
+			newOrder10.addInsertExp(pu.getFieldName("ol_delivery_d"), new E_Const_Num(-1));
+			newOrder10.addInsertExp(pu.getFieldName("ol_quantity"), pu.getArg("no_order_quantity"));
+			newOrder10.addInsertExp(pu.getFieldName("ol_supply_wid"), new E_Const_Num(-1));
+			newOrder10.addInsertExp(pu.getFieldName("ol_amount"),
+					new E_BinOp(BinOp.MULT, pu.mkProjExpr(txn_name, 3, "i_price", 1), pu.getArg("no_order_quantity")));
+			newOrder10.addInsertExp(pu.getFieldName("ol_dist_info"), new E_Const_Text("info"));
+
+			pu.addQueryStatement(txn_name, newOrder10);
+
 		}
 
 		/*
-		 * 
-		 * TEST
-		 * 
+		 * payment
 		 */
+		if (txns.contains("payment")) {
+			txn_name = "payment";
+			pu.mkTrnasaction(txn_name, "p_wid:int", "p_did:int", "p_cname:string", "p_cwid:int", "p_cdid:int",
+					"p_pay_amount:int", "p_current_t:int");
 
-		/*
-		 * if (txns.contains("test")) {
-		 * 
-		 * pu.mkTrnasaction("test", "ba_custName:string");
-		 * 
-		 * WHC Balance_GetAccount0_WHC1 = new WHC(pu.getIsAliveFieldName("accounts"),
-		 * new WHC_Constraint( pu.getTableName("accounts"), pu.getFieldName("a_custid"),
-		 * BinOp.EQ, new E_Const_Num(69))); Select_Query Balance_GetAccount01 =
-		 * pu.addSelectQuery("test", "accounts", Balance_GetAccount0_WHC1, "a_custid");
-		 * pu.addQueryStatement("test", Balance_GetAccount01);
-		 * 
-		 * // get customer's id based on his/her name WHC Balance_GetAccount0_WHC = new
-		 * WHC(pu.getIsAliveFieldName("accounts"), new
-		 * WHC_Constraint(pu.getTableName("accounts"), pu.getFieldName("a_custid"),
-		 * BinOp.EQ, pu.mkProjExpr("test", 0, "a_custid", 1))); Select_Query
-		 * Balance_GetAccount0 = pu.addSelectQuery("test", "accounts",
-		 * Balance_GetAccount0_WHC, "a_name"); pu.addQueryStatement("test",
-		 * Balance_GetAccount0);
-		 * 
-		 * // retrieve customer's savings balance based on the retrieved id WHC
-		 * Balance_GetSavings_WHC = new WHC(pu.getIsAliveFieldName("savings"), new
-		 * WHC_Constraint(pu.getTableName("savings"), pu.getFieldName("s_custid"),
-		 * BinOp.EQ, pu.mkProjExpr("test", 0, "a_custid", 1))); Select_Query
-		 * Balance_GetSavings = pu.addSelectQuery("test", "savings",
-		 * Balance_GetSavings_WHC, "s_bal"); pu.addQueryStatement("test",
-		 * Balance_GetSavings);
-		 * 
-		 * // retrieve customer's checking balance based on the retrieved id WHC
-		 * Balance_GetChecking_WHC = new WHC(pu.getIsAliveFieldName("checking"), new
-		 * WHC_Constraint(pu.getTableName("checking"), pu.getFieldName("c_custid"),
-		 * BinOp.EQ, pu.mkProjExpr("test", 0, "a_custid", 1))); Select_Query
-		 * Balance_GetChecking = pu.addSelectQuery("test", "checking",
-		 * Balance_GetChecking_WHC, "c_bal"); pu.addQueryStatement("test",
-		 * Balance_GetChecking);
-		 * 
-		 * // write customer's new checking balance WHC DepositChecking_WHC = new
-		 * WHC(pu.getIsAliveFieldName("checking"), new WHC_Constraint(
-		 * pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ, new
-		 * E_BinOp(BinOp.PLUS, new E_BinOp(BinOp.MULT, (pu.mkProjExpr("test", 2,
-		 * "s_bal", 1)), new E_Const_Num(11)), new E_Const_Num(1)))); Update_Query
-		 * DepositChecking = pu.addUpdateQuery("test", "checking", DepositChecking_WHC);
-		 * DepositChecking.addUpdateExp(pu.getFieldName("c_bal"), new
-		 * E_BinOp(BinOp.PLUS, pu.mkProjExpr("test", 2, "s_bal", 1), new
-		 * E_Const_Num(1))); DepositChecking.addUpdateExp(pu.getFieldName("c_score"),
-		 * new E_BinOp(BinOp.PLUS, pu.mkProjExpr("test", 0, "a_custid", 1), new
-		 * E_Const_Num(69))); pu.addQueryStatement("test", DepositChecking);
-		 * 
-		 * // write customer's new checking balance WHC DepositChecking_WHC11 = new
-		 * WHC(pu.getIsAliveFieldName("checking"), new
-		 * WHC_Constraint(pu.getTableName("checking"), pu.getFieldName("c_custid"),
-		 * BinOp.EQ, new E_BinOp(BinOp.PLUS, new E_Const_Num(1), new E_BinOp(BinOp.MULT,
-		 * new E_Const_Num(11), (pu.mkProjExpr("test", 2, "s_bal", 1)))
-		 * 
-		 * ))); Update_Query DepositChecking11 = pu.addUpdateQuery("test", "checking",
-		 * DepositChecking_WHC11);
-		 * DepositChecking11.addUpdateExp(pu.getFieldName("c_age"), new
-		 * E_Const_Num(69)); pu.addQueryStatement("test", DepositChecking11);
-		 * 
-		 * // select on car WHC select_whc_1 = new WHC(pu.getIsAliveFieldName("car"),
-		 * new WHC_Constraint(pu.getTableName("car"), pu.getFieldName("car_id"),
-		 * BinOp.EQ, new E_Const_Num(10))); Select_Query select_1 =
-		 * pu.addSelectQuery("test", "car", select_whc_1, "car_id", "car_maker",
-		 * "car_model", "car_type"); pu.addQueryStatement("test", select_1);
-		 * 
-		 * // select corresponding maker WHC select_whc_2 = new
-		 * WHC(pu.getIsAliveFieldName("makers"), new
-		 * WHC_Constraint(pu.getTableName("makers"), pu.getFieldName("maker_id"),
-		 * BinOp.EQ, pu.mkProjExpr("test", 4, "car_maker", 1))); Select_Query select_2 =
-		 * pu.addSelectQuery("test", "makers", select_whc_2, "maker_id", "maker_name",
-		 * "maker_budget", "maker_country"); pu.addQueryStatement("test", select_2);
-		 * 
-		 * // a write on savings (which will be used to test basic duplication) WHC
-		 * DepositChecking_WHC111 = new WHC(pu.getIsAliveFieldName("savings"), new
-		 * WHC_Constraint( pu.getTableName("savings"), pu.getFieldName("s_custid"),
-		 * BinOp.EQ, new E_Const_Num(96))); Update_Query DepositChecking111 =
-		 * pu.addUpdateQuery("test", "savings", DepositChecking_WHC111);
-		 * DepositChecking111.addUpdateExp(pu.getFieldName("s_bal"), new
-		 * E_Const_Num(69)); pu.addQueryStatement("test", DepositChecking111);
-		 * 
-		 * // a write on makers (which will be used to test OTM duplication) WHC
-		 * DepositChecking_WHC1111 = new WHC(pu.getIsAliveFieldName("makers"), new
-		 * WHC_Constraint( pu.getTableName("makers"), pu.getFieldName("maker_id"),
-		 * BinOp.EQ, new E_Const_Num(12))); Update_Query DepositChecking1111 =
-		 * pu.addUpdateQuery("test", "makers", DepositChecking_WHC1111);
-		 * DepositChecking1111.addUpdateExp(pu.getFieldName("maker_budget"), new
-		 * E_BinOp(BinOp.PLUS, pu.mkProjExpr("test", 5, "maker_budget", 1), new
-		 * E_Const_Num(100))); pu.addQueryStatement("test", DepositChecking1111);
-		 * 
-		 * // select a maker's budget from the original table (this will be redirected
-		 * to // CRDT table) WHC select_whc_21 = new
-		 * WHC(pu.getIsAliveFieldName("makers"), new
-		 * WHC_Constraint(pu.getTableName("makers"), pu.getFieldName("maker_id"),
-		 * BinOp.EQ, new E_Const_Num(10))); Select_Query select_21 =
-		 * pu.addSelectQuery("test", "makers", select_whc_21, "maker_budget");
-		 * pu.addQueryStatement("test", select_21);
-		 * 
-		 * // just an operation to use the variable selected by the above query WHC
-		 * select_whc_211 = new WHC(pu.getIsAliveFieldName("accounts"), new
-		 * WHC_Constraint(pu.getTableName("accounts"), pu.getFieldName("a_custid"),
-		 * BinOp.EQ, pu.mkProjExpr("test", 6, "maker_budget", 1))); Select_Query
-		 * select_211 = pu.addSelectQuery("test", "accounts", select_whc_211, "a_name");
-		 * pu.addQueryStatement("test", select_211);
-		 * 
-		 * }
-		 */
-		/*
-		 * 
-		 * Balance
-		 * 
-		 */
+			// retrieve info by w_id
+			table_name = "warehouse";
+			WHC payment_whc_1 = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(
+					pu.getTableName(table_name), pu.getFieldName("w_id"), BinOp.EQ, pu.getArg("p_wid")));
+			Select_Query payment1 = pu.addSelectQuery(txn_name, table_name, payment_whc_1, "w_ytd", "w_name",
+					"w_street", "w_city", "w_state", "w_zip");
+			pu.addQueryStatement(txn_name, payment1);
 
-		if (txns.contains("Balance")) {
+			// incremenet w_ytd
+			table_name = "warehouse";
+			WHC payment_whc_2 = payment_whc_1.mkSnapshot();
+			Update_Query payment2 = pu.addUpdateQuery(txn_name, table_name, payment_whc_2);
+			payment2.addUpdateExp(pu.getFieldName("w_ytd"),
+					new E_BinOp(BinOp.PLUS, pu.mkProjExpr(txn_name, 0, "w_ytd", 1), pu.getArg("p_pay_amount")));
+			pu.addQueryStatement(txn_name, payment2);
 
-			pu.mkTrnasaction("Balance", "ba_custName:string");
+			// retrieve info by id
+			table_name = "district";
+			WHC payment_whc_3 = new WHC(pu.getIsAliveFieldName(table_name),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("d_wid"), BinOp.EQ,
+							pu.getArg("p_wid")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("d_id"), BinOp.EQ,
+							pu.getArg("p_did")));
+			Select_Query payment3 = pu.addSelectQuery(txn_name, table_name, payment_whc_3, "d_ytd", "d_tax", "d_name",
+					"d_street", "d_city", "d_state", "d_zip");
+			pu.addQueryStatement(txn_name, payment3);
 
-			// get customer's id based on his/her name
-			WHC Balance_GetAccount0_WHC = new WHC(pu.getIsAliveFieldName("accounts"), new WHC_Constraint(
-					pu.getTableName("accounts"), pu.getFieldName("a_name"), BinOp.EQ, pu.getArg("ba_custName")));
-			Select_Query Balance_GetAccount0 = pu.addSelectQuery("Balance", "accounts", Balance_GetAccount0_WHC,
-					"a_custid");
-			pu.addQueryStatement("Balance", Balance_GetAccount0);
+			// incremenet d_ytd
+			table_name = "district";
+			WHC payment_whc_4 = payment_whc_3.mkSnapshot();
+			Update_Query payment4 = pu.addUpdateQuery(txn_name, table_name, payment_whc_4);
+			payment4.addUpdateExp(pu.getFieldName("d_ytd"),
+					new E_BinOp(BinOp.PLUS, pu.mkProjExpr(txn_name, 1, "d_ytd", 1), pu.getArg("p_pay_amount")));
+			pu.addQueryStatement(txn_name, payment4);
 
-			// retrieve customer's savings balance based on the retrieved id
-			WHC Balance_GetSavings_WHC = new WHC(pu.getIsAliveFieldName("savings"),
-					new WHC_Constraint(pu.getTableName("savings"), pu.getFieldName("s_custid"), BinOp.EQ,
-							pu.mkProjExpr("Balance", 0, "a_custid", 1)));
-			Select_Query Balance_GetSavings = pu.addSelectQuery("Balance", "savings", Balance_GetSavings_WHC, "s_bal");
-			Balance_GetSavings.setImplicitlyUsed(pu.getFieldName("s_bal"));
-			pu.addQueryStatement("Balance", Balance_GetSavings);
+			// select customer
+			table_name = "customer";
+			WHC payment_whc_5 = new WHC(pu.getIsAliveFieldName(table_name),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("c_wid"), BinOp.EQ,
+							pu.getArg("p_wid")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("c_did"), BinOp.EQ,
+							pu.getArg("p_did")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("c_last"), BinOp.EQ,
+							pu.getArg("p_cname")));
 
-			// retrieve customer's checking balance based on the retrieved id
-			WHC Balance_GetChecking_WHC = new WHC(pu.getIsAliveFieldName("checking"),
-					new WHC_Constraint(pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ,
-							pu.mkProjExpr("Balance", 0, "a_custid", 1)));
-			Select_Query Balance_GetChecking = pu.addSelectQuery("Balance", "checking", Balance_GetChecking_WHC,
-					"c_bal");
-			Balance_GetChecking.setImplicitlyUsed(pu.getFieldName("c_bal"));
-			pu.addQueryStatement("Balance", Balance_GetChecking);
+			Select_Query payment5 = pu.addSelectQuery(txn_name, table_name, payment_whc_5, "c_id", "c_discount",
+					"c_credit", "c_credit_lim", "c_balance", "c_ytd_payment", "c_payment_cnt");
+			pu.addQueryStatement(txn_name, payment5);
+
+			// update customer
+			table_name = "customer";
+			WHC payment_whc_6 = payment_whc_5.mkSnapshot();
+			Update_Query payment6 = pu.addUpdateQuery(txn_name, table_name, payment_whc_6);
+			payment6.addUpdateExp(pu.getFieldName("c_balance"),
+					new E_BinOp(BinOp.MINUS, pu.mkProjExpr(txn_name, 2, "c_balance", 1), pu.getArg("p_pay_amount")));
+			payment6.addUpdateExp(pu.getFieldName("c_ytd_payment"),
+					new E_BinOp(BinOp.PLUS, pu.mkProjExpr(txn_name, 2, "c_ytd_payment", 1), pu.getArg("p_pay_amount")));
+			payment6.addUpdateExp(pu.getFieldName("c_payment_cnt"),
+					new E_BinOp(BinOp.PLUS, pu.mkProjExpr(txn_name, 2, "c_payment_cnt", 1), new E_Const_Num(1)));
+			pu.addQueryStatement(txn_name, payment6);
 
 		}
 		/*
-		 * 
-		 * DepositChecking
-		 * 
+		 * stockLevel
 		 */
-		if (txns.contains("DepositChecking")) {
-			// retirve customer's id based on his/her name
-			pu.mkTrnasaction("DepositChecking", "dc_custName:string", "dc_amount:int");
-			WHC DepositChecking_GetAccount0_WHC = new WHC(pu.getIsAliveFieldName("accounts"), new WHC_Constraint(
-					pu.getTableName("accounts"), pu.getFieldName("a_name"), BinOp.EQ, pu.getArg("dc_custName")));
-			Select_Query DepositChecking_GetAccount0 = pu.addSelectQuery("DepositChecking", "accounts",
-					DepositChecking_GetAccount0_WHC, "a_custid");
-			pu.addQueryStatement("DepositChecking", DepositChecking_GetAccount0);
+		if (txns.contains("stockLevel")) {
+			txn_name = "stockLevel";
+			pu.mkTrnasaction(txn_name, "sl_wid:int", "sl_did:int", "sl_threshold:int");
 
-			// retrive customer's old checking balance
-			WHC DepositChecking_GetChecking_WHC = new WHC(pu.getIsAliveFieldName("checking"),
-					new WHC_Constraint(pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ,
-							pu.mkProjExpr("DepositChecking", 0, "a_custid", 1)));
-			Select_Query DepositChecking_GetChecking = pu.addSelectQuery("DepositChecking", "checking",
-					DepositChecking_GetChecking_WHC, "c_bal");
-			pu.addQueryStatement("DepositChecking", DepositChecking_GetChecking);
+			// retrieve d_next_o_id
+			table_name = "district";
+			WHC stockLevel_whc_1 = new WHC(pu.getIsAliveFieldName(table_name),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("d_wid"), BinOp.EQ,
+							pu.getArg("sl_wid")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("d_id"), BinOp.EQ,
+							pu.getArg("sl_did")));
+			Select_Query stockLevel1 = pu.addSelectQuery(txn_name, table_name, stockLevel_whc_1, "d_next_o_id");
+			stockLevel1.setImplicitlyUsed(pu.getFieldName("d_next_o_id"));
+			pu.addQueryStatement(txn_name, stockLevel1);
 
-			// write customer's new checking balance
-			WHC DepositChecking_WHC = new WHC(pu.getIsAliveFieldName("checking"),
-					new WHC_Constraint(pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ,
-							pu.mkProjExpr("DepositChecking", 0, "a_custid", 1)));
-			Update_Query DepositChecking = pu.addUpdateQuery("DepositChecking", "checking", DepositChecking_WHC);
-			DepositChecking.addUpdateExp(pu.getFieldName("c_bal"),
-					new E_BinOp(BinOp.PLUS, pu.mkProjExpr("DepositChecking", 1, "c_bal", 1), pu.getArg("dc_amount")));
-			pu.addQueryStatement("DepositChecking", DepositChecking);
+			// retrieve item id from corresponding order_line
+			table_name = "order_line";
+			WHC stockLevel_whc_2 = new WHC(pu.getIsAliveFieldName(table_name),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("ol_wid"), BinOp.EQ,
+							pu.getArg("sl_wid")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("ol_did"), BinOp.EQ,
+							pu.getArg("sl_did")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("ol_oid"), BinOp.EQ,
+							pu.mkProjExpr(txn_name, 0, "d_next_o_id", 1)));
+			Select_Query stockLevel2 = pu.addSelectQuery(txn_name, table_name, stockLevel_whc_2, "ol_iid");
+			stockLevel2.setImplicitlyUsed(pu.getFieldName("ol_iid"));
+			pu.addQueryStatement(txn_name, stockLevel2);
+
+			// retrieve the stock for that item
+			table_name = "stock";
+			WHC stockLevel_whc_3 = new WHC(pu.getIsAliveFieldName(table_name),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("s_wid"), BinOp.EQ,
+							pu.getArg("sl_wid")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("s_iid"), BinOp.EQ,
+							pu.mkProjExpr(txn_name, 1, "ol_iid", 1)));
+			Select_Query stockLevel3 = pu.addSelectQuery(txn_name, table_name, stockLevel_whc_3, "s_quantitiy", "s_ytd",
+					"s_order_cnt", "s_remote_cnt", "s_data");
+			stockLevel3.setImplicitlyUsed(pu.getFieldName("s_quantitiy"), pu.getFieldName("s_ytd"),
+					pu.getFieldName("s_order_cnt"));
+			pu.addQueryStatement(txn_name, stockLevel3);
+
 		}
 		/*
-		 * 
-		 * SendPayment
-		 * 
+		 * orderStatus
 		 */
-		if (txns.contains("SendPayment")) {
-			// retrieve both accounts' names
+		if (txns.contains("orderStatus")) {
+			txn_name = "orderStatus";
+			pu.mkTrnasaction(txn_name, "os_wid:int", "os_did:int", "os_cname:string");
 
-			pu.mkTrnasaction("SendPayment", "sp_sendAcct:int", "sp_destAcct:int", "sp_amount:int");
-			pu.mkAssertion("SendPayment",
-					new E_UnOp(UnOp.NOT, new E_BinOp(BinOp.EQ, pu.getArg("sp_sendAcct"), pu.getArg("sp_destAcct"))));
-			WHC SendPayment_GetAccount_send_WHC = new WHC(pu.getIsAliveFieldName("accounts"), new WHC_Constraint(
-					pu.getTableName("accounts"), pu.getFieldName("a_custid"), BinOp.EQ, pu.getArg("sp_sendAcct")));
-			Select_Query SendPayment_GetAccount_send = pu.addSelectQuery("SendPayment", "accounts",
-					SendPayment_GetAccount_send_WHC, "a_name");
-			SendPayment_GetAccount_send.setcanBeRemoved(false);
-			pu.addQueryStatement("SendPayment", SendPayment_GetAccount_send);
+			// select customer
+			table_name = "customer";
+			WHC orderStatus_whc_1 = new WHC(pu.getIsAliveFieldName(table_name),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("c_wid"), BinOp.EQ,
+							pu.getArg("os_wid")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("c_did"), BinOp.EQ,
+							pu.getArg("os_did")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("c_last"), BinOp.EQ,
+							pu.getArg("os_cname")));
+			Select_Query orderStatus1 = pu.addSelectQuery(txn_name, table_name, orderStatus_whc_1, "c_id", "c_discount",
+					"c_credit", "c_credit_lim", "c_balance", "c_ytd_payment", "c_payment_cnt");
+			orderStatus1.setImplicitlyUsed(pu.getFieldName("c_balance"), pu.getFieldName("c_ytd_payment"));
+			pu.addQueryStatement(txn_name, orderStatus1);
 
-			WHC SendPayment_GetAccount_dest_WHC = new WHC(pu.getIsAliveFieldName("accounts"), new WHC_Constraint(
-					pu.getTableName("accounts"), pu.getFieldName("a_custid"), BinOp.EQ, pu.getArg("sp_destAcct")));
-			Select_Query SendPayment_GetAccount_dest = pu.addSelectQuery("SendPayment", "accounts",
-					SendPayment_GetAccount_dest_WHC, "a_name");
-			SendPayment_GetAccount_send.setcanBeRemoved(false);
-			pu.addQueryStatement("SendPayment", SendPayment_GetAccount_dest);
+			// retrieve the latest order by above customer
+			table_name = "oorder";
+			WHC orderStatus_whc_2 = new WHC(pu.getIsAliveFieldName(table_name),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("o_wid"), BinOp.EQ,
+							pu.getArg("os_wid")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("o_did"), BinOp.EQ,
+							pu.getArg("os_did")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("o_cid"), BinOp.EQ,
+							pu.mkProjExpr(txn_name, 0, "c_id", 1)));
+			Select_Query orderStatus2 = pu.addSelectQuery(txn_name, table_name, orderStatus_whc_2, "o_id",
+					"o_carrier_id", "o_entry_d");
+			orderStatus2.setImplicitlyUsed(pu.getFieldName("o_id"), pu.getFieldName("o_carrier_id"),
+					pu.getFieldName("o_entry_d"));
+			pu.addQueryStatement(txn_name, orderStatus2);
 
-			// retrieve sender's old checking balance
-			WHC SendPayment_GetChecking_WHC = new WHC(pu.getIsAliveFieldName("checking"), new WHC_Constraint(
-					pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ, pu.getArg("sp_sendAcct")));
-			Select_Query SendPayment_GetChecking = pu.addSelectQuery("SendPayment", "checking",
-					SendPayment_GetChecking_WHC, "c_bal");
-			pu.addQueryStatement("SendPayment", SendPayment_GetChecking);
+			// retrieve the orderline info
+			table_name = "order_line";
+			WHC orderStatus_whc_3 = new WHC(pu.getIsAliveFieldName(table_name),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("ol_wid"), BinOp.EQ,
+							pu.getArg("os_wid")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("ol_did"), BinOp.EQ,
+							pu.getArg("os_did")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("ol_oid"), BinOp.EQ,
+							pu.mkProjExpr(txn_name, 1, "o_id", 1)),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("ol_number"), BinOp.EQ,
+							new E_Const_Num(1)));
 
-			// if the balance is greater than amount
-			Expression SendPayment_IF1_C = new E_BinOp(BinOp.GT, pu.mkProjExpr("SendPayment", 2, "c_bal", 1),
-					pu.getArg("sp_amount"));
-			pu.addIfStatement("SendPayment", SendPayment_IF1_C);
+			Select_Query orderStatus3 = pu.addSelectQuery(txn_name, table_name, orderStatus_whc_3, "ol_iid",
+					"ol_delivery_d", "ol_amount", "ol_supply_wid", "ol_quantity");
+			orderStatus3.setImplicitlyUsed(pu.getFieldName("ol_iid"), pu.getFieldName("ol_delivery_d"),
+					pu.getFieldName("ol_amount"), pu.getFieldName("ol_supply_wid"), pu.getFieldName("ol_quantity"));
+			pu.addQueryStatement(txn_name, orderStatus3);
 
-			// update sender's checking
-			WHC SendPayment_U1_WHC = new WHC(pu.getIsAliveFieldName("checking"), new WHC_Constraint(
-					pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ, pu.getArg("sp_sendAcct")));
-			Update_Query SendPayment_U1 = pu.addUpdateQuery("SendPayment", "checking", SendPayment_U1_WHC);
-			SendPayment_U1.addUpdateExp(pu.getFieldName("c_bal"),
-					new E_BinOp(BinOp.MINUS, pu.mkProjExpr("SendPayment", 2, "c_bal", 1), pu.getArg("sp_amount")));
-			pu.addQueryStatementInIf("SendPayment", 0, SendPayment_U1);
-
-			// retrieve dest's old checking balance
-			WHC SendPayment_GetChecking_dest_WHC = new WHC(pu.getIsAliveFieldName("checking"), new WHC_Constraint(
-					pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ, pu.getArg("sp_destAcct")));
-			Select_Query SendPayment_GetChecking_dest = pu.addSelectQuery("SendPayment", "checking",
-					SendPayment_GetChecking_dest_WHC, "c_bal");
-			pu.addQueryStatementInIf("SendPayment", 0, SendPayment_GetChecking_dest);
-
-			// write dest's new checking balance
-			WHC SendPayment_U1_dest_WHC = new WHC(pu.getIsAliveFieldName("checking"), new WHC_Constraint(
-					pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ, pu.getArg("sp_destAcct")));
-			Update_Query SendPayment_U1_dest = pu.addUpdateQuery("SendPayment", "checking", SendPayment_U1_dest_WHC);
-			SendPayment_U1_dest.addUpdateExp(pu.getFieldName("c_bal"),
-					new E_BinOp(BinOp.PLUS, pu.mkProjExpr("SendPayment", 3, "c_bal", 1), pu.getArg("sp_amount")));
-			pu.addQueryStatementInIf("SendPayment", 0, SendPayment_U1_dest);
 		}
 		/*
-		 * 
-		 * TransactSavings
-		 * 
+		 * delivery
 		 */
-		if (txns.contains("TransactSavings")) {
-			pu.mkTrnasaction("TransactSavings", "ts_custName:string", "ts_amount:int");
-			// retrieve customer's id based on his/her name
-			WHC TransactSavings_GetAccount0_WHC = new WHC(pu.getIsAliveFieldName("accounts"), new WHC_Constraint(
-					pu.getTableName("accounts"), pu.getFieldName("a_name"), BinOp.EQ, pu.getArg("ts_custName")));
-			Select_Query TransactSavings_GetAccount0 = pu.addSelectQuery("TransactSavings", "accounts",
-					TransactSavings_GetAccount0_WHC, "a_custid");
+		if (txns.contains("delivery")) {
+			txn_name = "delivery";
+			pu.mkTrnasaction(txn_name, "d_wid:int", "d_did:int", "d_carrier_id:int", "d_current_t:int");
 
-			pu.addQueryStatement("TransactSavings", TransactSavings_GetAccount0);
+			// retrieve (the latest) new order from this warehouse and district
+			table_name = "new_order";
+			WHC delivery_whc_1 = new WHC(pu.getIsAliveFieldName(table_name),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("no_wid"), BinOp.EQ,
+							pu.getArg("d_wid")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("no_did"), BinOp.EQ,
+							pu.getArg("d_did")));
+			Select_Query delivery1 = pu.addSelectQuery(txn_name, table_name, delivery_whc_1, "no_oid");
+			pu.addQueryStatement(txn_name, delivery1);
 
-			// retrieve customer's old savings balance
-			WHC TransactSavings_GetSavings_WHC = new WHC(pu.getIsAliveFieldName("savings"),
-					new WHC_Constraint(pu.getTableName("savings"), pu.getFieldName("s_custid"), BinOp.EQ,
-							pu.mkProjExpr("TransactSavings", 0, "a_custid", 1)));
-			Select_Query TransactSavings_GetSavings = pu.addSelectQuery("TransactSavings", "savings",
-					TransactSavings_GetSavings_WHC, "s_bal");
-			pu.addQueryStatement("TransactSavings", TransactSavings_GetSavings);
+			// retrieve corresponding order's info
+			table_name = "oorder";
+			WHC delivery_whc_2 = new WHC(pu.getIsAliveFieldName(table_name),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("o_wid"), BinOp.EQ,
+							pu.getArg("d_wid")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("o_did"), BinOp.EQ,
+							pu.getArg("d_did")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("o_id"), BinOp.EQ,
+							pu.mkProjExpr(txn_name, 0, "no_oid", 1)));
+			Select_Query delivery2 = pu.addSelectQuery(txn_name, table_name, delivery_whc_2, "o_cid");
+			pu.addQueryStatement(txn_name, delivery2);
 
-			// if the balance is larger than amount
-			Expression TransactSavings_IF1_C = new E_BinOp(BinOp.GT, pu.mkProjExpr("TransactSavings", 1, "s_bal", 1),
-					pu.getArg("ts_amount"));
-			pu.addIfStatement("TransactSavings", TransactSavings_IF1_C);
+			// delete the new_order record
+			table_name = "new_order";
+			WHC delivery_whc_3 = new WHC(pu.getIsAliveFieldName(table_name),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("no_wid"), BinOp.EQ,
+							pu.getArg("d_wid")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("no_did"), BinOp.EQ,
+							pu.getArg("d_did")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("no_oid"), BinOp.EQ,
+							pu.mkProjExpr(txn_name, 0, "no_oid", 1)));
+			Delete_Query delivery3 = pu.addDeleteQuery(txn_name, table_name, delivery_whc_3);
+			pu.addQueryStatement(txn_name, delivery3); // XXX
 
-			// write customer's new saving's balance
-			WHC TransactSavings_U1_WHC = new WHC(pu.getIsAliveFieldName("savings"),
-					new WHC_Constraint(pu.getTableName("savings"), pu.getFieldName("s_custid"), BinOp.EQ,
-							pu.mkProjExpr("TransactSavings", 0, "a_custid", 1)));
-			Update_Query TransactSavings_U1 = pu.addUpdateQuery("TransactSavings", "savings", TransactSavings_U1_WHC);
-			TransactSavings_U1.addUpdateExp(pu.getFieldName("s_bal"),
-					new E_BinOp(BinOp.MINUS, pu.mkProjExpr("TransactSavings", 1, "s_bal", 1), pu.getArg("ts_amount")));
-			pu.addQueryStatementInIf("TransactSavings", 0, TransactSavings_U1);
-		}
-		/*
-		 * 
-		 * WriteCheck
-		 * 
-		 */
-		if (txns.contains("WriteCheck")) {
-			pu.mkTrnasaction("WriteCheck", "wc_custName:string", "wc_amount:int");
-			// retrive customer's id based on his/her name
-			WHC WriteCheck_GetAccount0_WHC = new WHC(pu.getIsAliveFieldName("accounts"), new WHC_Constraint(
-					pu.getTableName("accounts"), pu.getFieldName("a_name"), BinOp.EQ, pu.getArg("wc_custName")));
-			Select_Query WriteCheck_GetAccount0 = pu.addSelectQuery("WriteCheck", "accounts",
-					WriteCheck_GetAccount0_WHC, "a_custid");
-			pu.addQueryStatement("WriteCheck", WriteCheck_GetAccount0);
+			// update oorder record
+			table_name = "oorder";
+			WHC delivery_whc_4 = delivery_whc_2.mkSnapshot();
+			Update_Query delivery4 = pu.addUpdateQuery(txn_name, table_name, delivery_whc_4);
+			delivery4.addUpdateExp(pu.getFieldName("o_carrier_id"), pu.getArg("d_carrier_id"));
+			pu.addQueryStatement(txn_name, delivery4);
 
-			// get their checkinbg balance
-			WHC WriteCheck_GetChecking_WHC = new WHC(pu.getIsAliveFieldName("checking"),
-					new WHC_Constraint(pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ,
-							pu.mkProjExpr("WriteCheck", 0, "a_custid", 1)));
-			Select_Query WriteCheck_GetChecking = pu.addSelectQuery("WriteCheck", "checking",
-					WriteCheck_GetChecking_WHC, "c_bal");
-			pu.addQueryStatement("WriteCheck", WriteCheck_GetChecking);
-			// get their savings balance
-			WHC WriteCheck_GetSavings_WHC = new WHC(pu.getIsAliveFieldName("savings"),
-					new WHC_Constraint(pu.getTableName("savings"), pu.getFieldName("s_custid"), BinOp.EQ,
-							pu.mkProjExpr("WriteCheck", 0, "a_custid", 1)));
-			Select_Query WriteCheck_GetSavings = pu.addSelectQuery("WriteCheck", "savings", WriteCheck_GetSavings_WHC,
-					"s_bal");
-			pu.addQueryStatement("WriteCheck", WriteCheck_GetSavings);
+			// select the order_line record
+			table_name = "order_line";
+			WHC delivery_whc_5 = new WHC(pu.getIsAliveFieldName(table_name),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("ol_wid"), BinOp.EQ,
+							pu.getArg("d_wid")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("ol_did"), BinOp.EQ,
+							pu.getArg("d_did")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("ol_oid"), BinOp.EQ,
+							pu.mkProjExpr(txn_name, 0, "no_oid", 1)),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("ol_number"), BinOp.EQ,
+							new E_Const_Num(1)));
+			Select_Query delivery5 = pu.addSelectQuery(txn_name, table_name, delivery_whc_5, "ol_amount");
+			pu.addQueryStatement(txn_name, delivery5);
 
-			// if the total of balances is high enough
-			E_BinOp total = new E_BinOp(BinOp.PLUS, pu.mkProjExpr("WriteCheck", 1, "c_bal", 1),
-					pu.mkProjExpr("WriteCheck", 2, "s_bal", 1));
-			Expression WriteCheck_IF1_C = new E_BinOp(BinOp.GT, total, pu.getArg("wc_amount"));
-			pu.addIfStatement("WriteCheck", WriteCheck_IF1_C);
-			// update their checking
-			WHC WriteCheck_U1_dest_WHC = new WHC(pu.getIsAliveFieldName("checking"),
-					new WHC_Constraint(pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ,
-							pu.mkProjExpr("WriteCheck", 0, "a_custid", 1)));
-			Update_Query WriteCheck_U1_dest = pu.addUpdateQuery("WriteCheck", "checking", WriteCheck_U1_dest_WHC);
-			WriteCheck_U1_dest.addUpdateExp(pu.getFieldName("c_bal"),
-					new E_BinOp(BinOp.MINUS, pu.mkProjExpr("WriteCheck", 1, "c_bal", 1), pu.getArg("wc_amount")));
-			pu.addQueryStatementInIf("WriteCheck", 0, WriteCheck_U1_dest);
+			// update oorder_line record
+			table_name = "order_line";
+			WHC delivery_whc_6 = new WHC(pu.getIsAliveFieldName(table_name),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("ol_wid"), BinOp.EQ,
+							pu.getArg("d_wid")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("ol_did"), BinOp.EQ,
+							pu.getArg("d_did")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("ol_oid"), BinOp.EQ,
+							pu.mkProjExpr(txn_name, 0, "no_oid", 1)),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("ol_number"), BinOp.EQ,
+							new E_Const_Num(1)));
+			Update_Query delivery6 = pu.addUpdateQuery(txn_name, table_name, delivery_whc_6);
+			delivery6.addUpdateExp(pu.getFieldName("ol_delivery_d"), pu.getArg("d_current_t"));
+			pu.addQueryStatement(txn_name, delivery6);
 
-			// else: update their checking
-			WHC WriteCheck_U1_dest_WHC_else = new WHC(pu.getIsAliveFieldName("checking"),
-					new WHC_Constraint(pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ,
-							pu.mkProjExpr("WriteCheck", 0, "a_custid", 1)));
-			Update_Query WriteCheck_U1_dest_else = pu.addUpdateQuery("WriteCheck", "checking",
-					WriteCheck_U1_dest_WHC_else);
-			E_BinOp penalty = new E_BinOp(BinOp.PLUS, pu.getArg("wc_amount"), new E_Const_Num(1));
-			WriteCheck_U1_dest_else.addUpdateExp(pu.getFieldName("c_bal"),
-					new E_BinOp(BinOp.MINUS, pu.mkProjExpr("WriteCheck", 1, "c_bal", 1), penalty));
-			pu.addQueryStatementInElse("WriteCheck", 0, WriteCheck_U1_dest_else);
+			// select customer
+			table_name = "customer";
+			WHC delivery_whc_7 = new WHC(pu.getIsAliveFieldName(table_name),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("c_wid"), BinOp.EQ,
+							pu.getArg("d_wid")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("c_did"), BinOp.EQ,
+							pu.getArg("d_did")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("c_id"), BinOp.EQ,
+							pu.mkProjExpr(txn_name, 1, "o_cid", 1)));
+			Select_Query delivery7 = pu.addSelectQuery(txn_name, table_name, delivery_whc_7, "c_balance",
+					"c_delivery_cnt");
+			pu.addQueryStatement(txn_name, delivery7);
+
+			// update customer
+			WHC delivery_whc_8 = delivery_whc_7.mkSnapshot();
+			Update_Query delivery8 = pu.addUpdateQuery(txn_name, table_name, delivery_whc_8);
+			delivery8.addUpdateExp(pu.getFieldName("c_balance"), new E_BinOp(BinOp.PLUS,
+					pu.mkProjExpr(txn_name, 3, "c_balance", 1), pu.mkProjExpr(txn_name, 2, "ol_amount", 1)));
+			delivery8.addUpdateExp(pu.getFieldName("c_delivery_cnt"),
+					new E_BinOp(BinOp.PLUS, pu.mkProjExpr(txn_name, 3, "c_delivery_cnt", 1), new E_Const_Num(1)));
+			pu.addQueryStatement(txn_name, delivery8);
+
 		}
 		return pu.generateProgram();
 	}

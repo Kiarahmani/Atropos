@@ -44,6 +44,7 @@ public class Insert_Query extends Query {
 		result.kind = this.kind;
 		for (Tuple<FieldName, Expression> fne : this.insert_expressions)
 			result.insert_expressions.add(new Tuple<FieldName, Expression>(fne.x, fne.y.mkSnapshot()));
+		result.is_included = this.is_included;
 		return result;
 	}
 
@@ -82,7 +83,7 @@ public class Insert_Query extends Query {
 			delim = ",";
 		}
 		return isAtomicString + "INSERT" + this.id + " INTO " + String.format("%-10s", this.tableName) + " VALUES ("
-				+ updateTuplesList + ")" ;// + "				PC=" + this.path_condition;
+				+ updateTuplesList + ")" + "	("+this.is_included+")";// + " PC=" + this.path_condition;
 	}
 
 	@Override
@@ -185,14 +186,20 @@ public class Insert_Query extends Query {
 	 */
 	@Override
 	public void redirectProjs(Variable oldVar, FieldName oldFn, Variable newVar, FieldName newFn) {
-		for (Tuple<FieldName, Expression> t : this.insert_expressions)
-			t.y.redirectProjs(newVar, newFn, newVar, newFn);
+		ArrayList<Tuple<FieldName, Expression>> new_update_expressions = new ArrayList<>();
+		for (Tuple<FieldName, Expression> t : this.insert_expressions) {
+			Tuple<FieldName, Expression> newTuple = new Tuple<FieldName, Expression>(t.x,
+					t.y.redirectProjs(oldVar, oldFn, newVar, newFn));
+			new_update_expressions.add(newTuple);
+		}
+		this.insert_expressions = new_update_expressions;
 		this.where_clause.redirectProjs(oldVar, oldFn, newVar, newFn);
 		this.path_condition.redirectProjs(oldVar, oldFn, newVar, newFn);
 	}
 
 	@Override
 	public void substituteExps(Expression oldExp, Expression newExp) {
+
 		ArrayList<Tuple<FieldName, Expression>> new_update_expressions = new ArrayList<>();
 		for (Tuple<FieldName, Expression> fn_exp : insert_expressions) {
 			Tuple<FieldName, Expression> newTuple = new Tuple<FieldName, Expression>(fn_exp.x,
