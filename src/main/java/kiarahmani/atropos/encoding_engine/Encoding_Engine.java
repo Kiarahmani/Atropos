@@ -108,24 +108,43 @@ public class Encoding_Engine {
 						} else
 							txn.is_included = false;
 
-					// set included queries to true
-					pot_dai.getQuery(1).setIsIncluded(true);
-					pot_dai.getQuery(2).setIsIncluded(true);
-					c1.getQuery(1).setIsIncluded(true);
-					c1.getQuery(2).setIsIncluded(true);
-					c2.getQuery(1).setIsIncluded(true);
-					c2.getQuery(2).setIsIncluded(true);
+					// XXX for some reason queries are not referenced by c1 and c2 and must directly
+					// be updated
+					for (Transaction txn : pu.getTrasnsactionMap().values())
+						for (Query q : txn.getAllQueries()) {
+							if (txn.is_equal(pot_dai.getTransaction())) {
+								if (q.getId().equals(pot_dai.getQuery(1).getId()))
+									q.setIsIncluded(true);
+								if (q.getId().equals(pot_dai.getQuery(2).getId()))
+									q.setIsIncluded(true);
+							}
+
+							if (txn.is_equal(c1.getTransaction(1)))
+								if (q.getId().equals(c1.getQuery(1).getId()))
+									q.setIsIncluded(true);
+
+							if (txn.is_equal(c1.getTransaction(2)))
+								if (q.getId().equals(c1.getQuery(2).getId()))
+									q.setIsIncluded(true);
+
+							if (txn.is_equal(c2.getTransaction(1)))
+								if (q.getId().equals(c2.getQuery(1).getId()))
+									q.setIsIncluded(true);
+
+							if (txn.is_equal(c2.getTransaction(2)))
+								if (q.getId().equals(c2.getQuery(2).getId()))
+									q.setIsIncluded(true);
+
+						}
 
 					// prune away unrelated components of the program
 					snapshot = pu.mkSnapShot();
 					re.delete_unincluded(snapshot);
-					// re.delete_redundant(snapshot);
 					program = snapshot.generateProgram();
 					program.printProgram();
 
 					// update the po of the queries in dai (since it may have been changed
 					// during the pruning)
-
 					for (Transaction txn : program.getTransactions())
 						for (Query q : txn.getAllQueries()) {
 							if (txn.is_equal(pot_dai.getTransaction()))

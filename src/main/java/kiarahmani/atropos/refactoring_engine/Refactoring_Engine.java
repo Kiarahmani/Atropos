@@ -173,8 +173,10 @@ public class Refactoring_Engine {
 			if (!txn.is_included)
 				to_be_removed.add(txn.getName());
 
-		for (String s : to_be_removed)
+		for (String s : to_be_removed) {
+			logger.debug("removing transaction " + s);
 			pu.rmTransaction(s);
+		}
 
 		// remove redundant queries
 		for (Transaction txn : pu.getTrasnsactionMap().values()) {
