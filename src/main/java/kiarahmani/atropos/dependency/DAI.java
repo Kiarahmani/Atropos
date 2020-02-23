@@ -22,6 +22,14 @@ public class DAI {
 		this.field_names2 = field_names2;
 	}
 
+	public ArrayList<FieldName> getFieldNames(int i) {
+		if (i == 1)
+			return this.field_names1;
+		if (i == 2)
+			return this.field_names2;
+		return null;
+	}
+
 	@Override
 	public String toString() {
 		return "<" + txn.getName() + "." + q1.getId() + "," + this.field_names1 + ">--<" + txn.getName() + "."
@@ -42,15 +50,14 @@ public class DAI {
 		return null;
 	}
 
-	
-	public void setQuery1( Query q) {
+	public void setQuery1(Query q) {
 		this.q1 = q;
 	}
-	
-	public void setQuery2( Query q) {
+
+	public void setQuery2(Query q) {
 		this.q2 = q;
 	}
-	
+
 	public boolean equls(DAI other) {
 		boolean arr1 = true;
 		boolean arr2 = true;
