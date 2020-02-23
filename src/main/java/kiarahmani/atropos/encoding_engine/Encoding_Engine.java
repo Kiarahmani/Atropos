@@ -74,7 +74,7 @@ public class Encoding_Engine {
 		int iter = 0;
 		int dais_loop_iter = 0;
 		dais_loop: for (DAI pot_dai : potential_dais) {
-			logger.error("DAI #" + (dais_loop_iter++) + ":  " + pot_dai);
+			System.out.println("\nDAI #" + (dais_loop_iter++));
 			// pre-analysis on the potential dai
 			z3logger.reset();
 			System.gc();
@@ -143,7 +143,7 @@ public class Encoding_Engine {
 					// prune away unrelated components of the program
 					re.delete_unincluded(snapshot);
 					program = snapshot.generateProgram();
-					program.printProgram();
+					//program.printProgram();
 
 					// update the po of the queries in dai (since it may have been changed
 					// during the pruning)
