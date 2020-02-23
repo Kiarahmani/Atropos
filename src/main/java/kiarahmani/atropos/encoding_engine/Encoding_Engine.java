@@ -74,7 +74,7 @@ public class Encoding_Engine {
 		int iter = 0;
 		int dais_loop_iter = 0;
 		dais_loop: for (DAI pot_dai : potential_dais) {
-			logger.debug("DAI #" + (dais_loop_iter++) + ":  " + pot_dai);
+			logger.error("DAI #" + (dais_loop_iter++) + ":  " + pot_dai);
 			// pre-analysis on the potential dai
 			z3logger.reset();
 			System.gc();
@@ -102,6 +102,8 @@ public class Encoding_Engine {
 					logger.debug(" involved transactions: " + pot_dai.getTransaction().getName() + "-"
 							+ c1.getTransaction(2).getName() + "-" + c2.getTransaction(2).getName());
 					snapshot = pu.mkSnapShot();
+					DAI original_dai = new DAI(pot_dai.getTransaction(), pot_dai.getQuery(1), pot_dai.getFieldNames(1),
+							pot_dai.getQuery(2), pot_dai.getFieldNames(2));
 
 					for (Transaction txn : snapshot.getTrasnsactionMap().values())
 						if (txn.is_equal(pot_dai.getTransaction()) || txn.is_equal(c1.getTransaction(2))
@@ -186,7 +188,7 @@ public class Encoding_Engine {
 					printResults(status, end - begin);
 					// if SAT, add the potential DAI to the graph
 					if (status == Status.SATISFIABLE) {
-						dai_graph.addDAI(pot_dai);
+						dai_graph.addDAI(original_dai);
 						continue dais_loop;
 					}
 					// free up solver's memory for the next iteration

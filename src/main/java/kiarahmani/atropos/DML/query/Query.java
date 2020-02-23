@@ -34,7 +34,7 @@ public abstract class Query {
 
 	public void setIsIncluded(boolean is_included) {
 		this.is_included = is_included;
-		this.canBeRemoved = false;
+		this.canBeRemoved = !is_included;
 	}
 
 	public boolean canBeRemoved() {
