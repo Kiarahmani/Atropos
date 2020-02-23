@@ -24,6 +24,10 @@ public abstract class Query {
 	protected int po;
 	protected boolean is_included;
 
+	public boolean equals_ids(Query other) {
+		return this.getId().equalsIgnoreCase(other.getId());
+	}
+
 	public boolean getIsIncluded() {
 		return is_included;
 	}
