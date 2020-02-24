@@ -43,7 +43,7 @@ public abstract class Query {
 
 	public Query() {
 		this.canBeRemoved = true;
-		this.is_included = true;
+		this.is_included = false;
 	}
 
 	public void setcanBeRemoved(boolean r) {

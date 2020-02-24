@@ -128,6 +128,8 @@ public class Table {
 			if (!fn.getName().contains("alive"))
 				result.addFieldName(fn);
 		result.setIsAllPK(this.isAllPk);
+		result.canBeRemoved = this.canBeRemoved;
+		result.isNew = this.isNew;
 		return result;
 	}
 

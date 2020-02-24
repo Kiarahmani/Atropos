@@ -113,13 +113,13 @@ public class SELECT_Splitter extends One_to_Two_Query_Modifier {
 	}
 
 	private WHC mk_old_whc_to_all_pk(WHC old_whc, Select_Query old_select) {
-		logger.error("attempting to make " + old_whc + " to an all-pk whc");
+		logger.debug("attempting to make " + old_whc + " to an all-pk whc");
 		Table table = pu.getTable(old_select.getTableName());
 		ArrayList<WHC_Constraint> whc_constraints = new ArrayList<>();
 		for (FieldName pk : table.getPKFields()) {
-			logger.error("checking if pk " + pk + " is bound by the whc: ");
+			logger.debug("checking if pk " + pk + " is bound by the whc: ");
 			if (old_whc.getConstraintByFieldName(pk) == null) {
-				logger.error("pk " + pk + " is not bound by whc. attempting to replace it with proj");
+				logger.debug("pk " + pk + " is not bound by whc. attempting to replace it with proj");
 				whc_constraints.add(new WHC_Constraint(table.getTableName(), pk, BinOp.EQ,
 						new E_Proj(old_select.getVariable(), pk, new E_Const_Num(1))));
 			} else

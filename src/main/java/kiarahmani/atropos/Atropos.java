@@ -99,13 +99,8 @@ public class Atropos {
 			program = pu.generateProgram();
 			program.printProgram();
 			iter++;
-			int anml_cnt = 5;// analyze(pu);
+			int anml_cnt = analyze(pu);
 			System.gc();
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
 			// print stats and exit
 			printStats(System.currentTimeMillis() - time_begin, anml_cnt);
 		}

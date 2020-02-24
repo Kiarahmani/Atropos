@@ -48,6 +48,7 @@ public class Encoding_Engine {
 
 	public DAI_Graph constructInitialDAIGraph(Program_Utils pu) {
 		Program program = pu.generateProgram();
+
 		Conflict_Graph cg = new Conflict_Graph(program);
 		Refactoring_Engine re = new Refactoring_Engine();
 		DAI_Graph dai_graph = new DAI_Graph();
@@ -143,7 +144,7 @@ public class Encoding_Engine {
 					// prune away unrelated components of the program
 					re.delete_unincluded(snapshot);
 					program = snapshot.generateProgram();
-					//program.printProgram();
+					program.printProgram();
 
 					// update the po of the queries in dai (since it may have been changed
 					// during the pruning)

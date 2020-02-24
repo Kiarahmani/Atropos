@@ -221,14 +221,15 @@ public class Refactoring_Engine {
 		// given accessed_fn_map which only considers SELECTs)
 		HashMap<Table, HashSet<FieldName>> accessed_fn_map_all_q = mkTableMap_allQ(pu);
 		for (Table t : pu.getTables().values()) {
-			ArrayList<FieldName> fns_to_be_removed = new ArrayList<>();
-			for (FieldName fn : t.getFieldNames())
-				if (!accessed_fn_map_all_q.get(t).contains(fn))
-					fns_to_be_removed.add(fn);
-			for (FieldName fn : fns_to_be_removed)
-				pu.removeFieldNameFromTable(t.getTableName().getName(), fn);
+			if (t.canBeRemoved()) {
+				ArrayList<FieldName> fns_to_be_removed = new ArrayList<>();
+				for (FieldName fn : t.getFieldNames())
+					if (!accessed_fn_map_all_q.get(t).contains(fn))
+						fns_to_be_removed.add(fn);
+				for (FieldName fn : fns_to_be_removed)
+					pu.removeFieldNameFromTable(t.getTableName().getName(), fn);
+			}
 		}
-
 		return result;
 	}
 
@@ -264,7 +265,7 @@ public class Refactoring_Engine {
 						if (excluded_fns.size() == curr_written.size()) { // if NONE of the updated fields is used
 							deleteQuery(pu, q.getPo(), txn.getName());
 							result = true;
-						} else if (excluded_fns.size() > 0) { // if only part of the written fns are used
+						} else if (excluded_fns.size() > 0) { // if only part of sthe written fns are used
 							int po = q.getPo();
 							split_update(pu, txn.getName(), excluded_fns, po, false);
 							deleteQuery(pu, po + 1, txn.getName());
