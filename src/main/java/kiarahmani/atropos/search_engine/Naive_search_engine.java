@@ -277,8 +277,8 @@ public class Naive_search_engine extends Search_engine {
 	// returns true if successful
 	public boolean reset(Program_Utils pu) {
 		this.iter = 0;
-		this.source_table = pu.getTable("customer");//getRandomTable(pu);
-		this.source_fn = pu.getFieldName("c_balance");//getRandomFieldName(pu, source_table, false, F_Type.NUM);
+		this.source_table = pu.getTable("district");//getRandomTable(pu);
+		this.source_fn = pu.getFieldName("d_ytd");//getRandomFieldName(pu, source_table, false, F_Type.NUM);
 		if (this.source_fn == null)
 			return false;
 		this.target_table = getRandomTable(pu, source_table);

@@ -367,6 +367,10 @@ public class Program_Utils {
 		return this.tableMap.get(tableName);
 	}
 
+	public Table getTable(TableName tableName) {
+		return this.tableMap.get(tableName.getName());
+	}
+
 	public TableName getTableName(String tn) {
 		// assert (this.tableNameMap.get(tn) != null) : "table " + tn + " does not exist
 		// in "+this.tableNameMap ;

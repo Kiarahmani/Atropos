@@ -59,7 +59,7 @@ public class Atropos {
 		} catch (IOException e) {
 		}
 		int iter = 0;
-		out: while (iter<1) {
+		out: while (iter < 1) {
 			System.out.println("\n\n#" + (iter) + "\n");
 			Refactoring_Engine re = new Refactoring_Engine();
 			pu = new Program_Utils("TPC-C");
@@ -95,7 +95,7 @@ public class Atropos {
 					history.get(vc.T_1).put(vc.T_2, new HashSet<>());
 				history.get(vc.T_1).get(vc.T_2).add(vc);
 			}
-			re.decompose(pu);
+			re.atomicize(pu);
 			program = pu.generateProgram();
 			program.printProgram();
 			iter++;

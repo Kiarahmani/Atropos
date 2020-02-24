@@ -16,10 +16,15 @@ import kiarahmani.atropos.Atropos;
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DDL.TableName;
 import kiarahmani.atropos.DML.Variable;
+import kiarahmani.atropos.DML.expression.BinOp;
+import kiarahmani.atropos.DML.expression.E_Proj;
 import kiarahmani.atropos.DML.expression.Expression;
+import kiarahmani.atropos.DML.expression.constants.E_Const_Num;
 import kiarahmani.atropos.DML.query.Query;
 import kiarahmani.atropos.DML.query.Select_Query;
 import kiarahmani.atropos.DML.where_clause.WHC;
+import kiarahmani.atropos.DML.where_clause.WHC_Constraint;
+import kiarahmani.atropos.program.Table;
 import kiarahmani.atropos.program.statements.Query_Statement;
 import kiarahmani.atropos.utils.Program_Utils;
 import kiarahmani.atropos.utils.Tuple;
@@ -87,8 +92,9 @@ public class SELECT_Splitter extends One_to_Two_Query_Modifier {
 		new_select_1.setPathCondition(old_select.getPathCondition());
 		logger.debug("New SELECT (1): " + new_select_1);
 		new_var_2 = pu.mkVariable(old_tableName.getName(), txnName);
+		WHC new_whc = mk_old_whc_to_all_pk(old_whc, old_select);
 		Select_Query new_select_2 = new Select_Query(-1, pu.getNewSelectId(txnName), old_is_atomic, old_tableName,
-				excluded_fns, new_var_2, old_whc);
+				excluded_fns, new_var_2, new_whc);
 		new_select_2.setPathCondition(old_select.getPathCondition());
 		logger.debug("New SELECT (2): " + new_select_2);
 		this.desc = "Old query (" + input_query.getId() + ") in " + txnName + " is splitted into queries ("
@@ -104,6 +110,23 @@ public class SELECT_Splitter extends One_to_Two_Query_Modifier {
 		new_select_2.setImplicitlyUsed(new_implicit_fns_2);
 		// return
 		return new Tuple<Query, Query>(new_select_1, new_select_2);
+	}
+
+	private WHC mk_old_whc_to_all_pk(WHC old_whc, Select_Query old_select) {
+		logger.error("attempting to make " + old_whc + " to an all-pk whc");
+		Table table = pu.getTable(old_select.getTableName());
+		ArrayList<WHC_Constraint> whc_constraints = new ArrayList<>();
+		for (FieldName pk : table.getPKFields()) {
+			logger.error("checking if pk " + pk + " is bound by the whc: ");
+			if (old_whc.getConstraintByFieldName(pk) == null) {
+				logger.error("pk " + pk + " is not bound by whc. attempting to replace it with proj");
+				whc_constraints.add(new WHC_Constraint(table.getTableName(), pk, BinOp.EQ,
+						new E_Proj(old_select.getVariable(), pk, new E_Const_Num(1))));
+			} else
+				whc_constraints.add(old_whc.getConstraintByFieldName(pk));
+
+		}
+		return new WHC(table.getIsAliveFN(), whc_constraints);
 	}
 
 	@Override

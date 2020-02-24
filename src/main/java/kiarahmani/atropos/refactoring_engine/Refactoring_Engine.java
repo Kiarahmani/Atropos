@@ -339,7 +339,7 @@ public class Refactoring_Engine {
 			for (Query q : all_queries) {
 				int po = q.getPo();
 				if (!q.isWrite()) {
-					logger.error("analyzing "+q.getId());
+					logger.debug("analyzing " + q.getId());
 					Select_Query sq = (Select_Query) q;
 					Table t_src = pu.getTable(q.getTableName().getName());
 					for (Table t_dest : pu.getTables().values()) {
@@ -351,18 +351,17 @@ public class Refactoring_Engine {
 							int total_size = sq.getSelectedFieldNames().size();
 							if (red_size < total_size) {
 								if (red_size > 0) {
-									logger.error("the subset of fns which must be redirected is proper subset");
+									logger.debug("the subset of fns which must be redirected is proper subset");
 									split_select(pu, txn_name, must_be_redirected, po, false);
 									redirect_select(pu, txn_name, t_src.getTableName().getName(),
 											t_dest.getTableName().getName(), po + 1, false);
 									result = true;
 								}
 							} else {
-								logger.error("all fns must be redirected");
+								logger.debug("all fns must be redirected");
 								SELECT_Redirector ss = redirect_select(pu, txn_name, t_src.getTableName().getName(),
 										t_dest.getTableName().getName(), po, false);
-								
-								assert (false): ""+ss;
+
 								result = true;
 							}
 						}
@@ -655,7 +654,7 @@ public class Refactoring_Engine {
 							intro_vc.addAppliedUpDup(ud);
 
 					} else if (q.getTableName().equalsWith(intro_vc.getVC().getTableName(input_pu, 2))) {
-						logger.error("query " + q.getId() + " is a write on T2 (" + t1.getName()
+						logger.debug("query " + q.getId() + " is a write on T2 (" + t1.getName()
 								+ ") and must be duplicated on T1 (" + t2.getName() + ")");
 						UPDATE_Duplicator ud = duplicate_update(input_pu, txn.getName(), t2.getName(), t1.getName(),
 								q.getPo());
@@ -911,7 +910,7 @@ public class Refactoring_Engine {
 		SELECT_Redirector select_red = new SELECT_Redirector();
 		select_red.set(input_pu, txn_name, src_table, dest_table);
 		if (select_red.isValid(input_pu.getQueryByPo(txn_name, qry_po))) {
-			logger.error("redirect is valid");
+			logger.debug("redirect is valid");
 			applyAndPropagate(input_pu, select_red, qry_po, txn_name);
 
 			String begin;
@@ -928,7 +927,7 @@ public class Refactoring_Engine {
 
 			return select_red;
 		} else {
-			logger.error("redirect is invalid");
+			logger.debug("redirect is invalid");
 			return null;
 		}
 	}
@@ -1052,7 +1051,7 @@ public class Refactoring_Engine {
 			upd_dup.setOrgDupPo(qry_po);
 			return upd_dup;
 		} else {
-			logger.error("attempted duplication of po#" + qry_po + " from " + source_table + " to " + target_table
+			logger.debug("attempted duplication of po#" + qry_po + " from " + source_table + " to " + target_table
 					+ " but failed");
 			assert (false);
 			return null;
