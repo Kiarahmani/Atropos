@@ -63,8 +63,8 @@ public class Atropos {
 			System.out.println("\n\n#" + (iter) + "\n");
 			Refactoring_Engine re = new Refactoring_Engine();
 			pu = new Program_Utils("TPC-C");
-			program = (new TPCCProgramGenerator(pu)).generate("newOrder1", "payment", "stockLevel1", "orderStatus1",
-					"delivery1");
+			program = (new TPCCProgramGenerator(pu)).generate("newOrder", "payment", "stockLevel", "orderStatus",
+					"delivery");
 			pu.lock();
 			program.printProgram();
 			re.pre_analysis(pu);

@@ -1,9 +1,11 @@
 package kiarahmani.atropos.refactoring_engine;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -160,11 +162,25 @@ public class Refactoring_Engine {
 		logger.debug("now calling normal delete_redundant");
 		while (delete_redundant_iter(pu))
 			;
+		delete_unincluded_tables(pu);
 	}
 
 	public void delete_redundant(Program_Utils pu) {
 		while (delete_redundant_iter(pu))
 			;
+	}
+
+	private void delete_unincluded_tables(Program_Utils pu) {
+		Set<TableName> unused_tables = pu.getTables().values().stream().map(t -> t.getTableName())
+				.collect(Collectors.toSet());
+
+		for (Transaction txn : pu.getTrasnsactionMap().values())
+			for (Query q : txn.getAllQueries())
+				unused_tables.remove(q.getTableName());
+
+		for (TableName tn : unused_tables)
+			pu.rmTable(tn.getName());
+
 	}
 
 	private void delete_unincluded_transactions(Program_Utils pu) {
@@ -1052,9 +1068,8 @@ public class Refactoring_Engine {
 			upd_dup.setOrgDupPo(qry_po);
 			return upd_dup;
 		} else {
-			logger.debug("attempted duplication of po#" + qry_po + " from " + source_table + " to " + target_table
+			logger.error("attempted duplication of "+txn_name+" (po#" + qry_po + ") from " + source_table + " to " + target_table
 					+ " but failed");
-			assert (false);
 			return null;
 		}
 	}
