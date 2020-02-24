@@ -132,9 +132,11 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 		// set pk fields
 		int index = 0;
 		logger.debug("For each PK a new expression will be added to the beginning of the ISNERT:");
+		logger.debug("pk_fields: " + pk_fields);
+
 		for (FieldName pk_fn : pk_fields) {
 			if (old_update.getWHC().getConstraintByFieldName(pk_fn) == null) {
-				logger.debug("pk "+pk_fn+" does not have a valid constraint in the original whc");
+				logger.debug("pk " + pk_fn + " does not have a valid constraint in the original whc");
 				return null;
 			}
 			result[index] = new WHC_Constraint(targetTable.getTableName(), targetTable.getPKFields().get(index),

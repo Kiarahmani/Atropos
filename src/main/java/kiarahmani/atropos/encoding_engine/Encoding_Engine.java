@@ -144,7 +144,7 @@ public class Encoding_Engine {
 					// prune away unrelated components of the program
 					re.delete_unincluded(snapshot);
 					program = snapshot.generateProgram();
-					//program.printProgram();
+					// program.printProgram();
 
 					// update the po of the queries in dai (since it may have been changed
 					// during the pruning)
@@ -209,7 +209,7 @@ public class Encoding_Engine {
 		if (status == Status.UNKNOWN)
 			status_string = "UNKNOWN";
 		if (Constants._VERBOSE_ANALYSIS) {
-			System.out.println("" + status_string + " (" + (time) + "ms)");
+			System.out.println("" + status_string + " (" + (time) + "ms)\n\n\n\n\n");
 		} else
 			System.out.print("" + status_string + ") ");
 		this.printer.append(String.valueOf(time));

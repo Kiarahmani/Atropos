@@ -160,13 +160,13 @@ public class Refactoring_Engine {
 		logger.debug("deleting unincluded transactions and queries");
 		delete_unincluded_transactions(pu);
 		logger.debug("now calling normal delete_redundant");
-		while (delete_redundant_iter(pu))
+		while (delete_redundant_iter(pu, true))
 			;
 		delete_unincluded_tables(pu);
 	}
 
 	public void delete_redundant(Program_Utils pu) {
-		while (delete_redundant_iter(pu))
+		while (delete_redundant_iter(pu, false))
 			;
 	}
 
@@ -210,28 +210,31 @@ public class Refactoring_Engine {
 
 	}
 
-	private boolean delete_redundant_iter(Program_Utils pu) {
+	private boolean delete_redundant_iter(Program_Utils pu, boolean analysis_call) {
 		boolean result = false;
 		HashMap<Table, HashSet<FieldName>> accessed_fn_map = mkTableMap(pu);
-		result |= delete_redundant_tables(pu, accessed_fn_map);
+		result |= delete_redundant_tables(pu, accessed_fn_map, analysis_call);
 		result |= delete_redundant_writes(pu, accessed_fn_map);
 		result |= delete_redundant_reads(pu);
 		return result;
 	}
 
-	private boolean delete_redundant_tables(Program_Utils pu, HashMap<Table, HashSet<FieldName>> accessed_fn_map) {
+	private boolean delete_redundant_tables(Program_Utils pu, HashMap<Table, HashSet<FieldName>> accessed_fn_map,
+			boolean analysis_call) {
 		boolean result = false;
 		ArrayList<Table> tables_to_be_removed = new ArrayList<>();
 		for (Table t : pu.getTables().values())
 			if (t.canBeRemoved() && accessed_fn_map.get(t).size() == (t.getPKFields().size() + 1) && !t.isAllPK()) {
-				if (!table_is_touched_by_included_queries(pu, t)) {
+				if (!tables_to_be_removed.contains(t)
+						&& (!table_is_touched_by_included_queries(pu, t, analysis_call))) {
 					tables_to_be_removed.add(t);
 					result = true;
 				}
 			}
-		for (Table t : tables_to_be_removed)
+		for (Table t : tables_to_be_removed) {
+			logger.debug("removing table " + t.getTableName());
 			pu.rmTable(t.getTableName().getName());
-
+		}
 		// remove redundant fieldNames
 		// a different map must be used which also considers accesses by updates (unlike
 		// given accessed_fn_map which only considers SELECTs)
@@ -499,15 +502,20 @@ public class Refactoring_Engine {
 		return false;
 	}
 
-	private boolean table_is_touched_by_included_queries(Program_Utils pu, Table t) {
+	private boolean table_is_touched_by_included_queries(Program_Utils pu, Table t, boolean analysis_call) {
+		logger.debug("checking if table " + t.getTableName() + " is touched by a query or not. analysis_call:"
+				+ analysis_call);
 		for (Transaction txn : pu.getTrasnsactionMap().values())
-			if (txn.is_included)
+			if (txn.is_included || (!analysis_call))
 				for (Query q : txn.getAllQueries())
-					if (q.getIsIncluded()) {
+					if (q.getIsIncluded() || (!analysis_call)) {
 						Table curr_t = pu.getTable(q.getTableName().getName());
-						if (curr_t.is_equal(t))
+						if (curr_t.is_equal(t)) {
+							logger.debug("it is");
 							return true;
+						}
 					}
+		logger.debug("it is not");
 		return false;
 	}
 
@@ -1068,8 +1076,8 @@ public class Refactoring_Engine {
 			upd_dup.setOrgDupPo(qry_po);
 			return upd_dup;
 		} else {
-			logger.debug("attempted duplication of "+txn_name+" (po#" + qry_po + ") from " + source_table + " to " + target_table
-					+ " but failed");
+			logger.debug("attempted duplication of " + txn_name + " (po#" + qry_po + ") from " + source_table + " to "
+					+ target_table + " but failed");
 			return null;
 		}
 	}

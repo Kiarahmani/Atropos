@@ -60,7 +60,6 @@ public class Z3Driver {
 	DeclaredObjects objs;
 
 	public Status validDAI(Program program, DAI dai) {
-		System.out.print(".");
 		HashMap<String, String> cfg = new HashMap<String, String>();
 		cfg.put("model", "true");
 		cfg.put("unsat_core", "true");
