@@ -81,6 +81,8 @@ public class VC {
 	}
 
 	public FieldName getCorrespondingFN(Program_Utils pu, FieldName input_fn) {
+		if (input_fn==null)
+			return null;
 		for (Tuple<String, String> fnt : this.fieldTuples)
 			if (fnt.x.equals(input_fn.getName()))
 				return pu.getFieldName(fnt.y);

@@ -120,7 +120,7 @@ public class Naive_search_engine extends Search_engine {
 			result[0] = intro_f;
 			INTRO_VC new_intro_vc = mk_ID_OTM_INTRO_VC(pu, intro_f.getNewName());
 			result[1] = new_intro_vc;
-			if (eqVCCnt(pu, new_intro_vc.getVC()) > 0)
+			if (new_intro_vc == null || eqVCCnt(pu, new_intro_vc.getVC()) > 0)
 				result[1] = null;
 		}
 		return result[iter];
@@ -171,7 +171,8 @@ public class Naive_search_engine extends Search_engine {
 	 */
 
 	private Table getRandomTable(Program_Utils pu) {
-		List<Table> filteredList = pu.getTables().values().stream().filter(t -> !t.isNew).collect(Collectors.toList());
+		List<Table> filteredList = pu.getTables().values().stream().filter(t -> !t.isNew && !t.isAllPK())
+				.collect(Collectors.toList());
 		int table_cnt = filteredList.size();
 		int random_index = (int) (Math.random() * table_cnt);
 		return filteredList.get(random_index);
@@ -195,6 +196,14 @@ public class Naive_search_engine extends Search_engine {
 	private FieldName getRandomFieldName(Program_Utils pu, Table from_this) {
 		List<FieldName> fns = from_this.getFieldNames().stream().filter(fn -> (!fn.isAliveField()))
 				.collect(Collectors.toList());
+		int filtered_fns_cnt = fns.size();
+		int random_index = (int) (Math.random() * filtered_fns_cnt);
+		return fns.get(random_index);
+	}
+
+	private FieldName getRandomFieldName(Program_Utils pu, Table from_this, ArrayList<FieldName> other_than_these) {
+		List<FieldName> fns = from_this.getFieldNames().stream()
+				.filter(fn -> (!fn.isAliveField() && !other_than_these.contains(fn))).collect(Collectors.toList());
 		int filtered_fns_cnt = fns.size();
 		int random_index = (int) (Math.random() * filtered_fns_cnt);
 		return fns.get(random_index);
@@ -229,12 +238,18 @@ public class Naive_search_engine extends Search_engine {
 
 	// returns only NUM type
 	private ArrayList<FieldName> getNRandomFieldNames(Program_Utils pu, Table from_this, int n) {
-		assert (from_this.getFieldNames().size() > n) : "cannot request n>number_of_fields";
+		// assert (from_this.getFieldNames().size() > n) : "cannot request " + n + "
+		// fieldNames from "
+		// + from_this.getTableName();
+		if (from_this.getFieldNames().size() <= n)
+			return null;
+
 		ArrayList<FieldName> result = new ArrayList<>();
 		for (int i = 0; i < n; i++) {
 			FieldName candidate_fn = getRandomFieldName(pu, from_this, F_Type.NUM);
-			while (result.contains(candidate_fn))
-				candidate_fn = getRandomFieldName(pu, from_this);
+			while (result.contains(candidate_fn)) {
+				candidate_fn = getRandomFieldName(pu, from_this, result);
+			}
 			result.add(candidate_fn);
 		}
 		return result;
@@ -266,6 +281,8 @@ public class Naive_search_engine extends Search_engine {
 		// set key correspondence
 		List<FieldName> source_pks = source_table.getPKFields();
 		ArrayList<FieldName> target_pks = getNRandomFieldNames(pu, target_table, source_pks.size());
+		if (target_pks == null)
+			return null;
 		for (int i = 0; i < source_pks.size(); i++)
 			result.addKeyCorrespondenceToVC(source_pks.get(i).getName(), target_pks.get(i).getName());
 		// set value correspondence
@@ -279,8 +296,11 @@ public class Naive_search_engine extends Search_engine {
 		this.iter = 0;
 		this.source_table = getRandomTable(pu);
 		this.source_fn = getRandomFieldName(pu, source_table, false, F_Type.NUM);
-		if (this.source_fn == null)
+		if (this.source_fn == null) {
+			logger.debug("#" + iter + " returning false because source fn could not be chosen");
+			this.iter++;
 			return false;
+		}
 		this.target_table = getRandomTable(pu, source_table);
 		if (Math.random() < 0.3) { // CRDT or not
 			// next refactoring is introduction of CRDT table and corresponding fields
@@ -302,6 +322,7 @@ public class Naive_search_engine extends Search_engine {
 			}
 		}
 		result = new Delta[max_iter];
+		logger.debug("#" + iter + " returning true");
 		return true;
 	}
 }
