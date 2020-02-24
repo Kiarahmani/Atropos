@@ -368,7 +368,14 @@ public class TPCCProgramGenerator implements ProgramGenerator {
 
 			// update customer
 			table_name = "customer";
-			WHC payment_whc_6 = payment_whc_5.mkSnapshot();
+			WHC payment_whc_6 = new WHC(pu.getIsAliveFieldName(table_name),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("c_wid"), BinOp.EQ,
+							pu.getArg("p_wid")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("c_did"), BinOp.EQ,
+							pu.getArg("p_did")),
+					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("c_id"), BinOp.EQ,
+							pu.mkProjExpr(txn_name, 2, "c_id", 1)));
+
 			Update_Query payment6 = pu.addUpdateQuery(txn_name, table_name, payment_whc_6);
 			payment6.addUpdateExp(pu.getFieldName("c_balance"),
 					new E_BinOp(BinOp.MINUS, pu.mkProjExpr(txn_name, 2, "c_balance", 1), pu.getArg("p_pay_amount")));

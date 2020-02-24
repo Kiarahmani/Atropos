@@ -59,18 +59,18 @@ public class Atropos {
 		} catch (IOException e) {
 		}
 		int iter = 0;
-		out: while (true) {
+		out: while (iter<1) {
 			System.out.println("\n\n#" + (iter) + "\n");
 			Refactoring_Engine re = new Refactoring_Engine();
 			pu = new Program_Utils("TPC-C");
-			program = (new TPCCProgramGenerator(pu)).generate("newOrder", "payment", "stockLevel", "orderStatus",
-					"delivery");
+			program = (new TPCCProgramGenerator(pu)).generate("newOrder1", "payment", "stockLevel1", "orderStatus1",
+					"delivery1");
 			pu.lock();
 			program.printProgram();
 			re.pre_analysis(pu);
 			// search the refactoring space
 			Naive_search_engine se = new Naive_search_engine(history);
-			int _refactoring_depth = 4;
+			int _refactoring_depth = 1;
 			HashSet<VC> local_hist = new HashSet<>();
 			for (int j = 0; j < _refactoring_depth; j++) {
 				if (!se.reset(pu))

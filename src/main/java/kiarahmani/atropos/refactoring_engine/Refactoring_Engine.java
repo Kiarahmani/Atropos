@@ -13,6 +13,7 @@ import kiarahmani.atropos.Atropos;
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DDL.TableName;
 import kiarahmani.atropos.DDL.vc.VC;
+import kiarahmani.atropos.DDL.vc.VC.VC_Agg;
 import kiarahmani.atropos.DML.Variable;
 import kiarahmani.atropos.DML.expression.BinOp;
 import kiarahmani.atropos.DML.expression.E_BinOp;
@@ -321,7 +322,7 @@ public class Refactoring_Engine {
 
 	public void decompose(Program_Utils pu) {
 		int iter = 0;
-		while (decompose_iter(pu) && iter++ < 4)
+		while (decompose_iter(pu) && iter++ < 10)
 			; // decompose untill fixed-point is reached
 
 	}
@@ -622,15 +623,36 @@ public class Refactoring_Engine {
 			for (Query q : txn.getAllQueries())
 				if (q.isWrite())
 					if (q.getTableName().equalsWith(t1)) {
-						logger.debug("query " + q.getId() + "(" + q.getPo() + ")" + "is a write on T1 (" + t1.getName()
+						logger.debug("query " + q.getId() + "(" + q.getPo() + ") is a write on T1 (" + t1.getName()
 								+ ") and must be duplicated on T2 (" + t2.getName() + ")");
+						// first make sure it is splitted into appropriate field updates
+						if (intro_vc.getVC().get_agg() == VC_Agg.VC_SUM) {
+							if (q instanceof Update_Query) {
+								Update_Query upt = (Update_Query) q;
+								if (upt.getUpdateExps().size() > 1) {
+									ArrayList<FieldName> excluded_fn = new ArrayList<>();
+									for (Tuple<FieldName, Expression> fe : upt.getUpdateExps())
+										if (intro_vc.getVC().getCorrespondingFN(input_pu, fe.x) == null)
+											excluded_fn.add(fe.x);
+									if (excluded_fn.size() < upt.getUpdateExps().size()) {
+										UPDATE_Splitter us = split_update(input_pu, txn.getName(), excluded_fn,
+												upt.getPo(), false);
+										logger.debug("attempted to split the update first: " + us);
+									} else {
+										logger.debug("the attempted query does not update the CRDTed field ");
+										continue;
+									}
+								}
+							}
+						}
+
 						UPDATE_Duplicator ud = duplicate_update(input_pu, txn.getName(), t1.getName(), t2.getName(),
 								q.getPo());
 						if (ud != null)
 							intro_vc.addAppliedUpDup(ud);
 
 					} else if (q.getTableName().equalsWith(intro_vc.getVC().getTableName(input_pu, 2))) {
-						logger.debug("query " + q.getId() + " is a write on T2 (" + t1.getName()
+						logger.error("query " + q.getId() + " is a write on T2 (" + t1.getName()
 								+ ") and must be duplicated on T1 (" + t2.getName() + ")");
 						UPDATE_Duplicator ud = duplicate_update(input_pu, txn.getName(), t2.getName(), t1.getName(),
 								q.getPo());
@@ -1025,8 +1047,9 @@ public class Refactoring_Engine {
 			upd_dup.setOrgDupPo(qry_po);
 			return upd_dup;
 		} else {
-			logger.debug("attempted duplication of po#" + qry_po + "from " + source_table + " to " + target_table
+			logger.error("attempted duplication of po#" + qry_po + " from " + source_table + " to " + target_table
 					+ " but failed");
+			assert (false);
 			return null;
 		}
 	}

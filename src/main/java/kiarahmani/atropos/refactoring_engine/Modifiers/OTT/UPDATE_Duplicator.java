@@ -92,8 +92,7 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 		assert (isValid(input_query)) : "requested modification cannot be done on: " + input_query;
 
 		Query new_qry = null;
-		// handle the CRDT case
-		if (vc.getType() == VC_Type.VC_OTM && vc.get_agg() == VC_Agg.VC_SUM) {
+		if (vc.getType() == VC_Type.VC_OTM && vc.get_agg() == VC_Agg.VC_SUM) {// handle the CRDT case
 			WHC_Constraint[] whcc_array = mkInsert(old_update);
 			new_qry = new Insert_Query(-1, pu.getNewUpdateId(txnName), targetTable, targetTable.getIsAliveFN());
 			((Insert_Query) new_qry).addPKExp(whcc_array);
@@ -134,8 +133,10 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 		int index = 0;
 		logger.debug("For each PK a new expression will be added to the beginning of the ISNERT:");
 		for (FieldName pk_fn : pk_fields) {
-			if (old_update.getWHC().getConstraintByFieldName(pk_fn) == null)
+			if (old_update.getWHC().getConstraintByFieldName(pk_fn) == null) {
+				logger.debug("pk "+pk_fn+" does not have a valid constraint in the original whc");
 				return null;
+			}
 			result[index] = new WHC_Constraint(targetTable.getTableName(), targetTable.getPKFields().get(index),
 					BinOp.EQ, old_update.getWHC().getConstraintByFieldName(pk_fn).getExpression());
 			index++;
@@ -265,6 +266,10 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 		boolean assumption3 = input_update.getWHC().hasOnlyEq();
 
 		boolean result = assumption0 && assumption1 && assumption2 && assumption3;
+		logger.debug("assumption0: " + assumption0);
+		logger.debug("assumption1: " + assumption1);
+		logger.debug("assumption2: " + assumption2);
+		logger.debug("assumption3: " + assumption3);
 		logger.debug("modificationIsValid returned result: " + result);
 		return result;
 	}
