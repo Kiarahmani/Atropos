@@ -48,8 +48,8 @@ public class E_Arg extends Expression {
 	 * kiarahmani.atropos.DDL.FieldName)
 	 */
 	@Override
-	public void redirectProjs(Variable oldVar, FieldName oldFn, Variable newVar, FieldName newFn) {
-		
+	public Expression redirectProjs(Variable oldVar, FieldName oldFn, Variable newVar, FieldName newFn) {
+		return this;
 	}
 
 	@Override

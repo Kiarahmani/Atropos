@@ -57,11 +57,12 @@ public class E_Proj extends Expression {
 	 * kiarahmani.atropos.DDL.FieldName)
 	 */
 	@Override
-	public void redirectProjs(Variable oldVar, FieldName oldFn, Variable newVar, FieldName newFn) {
+	public Expression redirectProjs(Variable oldVar, FieldName oldFn, Variable newVar, FieldName newFn) {
 		if (this.v.equals(oldVar) && this.f.equals(oldFn)) {
 			this.f = newFn;
 			this.v = newVar;
 		}
+		return this;
 	}
 
 	@Override

@@ -76,9 +76,10 @@ public class E_BinOp extends Expression {
 	 * kiarahmani.atropos.DDL.FieldName)
 	 */
 	@Override
-	public void redirectProjs(Variable oldVar, FieldName oldFn, Variable newVar, FieldName newFn) {
+	public Expression redirectProjs(Variable oldVar, FieldName oldFn, Variable newVar, FieldName newFn) {
 		oper1.redirectProjs(oldVar, oldFn, newVar, newFn);
 		oper2.redirectProjs(oldVar, oldFn, newVar, newFn);
+		return this;
 
 	}
 

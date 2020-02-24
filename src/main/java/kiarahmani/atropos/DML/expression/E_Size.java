@@ -39,10 +39,11 @@ public class E_Size extends Expression {
 	 * kiarahmani.atropos.DDL.FieldName)
 	 */
 	@Override
-	public void redirectProjs(Variable oldVar, FieldName oldFn, Variable newVar, FieldName newFn) {
+	public Expression redirectProjs(Variable oldVar, FieldName oldFn, Variable newVar, FieldName newFn) {
 		if (this.v.equals(oldVar)) {
 			this.v = newVar;
 		}
+		return this;
 	};
 
 	@Override

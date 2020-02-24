@@ -57,8 +57,9 @@ public class E_UnOp extends Expression {
 	 * kiarahmani.atropos.DDL.FieldName)
 	 */
 	@Override
-	public void redirectProjs(Variable oldVar, FieldName oldFn, Variable newVar, FieldName newFn) {
+	public Expression redirectProjs(Variable oldVar, FieldName oldFn, Variable newVar, FieldName newFn) {
 		exp.redirectProjs(oldVar, oldFn, newVar, newFn);
+		return this;
 	}
 
 	@Override
