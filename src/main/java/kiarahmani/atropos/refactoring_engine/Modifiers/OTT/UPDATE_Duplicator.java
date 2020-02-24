@@ -159,7 +159,8 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 		Expression result = null;
 		ArrayList<Tuple<FieldName, Expression>> old_exps = old_update.getUpdateExps();
 		assert (old_exps
-				.size() == 1) : "assumption failed: CRDT duplication can only be called on single field updates";
+				.size() == 1) : "assumption failed: CRDT duplication can only be called on single field updates. "
+						+ old_exps;
 		logger.debug("Extracting delta from: " + old_exps);
 		FieldName fn = old_exps.get(0).x;
 		Expression exp = old_exps.get(0).y;
