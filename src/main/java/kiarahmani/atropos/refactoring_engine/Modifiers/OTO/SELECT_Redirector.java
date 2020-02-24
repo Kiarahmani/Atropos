@@ -247,10 +247,15 @@ public class SELECT_Redirector extends One_to_One_Query_Modifier {
 		} else
 			return false;
 
-		if (vc == null)
+		if (vc == null) {
 			return false;
+		}
 
 		// all keys used as the WHC of redirecting SELECT must be constrained by vc
+		System.out.println();
+		System.out.println(vc);
+		System.out.println( input_query.getWHC());
+		System.out.println();
 		boolean assumption1 = vc.containsWHC(pu, input_query.getWHC());
 
 		// there must be a correspondence from old table to new table, for every field
@@ -273,6 +278,10 @@ public class SELECT_Redirector extends One_to_One_Query_Modifier {
 				logger.debug("E_Proj " + exp + " = 1?  " + assumption4);
 			}
 		}
+		logger.error("assumption1: " + assumption1);
+		logger.error("assumption2: " + assumption2);
+		logger.error("assumption3: " + assumption3);
+		logger.error("assumption4: " + assumption4);
 		return assumption1 && assumption2 && assumption3 && assumption4;
 	}
 

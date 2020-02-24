@@ -339,6 +339,7 @@ public class Refactoring_Engine {
 			for (Query q : all_queries) {
 				int po = q.getPo();
 				if (!q.isWrite()) {
+					logger.error("analyzing "+q.getId());
 					Select_Query sq = (Select_Query) q;
 					Table t_src = pu.getTable(q.getTableName().getName());
 					for (Table t_dest : pu.getTables().values()) {
@@ -350,16 +351,18 @@ public class Refactoring_Engine {
 							int total_size = sq.getSelectedFieldNames().size();
 							if (red_size < total_size) {
 								if (red_size > 0) {
-									logger.debug("the subset of fns which must be redirected is proper subset");
+									logger.error("the subset of fns which must be redirected is proper subset");
 									split_select(pu, txn_name, must_be_redirected, po, false);
 									redirect_select(pu, txn_name, t_src.getTableName().getName(),
 											t_dest.getTableName().getName(), po + 1, false);
 									result = true;
 								}
 							} else {
-								logger.debug("all fns must be redirected");
-								redirect_select(pu, txn_name, t_src.getTableName().getName(),
+								logger.error("all fns must be redirected");
+								SELECT_Redirector ss = redirect_select(pu, txn_name, t_src.getTableName().getName(),
 										t_dest.getTableName().getName(), po, false);
+								
+								assert (false): ""+ss;
 								result = true;
 							}
 						}
@@ -908,7 +911,7 @@ public class Refactoring_Engine {
 		SELECT_Redirector select_red = new SELECT_Redirector();
 		select_red.set(input_pu, txn_name, src_table, dest_table);
 		if (select_red.isValid(input_pu.getQueryByPo(txn_name, qry_po))) {
-
+			logger.error("redirect is valid");
 			applyAndPropagate(input_pu, select_red, qry_po, txn_name);
 
 			String begin;
@@ -924,8 +927,10 @@ public class Refactoring_Engine {
 			select_red.setApplied_po(qry_po);
 
 			return select_red;
-		} else
+		} else {
+			logger.error("redirect is invalid");
 			return null;
+		}
 	}
 
 	public Query_ReAtomicizer reAtomicize_qry(Program_Utils input_pu, String txn_name, int qry_po, boolean isRevert) {

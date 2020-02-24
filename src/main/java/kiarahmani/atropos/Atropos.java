@@ -95,7 +95,7 @@ public class Atropos {
 					history.get(vc.T_1).put(vc.T_2, new HashSet<>());
 				history.get(vc.T_1).get(vc.T_2).add(vc);
 			}
-			re.atomicize(pu);
+			re.decompose(pu);
 			program = pu.generateProgram();
 			program.printProgram();
 			iter++;
