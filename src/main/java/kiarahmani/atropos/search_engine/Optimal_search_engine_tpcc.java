@@ -28,7 +28,7 @@ public class Optimal_search_engine_tpcc extends Search_engine {
 
 	public Optimal_search_engine_tpcc() {
 		iter = 0;
-		max_iter = 33;
+		max_iter = 51;
 	}
 
 	public boolean hasNext() {
@@ -107,6 +107,48 @@ public class Optimal_search_engine_tpcc extends Search_engine {
 			delta_3.addKeyCorrespondenceToVC("s_iid", "syc_iid");
 			delta_3.addFieldTupleToVC("s_ytd", "syc_ytd");
 			result[index++] = delta_3;
+
+			/********************************************************************************/
+			// introduce a CRDT table for stock quantity
+			result[index++] = new INTRO_R("stock_quantitiy_crdt", true);
+
+			result[index++] = new INTRO_F("stock_quantitiy_crdt", "sqc_wid", F_Type.NUM);
+			result[index++] = new INTRO_F("stock_quantitiy_crdt", "sqc_iid", F_Type.NUM, false, false);
+			result[index++] = new INTRO_F("stock_quantitiy_crdt", "cqcc_uuid", F_Type.NUM, true, false);
+			result[index++] = new INTRO_F("stock_quantitiy_crdt", "sqc_quantity", F_Type.NUM, false, true);
+
+			result[index++] = new ADDPK(pu, "stock_quantitiy_crdt", "sqc_wid");
+			result[index++] = new ADDPK(pu, "stock_quantitiy_crdt", "sqc_iid");
+			result[index++] = new CHSK(pu, "stock_quantitiy_crdt", "sqc_wid");
+
+			// introduce vc between customer and cust_bal_crdt
+			INTRO_VC delta_4 = new INTRO_VC(pu, "stock", "stock_quantitiy_crdt", VC_Agg.VC_SUM, VC_Type.VC_OTM);
+			delta_4.addKeyCorrespondenceToVC("s_wid", "sqc_wid");
+			delta_4.addKeyCorrespondenceToVC("s_iid", "sqc_iid");
+			delta_4.addFieldTupleToVC("s_quantitiy", "sqc_quantity");
+			result[index++] = delta_4;
+			
+			/********************************************************************************/
+			// introduce a CRDT table for stock quantity
+			result[index++] = new INTRO_R("stock_ord_cnt_crdt", true);
+
+			result[index++] = new INTRO_F("stock_ord_cnt_crdt", "socc_wid", F_Type.NUM);
+			result[index++] = new INTRO_F("stock_ord_cnt_crdt", "socc_iid", F_Type.NUM, false, false);
+			result[index++] = new INTRO_F("stock_ord_cnt_crdt", "cocc_uuid", F_Type.NUM, true, false);
+			result[index++] = new INTRO_F("stock_ord_cnt_crdt", "socc_ord_cnt", F_Type.NUM, false, true);
+
+			result[index++] = new ADDPK(pu, "stock_ord_cnt_crdt", "socc_wid");
+			result[index++] = new ADDPK(pu, "stock_ord_cnt_crdt", "socc_iid");
+			result[index++] = new CHSK(pu, "stock_ord_cnt_crdt", "socc_wid");
+
+			// introduce vc between customer and cust_bal_crdt
+			INTRO_VC delta_5 = new INTRO_VC(pu, "stock", "stock_ord_cnt_crdt", VC_Agg.VC_SUM, VC_Type.VC_OTM);
+			delta_5.addKeyCorrespondenceToVC("s_wid", "socc_wid");
+			delta_5.addKeyCorrespondenceToVC("s_iid", "socc_iid");
+			delta_5.addFieldTupleToVC("s_order_cnt", "socc_ord_cnt");
+			result[index++] = delta_5;
+			
+			
 
 		}
 		// return null;
