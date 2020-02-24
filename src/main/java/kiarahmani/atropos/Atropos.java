@@ -59,7 +59,7 @@ public class Atropos {
 		} catch (IOException e) {
 		}
 		int iter = 0;
-		out: while (iter < 1) {
+		out: while (iter < 100) {
 			System.out.println("\n\n#" + (iter) + "\n");
 			Refactoring_Engine re = new Refactoring_Engine();
 			pu = new Program_Utils("TPC-C");
@@ -99,7 +99,12 @@ public class Atropos {
 			program = pu.generateProgram();
 			program.printProgram();
 			iter++;
-			int anml_cnt = analyze(pu);
+			int anml_cnt = 5;// analyze(pu);
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 			System.gc();
 			// print stats and exit
 			printStats(System.currentTimeMillis() - time_begin, anml_cnt);

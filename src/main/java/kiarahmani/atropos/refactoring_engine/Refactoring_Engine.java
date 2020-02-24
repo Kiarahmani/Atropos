@@ -1068,7 +1068,7 @@ public class Refactoring_Engine {
 			upd_dup.setOrgDupPo(qry_po);
 			return upd_dup;
 		} else {
-			logger.error("attempted duplication of "+txn_name+" (po#" + qry_po + ") from " + source_table + " to " + target_table
+			logger.debug("attempted duplication of "+txn_name+" (po#" + qry_po + ") from " + source_table + " to " + target_table
 					+ " but failed");
 			return null;
 		}

@@ -277,12 +277,12 @@ public class Naive_search_engine extends Search_engine {
 	// returns true if successful
 	public boolean reset(Program_Utils pu) {
 		this.iter = 0;
-		this.source_table = pu.getTable("district");//getRandomTable(pu);
-		this.source_fn = pu.getFieldName("d_ytd");//getRandomFieldName(pu, source_table, false, F_Type.NUM);
+		this.source_table = getRandomTable(pu);
+		this.source_fn = getRandomFieldName(pu, source_table, false, F_Type.NUM);
 		if (this.source_fn == null)
 			return false;
 		this.target_table = getRandomTable(pu, source_table);
-		if (Math.random() < 10.3) { // CRDT or not
+		if (Math.random() < 0.3) { // CRDT or not
 			// next refactoring is introduction of CRDT table and corresponding fields
 			max_iter = 6 + 2 * source_table.getPKFields().size();
 			this.agg = VC_Agg.VC_SUM;
