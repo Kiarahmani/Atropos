@@ -303,10 +303,13 @@ public class Refactoring_Engine {
 					logger.debug("---- checking if " + txn.getName() + "." + q.getId() + " can be deleted");
 					Select_Query sq = (Select_Query) q;
 					// check if sq is implicitly used
-					if (sq.getImplicitlyUsed().size() > 0) {
-						logger.debug(q.getId() + " cannot be deleted because it is implicitly used");
-						continue q_loop;
-					}
+					for (FieldName fn : sq.getImplicitlyUsed())
+						if (sq.getReadFieldNames().contains(fn)) {
+							logger.debug(q.getId() + " cannot be deleted because it is implicitly used: "
+									+ sq.getImplicitlyUsed() + " -union- " + sq.getReadFieldNames());
+							continue q_loop;
+						}
+
 					// check if sq is explicitly used
 					Variable v = sq.getVariable();
 					if (var_is_used_in_txn(pu, txn.getName(), v)) {
