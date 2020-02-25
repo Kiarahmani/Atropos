@@ -28,7 +28,7 @@ public class Optimal_search_engine_tpcc extends Search_engine {
 
 	public Optimal_search_engine_tpcc() {
 		iter = 0;
-		max_iter = 83;
+		max_iter = 93;
 	}
 
 	public boolean hasNext() {
@@ -215,7 +215,7 @@ public class Optimal_search_engine_tpcc extends Search_engine {
 
 			/********************************************************************************/
 			// introduce a CRDT table for d_ytd
-			/*result[index++] = new INTRO_R("district_ytd_crdt", true);
+			result[index++] = new INTRO_R("district_ytd_crdt", true);
 
 			result[index++] = new INTRO_F("district_ytd_crdt", "dyc_wid", F_Type.NUM);
 			result[index++] = new INTRO_F("district_ytd_crdt", "dyc_did", F_Type.NUM);
@@ -230,10 +230,10 @@ public class Optimal_search_engine_tpcc extends Search_engine {
 			// introduce vc between customer and w_ytd
 			INTRO_VC delta_9 = new INTRO_VC(pu, "district", "district_ytd_crdt", VC_Agg.VC_SUM, VC_Type.VC_OTM);
 			delta_9.addKeyCorrespondenceToVC("d_wid", "dyc_wid");
-			delta_9.addKeyCorrespondenceToVC("d_id", "dycdyc_did_wid");
-			delta_9.addFieldTupleToVC("w_ytd", "wyc_wid");
+			delta_9.addKeyCorrespondenceToVC("d_id", "dyc_did");
+			delta_9.addFieldTupleToVC("d_ytd", "dyc_ytd");
 			result[index++] = delta_9;
-*/
+
 		}
 		// return null;
 		return result[iter];
