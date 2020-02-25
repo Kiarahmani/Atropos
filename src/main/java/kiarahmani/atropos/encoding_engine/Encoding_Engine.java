@@ -9,6 +9,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.status.StatusConfiguration.Verbosity;
+
 import com.microsoft.z3.Status;
 
 import kiarahmani.atropos.Atropos;
@@ -85,27 +87,26 @@ public class Encoding_Engine {
 				txn.is_included = true;
 				txn.setAllQueriesIncluded(true);
 			}
-
 			Program_Utils snapshot = pu.mkSnapShot();
-			re.delete_redundant(snapshot);
-			program = snapshot.generateProgram();
-			Status valid = local_z3_driver.validDAI(program, pot_dai);
-			if (valid == Status.UNSATISFIABLE) {
-				logger.debug(
-						" discarding the potential DAI due to conflicting path conditions. continue to the next dai");
-				continue dais_loop;
-			} else
-				logger.debug("potential DAI was pre-analyzed and found valid. Further analysis is needed");
-
+			if (Constants._PRE_ANALYSIS_STEP) {
+				re.delete_redundant(snapshot);
+				program = snapshot.generateProgram();
+				Status valid = local_z3_driver.validDAI(program, pot_dai);
+				if (valid == Status.UNSATISFIABLE) {
+					logger.debug(
+							" discarding the potential DAI due to conflicting path conditions. continue to the next dai");
+					if (Constants._VERBOSE_ANALYSIS)
+						System.out.println(".");
+					continue dais_loop;
+				} else
+					logger.debug("potential DAI was pre-analyzed and found valid. Further analysis is needed");
+			}
 			// could not rule out the potential dai: must perform full analysis
 			for (Conflict c1 : cg.getConfsFromQuery(pot_dai.getQuery(1), pot_dai.getTransaction())) {
 				for (Conflict c2 : cg.getConfsFromQuery(pot_dai.getQuery(2), pot_dai.getTransaction())) {
 					logger.debug(" involved transactions: " + pot_dai.getTransaction().getName() + "-"
 							+ c1.getTransaction(2).getName() + "-" + c2.getTransaction(2).getName());
-					
-					
-					
-					
+
 					snapshot = pu.mkSnapShot();
 					DAI original_dai = new DAI(pot_dai.getTransaction(), pot_dai.getQuery(1), pot_dai.getFieldNames(1),
 							pot_dai.getQuery(2), pot_dai.getFieldNames(2));

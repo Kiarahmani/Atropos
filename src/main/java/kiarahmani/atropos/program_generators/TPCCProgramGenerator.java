@@ -323,6 +323,7 @@ public class TPCCProgramGenerator implements ProgramGenerator {
 					pu.getTableName(table_name), pu.getFieldName("w_id"), BinOp.EQ, pu.getArg("p_wid")));
 			Select_Query payment1 = pu.addSelectQuery(txn_name, table_name, payment_whc_1, "w_ytd", "w_name",
 					"w_street", "w_city", "w_state", "w_zip");
+			payment1.setImplicitlyUsed(pu.getFieldName("w_name"));
 			pu.addQueryStatement(txn_name, payment1);
 
 			// incremenet w_ytd

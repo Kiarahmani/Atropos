@@ -21,6 +21,7 @@ public class Constants {
 	public static boolean _IS_TEST;
 	public static boolean _VERBOSE_ANALYSIS;
 	public static boolean _PRINT_COMMENTS_IN_PROG;
+	public static boolean _PRE_ANALYSIS_STEP;
 
 	public Constants() throws IOException {
 		this._IS_TEST = false;
@@ -43,6 +44,7 @@ public class Constants {
 		Constants._VERBOSE_ANALYSIS = Boolean.parseBoolean(prop.getProperty("_VERBOSE_ANALYSIS"));
 
 		Constants._PRINT_COMMENTS_IN_PROG = Boolean.parseBoolean(prop.getProperty("_PRINT_COMMENTS_IN_PROG"));
+		Constants._PRE_ANALYSIS_STEP = Boolean.parseBoolean(prop.getProperty("_PRE_ANALYSIS_STEP"));
 
 	}
 }
