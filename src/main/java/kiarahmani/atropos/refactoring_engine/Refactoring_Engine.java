@@ -215,7 +215,7 @@ public class Refactoring_Engine {
 		HashMap<Table, HashSet<FieldName>> accessed_fn_map = mkTableMap(pu);
 		result |= delete_redundant_tables(pu, accessed_fn_map, analysis_call);
 		result |= delete_redundant_writes(pu, accessed_fn_map);
-		result |= delete_redundant_reads(pu);
+		result |= delete_redundant_reads(pu, analysis_call);
 		return result;
 	}
 
@@ -294,7 +294,7 @@ public class Refactoring_Engine {
 		return result;
 	}
 
-	public boolean delete_redundant_reads(Program_Utils pu) {
+	public boolean delete_redundant_reads(Program_Utils pu, boolean analysis_call) {
 		boolean result = false;
 		for (Transaction txn : pu.getTrasnsactionMap().values()) {
 			logger.debug("analyzing " + txn.getName() + " to delete redundant reads");
@@ -307,7 +307,8 @@ public class Refactoring_Engine {
 						if (sq.getReadFieldNames().contains(fn)) {
 							logger.debug(q.getId() + " cannot be deleted because it is implicitly used: "
 									+ sq.getImplicitlyUsed() + " -union- " + sq.getReadFieldNames());
-							continue q_loop;
+							if (!analysis_call)
+								continue q_loop;
 						}
 
 					// check if sq is explicitly used

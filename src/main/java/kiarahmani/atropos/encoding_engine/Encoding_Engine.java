@@ -149,7 +149,9 @@ public class Encoding_Engine {
 					// prune away unrelated components of the program
 					re.delete_unincluded(snapshot);
 					program = snapshot.generateProgram();
-					// program.printProgram();
+
+					if (Constants._PRINT_PROGRAM_BEFORE_ANALYSIS)
+						program.printProgram();
 
 					// update the po of the queries in dai (since it may have been changed
 					// during the pruning)

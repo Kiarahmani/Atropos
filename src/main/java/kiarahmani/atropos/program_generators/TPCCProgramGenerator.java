@@ -402,7 +402,7 @@ public class TPCCProgramGenerator implements ProgramGenerator {
 					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("d_id"), BinOp.EQ,
 							pu.getArg("sl_did")));
 			Select_Query stockLevel1 = pu.addSelectQuery(txn_name, table_name, stockLevel_whc_1, "d_next_o_id");
-			stockLevel1.setImplicitlyUsed(pu.getFieldName("d_next_o_id"));
+			//stockLevel1.setImplicitlyUsed(pu.getFieldName("d_next_o_id"));
 			pu.addQueryStatement(txn_name, stockLevel1);
 
 			// retrieve item id from corresponding order_line
@@ -415,7 +415,7 @@ public class TPCCProgramGenerator implements ProgramGenerator {
 					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("ol_oid"), BinOp.EQ,
 							pu.mkProjExpr(txn_name, 0, "d_next_o_id", 1)));
 			Select_Query stockLevel2 = pu.addSelectQuery(txn_name, table_name, stockLevel_whc_2, "ol_iid");
-			stockLevel2.setImplicitlyUsed(pu.getFieldName("ol_iid"));
+			//stockLevel2.setImplicitlyUsed(pu.getFieldName("ol_iid"));
 			pu.addQueryStatement(txn_name, stockLevel2);
 
 			// retrieve the stock for that item
@@ -427,8 +427,8 @@ public class TPCCProgramGenerator implements ProgramGenerator {
 							pu.mkProjExpr(txn_name, 1, "ol_iid", 1)));
 			Select_Query stockLevel3 = pu.addSelectQuery(txn_name, table_name, stockLevel_whc_3, "s_quantitiy", "s_ytd",
 					"s_order_cnt", "s_remote_cnt", "s_data");
-			stockLevel3.setImplicitlyUsed(pu.getFieldName("s_quantitiy"), pu.getFieldName("s_ytd"),
-					pu.getFieldName("s_order_cnt"));
+			//stockLevel3.setImplicitlyUsed(pu.getFieldName("s_quantitiy"), pu.getFieldName("s_ytd"),
+		//			pu.getFieldName("s_order_cnt"));
 			pu.addQueryStatement(txn_name, stockLevel3);
 
 		}
@@ -450,7 +450,7 @@ public class TPCCProgramGenerator implements ProgramGenerator {
 							pu.getArg("os_cname")));
 			Select_Query orderStatus1 = pu.addSelectQuery(txn_name, table_name, orderStatus_whc_1, "c_id", "c_discount",
 					"c_credit", "c_credit_lim", "c_balance", "c_ytd_payment", "c_payment_cnt");
-			orderStatus1.setImplicitlyUsed(pu.getFieldName("c_balance"), pu.getFieldName("c_ytd_payment"));
+			//orderStatus1.setImplicitlyUsed(pu.getFieldName("c_balance"), pu.getFieldName("c_ytd_payment"));
 			pu.addQueryStatement(txn_name, orderStatus1);
 
 			// retrieve the latest order by above customer
@@ -464,8 +464,8 @@ public class TPCCProgramGenerator implements ProgramGenerator {
 							pu.mkProjExpr(txn_name, 0, "c_id", 1)));
 			Select_Query orderStatus2 = pu.addSelectQuery(txn_name, table_name, orderStatus_whc_2, "o_id",
 					"o_carrier_id", "o_entry_d");
-			orderStatus2.setImplicitlyUsed(pu.getFieldName("o_id"), pu.getFieldName("o_carrier_id"),
-					pu.getFieldName("o_entry_d"));
+			//orderStatus2.setImplicitlyUsed(pu.getFieldName("o_id"), pu.getFieldName("o_carrier_id"),
+			//		pu.getFieldName("o_entry_d"));
 			pu.addQueryStatement(txn_name, orderStatus2);
 
 			// retrieve the orderline info
@@ -482,8 +482,8 @@ public class TPCCProgramGenerator implements ProgramGenerator {
 
 			Select_Query orderStatus3 = pu.addSelectQuery(txn_name, table_name, orderStatus_whc_3, "ol_iid",
 					"ol_delivery_d", "ol_amount", "ol_supply_wid", "ol_quantity");
-			orderStatus3.setImplicitlyUsed(pu.getFieldName("ol_iid"), pu.getFieldName("ol_delivery_d"),
-					pu.getFieldName("ol_amount"), pu.getFieldName("ol_supply_wid"), pu.getFieldName("ol_quantity"));
+			//orderStatus3.setImplicitlyUsed(pu.getFieldName("ol_iid"), pu.getFieldName("ol_delivery_d"),
+			//		pu.getFieldName("ol_amount"), pu.getFieldName("ol_supply_wid"), pu.getFieldName("ol_quantity"));
 			pu.addQueryStatement(txn_name, orderStatus3);
 
 		}
