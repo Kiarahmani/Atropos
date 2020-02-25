@@ -111,7 +111,8 @@ public class Conflict_Graph {
 			logger.debug("Neither Stmts were If");
 			Conflict c = constructConf(txn1, q1, txn2, q2);
 			if (c != null)
-				addConflict(c);
+				if (!q1.isWrite() || !q2.isWrite())
+					addConflict(c);
 		}
 	}
 

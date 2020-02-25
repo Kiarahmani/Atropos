@@ -43,9 +43,10 @@ public class Atropos {
 			Refactoring_Engine re = new Refactoring_Engine();
 			Program_Utils pu = new Program_Utils("TPC-C");
 			Program program = (new TPCCProgramGenerator(pu)).generate("newOrder", "payment1", "stockLevel1",
-					"orderStatus1", "delivery1");
+					"orderStatus1", "delivery");
 			program.printProgram();
-			// analyze(pu);
+			analyze(pu);
+			assert(false);
 			pu.lock();
 			re.pre_analysis(pu);
 			// search the refactoring space

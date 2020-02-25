@@ -102,6 +102,10 @@ public class Encoding_Engine {
 				for (Conflict c2 : cg.getConfsFromQuery(pot_dai.getQuery(2), pot_dai.getTransaction())) {
 					logger.debug(" involved transactions: " + pot_dai.getTransaction().getName() + "-"
 							+ c1.getTransaction(2).getName() + "-" + c2.getTransaction(2).getName());
+					
+					
+					
+					
 					snapshot = pu.mkSnapShot();
 					DAI original_dai = new DAI(pot_dai.getTransaction(), pot_dai.getQuery(1), pot_dai.getFieldNames(1),
 							pot_dai.getQuery(2), pot_dai.getFieldNames(2));
