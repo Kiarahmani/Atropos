@@ -113,7 +113,7 @@ public class Table {
 	@Override
 	public String toString() {
 		String result = "", delim = "";
-		result += String.format("%-9s", this.name) + "(";
+		result += String.format("%-9s", this.name) + "(" + this.fieldNames.size() + ")" + "(";
 		for (FieldName fn : fieldNames) {
 			result += delim + fn.toStringWithType();
 			delim = ",";

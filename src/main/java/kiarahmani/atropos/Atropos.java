@@ -31,6 +31,17 @@ public class Atropos {
 	private static final Logger logger = LogManager.getLogger(Atropos.class);
 
 	public static void main(String[] args) {
+		Program_Utils pu = new Program_Utils("TPC-C");
+		Program program = (new TPCCProgramGenerator(pu)).generate("newOrder", "payment", "stockLevel", "orderStatus",
+				"delivery");
+		HashMap<String, HashMap<String, HashSet<VC>>> history = new HashMap<>();
+		for (Table t : pu.getTables().values()) {
+			HashMap<String, HashSet<VC>> newMap = new HashMap<>();
+			for (Table tt : pu.getTables().values())
+				newMap.put(tt.getTableName().getName(), new HashSet<>());
+			history.put(t.getTableName().getName(), newMap);
+		}
+
 		try {
 			new Constants();
 		} catch (IOException e) {
@@ -41,13 +52,15 @@ public class Atropos {
 		out: while (iter < 1) {
 			System.out.println("\n\n#" + (iter) + "\n");
 			Refactoring_Engine re = new Refactoring_Engine();
-			Program_Utils pu = new Program_Utils("TPC-C");
-			Program program = (new TPCCProgramGenerator(pu)).generate("newOrder", "payment", "stockLevel",
-					"orderStatus", "delivery");
+			pu = new Program_Utils("TPC-C");
+			program = (new TPCCProgramGenerator(pu)).generate("newOrder", "payment", "stockLevel", "orderStatus",
+					"delivery");
+
 			//re.atomicize(pu);
 			//program.printProgram();
 			//analyze(pu);
-			// assert(false);
+			//System.out.println("Initial analysis time: " + (System.currentTimeMillis() - time_begin));
+			//assert (false);
 			pu.lock();
 			re.pre_analysis(pu);
 			// search the refactoring space
@@ -74,10 +87,19 @@ public class Atropos {
 				} while (se.hasNext());
 			}
 
+			for (VC vc : local_hist) {
+				if (history.get(vc.T_1) == null)
+					history.put(vc.T_1, new HashMap<>());
+				if (history.get(vc.T_1).get(vc.T_2) == null)
+					history.get(vc.T_1).put(vc.T_2, new HashSet<>());
+				history.get(vc.T_1).get(vc.T_2).add(vc);
+			}
+
 			iter++;
 			pu.generateProgram().printProgram();
 			re.atomicize(pu);
 			pu.generateProgram().printProgram();
+			System.out.println("refactoring time: " + (System.currentTimeMillis() - time_begin));
 			int anml_cnt = analyze(pu);
 			System.gc();
 			// print stats and exit
