@@ -22,6 +22,7 @@ import kiarahmani.atropos.refactoring_engine.Refactoring_Engine;
 import kiarahmani.atropos.refactoring_engine.deltas.Delta;
 import kiarahmani.atropos.refactoring_engine.deltas.INTRO_VC;
 import kiarahmani.atropos.search_engine.Naive_search_engine;
+import kiarahmani.atropos.search_engine.Optimal_search_engine;
 import kiarahmani.atropos.search_engine.Optimal_search_engine_tpcc;
 import kiarahmani.atropos.utils.Constants;
 import kiarahmani.atropos.utils.Program_Utils;
@@ -52,11 +53,16 @@ public class Atropos {
 		out: while (iter < 1) {
 			System.out.println("\n\n#" + (iter) + "\n");
 			Refactoring_Engine re = new Refactoring_Engine();
-			pu = new Program_Utils("TPC-C");
-			program = (new TPCCProgramGenerator(pu)).generate("newOrder", "payment", "stockLevel", "orderStatus",
-					"delivery");
+			pu = new Program_Utils("SmallBank");
+			// for TPC-C
+			 program = (new TPCCProgramGenerator(pu)).generate("newOrder", "payment",
+			 "stockLevel", "orderStatus",
+			 "delivery");
+			// for small bank:
+			//program = new SmallBankProgramGenerator(pu).generate("Amalgamate", "Balance", "DepositChecking",
+			//		"SendPayment", "TransactSavings", "WriteCheck");
 
-			//re.atomicize(pu);
+			// re.atomicize(pu);
 			//program.printProgram();
 			//analyze(pu);
 			//System.out.println("Initial analysis time: " + (System.currentTimeMillis() - time_begin));
@@ -64,7 +70,8 @@ public class Atropos {
 			pu.lock();
 			re.pre_analysis(pu);
 			// search the refactoring space
-			Optimal_search_engine_tpcc se = new Optimal_search_engine_tpcc();
+			//Optimal_search_engine se = new Optimal_search_engine();
+			 Optimal_search_engine_tpcc se = new Optimal_search_engine_tpcc();
 			int _refactoring_depth = 1;
 			HashSet<VC> local_hist = new HashSet<>();
 			for (int j = 0; j < _refactoring_depth; j++) {
