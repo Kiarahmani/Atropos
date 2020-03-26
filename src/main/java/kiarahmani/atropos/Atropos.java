@@ -16,6 +16,7 @@ import kiarahmani.atropos.dependency.DAI_Graph;
 import kiarahmani.atropos.encoding_engine.Encoding_Engine;
 import kiarahmani.atropos.program.Program;
 import kiarahmani.atropos.program.Table;
+import kiarahmani.atropos.program_generators.SEATSProgramGenerator;
 import kiarahmani.atropos.program_generators.TPCCProgramGenerator;
 import kiarahmani.atropos.program_generators.SmallBank.SmallBankProgramGenerator;
 import kiarahmani.atropos.refactoring_engine.Refactoring_Engine;
@@ -33,15 +34,16 @@ public class Atropos {
 
 	public static void main(String[] args) {
 		Program_Utils pu = new Program_Utils("TPC-C");
-		Program program = (new TPCCProgramGenerator(pu)).generate("newOrder", "payment", "stockLevel", "orderStatus",
-				"delivery");
-		HashMap<String, HashMap<String, HashSet<VC>>> history = new HashMap<>();
-		for (Table t : pu.getTables().values()) {
-			HashMap<String, HashSet<VC>> newMap = new HashMap<>();
-			for (Table tt : pu.getTables().values())
-				newMap.put(tt.getTableName().getName(), new HashSet<>());
-			history.put(t.getTableName().getName(), newMap);
-		}
+		// Program program = (new TPCCProgramGenerator(pu)).generate("newOrder",
+		// "payment", "stockLevel", "orderStatus",
+		// "delivery");
+		// HashMap<String, HashMap<String, HashSet<VC>>> history = new HashMap<>();
+		// for (Table t : pu.getTables().values()) {
+		// HashMap<String, HashSet<VC>> newMap = new HashMap<>();
+		// for (Table tt : pu.getTables().values())
+		// newMap.put(tt.getTableName().getName(), new HashSet<>());
+		// history.put(t.getTableName().getName(), newMap);
+		// }
 
 		try {
 			new Constants();
@@ -50,67 +52,63 @@ public class Atropos {
 		}
 		long time_begin = System.currentTimeMillis();
 		int iter = 0;
-		out: while (iter < 1) {
-			System.out.println("\n\n#" + (iter) + "\n");
+		out: while (iter < 50) {
 			Refactoring_Engine re = new Refactoring_Engine();
-			pu = new Program_Utils("SmallBank");
-			// for TPC-C
-			 program = (new TPCCProgramGenerator(pu)).generate("newOrder", "payment",
-			 "stockLevel", "orderStatus",
-			 "delivery");
-			// for small bank:
-			//program = new SmallBankProgramGenerator(pu).generate("Amalgamate", "Balance", "DepositChecking",
-			//		"SendPayment", "TransactSavings", "WriteCheck");
+			pu = new Program_Utils("SEATS");
 
-			// re.atomicize(pu);
-			//program.printProgram();
-			//analyze(pu);
-			//System.out.println("Initial analysis time: " + (System.currentTimeMillis() - time_begin));
-			//assert (false);
-			pu.lock();
-			re.pre_analysis(pu);
-			// search the refactoring space
-			//Optimal_search_engine se = new Optimal_search_engine();
-			 Optimal_search_engine_tpcc se = new Optimal_search_engine_tpcc();
-			int _refactoring_depth = 1;
-			HashSet<VC> local_hist = new HashSet<>();
-			for (int j = 0; j < _refactoring_depth; j++) {
-				if (!se.reset(pu)) {
-					logger.debug("reset failed: continue the main loop");
-					iter++;
-					continue out;
-				}
-				do {
-					Delta ref = se.nextRefactoring(pu);
-					if (ref == null) {
-						iter++;
-						continue out;
-					}
-					if (ref instanceof INTRO_VC) {
-						INTRO_VC new_name = (INTRO_VC) ref;
-						local_hist.add(new_name.getVC());
-					}
-					re.refactor_schema(pu, ref);
-				} while (se.hasNext());
-			}
-
-			for (VC vc : local_hist) {
-				if (history.get(vc.T_1) == null)
-					history.put(vc.T_1, new HashMap<>());
-				if (history.get(vc.T_1).get(vc.T_2) == null)
-					history.get(vc.T_1).put(vc.T_2, new HashSet<>());
-				history.get(vc.T_1).get(vc.T_2).add(vc);
-			}
-
-			iter++;
-			pu.generateProgram().printProgram();
+			Program program = (new SEATSProgramGenerator(pu)).generate("deleteReservation", "findFlights",
+					"findOpenSeats", "newReservation", "updateCustomer", "updateReservation");
+			program.printProgram();
 			re.atomicize(pu);
-			pu.generateProgram().printProgram();
-			System.out.println("refactoring time: " + (System.currentTimeMillis() - time_begin));
-			int anml_cnt = analyze(pu);
-			System.gc();
-			// print stats and exit
-			printStats(System.currentTimeMillis() - time_begin, anml_cnt);
+			program.printProgram();
+
+			analyze(pu);
+			assert (false);
+			// pu.lock();
+			// re.pre_analysis(pu);
+			// search the refactoring space
+			// Optimal_search_engine se = new Optimal_search_engine();
+			// Optimal_search_engine_tpcc se = new Optimal_search_engine_tpcc();
+//			Naive_search_engine se = new Naive_search_engine(history);
+//			int _refactoring_depth = 8;
+//			HashSet<VC> local_hist = new HashSet<>();
+//			for (int j = 0; j < _refactoring_depth; j++) {
+//				if (!se.reset(pu)) {
+//					logger.debug("reset failed: continue the main loop");
+//					iter++;
+//					continue out;
+//				}
+//				do {
+//					Delta ref = se.nextRefactoring(pu);
+//					if (ref == null) {
+//						iter++;
+//						continue out;
+//					}
+//					if (ref instanceof INTRO_VC) {
+//						INTRO_VC new_name = (INTRO_VC) ref;
+//						local_hist.add(new_name.getVC());
+//					}
+//					re.refactor_schema(pu, ref);
+//				} while (se.hasNext());
+//			}
+//
+//			for (VC vc : local_hist) {
+//				if (history.get(vc.T_1) == null)
+//					history.put(vc.T_1, new HashMap<>());
+//				if (history.get(vc.T_1).get(vc.T_2) == null)
+//					history.get(vc.T_1).put(vc.T_2, new HashSet<>());
+//				history.get(vc.T_1).get(vc.T_2).add(vc);
+//			}
+//
+//			iter++;
+//			pu.generateProgram().printProgram();
+//			re.atomicize(pu);
+//			pu.generateProgram().printProgram();
+//			System.out.println("refactoring time: " + (System.currentTimeMillis() - time_begin));
+//			int anml_cnt = analyze(pu);
+//			System.gc();
+//			// print stats and exit
+//			printStats(System.currentTimeMillis() - time_begin, anml_cnt);
 		}
 
 	}

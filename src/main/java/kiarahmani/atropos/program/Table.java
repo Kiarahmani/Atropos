@@ -112,8 +112,10 @@ public class Table {
 
 	@Override
 	public String toString() {
+		boolean print_table_size = false;
 		String result = "", delim = "";
-		result += String.format("%-9s", this.name) + "(" + this.fieldNames.size() + ")" + "(";
+		String show_size = (print_table_size)? "(" + this.fieldNames.size() + ")" : "";
+		result += String.format("%-15s", this.name) + show_size + "(";
 		for (FieldName fn : fieldNames) {
 			result += delim + fn.toStringWithType();
 			delim = ",";

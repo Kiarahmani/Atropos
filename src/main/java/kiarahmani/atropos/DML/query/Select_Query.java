@@ -77,8 +77,8 @@ public class Select_Query extends Query {
 		fieldNamesString += ")";
 		String isAtomicString = isAtomic ? "(" + po + ") ATOMIC " : "(" + po + ") ";
 		return isAtomicString + "SELECT" + this.id + " (" + String.format("%-10s", fieldNamesString) + " FROM "
-				+ String.format("%-10s", this.tableName) + " AS " + this.variable + " WHERE " + this.where_clause
-				+ "		(" + this.is_included + ")";
+				+ String.format("%-10s", this.tableName) + " AS " + this.variable + " WHERE " + this.where_clause;
+		// + " (" + this.is_included + ")";
 		// + String.format(" PC=" + this.path_condition);
 
 	}

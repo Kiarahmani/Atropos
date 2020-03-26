@@ -249,6 +249,8 @@ public class Refactoring_Engine {
 					pu.removeFieldNameFromTable(t.getTableName().getName(), fn);
 			}
 		}
+		// XXX
+		
 		return result;
 	}
 
@@ -563,7 +565,7 @@ public class Refactoring_Engine {
 				if (!touched_field_names.keySet().contains(curr_t))
 					continue;
 				HashSet<FieldName> old_set = touched_field_names.get(curr_t);
-				old_set.addAll(q.getReadFieldNames());
+				old_set.addAll(q.getAccessedFieldNames());
 				if (!q.isWrite())
 					old_set.addAll(((Select_Query) q).getImplicitlyUsed());
 				touched_field_names.put(curr_t, old_set);
