@@ -112,7 +112,7 @@ public class Table {
 
 	@Override
 	public String toString() {
-		boolean print_table_size = false;
+		boolean print_table_size = true;
 		String result = "", delim = "";
 		String show_size = (print_table_size)? "(" + this.fieldNames.size() + ")" : "";
 		result += String.format("%-15s", this.name) + show_size + "(";

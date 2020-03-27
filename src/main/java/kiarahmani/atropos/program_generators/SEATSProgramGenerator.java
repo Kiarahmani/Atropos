@@ -415,6 +415,15 @@ public class SEATSProgramGenerator implements ProgramGenerator {
 					new E_BinOp(BinOp.PLUS, pu.mkProjExpr(txn_name, 4, "c_iattr", 1), new E_Const_Num(1)));
 			pu.addQueryStatementInIf(txn_name, 0, update7);
 
+			// update flight
+			table_name = "flight";
+			WHC whc10 = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(pu.getTableName(table_name),
+					pu.getFieldName("f_id"), BinOp.EQ, pu.getArg("nr_f_id")));
+			Update_Query update10 = pu.addUpdateQuery(txn_name, table_name, whc10);
+			update10.addUpdateExp(pu.getFieldName("f_seats_left"),
+					new E_BinOp(BinOp.MINUS, pu.mkProjExpr(txn_name, 0, "f_seats_left", 1), new E_Const_Num(1)));
+			pu.addQueryStatementInIf(txn_name, 0, update10);
+
 			// select frequent_flyer
 			table_name = "frequent_flyer";
 			WHC whc8 = new WHC(pu.getIsAliveFieldName(table_name),

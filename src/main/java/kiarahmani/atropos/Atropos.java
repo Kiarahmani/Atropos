@@ -24,6 +24,7 @@ import kiarahmani.atropos.refactoring_engine.deltas.Delta;
 import kiarahmani.atropos.refactoring_engine.deltas.INTRO_VC;
 import kiarahmani.atropos.search_engine.Naive_search_engine;
 import kiarahmani.atropos.search_engine.Optimal_search_engine;
+import kiarahmani.atropos.search_engine.Optimal_search_engine_seats;
 import kiarahmani.atropos.search_engine.Optimal_search_engine_tpcc;
 import kiarahmani.atropos.utils.Constants;
 import kiarahmani.atropos.utils.Program_Utils;
@@ -34,15 +35,15 @@ public class Atropos {
 
 	public static void main(String[] args) {
 		Program_Utils pu = new Program_Utils("TPC-C");
-		Program program = (new SEATSProgramGenerator(pu)).generate("deleteReservation", "findFlights", "findOpenSeats",
-				"newReservation", "updateCustomer", "updateReservation");
-		HashMap<String, HashMap<String, HashSet<VC>>> history = new HashMap<>();
-		for (Table t : pu.getTables().values()) {
-			HashMap<String, HashSet<VC>> newMap = new HashMap<>();
-			for (Table tt : pu.getTables().values())
-				newMap.put(tt.getTableName().getName(), new HashSet<>());
-			history.put(t.getTableName().getName(), newMap);
-		}
+//		Program program = (new SEATSProgramGenerator(pu)).generate("deleteReservation", "findFlights", "findOpenSeats",
+//				"newReservation", "updateCustomer", "updateReservation");
+//		HashMap<String, HashMap<String, HashSet<VC>>> history = new HashMap<>();
+//		for (Table t : pu.getTables().values()) {
+//			HashMap<String, HashSet<VC>> newMap = new HashMap<>();
+//			for (Table tt : pu.getTables().values())
+//				newMap.put(tt.getTableName().getName(), new HashSet<>());
+//			history.put(t.getTableName().getName(), newMap);
+//		}
 
 		try {
 			new Constants();
@@ -51,25 +52,25 @@ public class Atropos {
 		}
 		long time_begin = System.currentTimeMillis();
 		int iter = 0;
-		out: while (iter < 50) {
+		out: while (iter < 1) {
 			Refactoring_Engine re = new Refactoring_Engine();
 			pu = new Program_Utils("SEATS");
 
-			program = (new SEATSProgramGenerator(pu)).generate("deleteReservation", "findFlights", "findOpenSeats",
-					"newReservation", "updateCustomer", "updateReservation");
-			program.printProgram();
-//			re.atomicize(pu);
-//			program.printProgram();
-//			analyze(pu);
-//			assert (false);
+			Program program = (new SEATSProgramGenerator(pu)).generate("deleteReservation", "findFlights",
+					"findOpenSeats", "newReservation", "updateCustomer", "updateReservation");
+			// program.printProgram();
+			// re.atomicize(pu);
+			// program.printProgram();
+			// analyze(pu);
+			// assert (false);
 			pu.lock();
 			re.pre_analysis(pu);
 			// search the refactoring space
-			// Optimal_search_engine se = new Optimal_search_engine();
-			// Optimal_search_engine_tpcc se = new Optimal_search_engine_tpcc();
-			Naive_search_engine se = new Naive_search_engine(history);
-			int _refactoring_depth = 5;
+			Optimal_search_engine_seats se = new Optimal_search_engine_seats();
+			// Naive_search_engine se = new Naive_search_engine(history);
+			int _refactoring_depth = 1;
 			HashSet<VC> local_hist = new HashSet<>();
+
 			for (int j = 0; j < _refactoring_depth; j++) {
 				if (!se.reset(pu)) {
 					logger.debug("reset failed: continue the main loop");
@@ -90,13 +91,13 @@ public class Atropos {
 				} while (se.hasNext());
 			}
 
-			for (VC vc : local_hist) {
-				if (history.get(vc.T_1) == null)
-					history.put(vc.T_1, new HashMap<>());
-				if (history.get(vc.T_1).get(vc.T_2) == null)
-					history.get(vc.T_1).put(vc.T_2, new HashSet<>());
-				history.get(vc.T_1).get(vc.T_2).add(vc);
-			}
+//			for (VC vc : local_hist) {
+//				if (history.get(vc.T_1) == null)
+//					history.put(vc.T_1, new HashMap<>());
+//				if (history.get(vc.T_1).get(vc.T_2) == null)
+//					history.get(vc.T_1).put(vc.T_2, new HashSet<>());
+//				history.get(vc.T_1).get(vc.T_2).add(vc);
+//			}
 
 			iter++;
 			pu.generateProgram().printProgram();

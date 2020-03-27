@@ -678,7 +678,6 @@ public class Refactoring_Engine {
 								}
 							}
 						}
-
 						UPDATE_Duplicator ud = duplicate_update(input_pu, txn.getName(), t1.getName(), t2.getName(),
 								q.getPo());
 						if (ud != null)
