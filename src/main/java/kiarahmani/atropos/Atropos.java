@@ -17,6 +17,7 @@ import kiarahmani.atropos.encoding_engine.Encoding_Engine;
 import kiarahmani.atropos.program.Program;
 import kiarahmani.atropos.program.Table;
 import kiarahmani.atropos.program_generators.SEATSProgramGenerator;
+import kiarahmani.atropos.program_generators.SIBenchProgramGenerator;
 import kiarahmani.atropos.program_generators.TPCCProgramGenerator;
 import kiarahmani.atropos.program_generators.TWITTERProgramGenerator;
 import kiarahmani.atropos.program_generators.SmallBank.SmallBankProgramGenerator;
@@ -56,16 +57,18 @@ public class Atropos {
 		int iter = 0;
 		out: while (iter < 1) {
 			Refactoring_Engine re = new Refactoring_Engine();
-			pu = new Program_Utils("TWITTER");
+			pu = new Program_Utils("SIBench");
 
-			Program program = (new TWITTERProgramGenerator(pu)).generate("getFollowers", "getTweets",
-					"getTweetsFromFollowing", "getUserTweets", "insertTweet");
+			Program program = (new SIBenchProgramGenerator(pu)).generate("minRecord", "updateRecord");
 
-			// program.printProgram();
-			// re.atomicize(pu);
-			// program.printProgram();
-			// analyze(pu);
-			// assert (false);
+			program.printProgram();
+			re.atomicize(pu);
+			program.printProgram();
+			analyze(pu);
+			assert (false);
+			//
+			//
+
 			pu.lock();
 			re.pre_analysis(pu);
 			// search the refactoring space
