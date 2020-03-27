@@ -27,6 +27,7 @@ import kiarahmani.atropos.refactoring_engine.deltas.INTRO_VC;
 import kiarahmani.atropos.search_engine.Naive_search_engine;
 import kiarahmani.atropos.search_engine.Optimal_search_engine;
 import kiarahmani.atropos.search_engine.Optimal_search_engine_seats;
+import kiarahmani.atropos.search_engine.Optimal_search_engine_sibench;
 import kiarahmani.atropos.search_engine.Optimal_search_engine_tpcc;
 import kiarahmani.atropos.search_engine.Optimal_search_engine_twitter;
 import kiarahmani.atropos.utils.Constants;
@@ -61,18 +62,18 @@ public class Atropos {
 
 			Program program = (new SIBenchProgramGenerator(pu)).generate("minRecord", "updateRecord");
 
-			program.printProgram();
-			re.atomicize(pu);
-			program.printProgram();
-			analyze(pu);
-			assert (false);
+			 program.printProgram();
+			// re.atomicize(pu);
+			// program.printProgram();
+			// analyze(pu);
+			// assert (false);
 			//
 			//
 
 			pu.lock();
 			re.pre_analysis(pu);
 			// search the refactoring space
-			Optimal_search_engine_twitter se = new Optimal_search_engine_twitter();
+			Optimal_search_engine_sibench se = new Optimal_search_engine_sibench();
 			// Naive_search_engine se = new Naive_search_engine(history);
 			int _refactoring_depth = 1;
 			HashSet<VC> local_hist = new HashSet<>();

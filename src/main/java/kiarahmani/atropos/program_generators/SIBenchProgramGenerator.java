@@ -49,17 +49,7 @@ public class SIBenchProgramGenerator implements ProgramGenerator {
 		 * 
 		 * 
 		 * 
-		 * 
-		 * 
-		 * 
-		 * 
-		 * 
-		 * 
-		 * 
-		 * 
-		 * 
-		 * 
-		 * 
+
 		 * 
 		 * 
 		 * 
@@ -67,18 +57,6 @@ public class SIBenchProgramGenerator implements ProgramGenerator {
 		 * 
 		 * 
 		 * ************************ Transactions ************************
-		 *
-		 *
-		 *
-		 *
-		 *
-		 *
-		 *
-		 *
-		 *
-		 *
-		 *
-		 *
 		 *
 		 *
 		 *
@@ -122,7 +100,6 @@ public class SIBenchProgramGenerator implements ProgramGenerator {
 			update2.addUpdateExp(pu.getFieldName("value"),
 					new E_BinOp(BinOp.PLUS, pu.mkProjExpr(txn_name, 0, "value", 1), new E_Const_Num(1)));
 			pu.addQueryStatement(txn_name, update2);
-
 		}
 
 		return pu.generateProgram();
