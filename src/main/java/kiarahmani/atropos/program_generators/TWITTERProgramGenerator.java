@@ -45,7 +45,8 @@ public class TWITTERProgramGenerator implements ProgramGenerator {
 				new FieldName(prefix + "email", false, false, F_Type.TEXT),
 				new FieldName(prefix + "partitionid", false, false, F_Type.NUM),
 				new FieldName(prefix + "partitionid2", false, false, F_Type.NUM),
-				new FieldName(prefix + "followers", false, false, F_Type.NUM) };
+				new FieldName(prefix + "followers", false, false, F_Type.NUM),
+				new FieldName(prefix + "tweet_counts", false, false, F_Type.NUM) };
 		pu.mkTable(table_name, fns);
 
 		// followers
@@ -226,6 +227,19 @@ public class TWITTERProgramGenerator implements ProgramGenerator {
 			insert1.addInsertExp(pu.getFieldName("t_text"), pu.getArg("it_text"));
 			insert1.addInsertExp(pu.getFieldName("t_createdate"), pu.getArg("it_time"));
 			pu.addQueryStatement(txn_name, insert1);
+
+			// select user
+			table_name = "user_profiles";
+			WHC whc2 = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(pu.getTableName(table_name),
+					pu.getFieldName("up_id"), BinOp.EQ, pu.getArg("it_uid")));
+			Select_Query select2 = pu.addSelectQuery(txn_name, table_name, whc2, "up_tweet_counts");
+			pu.addQueryStatement(txn_name, select2);
+
+			// update tweet counts
+			Update_Query update3 = pu.addUpdateQuery(txn_name, table_name, whc2);
+			update3.addUpdateExp(pu.getFieldName("up_tweet_counts"),
+					new E_BinOp(BinOp.PLUS, pu.mkProjExpr(txn_name, 1, "up_tweet_counts", 1), new E_Const_Num(1)));
+			pu.addQueryStatement(txn_name, update3);
 
 		}
 
