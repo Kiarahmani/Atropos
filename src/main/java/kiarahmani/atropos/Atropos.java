@@ -31,6 +31,7 @@ import kiarahmani.atropos.search_engine.Optimal_search_engine_seats;
 import kiarahmani.atropos.search_engine.Optimal_search_engine_sibench;
 import kiarahmani.atropos.search_engine.Optimal_search_engine_tpcc;
 import kiarahmani.atropos.search_engine.Optimal_search_engine_twitter;
+import kiarahmani.atropos.search_engine.Optimal_search_engine_wikipedia;
 import kiarahmani.atropos.utils.Constants;
 import kiarahmani.atropos.utils.Program_Utils;
 
@@ -64,11 +65,11 @@ public class Atropos {
 			Program program = (new WikipediaProgramGenerator(pu)).generate("addWatchList", "getPageAnonymous",
 					"getPageAuthenticated", "removeWatchList", "updatePageLog", "updatePage");
 
-			program.printProgram();
-			re.atomicize(pu);
-			program.printProgram();
-			analyze(pu);
-			assert (false);
+			// program.printProgram();
+			// re.atomicize(pu);
+			// program.printProgram();
+			// analyze(pu);
+			// assert (false);
 
 			/*
 			 * 
@@ -78,7 +79,7 @@ public class Atropos {
 			pu.lock();
 			re.pre_analysis(pu);
 			// search the refactoring space
-			Optimal_search_engine_sibench se = new Optimal_search_engine_sibench();
+			Optimal_search_engine_wikipedia se = new Optimal_search_engine_wikipedia();
 			// Naive_search_engine se = new Naive_search_engine(history);
 			int _refactoring_depth = 1;
 			HashSet<VC> local_hist = new HashSet<>();

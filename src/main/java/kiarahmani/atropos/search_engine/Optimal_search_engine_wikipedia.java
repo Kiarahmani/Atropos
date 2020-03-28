@@ -20,13 +20,13 @@ import kiarahmani.atropos.utils.Program_Utils;
  * @author Kiarash
  *
  */
-public class Optimal_search_engine_twitter extends Search_engine {
+public class Optimal_search_engine_wikipedia extends Search_engine {
 
 	private int iter;
 	private int max_iter;
 	private Delta[] result;
 
-	public Optimal_search_engine_twitter() {
+	public Optimal_search_engine_wikipedia() {
 		iter = 0;
 		max_iter = 8;
 	}
@@ -42,19 +42,19 @@ public class Optimal_search_engine_twitter extends Search_engine {
 			// introduce new fields
 			int index = 0;
 			// introduce a CRDT table for customer balance
-			result[index++] = new INTRO_R("user_tweet_cnt", true);
-			result[index++] = new INTRO_F("user_tweet_cnt", "tc_uid", F_Type.NUM, false, false);
-			result[index++] = new INTRO_F("user_tweet_cnt", "tc_uuid", F_Type.NUM, true, false);
-			result[index++] = new INTRO_F("user_tweet_cnt", "tc_cnt", F_Type.NUM, false, true);
+			result[index++] = new INTRO_R("useracct_editcount_crdt", true);
+			result[index++] = new INTRO_F("useracct_editcount_crdt", "uec_uid", F_Type.NUM, false, false);
+			result[index++] = new INTRO_F("useracct_editcount_crdt", "uec_uuid", F_Type.NUM, true, false);
+			result[index++] = new INTRO_F("useracct_editcount_crdt", "uec_cnt", F_Type.NUM, false, true);
 
-			result[index++] = new ADDPK(pu, "user_tweet_cnt", "tc_uid");
-			result[index++] = new ADDPK(pu, "user_tweet_cnt", "tc_uuid");
-			result[index++] = new CHSK(pu, "user_tweet_cnt", "tc_uid");
+			result[index++] = new ADDPK(pu, "useracct_editcount_crdt", "uec_uid");
+			result[index++] = new ADDPK(pu, "useracct_editcount_crdt", "uec_uuid");
+			result[index++] = new CHSK(pu, "useracct_editcount_crdt", "uec_uid");
 
 			// introduce vc between customer and cust_bal_crdt
-			INTRO_VC delta_1 = new INTRO_VC(pu, "user_profiles", "user_tweet_cnt", VC_Agg.VC_SUM, VC_Type.VC_OTM);
-			delta_1.addKeyCorrespondenceToVC("up_id", "tc_uid");
-			delta_1.addFieldTupleToVC("up_tweet_counts", "tc_cnt");
+			INTRO_VC delta_1 = new INTRO_VC(pu, "useracct", "useracct_editcount_crdt", VC_Agg.VC_SUM, VC_Type.VC_OTM);
+			delta_1.addKeyCorrespondenceToVC("user_id", "uec_uid");
+			delta_1.addFieldTupleToVC("user_editcount", "uec_cnt");
 			result[index++] = delta_1;
 
 			/*
