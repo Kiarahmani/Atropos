@@ -49,12 +49,12 @@ public class If_Statement extends Statement {
 		System.out.println(indent + "    IF" + this.id + " (" + this.condition.toString() + "){");
 		for (Statement stmt : if_statements)
 			stmt.printStatemenet(indent + "       ");
-		System.out.println(indent + "}");
+		System.out.println(indent + "    }");
 		if (else_statements.size() > 0) {
 			System.out.println(indent + "    ELSE {");
 			for (Statement stmt : else_statements)
 				stmt.printStatemenet(indent + "       ");
-			System.out.println(indent + "}");
+			System.out.println(indent + "    }");
 		}
 	}
 
@@ -63,12 +63,12 @@ public class If_Statement extends Statement {
 		System.out.println("    IF" + this.id + " (" + this.condition.toString() + "){");
 		for (Statement stmt : if_statements)
 			stmt.printStatemenet("       ");
-		System.out.println("}");
+		System.out.println("    }");
 		if (else_statements.size() > 0) {
 			System.out.println("    ELSE {");
 			for (Statement stmt : else_statements)
 				stmt.printStatemenet("       ");
-			System.out.println("}");
+			System.out.println("    }");
 		}
 
 	}
