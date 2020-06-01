@@ -11,7 +11,7 @@ import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.expression.constants.E_Const_Bool;
 import kiarahmani.atropos.DML.query.Query.Kind;
 import kiarahmani.atropos.DML.where_clause.WHC;
-import kiarahmani.atropos.DML.where_clause.WHC_Constraint;
+import kiarahmani.atropos.DML.where_clause.WHCC;
 import kiarahmani.atropos.program.Table;
 import kiarahmani.atropos.utils.Tuple;
 
@@ -56,7 +56,7 @@ public class Insert_Query extends Query {
 		return null;
 	}
 
-	public void addPKExp(WHC_Constraint... whccs) {
+	public void addPKExp(WHCC... whccs) {
 		where_clause = new WHC(whccs);
 	}
 

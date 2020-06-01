@@ -13,7 +13,7 @@ import kiarahmani.atropos.DML.expression.BinOp;
 import kiarahmani.atropos.DML.expression.E_Proj;
 import kiarahmani.atropos.DML.expression.Expression;
 
-public class WHC_Constraint {
+public class WHCC {
 	private TableName tn;
 	private FieldName f;
 	private BinOp op;
@@ -21,7 +21,7 @@ public class WHC_Constraint {
 	private boolean alive_constraint;
 	private static final Logger logger = LogManager.getLogger(Atropos.class);
 
-	public WHC_Constraint(TableName tn, FieldName f, BinOp op, Expression exp) {
+	public WHCC(TableName tn, FieldName f, BinOp op, Expression exp) {
 		this.tn = tn;
 		this.f = f;
 		this.op = op;
@@ -29,8 +29,8 @@ public class WHC_Constraint {
 		this.alive_constraint = this.f.getName().contains("alive");
 	}
 
-	public WHC_Constraint mkSnapshot() {
-		return new WHC_Constraint(this.tn, this.f, this.op, this.exp.mkSnapshot());
+	public WHCC mkSnapshot() {
+		return new WHCC(this.tn, this.f, this.op, this.exp.mkSnapshot());
 	}
 
 	public boolean isAliveConstraint() {
@@ -53,7 +53,7 @@ public class WHC_Constraint {
 		return this.f;
 	}
 
-	public boolean isEqual(WHC_Constraint other) {
+	public boolean isEqual(WHCC other) {
 		// logger.debug(this.f + " =? " + other.f + " (" + this.f.equals(other.f) +
 		// ")");
 		// logger.debug(this.op + " =? " + other.op + " (" + (this.op == other.op) +

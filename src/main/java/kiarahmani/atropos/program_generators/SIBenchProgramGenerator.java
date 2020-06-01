@@ -15,7 +15,7 @@ import kiarahmani.atropos.DML.query.Insert_Query;
 import kiarahmani.atropos.DML.query.Select_Query;
 import kiarahmani.atropos.DML.query.Update_Query;
 import kiarahmani.atropos.DML.where_clause.WHC;
-import kiarahmani.atropos.DML.where_clause.WHC_Constraint;
+import kiarahmani.atropos.DML.where_clause.WHCC;
 import kiarahmani.atropos.program.Program;
 import kiarahmani.atropos.program_generators.ProgramGenerator;
 import kiarahmani.atropos.utils.Program_Utils;
@@ -76,7 +76,7 @@ public class SIBenchProgramGenerator implements ProgramGenerator {
 			pu.mkTrnasaction(txn_name, prefix + "id:int");
 
 			table_name = "sitest";
-			WHC whc1 = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(pu.getTableName(table_name),
+			WHC whc1 = new WHC(pu.getIsAliveFieldName(table_name), new WHCC(pu.getTableName(table_name),
 					pu.getFieldName("id"), BinOp.EQ, pu.getArg("m_id")));
 			Select_Query select1 = pu.addSelectQuery(txn_name, table_name, whc1, "value");
 			pu.addQueryStatement(txn_name, select1);
@@ -91,7 +91,7 @@ public class SIBenchProgramGenerator implements ProgramGenerator {
 			pu.mkTrnasaction(txn_name, prefix + "id:int");
 
 			table_name = "sitest";
-			WHC whc1 = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(pu.getTableName(table_name),
+			WHC whc1 = new WHC(pu.getIsAliveFieldName(table_name), new WHCC(pu.getTableName(table_name),
 					pu.getFieldName("id"), BinOp.EQ, pu.getArg("u_id")));
 			Select_Query select1 = pu.addSelectQuery(txn_name, table_name, whc1, "value");
 			pu.addQueryStatement(txn_name, select1);

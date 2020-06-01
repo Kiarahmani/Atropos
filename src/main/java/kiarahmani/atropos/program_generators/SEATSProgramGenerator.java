@@ -14,7 +14,7 @@ import kiarahmani.atropos.DML.query.Insert_Query;
 import kiarahmani.atropos.DML.query.Select_Query;
 import kiarahmani.atropos.DML.query.Update_Query;
 import kiarahmani.atropos.DML.where_clause.WHC;
-import kiarahmani.atropos.DML.where_clause.WHC_Constraint;
+import kiarahmani.atropos.DML.where_clause.WHCC;
 import kiarahmani.atropos.program.Program;
 import kiarahmani.atropos.program_generators.ProgramGenerator;
 import kiarahmani.atropos.utils.Program_Utils;
@@ -183,21 +183,21 @@ public class SEATSProgramGenerator implements ProgramGenerator {
 					prefix + "ff_al_id:int");
 			// get customer's details
 			table_name = "customer";
-			WHC whc1 = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(pu.getTableName(table_name),
+			WHC whc1 = new WHC(pu.getIsAliveFieldName(table_name), new WHCC(pu.getTableName(table_name),
 					pu.getFieldName("c_id"), BinOp.EQ, pu.getArg("dr_given_c_id")));
 			Select_Query select1 = pu.addSelectQuery(txn_name, table_name, whc1, "c_balance", "c_sattr", "c_iattr");
 			pu.addQueryStatement(txn_name, select1);
 
 			// retrieve the flight details
 			table_name = "flight";
-			WHC whc2 = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(pu.getTableName(table_name),
+			WHC whc2 = new WHC(pu.getIsAliveFieldName(table_name), new WHCC(pu.getTableName(table_name),
 					pu.getFieldName("f_id"), BinOp.EQ, pu.getArg("dr_f_id")));
 			Select_Query select2 = pu.addSelectQuery(txn_name, table_name, whc2, "f_seats_left");
 			pu.addQueryStatement(txn_name, select2);
 
 			// retrieve the reservation's details
 			table_name = "reservation";
-			WHC whc3 = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(pu.getTableName(table_name),
+			WHC whc3 = new WHC(pu.getIsAliveFieldName(table_name), new WHCC(pu.getTableName(table_name),
 					pu.getFieldName("r_c_id"), BinOp.EQ, pu.getArg("dr_given_c_id")));
 			Select_Query select3 = pu.addSelectQuery(txn_name, table_name, whc3, "r_id", "r_seat", "r_price",
 					"r_iattr");
@@ -206,18 +206,18 @@ public class SEATSProgramGenerator implements ProgramGenerator {
 			// delete their first reservation
 			table_name = "reservation";
 			WHC whc4 = new WHC(pu.getIsAliveFieldName(table_name),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("r_id"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("r_id"), BinOp.EQ,
 							pu.mkProjExpr(txn_name, 2, "r_id", 1)),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("r_c_id"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("r_c_id"), BinOp.EQ,
 							pu.getArg("dr_given_c_id")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("r_f_id"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("r_f_id"), BinOp.EQ,
 							pu.getArg("dr_f_id")));
 			Delete_Query delete4 = pu.addDeleteQuery(txn_name, table_name, whc4);
 			pu.addQueryStatement(txn_name, delete4);
 
 			// update the number of seats left in the flight
 			table_name = "flight";
-			WHC whc5 = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(pu.getTableName(table_name),
+			WHC whc5 = new WHC(pu.getIsAliveFieldName(table_name), new WHCC(pu.getTableName(table_name),
 					pu.getFieldName("f_id"), BinOp.EQ, pu.getArg("dr_f_id")));
 			Update_Query update5 = pu.addUpdateQuery(txn_name, table_name, whc5);
 			update5.addUpdateExp(pu.getFieldName("f_seats_left"),
@@ -226,7 +226,7 @@ public class SEATSProgramGenerator implements ProgramGenerator {
 
 			// update customer's balance
 			table_name = "customer";
-			WHC whc6 = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(pu.getTableName(table_name),
+			WHC whc6 = new WHC(pu.getIsAliveFieldName(table_name), new WHCC(pu.getTableName(table_name),
 					pu.getFieldName("c_id"), BinOp.EQ, pu.getArg("dr_given_c_id")));
 			Update_Query update6 = pu.addUpdateQuery(txn_name, table_name, whc6);
 			update6.addUpdateExp(pu.getFieldName("c_balance"), new E_BinOp(BinOp.PLUS,
@@ -251,13 +251,13 @@ public class SEATSProgramGenerator implements ProgramGenerator {
 			// retrieve flights' details
 			table_name = "flight";
 			WHC whc1 = new WHC(pu.getIsAliveFieldName(table_name),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("f_depart_ap_id"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("f_depart_ap_id"), BinOp.EQ,
 							pu.getArg("ff_depart_aid")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("f_arrive_ap_id"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("f_arrive_ap_id"), BinOp.EQ,
 							pu.getArg("ff_arrive_aid")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("f_arrive_time"), BinOp.LT,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("f_arrive_time"), BinOp.LT,
 							pu.getArg("ff_end_date")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("f_depart_time"), BinOp.GT,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("f_depart_time"), BinOp.GT,
 							pu.getArg("ff_start_date")));
 			Select_Query select1 = pu.addSelectQuery(txn_name, table_name, whc1, "f_id", "f_al_id", "f_seats_left",
 					"f_depart_time", "f_arrive_time", "f_iattr");
@@ -265,28 +265,28 @@ public class SEATSProgramGenerator implements ProgramGenerator {
 
 			// retrieve airline
 			table_name = "airline";
-			WHC whc2 = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(pu.getTableName(table_name),
+			WHC whc2 = new WHC(pu.getIsAliveFieldName(table_name), new WHCC(pu.getTableName(table_name),
 					pu.getFieldName("al_id"), BinOp.EQ, pu.mkProjExpr(txn_name, 0, "f_al_id", 1)));
 			Select_Query select2 = pu.addSelectQuery(txn_name, table_name, whc2, "al_name", "al_iattr");
 			pu.addQueryStatement(txn_name, select2);
 
 			// retrieve depart airport details
 			table_name = "airport";
-			WHC whc3 = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(pu.getTableName(table_name),
+			WHC whc3 = new WHC(pu.getIsAliveFieldName(table_name), new WHCC(pu.getTableName(table_name),
 					pu.getFieldName("ap_id"), BinOp.EQ, pu.getArg("ff_depart_aid")));
 			Select_Query select3 = pu.addSelectQuery(txn_name, table_name, whc3, "ap_code", "ap_name", "ap_city",
 					"ap_co_id", "ap_longitude", "ap_latitude");
 			pu.addQueryStatement(txn_name, select3);
 			// retrieve depart country details
 			table_name = "country";
-			WHC whc4 = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(pu.getTableName(table_name),
+			WHC whc4 = new WHC(pu.getIsAliveFieldName(table_name), new WHCC(pu.getTableName(table_name),
 					pu.getFieldName("co_id"), BinOp.EQ, pu.mkProjExpr(txn_name, 2, "ap_co_id", 1)));
 			Select_Query select4 = pu.addSelectQuery(txn_name, table_name, whc4, "co_name", "co_code");
 			pu.addQueryStatement(txn_name, select4);
 
 			// retrieve arrive airport details
 			table_name = "airport";
-			WHC whc5 = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(pu.getTableName(table_name),
+			WHC whc5 = new WHC(pu.getIsAliveFieldName(table_name), new WHCC(pu.getTableName(table_name),
 					pu.getFieldName("ap_id"), BinOp.EQ, pu.getArg("ff_arrive_aid")));
 			Select_Query select5 = pu.addSelectQuery(txn_name, table_name, whc5, "ap_code", "ap_name", "ap_city",
 					"ap_co_id", "ap_longitude", "ap_latitude");
@@ -294,7 +294,7 @@ public class SEATSProgramGenerator implements ProgramGenerator {
 
 			// retrieve arrive country details
 			table_name = "country";
-			WHC whc6 = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(pu.getTableName(table_name),
+			WHC whc6 = new WHC(pu.getIsAliveFieldName(table_name), new WHCC(pu.getTableName(table_name),
 					pu.getFieldName("co_id"), BinOp.EQ, pu.mkProjExpr(txn_name, 4, "ap_co_id", 1)));
 			Select_Query select6 = pu.addSelectQuery(txn_name, table_name, whc6, "co_name", "co_code");
 			pu.addQueryStatement(txn_name, select6);
@@ -310,7 +310,7 @@ public class SEATSProgramGenerator implements ProgramGenerator {
 
 			// retrieve flight's details
 			table_name = "flight";
-			WHC whc1 = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(pu.getTableName(table_name),
+			WHC whc1 = new WHC(pu.getIsAliveFieldName(table_name), new WHCC(pu.getTableName(table_name),
 					pu.getFieldName("f_id"), BinOp.EQ, pu.getArg("fos_fid")));
 			Select_Query select1 = pu.addSelectQuery(txn_name, table_name, whc1, "f_status", "f_base_price",
 					"f_seats_total", "f_seats_left");
@@ -318,7 +318,7 @@ public class SEATSProgramGenerator implements ProgramGenerator {
 
 			// get all reservations on this flight
 			table_name = "reservation";
-			WHC whc2 = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(pu.getTableName(table_name),
+			WHC whc2 = new WHC(pu.getIsAliveFieldName(table_name), new WHCC(pu.getTableName(table_name),
 					pu.getFieldName("r_f_id"), BinOp.EQ, pu.getArg("fos_fid")));
 			Select_Query select2 = pu.addSelectQuery(txn_name, table_name, whc2, "r_id", "r_seat");
 			pu.addQueryStatement(txn_name, select2);
@@ -334,7 +334,7 @@ public class SEATSProgramGenerator implements ProgramGenerator {
 
 			// retrieve flight's information
 			table_name = "flight";
-			WHC whc1 = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(pu.getTableName(table_name),
+			WHC whc1 = new WHC(pu.getIsAliveFieldName(table_name), new WHCC(pu.getTableName(table_name),
 					pu.getFieldName("f_id"), BinOp.EQ, pu.getArg("nr_f_id")));
 			Select_Query select1 = pu.addSelectQuery(txn_name, table_name, whc1, "f_base_price", "f_al_id",
 					"f_seats_left");
@@ -342,7 +342,7 @@ public class SEATSProgramGenerator implements ProgramGenerator {
 
 			// retrieve airline information
 			table_name = "airline";
-			WHC whc2 = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(pu.getTableName(table_name),
+			WHC whc2 = new WHC(pu.getIsAliveFieldName(table_name), new WHCC(pu.getTableName(table_name),
 					pu.getFieldName("al_id"), BinOp.EQ, pu.mkProjExpr(txn_name, 0, "f_al_id", 1)));
 			Select_Query select2 = pu.addSelectQuery(txn_name, table_name, whc2, "al_name", "al_iattr");
 			pu.addQueryStatement(txn_name, select2);
@@ -354,9 +354,9 @@ public class SEATSProgramGenerator implements ProgramGenerator {
 			// retrieve reservations on this flight
 			table_name = "reservation";
 			WHC whc3 = new WHC(pu.getIsAliveFieldName(table_name),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("r_f_id"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("r_f_id"), BinOp.EQ,
 							pu.getArg("nr_f_id")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("r_seat"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("r_seat"), BinOp.EQ,
 							pu.getArg("nr_seatnum")));
 			Select_Query select3 = pu.addSelectQuery(txn_name, table_name, whc3, "r_id");
 			pu.addQueryStatementInIf(txn_name, 0, select3);
@@ -364,16 +364,16 @@ public class SEATSProgramGenerator implements ProgramGenerator {
 			// retrieve reservations of this customer
 			table_name = "reservation";
 			WHC whc4 = new WHC(pu.getIsAliveFieldName(table_name),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("r_f_id"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("r_f_id"), BinOp.EQ,
 							pu.getArg("nr_f_id")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("r_c_id"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("r_c_id"), BinOp.EQ,
 							pu.getArg("nr_c_id")));
 			Select_Query select4 = pu.addSelectQuery(txn_name, table_name, whc4, "r_id");
 			pu.addQueryStatementInIf(txn_name, 0, select4);
 
 			// retrieve customer's information
 			table_name = "customer";
-			WHC whc5 = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(pu.getTableName(table_name),
+			WHC whc5 = new WHC(pu.getIsAliveFieldName(table_name), new WHCC(pu.getTableName(table_name),
 					pu.getFieldName("c_id"), BinOp.EQ, pu.getArg("nr_c_id")));
 			Select_Query select5 = pu.addSelectQuery(txn_name, table_name, whc5, "c_base_ap_id", "c_balance", "c_sattr",
 					"c_iattr");
@@ -382,17 +382,17 @@ public class SEATSProgramGenerator implements ProgramGenerator {
 			// insert a new reservation
 			table_name = "reservation";
 			Insert_Query insert6 = pu.addInsertQuery(txn_name, table_name,
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("r_id"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("r_id"), BinOp.EQ,
 							pu.getArg("nr_r_id")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("r_c_id"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("r_c_id"), BinOp.EQ,
 							pu.getArg("nr_c_id")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("r_f_id"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("r_f_id"), BinOp.EQ,
 							pu.getArg("nr_f_id")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("r_seat"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("r_seat"), BinOp.EQ,
 							pu.getArg("nr_seatnum")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("r_price"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("r_price"), BinOp.EQ,
 							pu.mkProjExpr(txn_name, 0, "f_base_price", 1)),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("r_iattr"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("r_iattr"), BinOp.EQ,
 							pu.getArg("nr_attr")));
 			insert6.addInsertExp(pu.getFieldName("r_id"), pu.getArg("nr_r_id"));
 			insert6.addInsertExp(pu.getFieldName("r_c_id"), pu.getArg("nr_c_id"));
@@ -404,7 +404,7 @@ public class SEATSProgramGenerator implements ProgramGenerator {
 
 			// update customer
 			table_name = "customer";
-			WHC whc7 = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(pu.getTableName(table_name),
+			WHC whc7 = new WHC(pu.getIsAliveFieldName(table_name), new WHCC(pu.getTableName(table_name),
 					pu.getFieldName("c_id"), BinOp.EQ, pu.getArg("nr_c_id")));
 			Update_Query update7 = pu.addUpdateQuery(txn_name, table_name, whc7);
 			update7.addUpdateExp(pu.getFieldName("c_balance"), new E_BinOp(BinOp.MINUS,
@@ -417,7 +417,7 @@ public class SEATSProgramGenerator implements ProgramGenerator {
 
 			// update flight
 			table_name = "flight";
-			WHC whc10 = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(pu.getTableName(table_name),
+			WHC whc10 = new WHC(pu.getIsAliveFieldName(table_name), new WHCC(pu.getTableName(table_name),
 					pu.getFieldName("f_id"), BinOp.EQ, pu.getArg("nr_f_id")));
 			Update_Query update10 = pu.addUpdateQuery(txn_name, table_name, whc10);
 			update10.addUpdateExp(pu.getFieldName("f_seats_left"),
@@ -427,9 +427,9 @@ public class SEATSProgramGenerator implements ProgramGenerator {
 			// select frequent_flyer
 			table_name = "frequent_flyer";
 			WHC whc8 = new WHC(pu.getIsAliveFieldName(table_name),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("ff_c_id"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("ff_c_id"), BinOp.EQ,
 							pu.getArg("nr_c_id")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("ff_al_id"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("ff_al_id"), BinOp.EQ,
 							pu.mkProjExpr(txn_name, 0, "f_al_id", 1)));
 			Select_Query select8 = pu.addSelectQuery(txn_name, table_name, whc8, "ff_sattr", "ff_iattr");
 			pu.addQueryStatementInIf(txn_name, 0, select8);
@@ -437,9 +437,9 @@ public class SEATSProgramGenerator implements ProgramGenerator {
 			// update frequent_flyer
 			table_name = "frequent_flyer";
 			WHC whc9 = new WHC(pu.getIsAliveFieldName(table_name),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("ff_c_id"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("ff_c_id"), BinOp.EQ,
 							pu.getArg("nr_c_id")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("ff_al_id"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("ff_al_id"), BinOp.EQ,
 							pu.mkProjExpr(txn_name, 0, "f_al_id", 1)));
 
 			Update_Query update9 = pu.addUpdateQuery(txn_name, table_name, whc9);
@@ -461,14 +461,14 @@ public class SEATSProgramGenerator implements ProgramGenerator {
 
 			// retrieve customer's details
 			table_name = "customer";
-			WHC whc1 = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(pu.getTableName(table_name),
+			WHC whc1 = new WHC(pu.getIsAliveFieldName(table_name), new WHCC(pu.getTableName(table_name),
 					pu.getFieldName("c_id"), BinOp.EQ, pu.getArg("uc_c_id")));
 			Select_Query select1 = pu.addSelectQuery(txn_name, table_name, whc1, "c_base_ap_id", "c_balance", "c_sattr",
 					"c_iattr");
 			pu.addQueryStatement(txn_name, select1);
 			// retrieve their base airport details
 			table_name = "airport";
-			WHC whc2 = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(pu.getTableName(table_name),
+			WHC whc2 = new WHC(pu.getIsAliveFieldName(table_name), new WHCC(pu.getTableName(table_name),
 					pu.getFieldName("ap_id"), BinOp.EQ, pu.mkProjExpr(txn_name, 0, "c_base_ap_id", 1)));
 			Select_Query select2 = pu.addSelectQuery(txn_name, table_name, whc2, "ap_code", "ap_name", "ap_city",
 					"ap_co_id", "ap_longitude", "ap_latitude");
@@ -476,7 +476,7 @@ public class SEATSProgramGenerator implements ProgramGenerator {
 
 			// retrieve airport's country's details
 			table_name = "country";
-			WHC whc3 = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(pu.getTableName(table_name),
+			WHC whc3 = new WHC(pu.getIsAliveFieldName(table_name), new WHCC(pu.getTableName(table_name),
 					pu.getFieldName("co_id"), BinOp.EQ, pu.mkProjExpr(txn_name, 1, "ap_co_id", 1)));
 			Select_Query select3 = pu.addSelectQuery(txn_name, table_name, whc3, "co_name", "co_code");
 			pu.addQueryStatement(txn_name, select3);
@@ -494,9 +494,9 @@ public class SEATSProgramGenerator implements ProgramGenerator {
 			// retrieve target reservation's details
 			table_name = "reservation";
 			WHC whc1 = new WHC(pu.getIsAliveFieldName(table_name),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("r_f_id"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("r_f_id"), BinOp.EQ,
 							pu.getArg("ur_f_id")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("r_seat"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("r_seat"), BinOp.EQ,
 							pu.getArg("ur_seatnum")));
 			Select_Query select1 = pu.addSelectQuery(txn_name, table_name, whc1, "r_id");
 			pu.addQueryStatement(txn_name, select1);
@@ -504,9 +504,9 @@ public class SEATSProgramGenerator implements ProgramGenerator {
 			// retrieve reservations of the customer
 			table_name = "reservation";
 			WHC whc2 = new WHC(pu.getIsAliveFieldName(table_name),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("r_f_id"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("r_f_id"), BinOp.EQ,
 							pu.getArg("ur_f_id")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("r_c_id"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("r_c_id"), BinOp.EQ,
 							pu.getArg("ur_c_id")));
 			Select_Query select2 = pu.addSelectQuery(txn_name, table_name, whc2, "r_id");
 			pu.addQueryStatement(txn_name, select2);
@@ -514,11 +514,11 @@ public class SEATSProgramGenerator implements ProgramGenerator {
 			// update seat number
 			table_name = "reservation";
 			WHC whc3 = new WHC(pu.getIsAliveFieldName(table_name),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("r_id"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("r_id"), BinOp.EQ,
 							pu.mkProjExpr(txn_name, 1, "r_id", 1)),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("r_f_id"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("r_f_id"), BinOp.EQ,
 							pu.getArg("ur_f_id")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("r_c_id"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("r_c_id"), BinOp.EQ,
 							pu.getArg("ur_c_id")));
 			Update_Query update3 = pu.addUpdateQuery(txn_name, table_name, whc3);
 			update3.addUpdateExp(pu.getFieldName("r_seat"), pu.getArg("ur_seatnum"));

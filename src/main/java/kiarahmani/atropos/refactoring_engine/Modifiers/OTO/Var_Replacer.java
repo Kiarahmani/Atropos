@@ -24,7 +24,7 @@ import kiarahmani.atropos.DML.expression.constants.E_Const_Num;
 import kiarahmani.atropos.DML.query.Query;
 import kiarahmani.atropos.DML.query.Select_Query;
 import kiarahmani.atropos.DML.where_clause.WHC;
-import kiarahmani.atropos.DML.where_clause.WHC_Constraint;
+import kiarahmani.atropos.DML.where_clause.WHCC;
 import kiarahmani.atropos.program.Table;
 import kiarahmani.atropos.program.Transaction;
 import kiarahmani.atropos.program.statements.Query_Statement;

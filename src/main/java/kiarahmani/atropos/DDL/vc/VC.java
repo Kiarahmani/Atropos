@@ -16,7 +16,7 @@ import kiarahmani.atropos.Atropos;
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DDL.TableName;
 import kiarahmani.atropos.DML.where_clause.WHC;
-import kiarahmani.atropos.DML.where_clause.WHC_Constraint;
+import kiarahmani.atropos.DML.where_clause.WHCC;
 import kiarahmani.atropos.utils.Program_Utils;
 import kiarahmani.atropos.utils.Tuple;
 
@@ -141,14 +141,14 @@ public class VC {
 	}
 
 	public boolean containsWHC(Program_Utils pu, WHC input_whc) {
-		for (WHC_Constraint whcc : input_whc.getConstraints())
+		for (WHCC whcc : input_whc.getConstraints())
 			if (!whcc.isAliveConstraint() && !containsWHCC(pu, whcc))
 				return false;
 		logger.debug("whc (" + input_whc + ") is contained in " + this);
 		return true;
 	}
 
-	private boolean containsWHCC(Program_Utils pu, WHC_Constraint input_whcc) {
+	private boolean containsWHCC(Program_Utils pu, WHCC input_whcc) {
 		for (VC_Constraint vcc : vc_constraints)
 			if (vcc.getF_1(pu).equals(input_whcc.getFieldName()) || vcc.getF_2(pu).equals(input_whcc.getFieldName()))
 				return true;

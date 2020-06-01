@@ -23,7 +23,7 @@ import kiarahmani.atropos.DML.expression.constants.E_Const_Num;
 import kiarahmani.atropos.DML.query.Query;
 import kiarahmani.atropos.DML.query.Select_Query;
 import kiarahmani.atropos.DML.where_clause.WHC;
-import kiarahmani.atropos.DML.where_clause.WHC_Constraint;
+import kiarahmani.atropos.DML.where_clause.WHCC;
 import kiarahmani.atropos.program.Table;
 import kiarahmani.atropos.program.statements.Query_Statement;
 import kiarahmani.atropos.utils.Program_Utils;
@@ -115,12 +115,12 @@ public class SELECT_Splitter extends One_to_Two_Query_Modifier {
 	private WHC mk_old_whc_to_all_pk(WHC old_whc, Select_Query old_select) {
 		logger.debug("attempting to make " + old_whc + " to an all-pk whc");
 		Table table = pu.getTable(old_select.getTableName());
-		ArrayList<WHC_Constraint> whc_constraints = new ArrayList<>();
+		ArrayList<WHCC> whc_constraints = new ArrayList<>();
 		for (FieldName pk : table.getPKFields()) {
 			logger.debug("checking if pk " + pk + " is bound by the whc: ");
 			if (old_whc.getConstraintByFieldName(pk) == null) {
 				logger.debug("pk " + pk + " is not bound by whc. attempting to replace it with proj");
-				whc_constraints.add(new WHC_Constraint(table.getTableName(), pk, BinOp.EQ,
+				whc_constraints.add(new WHCC(table.getTableName(), pk, BinOp.EQ,
 						new E_Proj(old_select.getVariable(), pk, new E_Const_Num(1))));
 			} else
 				whc_constraints.add(old_whc.getConstraintByFieldName(pk));

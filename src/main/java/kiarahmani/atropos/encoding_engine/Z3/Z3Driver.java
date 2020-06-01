@@ -39,7 +39,7 @@ import kiarahmani.atropos.DML.expression.constants.E_Const_Text;
 import kiarahmani.atropos.DML.query.Query;
 import kiarahmani.atropos.DML.query.Select_Query;
 import kiarahmani.atropos.DML.where_clause.WHC;
-import kiarahmani.atropos.DML.where_clause.WHC_Constraint;
+import kiarahmani.atropos.DML.where_clause.WHCC;
 import kiarahmani.atropos.dependency.Conflict;
 import kiarahmani.atropos.dependency.Conflict_Graph;
 import kiarahmani.atropos.dependency.DAI;
@@ -1193,7 +1193,7 @@ public class Z3Driver {
 
 	private BoolExpr translateWhereClauseToZ3Expr(String txnName, Expr transaction, WHC input_whc, Expr record,
 			Expr po) {
-		ArrayList<WHC_Constraint> constraints = input_whc.getConstraints();
+		ArrayList<WHCC> constraints = input_whc.getConstraints();
 		BoolExpr[] result = new BoolExpr[constraints.size()];
 		for (int i = 0; i < constraints.size(); i++)
 			result[i] = translateWhereConstraintToZ3Expr(txnName, transaction, constraints.get(i), record, po);
@@ -1202,10 +1202,10 @@ public class Z3Driver {
 
 	private BoolExpr translateWhereClauseWithoutIsAliveToZ3Expr(String txnName, Expr transaction, WHC input_whc,
 			Expr record, Expr po) {
-		ArrayList<WHC_Constraint> constraints = input_whc.getConstraints();
+		ArrayList<WHCC> constraints = input_whc.getConstraints();
 		BoolExpr[] result = new BoolExpr[constraints.size() - 1];
 		int i = 0;
-		for (WHC_Constraint constraint : constraints) {
+		for (WHCC constraint : constraints) {
 			if (!constraint.getFieldName().getName().contains("is_alive"))
 				result[i++] = translateWhereConstraintToZ3Expr(txnName, transaction, constraint, record, po);
 		}
@@ -1303,7 +1303,7 @@ public class Z3Driver {
 		return null;
 	}
 
-	private BoolExpr translateWhereConstraintToZ3Expr(String txnName, Expr transaction, WHC_Constraint input_constraint,
+	private BoolExpr translateWhereConstraintToZ3Expr(String txnName, Expr transaction, WHCC input_constraint,
 			Expr record, Expr po) {
 		BoolExpr result = null;
 		Expr rhs = translateExpressionsToZ3Expr(txnName, transaction, input_constraint.getExpression(), po);

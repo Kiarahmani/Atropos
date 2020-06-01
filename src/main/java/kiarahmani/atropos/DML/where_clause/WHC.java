@@ -21,52 +21,51 @@ public class WHC {
 
 	private static final Logger logger = LogManager.getLogger(Atropos.class);
 	private WHC_Type whc_type;
-	private ArrayList<WHC_Constraint> whc_constraints;
+	private ArrayList<WHCC> whc_constraints;
 
-	public WHC(FieldName is_alive, WHC_Constraint... whccs) {
+	public WHC(FieldName is_alive, WHCC... whccs) {
 		whc_constraints = new ArrayList<>();
-		for (WHC_Constraint whcc : whccs)
+		for (WHCC whcc : whccs)
 			whc_constraints.add(whcc);
 		// all where cluases included a special constraint on is_alive
-		whc_constraints.add(new WHC_Constraint(whccs[0].getTableName(), is_alive, BinOp.EQ, new E_Const_Bool(true)));
+		whc_constraints.add(new WHCC(whccs[0].getTableName(), is_alive, BinOp.EQ, new E_Const_Bool(true)));
 	}
 
-	public WHC(FieldName is_alive, ArrayList<WHC_Constraint> whccs) {
+	public WHC(FieldName is_alive, ArrayList<WHCC> whccs) {
 		this.whc_constraints = whccs;
 		// all where cluases included a special constraint on is_alive
-		whc_constraints
-				.add(new WHC_Constraint(whccs.get(0).getTableName(), is_alive, BinOp.EQ, new E_Const_Bool(true)));
+		whc_constraints.add(new WHCC(whccs.get(0).getTableName(), is_alive, BinOp.EQ, new E_Const_Bool(true)));
 	}
 
-	public WHC(WHC_Constraint... whccs) {
+	public WHC(WHCC... whccs) {
 		whc_constraints = new ArrayList<>();
-		for (WHC_Constraint whcc : whccs)
+		for (WHCC whcc : whccs)
 			whc_constraints.add(whcc);
 		// all where cluases included a special constraint on is_alive
 	}
 
 	public WHC mkSnapshot() {
 		WHC result = new WHC();
-		for (WHC_Constraint whcc : this.whc_constraints)
+		for (WHCC whcc : this.whc_constraints)
 			result.whc_constraints.add(whcc.mkSnapshot());
 		return result;
 	}
 
-	public ArrayList<WHC_Constraint> getConstraints() {
+	public ArrayList<WHCC> getConstraints() {
 		return this.whc_constraints;
 	}
 
-	public WHC_Constraint getConstraintByFieldName(FieldName fn) {
-		for (WHC_Constraint whcc : this.whc_constraints)
+	public WHCC getConstraintByFieldName(FieldName fn) {
+		for (WHCC whcc : this.whc_constraints)
 			if (whcc.getFieldName() == fn)
 				return whcc;
-		//assert (false) : "unexepected field name " + fn;
+		// assert (false) : "unexepected field name " + fn;
 		return null;
 	}
 
 	public ArrayList<FieldName> getAccessedFieldNames() {
 		ArrayList<FieldName> result = new ArrayList<>();
-		for (WHC_Constraint whcc : this.whc_constraints)
+		for (WHCC whcc : this.whc_constraints)
 			if (!whcc.getFieldName().isPK())
 				result.add(whcc.getFieldName());
 		return result;
@@ -75,9 +74,11 @@ public class WHC {
 	@Override
 	public String toString() {
 		String constraintsList = "", delim = "";
-		for (WHC_Constraint whcc : whc_constraints) {
-			constraintsList += delim + whcc.toString();
-			delim = " ∧ ";
+		for (WHCC whcc : whc_constraints) {
+			if (!whcc.isAliveConstraint()) {
+				constraintsList += delim + whcc.toString();
+				delim = " ∧ ";
+			}
 		}
 		constraintsList = (constraintsList.equals("")) ? "true" : constraintsList; // no constraint means true
 		return "(" + constraintsList + ")";
@@ -85,14 +86,14 @@ public class WHC {
 
 	public HashSet<Variable> getAllRefferencedVars() {
 		HashSet<Variable> result = new HashSet<>();
-		for (WHC_Constraint whcc : this.whc_constraints)
+		for (WHCC whcc : this.whc_constraints)
 			result.addAll(whcc.getAllRefferencedVars());
 		return result;
 	}
 
 	public HashSet<E_Proj> getAllProjExps() {
 		HashSet<E_Proj> result = new HashSet<>();
-		for (WHC_Constraint whcc : this.whc_constraints)
+		for (WHCC whcc : this.whc_constraints)
 			result.addAll(whcc.getAllProjExps());
 		return result;
 	}
@@ -102,7 +103,7 @@ public class WHC {
 	 */
 	public boolean containsWHC(WHC other) {
 		logger.debug("begin containsWHC");
-		for (WHC_Constraint other_whcc : other.whc_constraints) {
+		for (WHCC other_whcc : other.whc_constraints) {
 			if (other_whcc.isAliveConstraint()) {
 				logger.debug("skip: do not do the analysis for isAlive fieldNames");
 				continue;
@@ -119,9 +120,9 @@ public class WHC {
 	/*
 	 * make sure at least one of whcc in this object is equal to the other whcc
 	 */
-	public boolean containsConstraint(WHC_Constraint other_whcc) {
+	public boolean containsConstraint(WHCC other_whcc) {
 
-		for (WHC_Constraint whcc : this.whc_constraints) {
+		for (WHCC whcc : this.whc_constraints) {
 			if (other_whcc.isEqual(whcc)) {
 				logger.debug(whcc + "  is equal to" + other_whcc);
 				return true;
@@ -132,7 +133,7 @@ public class WHC {
 	}
 
 	public boolean isAtomic(FieldName SK) {
-		for (WHC_Constraint whcc : whc_constraints)
+		for (WHCC whcc : whc_constraints)
 			if (whcc.getOp() == BinOp.EQ && (whcc.getFieldName().equals(SK))) {
 				return true;
 			}
@@ -140,19 +141,19 @@ public class WHC {
 	}
 
 	public boolean hasOnlyEq() {
-		for (WHC_Constraint whcc : whc_constraints)
+		for (WHCC whcc : whc_constraints)
 			if (whcc.getOp() != BinOp.EQ)
 				return false;
 		return true;
 	}
 
 	public void substituteExps(Expression oldExp, Expression newExp) {
-		for (WHC_Constraint whcc : whc_constraints)
+		for (WHCC whcc : whc_constraints)
 			whcc.substituteExps(oldExp, newExp);
 	}
 
 	public void redirectProjs(Variable oldVar, FieldName oldFn, Variable newVar, FieldName newFn) {
-		for (WHC_Constraint whcc : whc_constraints)
+		for (WHCC whcc : whc_constraints)
 			whcc.redirectProjs(oldVar, oldFn, newVar, newFn);
 	}
 }

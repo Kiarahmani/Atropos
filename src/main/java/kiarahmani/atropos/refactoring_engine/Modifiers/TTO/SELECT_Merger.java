@@ -21,7 +21,7 @@ import kiarahmani.atropos.DML.expression.constants.E_Const_Num;
 import kiarahmani.atropos.DML.query.Query;
 import kiarahmani.atropos.DML.query.Select_Query;
 import kiarahmani.atropos.DML.where_clause.WHC;
-import kiarahmani.atropos.DML.where_clause.WHC_Constraint;
+import kiarahmani.atropos.DML.where_clause.WHCC;
 import kiarahmani.atropos.program.Block;
 import kiarahmani.atropos.program.Table;
 import kiarahmani.atropos.program.statements.Query_Statement;
@@ -161,7 +161,7 @@ public class SELECT_Merger extends Two_to_One_Query_Modifier {
 		boolean whc2_format = true;
 		ArrayList<FieldName> pot_keys = new ArrayList<>();
 		// this is a property of whc2
-		for (WHC_Constraint whcc : whc2.getConstraints())
+		for (WHCC whcc : whc2.getConstraints())
 			if (!whcc.isAliveConstraint()) {
 				whc2_format &= whcc.getOp() == BinOp.EQ;
 				whc2_format &= isAProjOnFn(whcc.getExpression(), whcc.getFieldName(), var1);

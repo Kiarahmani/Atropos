@@ -22,6 +22,7 @@ import kiarahmani.atropos.program_generators.TPCCProgramGenerator;
 import kiarahmani.atropos.program_generators.TWITTERProgramGenerator;
 import kiarahmani.atropos.program_generators.WikipediaProgramGenerator;
 import kiarahmani.atropos.program_generators.SmallBank.SmallBankProgramGenerator;
+import kiarahmani.atropos.program_generators.SmallBank.SmallBankProgramGenerator_DSL;
 import kiarahmani.atropos.refactoring_engine.Refactoring_Engine;
 import kiarahmani.atropos.refactoring_engine.deltas.Delta;
 import kiarahmani.atropos.refactoring_engine.deltas.INTRO_VC;
@@ -40,6 +41,34 @@ public class Atropos {
 	private static final Logger logger = LogManager.getLogger(Atropos.class);
 
 	public static void main(String[] args) {
+
+		////////////// TEST
+		Program_Utils pu1 = new Program_Utils("TPC-C");
+		Program program1 = (new SmallBankProgramGenerator_DSL(pu1)).generate("Amalgamate", "Balance1",
+				"DepositChecking1", "SendPayment1", "TransactSavings1", "WriteCheck1");
+
+		program1.printProgram();
+		assert (false);
+
+		////////////////////
+		//
+		//
+		//
+		//
+		//
+		//
+		//
+		//
+		//
+		//
+		//
+		//
+		//
+		//
+		//
+		//
+		//
+
 		Program_Utils pu = new Program_Utils("TPC-C");
 //		Program program = (new SEATSProgramGenerator(pu)).generate("deleteReservation", "findFlights", "findOpenSeats",
 //				"newReservation", "updateCustomer", "updateReservation");
@@ -60,16 +89,16 @@ public class Atropos {
 		int iter = 0;
 		out: while (iter < 1) {
 			Refactoring_Engine re = new Refactoring_Engine();
-			pu = new Program_Utils("Wikipedia");
+			pu = new Program_Utils("SmallBank");
 
-			Program program = (new WikipediaProgramGenerator(pu)).generate("addWatchList", "getPageAnonymous",
-					"getPageAuthenticated", "removeWatchList", "updatePageLog", "updatePage");
+			Program program = (new SmallBankProgramGenerator_DSL(pu)).generate("Amalgamate", "Balance1",
+					"DepositChecking1", "SendPayment1", "TransactSavings1", "WriteCheck1");
 
-			// program.printProgram();
+			program.printProgram();
 			// re.atomicize(pu);
 			// program.printProgram();
 			// analyze(pu);
-			// assert (false);
+			assert (false);
 
 			/*
 			 * 

@@ -72,6 +72,17 @@ public class Table {
 		canBeRemoved = true;
 	}
 
+	public Table(TableName tn, FieldName is_alive, ArrayList<FieldName> fns) {
+		this.isNew = false;
+		this.crdt = false; // must be set explicitly
+		fieldNames = new ArrayList<>();
+		name = tn;
+		for (FieldName fn : fns)
+			this.fieldNames.add(fn);
+		this.fieldNames.add(is_alive);
+		canBeRemoved = true;
+	}
+
 	public void addFieldName(FieldName fn) {
 		this.fieldNames.add(fn);
 	}
@@ -112,15 +123,15 @@ public class Table {
 
 	@Override
 	public String toString() {
-		boolean print_table_size = true;
+		boolean print_table_size = false;
 		String result = "", delim = "";
-		String show_size = (print_table_size)? "(" + this.fieldNames.size() + ")" : "";
-		result += String.format("%-15s", this.name) + show_size + "(";
+		String show_size = (print_table_size) ? "(" + this.fieldNames.size() + ")" : "";
+		result += String.format("%-15s", this.name) + show_size + "";
 		for (FieldName fn : fieldNames) {
 			result += delim + fn.toStringWithType();
 			delim = ",";
 		}
-		result += ")";
+		result += "";
 		return result;
 	}
 

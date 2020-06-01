@@ -10,6 +10,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import kiarahmani.atropos.Atropos;
+import kiarahmani.atropos.DB.statementBuilder;
+import kiarahmani.atropos.DB.tableBuilder;
+import kiarahmani.atropos.DB.transactionBuilder;
 import kiarahmani.atropos.DDL.F_Type;
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DDL.TableName;
@@ -21,6 +24,7 @@ import kiarahmani.atropos.DML.Variable;
 import kiarahmani.atropos.DML.expression.BinOp;
 import kiarahmani.atropos.DML.expression.E_Arg;
 import kiarahmani.atropos.DML.expression.E_BinOp;
+import kiarahmani.atropos.DML.expression.E_Const;
 import kiarahmani.atropos.DML.expression.E_Proj;
 import kiarahmani.atropos.DML.expression.E_Size;
 import kiarahmani.atropos.DML.expression.E_UnOp;
@@ -28,13 +32,14 @@ import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.expression.E_UnOp.UnOp;
 import kiarahmani.atropos.DML.expression.constants.E_Const_Bool;
 import kiarahmani.atropos.DML.expression.constants.E_Const_Num;
+import kiarahmani.atropos.DML.expression.constants.E_Const_Text;
 import kiarahmani.atropos.DML.query.Delete_Query;
 import kiarahmani.atropos.DML.query.Insert_Query;
 import kiarahmani.atropos.DML.query.Query;
 import kiarahmani.atropos.DML.query.Select_Query;
 import kiarahmani.atropos.DML.query.Update_Query;
 import kiarahmani.atropos.DML.where_clause.WHC;
-import kiarahmani.atropos.DML.where_clause.WHC_Constraint;
+import kiarahmani.atropos.DML.where_clause.WHCC;
 import kiarahmani.atropos.program.Block;
 import kiarahmani.atropos.program.Program;
 import kiarahmani.atropos.program.Statement;
@@ -44,8 +49,29 @@ import kiarahmani.atropos.program.Block.BlockType;
 import kiarahmani.atropos.program.statements.If_Statement;
 import kiarahmani.atropos.program.statements.Query_Statement;
 
+/*****************************************************************************************************************/
+// DSL front-end
+/*****************************************************************************************************************/
+
 public class Program_Utils {
 	private static final Logger logger = LogManager.getLogger(Atropos.class);
+
+	/*****************************************************************************************************************/
+	// DSL front-end
+	/*****************************************************************************************************************/
+
+	public tableBuilder Table(String tname) {
+		return new tableBuilder(this, tname);
+	}
+
+	public transactionBuilder Transaction(String txnName) {
+		return new transactionBuilder(this, txnName);
+	}
+
+	public statementBuilder addStmt(String txnName) {
+		return new statementBuilder(this, txnName);
+	}
+
 	/*****************************************************************************************************************/
 	// meta-data and bookkeeping data structures
 	/*****************************************************************************************************************/
@@ -134,6 +160,20 @@ public class Program_Utils {
 		return txn;
 	}
 
+	public Transaction mkTrnasaction(String txn_name, ArrayList<String> args) {
+		assert (!lock) : "cannot call this function after locking";
+		Transaction txn = new Transaction(txn_name);
+		this.getTrasnsactionMap().put(txn_name, txn);
+		transactionToVarCount.put(txn_name, 0);
+		for (String arg : args) {
+			String[] parts = arg.split(":");
+			E_Arg current_arg = new E_Arg(txn_name, parts[0], F_Type.stringTypeToFType(parts[1]));
+			argsMap.put(parts[0], current_arg);
+			txn.addArg(current_arg);
+		}
+		return txn;
+	}
+
 	/*
 	 * create a new assertions about args in a transaction
 	 */
@@ -163,6 +203,22 @@ public class Program_Utils {
 		return result;
 	}
 
+	public Select_Query addSelectQuery(String txn, String tableName, String varName, WHC whc, String... fieldNames) {
+		assert (!lock) : "cannot call this function after locking";
+		boolean isAtomic = whc.isAtomic(getTable(tableName).getShardKey());
+		int po = transactionToPoCount.containsKey(txn) ? transactionToPoCount.get(txn) : 0;
+		transactionToPoCount.put(txn, po + 1);
+		Variable fresh_variable = mkVariable(tableName, txn, varName);
+		int select_counts = (transactionToSelectCount.containsKey(txn)) ? transactionToSelectCount.get(txn) : 0;
+		transactionToSelectCount.put(txn, select_counts + 1);
+		ArrayList<FieldName> fresh_field_names = new ArrayList<>();
+		for (String fn : fieldNames)
+			fresh_field_names.add(fieldNameMap.get(fn));
+		Select_Query result = new Select_Query(po, select_counts, isAtomic, tableNameMap.get(tableName),
+				fresh_field_names, fresh_variable, whc);
+		return result;
+	}
+
 	public Update_Query addUpdateQuery(String txn, String tableName, WHC whc) {
 		assert (!lock) : "cannot call this function after locking";
 		boolean isAtomic = whc.isAtomic(getTable(tableName).getShardKey());
@@ -174,7 +230,7 @@ public class Program_Utils {
 		return result;
 	}
 
-	public Insert_Query addInsertQuery(String txn, String tableName, WHC_Constraint... pks) {
+	public Insert_Query addInsertQuery(String txn, String tableName, WHCC... pks) {
 		assert (!lock) : "cannot call this function after locking";
 		int po = transactionToPoCount.containsKey(txn) ? transactionToPoCount.get(txn) : 0;
 		transactionToPoCount.put(txn, po + 1);
@@ -184,7 +240,7 @@ public class Program_Utils {
 				this.getIsAliveFieldName(tableName));
 		result.addPKExp(pks);
 
-		for (WHC_Constraint pk : pks)
+		for (WHCC pk : pks)
 			result.addInsertExp(pk.getFieldName(), pk.getExpression());
 		return result;
 	}
@@ -440,6 +496,45 @@ public class Program_Utils {
 		return this.argsMap.get(arg);
 	}
 
+	public E_Arg arg(String arg) {
+		return this.argsMap.get(arg);
+	}
+
+	public E_Proj proj(String fn, String varName, int order) {
+		Variable v = variableMap.get(varName);
+		assert (v != null);
+		assert (getFieldName(fn) != null);
+		return new E_Proj(v, getFieldName(fn), new E_Const_Num(order));
+	}
+
+	public Expression plus(Expression e1, Expression e2) {
+		return new E_BinOp(BinOp.PLUS, e1, e2);
+	}
+
+	public Expression mult(Expression e1, Expression e2) {
+		return new E_BinOp(BinOp.MULT, e1, e2);
+	}
+
+	public Expression minus(Expression e1, Expression e2) {
+		return new E_BinOp(BinOp.MINUS, e1, e2);
+	}
+
+	public Expression div(Expression e1, Expression e2) {
+		return new E_BinOp(BinOp.DIV, e1, e2);
+	}
+
+	public E_Const_Num con(int i) {
+		return new E_Const_Num(i);
+	}
+
+	public E_Const_Bool con(boolean b) {
+		return new E_Const_Bool(b);
+	}
+
+	public E_Const_Text con(String s) {
+		return new E_Const_Text(s);
+	}
+
 	/*
 	 * Blocks
 	 */
@@ -564,6 +659,22 @@ public class Program_Utils {
 		return newTable;
 	}
 
+	/*
+	 * new table
+	 */
+	public Table mkTable(String tn_name, ArrayList<FieldName> fns) {
+		TableName tn = new TableName(tn_name);
+		FieldName is_alive = new FieldName("is_alive", false, false, F_Type.BOOL);
+		this.tableNameMap.put(tn.getName(), tn);
+		Table newTable = new Table(tn, is_alive, fns);
+		newTable.setIsAllPK(false);
+		this.tableMap.put(tn.getName(), newTable);
+		for (FieldName fn : fns)
+			this.fieldNameMap.put(fn.getName(), fn);
+		this.fieldNameMap.put(tn_name + "_is_alive", is_alive);
+		return newTable;
+	}
+
 	public Table mkAllPKTable(String tn_name, FieldName... fns) {
 		TableName tn = new TableName(tn_name);
 		FieldName is_alive = new FieldName("is_alive", false, false, F_Type.BOOL);
@@ -609,6 +720,15 @@ public class Program_Utils {
 	public Variable mkVariable(String tn, String txn) {
 		int var_cnt = transactionToVarCount.get(txn);
 		String fresh_variable_name = txn + "_v" + var_cnt;
+		Variable fresh_variable = new Variable(tn, fresh_variable_name);
+		transactionToVarCount.put(txn, ++var_cnt);
+		variableMap.put(fresh_variable_name, fresh_variable);
+		return fresh_variable;
+	}
+
+	public Variable mkVariable(String tn, String txn, String name) {
+		int var_cnt = transactionToVarCount.get(txn);
+		String fresh_variable_name = name;
 		Variable fresh_variable = new Variable(tn, fresh_variable_name);
 		transactionToVarCount.put(txn, ++var_cnt);
 		variableMap.put(fresh_variable_name, fresh_variable);
@@ -724,7 +844,7 @@ public class Program_Utils {
 		assert (!lock) : "cannot call this function after locking";
 		Variable v = new Variable("accounts", "v_test_" + 999);
 		WHC GetAccount0_WHC = new WHC(getIsAliveFieldName("accounts"),
-				new WHC_Constraint(getTableName("accounts"), getFieldName("a_custid"), BinOp.EQ, new E_Const_Num(999)));
+				new WHCC(getTableName("accounts"), getFieldName("a_custid"), BinOp.EQ, new E_Const_Num(999)));
 		ArrayList<FieldName> fns = new ArrayList<>();
 		fns.add(getFieldName("a_custid"));
 		Select_Query q = new Select_Query(9, 999, true, getTableName("accounts"), fns, v, GetAccount0_WHC);

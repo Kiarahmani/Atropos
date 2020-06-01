@@ -15,7 +15,7 @@ import kiarahmani.atropos.DML.query.Insert_Query;
 import kiarahmani.atropos.DML.query.Select_Query;
 import kiarahmani.atropos.DML.query.Update_Query;
 import kiarahmani.atropos.DML.where_clause.WHC;
-import kiarahmani.atropos.DML.where_clause.WHC_Constraint;
+import kiarahmani.atropos.DML.where_clause.WHCC;
 import kiarahmani.atropos.program.Program;
 import kiarahmani.atropos.program_generators.ProgramGenerator;
 import kiarahmani.atropos.utils.Program_Utils;
@@ -276,13 +276,13 @@ public class WikipediaProgramGenerator implements ProgramGenerator {
 			// insert into watchlist
 			table_name = "watchlist";
 			Insert_Query insert1 = pu.addInsertQuery(txn_name, table_name,
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("wl_user"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("wl_user"), BinOp.EQ,
 							pu.getArg("awl_userId")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("wl_namespace"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("wl_namespace"), BinOp.EQ,
 							pu.getArg("awl_nameSpace")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("wl_title"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("wl_title"), BinOp.EQ,
 							pu.getArg("awl_pageTitle")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("wl_notificationtimestamp"),
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("wl_notificationtimestamp"),
 							BinOp.EQ, new E_Const_Text("null")));
 			insert1.addInsertExp(pu.getFieldName("wl_user"), pu.getArg("awl_userId"));
 			insert1.addInsertExp(pu.getFieldName("wl_namespace"), pu.getArg("awl_nameSpace"));
@@ -297,13 +297,13 @@ public class WikipediaProgramGenerator implements ProgramGenerator {
 			// insert into watchlist
 			table_name = "watchlist";
 			Insert_Query insert2 = pu.addInsertQuery(txn_name, table_name,
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("wl_user"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("wl_user"), BinOp.EQ,
 							pu.getArg("awl_userId")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("wl_namespace"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("wl_namespace"), BinOp.EQ,
 							new E_Const_Num(1)),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("wl_title"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("wl_title"), BinOp.EQ,
 							pu.getArg("awl_pageTitle")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("wl_notificationtimestamp"),
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("wl_notificationtimestamp"),
 							BinOp.EQ, new E_Const_Text("null")));
 			insert2.addInsertExp(pu.getFieldName("wl_user"), pu.getArg("awl_userId"));
 			insert2.addInsertExp(pu.getFieldName("wl_namespace"), new E_Const_Num(1));
@@ -313,7 +313,7 @@ public class WikipediaProgramGenerator implements ProgramGenerator {
 
 			// update useracct
 			table_name = "useracct";
-			WHC whc3 = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(pu.getTableName(table_name),
+			WHC whc3 = new WHC(pu.getIsAliveFieldName(table_name), new WHCC(pu.getTableName(table_name),
 					pu.getFieldName("user_id"), BinOp.EQ, pu.getArg("awl_userId")));
 			Update_Query update3 = pu.addUpdateQuery(txn_name, table_name, whc3);
 			update3.addUpdateExp(pu.getFieldName("user_touched"), pu.getArg("awl_timestamp"));
@@ -333,9 +333,9 @@ public class WikipediaProgramGenerator implements ProgramGenerator {
 			// retrieve the page
 			table_name = "page";
 			WHC whc1 = new WHC(pu.getIsAliveFieldName(table_name),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("page_namespace"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("page_namespace"), BinOp.EQ,
 							pu.getArg("gpan_pageNamespace")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("page_title"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("page_title"), BinOp.EQ,
 							pu.getArg("gpan_pageTitle")));
 
 			Select_Query select1 = pu.addSelectQuery(txn_name, table_name, whc1, "page_id", "page_title",
@@ -345,7 +345,7 @@ public class WikipediaProgramGenerator implements ProgramGenerator {
 
 			// retrieve its restrictions
 			table_name = "page_restrictions";
-			WHC whc2 = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(pu.getTableName(table_name),
+			WHC whc2 = new WHC(pu.getIsAliveFieldName(table_name), new WHCC(pu.getTableName(table_name),
 					pu.getFieldName("pr_page"), BinOp.EQ, pu.mkProjExpr(txn_name, 0, "page_id", 1)));
 			Select_Query select2 = pu.addSelectQuery(txn_name, table_name, whc2, "pr_id", "pr_type", "pr_level",
 					"pr_user", "pr_expiry");
@@ -353,7 +353,7 @@ public class WikipediaProgramGenerator implements ProgramGenerator {
 
 			// check blocked ips
 			table_name = "ipblocks";
-			WHC whc3 = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(pu.getTableName(table_name),
+			WHC whc3 = new WHC(pu.getIsAliveFieldName(table_name), new WHCC(pu.getTableName(table_name),
 					pu.getFieldName("ipb_address"), BinOp.EQ, pu.getArg("gpan_userIp")));
 			Select_Query select3 = pu.addSelectQuery(txn_name, table_name, whc3, "ipb_id", "ipb_user", "ipb_by",
 					"ipb_by_text", "ipb_reason", "ipb_timestamp", "ipb_auto", "ipb_anon_only", "ipb_create_account",
@@ -364,9 +364,9 @@ public class WikipediaProgramGenerator implements ProgramGenerator {
 			// retrieve page's revision history
 			table_name = "revision";
 			WHC whc4 = new WHC(pu.getIsAliveFieldName(table_name),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("rev_page"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("rev_page"), BinOp.EQ,
 							pu.mkProjExpr(txn_name, 0, "page_id", 1)),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("rev_id"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("rev_id"), BinOp.EQ,
 							pu.mkProjExpr(txn_name, 0, "page_latest", 1)));
 
 			Select_Query select4 = pu.addSelectQuery(txn_name, table_name, whc4, "rev_text_id", "rev_comment",
@@ -376,7 +376,7 @@ public class WikipediaProgramGenerator implements ProgramGenerator {
 
 			// retrieve text
 			table_name = "text";
-			WHC whc5 = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(pu.getTableName(table_name),
+			WHC whc5 = new WHC(pu.getIsAliveFieldName(table_name), new WHCC(pu.getTableName(table_name),
 					pu.getFieldName("old_id"), BinOp.EQ, pu.mkProjExpr(txn_name, 3, "rev_text_id", 1)));
 			Select_Query select5 = pu.addSelectQuery(txn_name, table_name, whc5, "old_text", "old_flags");
 			pu.addQueryStatement(txn_name, select5);
@@ -394,14 +394,14 @@ public class WikipediaProgramGenerator implements ProgramGenerator {
 
 			// retrieve user's account
 			table_name = "useracct";
-			WHC whc11 = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(pu.getTableName(table_name),
+			WHC whc11 = new WHC(pu.getIsAliveFieldName(table_name), new WHCC(pu.getTableName(table_name),
 					pu.getFieldName("user_id"), BinOp.EQ, pu.getArg("gpat_userId")));
 			Select_Query select11 = pu.addSelectQuery(txn_name, table_name, whc11, "user_touched");
 			pu.addQueryStatement(txn_name, select11);
 
 			// retrieve groups that user belongs to
 			table_name = "user_groups";
-			WHC whc12 = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(pu.getTableName(table_name),
+			WHC whc12 = new WHC(pu.getIsAliveFieldName(table_name), new WHCC(pu.getTableName(table_name),
 					pu.getFieldName("ug_user"), BinOp.EQ, pu.getArg("gpat_userId")));
 			Select_Query select12 = pu.addSelectQuery(txn_name, table_name, whc12, "ug_group");
 			pu.addQueryStatement(txn_name, select12);
@@ -409,9 +409,9 @@ public class WikipediaProgramGenerator implements ProgramGenerator {
 			// retrieve the page
 			table_name = "page";
 			WHC whc1 = new WHC(pu.getIsAliveFieldName(table_name),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("page_namespace"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("page_namespace"), BinOp.EQ,
 							pu.getArg("gpan_pageNamespace")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("page_title"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("page_title"), BinOp.EQ,
 							pu.getArg("gpan_pageTitle")));
 
 			Select_Query select1 = pu.addSelectQuery(txn_name, table_name, whc1, "page_id", "page_title",
@@ -421,7 +421,7 @@ public class WikipediaProgramGenerator implements ProgramGenerator {
 
 			// retrieve page's restrictions
 			table_name = "page_restrictions";
-			WHC whc2 = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(pu.getTableName(table_name),
+			WHC whc2 = new WHC(pu.getIsAliveFieldName(table_name), new WHCC(pu.getTableName(table_name),
 					pu.getFieldName("pr_page"), BinOp.EQ, pu.mkProjExpr(txn_name, 2, "page_id", 1)));
 			Select_Query select2 = pu.addSelectQuery(txn_name, table_name, whc2, "pr_id", "pr_type", "pr_level",
 					"pr_user", "pr_expiry");
@@ -429,7 +429,7 @@ public class WikipediaProgramGenerator implements ProgramGenerator {
 
 			// retrive blocked ips
 			table_name = "ipblocks";
-			WHC whc3 = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(pu.getTableName(table_name),
+			WHC whc3 = new WHC(pu.getIsAliveFieldName(table_name), new WHCC(pu.getTableName(table_name),
 					pu.getFieldName("ipb_address"), BinOp.EQ, pu.getArg("gpan_userIp")));
 			Select_Query select3 = pu.addSelectQuery(txn_name, table_name, whc3, "ipb_id", "ipb_user", "ipb_by",
 					"ipb_by_text", "ipb_reason", "ipb_timestamp", "ipb_auto", "ipb_anon_only", "ipb_create_account",
@@ -440,9 +440,9 @@ public class WikipediaProgramGenerator implements ProgramGenerator {
 			// retrieve revision history
 			table_name = "revision";
 			WHC whc4 = new WHC(pu.getIsAliveFieldName(table_name),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("rev_page"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("rev_page"), BinOp.EQ,
 							pu.mkProjExpr(txn_name, 2, "page_id", 1)),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("rev_id"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("rev_id"), BinOp.EQ,
 							pu.mkProjExpr(txn_name, 2, "page_latest", 1)));
 
 			Select_Query select4 = pu.addSelectQuery(txn_name, table_name, whc4, "rev_text_id", "rev_comment",
@@ -452,7 +452,7 @@ public class WikipediaProgramGenerator implements ProgramGenerator {
 
 			// retrieve text
 			table_name = "text";
-			WHC whc5 = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(pu.getTableName(table_name),
+			WHC whc5 = new WHC(pu.getIsAliveFieldName(table_name), new WHCC(pu.getTableName(table_name),
 					pu.getFieldName("old_id"), BinOp.EQ, pu.mkProjExpr(txn_name, 5, "rev_text_id", 1)));
 			Select_Query select5 = pu.addSelectQuery(txn_name, table_name, whc5, "old_text", "old_flags");
 			pu.addQueryStatement(txn_name, select5);
@@ -474,11 +474,11 @@ public class WikipediaProgramGenerator implements ProgramGenerator {
 			// delete from watchlist
 			table_name = "watchlist";
 			WHC delete1 = new WHC(pu.getIsAliveFieldName(table_name),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("wl_user"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("wl_user"), BinOp.EQ,
 							pu.getArg("rwl_userId")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("wl_namespace"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("wl_namespace"), BinOp.EQ,
 							pu.getArg("rwl_nameSpace")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("wl_title"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("wl_title"), BinOp.EQ,
 							pu.getArg("rwl_pageTitle")));
 			Delete_Query delivery1 = pu.addDeleteQuery(txn_name, table_name, delete1);
 			pu.addQueryStatementInIf(txn_name, 0, delivery1);
@@ -490,18 +490,18 @@ public class WikipediaProgramGenerator implements ProgramGenerator {
 			// delete from watchlist
 			table_name = "watchlist";
 			WHC delete2 = new WHC(pu.getIsAliveFieldName(table_name),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("wl_user"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("wl_user"), BinOp.EQ,
 							pu.getArg("rwl_userId")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("wl_namespace"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("wl_namespace"), BinOp.EQ,
 							new E_Const_Num(1)),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("wl_title"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("wl_title"), BinOp.EQ,
 							pu.getArg("rwl_pageTitle")));
 			Delete_Query delivery2 = pu.addDeleteQuery(txn_name, table_name, delete2);
 			pu.addQueryStatementInIf(txn_name, 1, delivery2);
 
 			// update useracct
 			table_name = "useracct";
-			WHC whc3 = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(pu.getTableName(table_name),
+			WHC whc3 = new WHC(pu.getIsAliveFieldName(table_name), new WHCC(pu.getTableName(table_name),
 					pu.getFieldName("user_id"), BinOp.EQ, pu.getArg("rwl_userId")));
 			Update_Query update3 = pu.addUpdateQuery(txn_name, table_name, whc3);
 			update3.addUpdateExp(pu.getFieldName("user_touched"), pu.getArg("rwl_timestamp"));
@@ -523,30 +523,30 @@ public class WikipediaProgramGenerator implements ProgramGenerator {
 			// insert into pagelog
 			table_name = "logging";
 			Insert_Query insert1 = pu.addInsertQuery(txn_name, table_name,
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("log_id"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("log_id"), BinOp.EQ,
 							new E_Const_Num(1)),
 
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("log_type"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("log_type"), BinOp.EQ,
 							new E_Const_Text("patrol")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("log_action"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("log_action"), BinOp.EQ,
 							new E_Const_Text("patrol")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("log_timestamp"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("log_timestamp"), BinOp.EQ,
 							pu.getArg("upl_timestamp")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("log_user"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("log_user"), BinOp.EQ,
 							pu.getArg("upl_userId")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("log_namespace"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("log_namespace"), BinOp.EQ,
 							pu.getArg("upl_pageNamespace")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("log_title"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("log_title"), BinOp.EQ,
 							pu.getArg("upl_pageTitle")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("log_comment"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("log_comment"), BinOp.EQ,
 							pu.getArg("upl_revComment")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("log_params"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("log_params"), BinOp.EQ,
 							new E_Const_Text("")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("log_deleted"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("log_deleted"), BinOp.EQ,
 							new E_Const_Num(0)),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("log_user_text"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("log_user_text"), BinOp.EQ,
 							pu.getArg("upl_userText")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("log_page"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("log_page"), BinOp.EQ,
 							pu.getArg("upl_pageId")));
 			insert1.addInsertExp(pu.getFieldName("log_id"), new E_Const_Text("patrol"));
 			insert1.addInsertExp(pu.getFieldName("log_type"), new E_Const_Text("patrol"));
@@ -564,7 +564,7 @@ public class WikipediaProgramGenerator implements ProgramGenerator {
 
 			// retrieve user's details
 			table_name = "useracct";
-			WHC whc11 = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(pu.getTableName(table_name),
+			WHC whc11 = new WHC(pu.getIsAliveFieldName(table_name), new WHCC(pu.getTableName(table_name),
 					pu.getFieldName("user_id"), BinOp.EQ, pu.getArg("upl_userId")));
 			Select_Query select11 = pu.addSelectQuery(txn_name, table_name, whc11, "user_editcount", "user_touched");
 			pu.addQueryStatement(txn_name, select11);
@@ -592,7 +592,7 @@ public class WikipediaProgramGenerator implements ProgramGenerator {
 
 			// retrieve text
 			table_name = "text";
-			WHC whc11 = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(pu.getTableName(table_name),
+			WHC whc11 = new WHC(pu.getIsAliveFieldName(table_name), new WHCC(pu.getTableName(table_name),
 					pu.getFieldName("old_page"), BinOp.EQ, pu.getArg("up_pageId")));
 			Select_Query select11 = pu.addSelectQuery(txn_name, table_name, whc11, "old_id");
 			pu.addQueryStatement(txn_name, select11);
@@ -600,13 +600,13 @@ public class WikipediaProgramGenerator implements ProgramGenerator {
 			// insert new text
 			table_name = "text";
 			Insert_Query insert1 = pu.addInsertQuery(txn_name, table_name,
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("old_id"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("old_id"), BinOp.EQ,
 							new E_BinOp(BinOp.PLUS, pu.mkProjExpr(txn_name, 0, "old_id", 1), new E_Const_Num(1))),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("old_text"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("old_text"), BinOp.EQ,
 							pu.getArg("up_pageText")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("old_flags"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("old_flags"), BinOp.EQ,
 							new E_Const_Text("utf-8")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("old_page"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("old_page"), BinOp.EQ,
 							pu.getArg("up_pageId")));
 			insert1.addInsertExp(pu.getFieldName("old_id"),
 					new E_BinOp(BinOp.PLUS, pu.mkProjExpr(txn_name, 0, "old_id", 1), new E_Const_Num(1)));
@@ -617,7 +617,7 @@ public class WikipediaProgramGenerator implements ProgramGenerator {
 
 			// select revision history
 			table_name = "revision";
-			WHC whc2 = new WHC(pu.getIsAliveFieldName(table_name), new WHC_Constraint(pu.getTableName(table_name),
+			WHC whc2 = new WHC(pu.getIsAliveFieldName(table_name), new WHCC(pu.getTableName(table_name),
 					pu.getFieldName("rev_page"), BinOp.EQ, pu.getArg("up_pageId")));
 			Select_Query select2 = pu.addSelectQuery(txn_name, table_name, whc2, "rev_id");
 			pu.addQueryStatement(txn_name, select2);
@@ -625,27 +625,27 @@ public class WikipediaProgramGenerator implements ProgramGenerator {
 			// insert new revision
 			table_name = "revision";
 			Insert_Query insert2 = pu.addInsertQuery(txn_name, table_name,
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("rev_id"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("rev_id"), BinOp.EQ,
 							new E_BinOp(BinOp.PLUS, pu.mkProjExpr(txn_name, 1, "rev_id", 1), new E_Const_Num(1))),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("rev_page"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("rev_page"), BinOp.EQ,
 							pu.getArg("up_pageId")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("rev_text_id"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("rev_text_id"), BinOp.EQ,
 							new E_BinOp(BinOp.PLUS, pu.mkProjExpr(txn_name, 0, "old_id", 1), new E_Const_Num(1))),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("rev_comment"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("rev_comment"), BinOp.EQ,
 							pu.getArg("up_revComment")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("rev_user"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("rev_user"), BinOp.EQ,
 							pu.getArg("up_userId")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("rev_user_text"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("rev_user_text"), BinOp.EQ,
 							pu.getArg("up_userText")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("rev_timestamp"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("rev_timestamp"), BinOp.EQ,
 							pu.getArg("up_timestamp")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("rev_minor_edit"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("rev_minor_edit"), BinOp.EQ,
 							pu.getArg("up_revMinorEdit")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("rev_deleted"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("rev_deleted"), BinOp.EQ,
 							new E_Const_Num(0)),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("rev_len"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("rev_len"), BinOp.EQ,
 							new E_Const_Num(10)),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("rev_pcarenct_id"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("rev_pcarenct_id"), BinOp.EQ,
 							pu.getArg("up_revisionId")));
 			insert2.addInsertExp(pu.getFieldName("rev_id"),
 					new E_BinOp(BinOp.PLUS, pu.mkProjExpr(txn_name, 1, "rev_id", 1), new E_Const_Num(1)));
@@ -677,57 +677,57 @@ public class WikipediaProgramGenerator implements ProgramGenerator {
 			// insert new recentchange
 			table_name = "recentchanges";
 			Insert_Query insert3 = pu.addInsertQuery(txn_name, table_name,
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("rc_id"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("rc_id"), BinOp.EQ,
 							new E_Const_Num(10)),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("rc_timestamp"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("rc_timestamp"), BinOp.EQ,
 							pu.getArg("up_timestamp")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("rc_cur_time"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("rc_cur_time"), BinOp.EQ,
 							pu.getArg("up_timestamp")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("rc_user"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("rc_user"), BinOp.EQ,
 							pu.getArg("up_userId")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("rc_user_text"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("rc_user_text"), BinOp.EQ,
 							pu.getArg("up_userText")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("rc_namespace"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("rc_namespace"), BinOp.EQ,
 							pu.getArg("up_pageNamespace")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("rc_title"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("rc_title"), BinOp.EQ,
 							pu.getArg("up_pageTitle")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("rc_comment"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("rc_comment"), BinOp.EQ,
 							pu.getArg("up_revComment")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("rc_minor"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("rc_minor"), BinOp.EQ,
 							new E_Const_Num(0)),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("rc_bot"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("rc_bot"), BinOp.EQ,
 							new E_Const_Num(0)),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("rc_new"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("rc_new"), BinOp.EQ,
 							new E_Const_Num(0)),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("rc_cur_id"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("rc_cur_id"), BinOp.EQ,
 							pu.getArg("up_pageId")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("rc_this_oldid"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("rc_this_oldid"), BinOp.EQ,
 							new E_BinOp(BinOp.PLUS, pu.mkProjExpr(txn_name, 0, "old_id", 1), new E_Const_Num(1))),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("rc_last_oldid"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("rc_last_oldid"), BinOp.EQ,
 							pu.getArg("up_textId")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("rc_type"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("rc_type"), BinOp.EQ,
 							new E_Const_Num(0)),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("rc_moved_to_ns"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("rc_moved_to_ns"), BinOp.EQ,
 							new E_Const_Num(0)),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("rc_moved_to_title"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("rc_moved_to_title"), BinOp.EQ,
 							new E_Const_Text("")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("rc_patrolled"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("rc_patrolled"), BinOp.EQ,
 							new E_Const_Num(0)),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("rc_ip"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("rc_ip"), BinOp.EQ,
 							pu.getArg("up_userIp")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("rc_old_len"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("rc_old_len"), BinOp.EQ,
 							new E_Const_Num(10)),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("rc_new_len"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("rc_new_len"), BinOp.EQ,
 							new E_Const_Num(10)),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("rc_deleted"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("rc_deleted"), BinOp.EQ,
 							new E_Const_Num(0)),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("rc_logid"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("rc_logid"), BinOp.EQ,
 							new E_Const_Num(0)),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("rc_log_type"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("rc_log_type"), BinOp.EQ,
 							new E_Const_Text("")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("rc_log_action"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("rc_log_action"), BinOp.EQ,
 							new E_Const_Text("")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("rc_params"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("rc_params"), BinOp.EQ,
 							new E_Const_Text("")));
 
 			insert3.addInsertExp(pu.getFieldName("rc_id"), new E_Const_Num(10));
@@ -763,9 +763,9 @@ public class WikipediaProgramGenerator implements ProgramGenerator {
 			// retrieve watchlist
 			table_name = "watchlist";
 			WHC whc111 = new WHC(pu.getIsAliveFieldName(table_name),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("wl_namespace"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("wl_namespace"), BinOp.EQ,
 							pu.getArg("up_pageNamespace")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("wl_title"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("wl_title"), BinOp.EQ,
 							pu.getArg("up_pageTitle")));
 			Select_Query select111 = pu.addSelectQuery(txn_name, table_name, whc111, "wl_user");
 			pu.addQueryStatement(txn_name, select111);
@@ -773,11 +773,11 @@ public class WikipediaProgramGenerator implements ProgramGenerator {
 			// update watchlist
 			table_name = "watchlist";
 			WHC whc1112 = new WHC(pu.getIsAliveFieldName(table_name),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("wl_namespace"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("wl_namespace"), BinOp.EQ,
 							pu.getArg("up_pageNamespace")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("wl_title"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("wl_title"), BinOp.EQ,
 							pu.getArg("up_pageTitle")),
-					new WHC_Constraint(pu.getTableName(table_name), pu.getFieldName("wl_user"), BinOp.EQ,
+					new WHCC(pu.getTableName(table_name), pu.getFieldName("wl_user"), BinOp.EQ,
 							pu.mkProjExpr(txn_name, 2, "wl_user", 1)));
 			Update_Query update31 = pu.addUpdateQuery(txn_name, table_name, whc1112);
 			update31.addUpdateExp(pu.getFieldName("wl_notificationtimestamp"), pu.getArg("up_timestamp"));

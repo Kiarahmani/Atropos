@@ -30,7 +30,7 @@ import kiarahmani.atropos.DML.query.Query;
 import kiarahmani.atropos.DML.query.Select_Query;
 import kiarahmani.atropos.DML.query.Update_Query;
 import kiarahmani.atropos.DML.where_clause.WHC;
-import kiarahmani.atropos.DML.where_clause.WHC_Constraint;
+import kiarahmani.atropos.DML.where_clause.WHCC;
 import kiarahmani.atropos.program.Table;
 import kiarahmani.atropos.program.statements.Query_Statement;
 import kiarahmani.atropos.utils.Program_Utils;
@@ -93,10 +93,10 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 
 		Query new_qry = null;
 		if (vc.getType() == VC_Type.VC_OTM && vc.get_agg() == VC_Agg.VC_SUM) {// handle the CRDT case
-			WHC_Constraint[] whcc_array = mkInsert(old_update);
+			WHCC[] whcc_array = mkInsert(old_update);
 			new_qry = new Insert_Query(-1, pu.getNewUpdateId(txnName), targetTable, targetTable.getIsAliveFN());
 			((Insert_Query) new_qry).addPKExp(whcc_array);
-			for (WHC_Constraint pk : whcc_array)
+			for (WHCC pk : whcc_array)
 				((Insert_Query) new_qry).addInsertExp(pk.getFieldName(), pk.getExpression());
 			new_qry.setcanBeRemoved(false);
 
@@ -122,13 +122,13 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 	/**
 	 * @return
 	 */
-	private WHC_Constraint[] mkInsert(Update_Query old_update) {
+	private WHCC[] mkInsert(Update_Query old_update) {
 		if (!targetTable.isCrdt())
 			return null;
 		List<FieldName> pk_fields = sourceTable.getPKFields();
 		logger.debug("PK fields of the source table: " + pk_fields);
 		int pk_fields_size = pk_fields.size();
-		WHC_Constraint[] result = new WHC_Constraint[pk_fields_size + 2];
+		WHCC[] result = new WHCC[pk_fields_size + 2];
 		// set pk fields
 		int index = 0;
 		logger.debug("For each PK a new expression will be added to the beginning of the ISNERT:");
@@ -139,20 +139,20 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 				logger.debug("pk " + pk_fn + " does not have a valid constraint in the original whc");
 				return null;
 			}
-			result[index] = new WHC_Constraint(targetTable.getTableName(), targetTable.getPKFields().get(index),
+			result[index] = new WHCC(targetTable.getTableName(), targetTable.getPKFields().get(index),
 					BinOp.EQ, old_update.getWHC().getConstraintByFieldName(pk_fn).getExpression());
 			index++;
 		}
 		logger.debug("Insert Exps after adding PKs: " + Arrays.toString(result));
 		// set uuid field
-		result[pk_fields_size] = new WHC_Constraint(targetTable.getTableName(), targetTable.getUUIDField(), BinOp.EQ,
+		result[pk_fields_size] = new WHCC(targetTable.getTableName(), targetTable.getUUIDField(), BinOp.EQ,
 				new E_UUID());
 		logger.debug("Insert Exps after adding UUID: " + Arrays.toString(result));
 		// set delta field
 		Expression delta_exp = extractDeltaExp(old_update);
 		if (delta_exp == null)
 			return null;
-		result[pk_fields_size + 1] = new WHC_Constraint(targetTable.getTableName(), targetTable.getDeltaField(),
+		result[pk_fields_size + 1] = new WHCC(targetTable.getTableName(), targetTable.getDeltaField(),
 				BinOp.EQ, delta_exp);
 		logger.debug("Final insert Exps: " + Arrays.toString(result));
 		return result;
@@ -191,25 +191,25 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 	}
 
 	private WHC updateWHC(WHC old_whc) {
-		ArrayList<WHC_Constraint> new_whccs = new ArrayList<>();
-		for (WHC_Constraint old_whcc : old_whc.getConstraints())
+		ArrayList<WHCC> new_whccs = new ArrayList<>();
+		for (WHCC old_whcc : old_whc.getConstraints())
 			if (!old_whcc.isAliveConstraint())
 				new_whccs.add(updateWHCC(old_whcc));
 		WHC new_whc = new WHC(targetTable.getIsAliveFN(), new_whccs);
 		return new_whc;
 	}
 
-	private WHC_Constraint updateWHCC(WHC_Constraint old_whcc) {
-		WHC_Constraint result = old_whcc;
+	private WHCC updateWHCC(WHCC old_whcc) {
+		WHCC result = old_whcc;
 		switch (vc.getType()) {
 		case VC_OTO:
-			result = new WHC_Constraint(targetTable.getTableName(), vc.getCorrespondingKey(pu, old_whcc.getFieldName()),
+			result = new WHCC(targetTable.getTableName(), vc.getCorrespondingKey(pu, old_whcc.getFieldName()),
 					old_whcc.getOp(), old_whcc.getExpression());
 			break;
 		case VC_OTM:
 			switch (vc.get_agg()) {
 			case VC_ID:
-				result = new WHC_Constraint(targetTable.getTableName(),
+				result = new WHCC(targetTable.getTableName(),
 						vc.getCorrespondingKey(pu, old_whcc.getFieldName()), old_whcc.getOp(),
 						old_whcc.getExpression());
 				break;

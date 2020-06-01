@@ -29,6 +29,20 @@ public enum BinOp {
 		return false;
 	}
 
+	public static BinOp StringToBinOp(String binop) {
+		switch (binop) {
+		case "=":
+			return BinOp.EQ;
+		case ">":
+			return GT;
+		case "<":
+			return LT;
+		default:
+			assert false : "unknown operator";
+			return null;
+		}
+	}
+
 	public static String BinOpToString(BinOp binop) {
 		switch (binop) {
 		case PLUS:

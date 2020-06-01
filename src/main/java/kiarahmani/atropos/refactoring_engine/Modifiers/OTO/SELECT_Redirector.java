@@ -26,7 +26,7 @@ import kiarahmani.atropos.DML.expression.constants.E_Const_Num;
 import kiarahmani.atropos.DML.query.Query;
 import kiarahmani.atropos.DML.query.Select_Query;
 import kiarahmani.atropos.DML.where_clause.WHC;
-import kiarahmani.atropos.DML.where_clause.WHC_Constraint;
+import kiarahmani.atropos.DML.where_clause.WHCC;
 import kiarahmani.atropos.program.Table;
 import kiarahmani.atropos.program.Transaction;
 import kiarahmani.atropos.program.statements.Query_Statement;
@@ -193,30 +193,30 @@ public class SELECT_Redirector extends One_to_One_Query_Modifier {
 	}
 
 	private WHC updateWHC(WHC old_whc) {
-		ArrayList<WHC_Constraint> new_whccs = new ArrayList<>();
-		for (WHC_Constraint old_whcc : old_whc.getConstraints())
+		ArrayList<WHCC> new_whccs = new ArrayList<>();
+		for (WHCC old_whcc : old_whc.getConstraints())
 			if (!old_whcc.isAliveConstraint())
 				new_whccs.add(updateWHCC(old_whcc));
 		WHC new_whc = new WHC(targetTable.getIsAliveFN(), new_whccs);
 		return new_whc;
 	}
 
-	private WHC_Constraint updateWHCC(WHC_Constraint old_whcc) {
-		WHC_Constraint result = null;
+	private WHCC updateWHCC(WHCC old_whcc) {
+		WHCC result = null;
 		switch (vc.getType()) {
 		case VC_OTO:
-			result = new WHC_Constraint(targetTable.getTableName(), vc.getCorrespondingKey(pu, old_whcc.getFieldName()),
+			result = new WHCC(targetTable.getTableName(), vc.getCorrespondingKey(pu, old_whcc.getFieldName()),
 					old_whcc.getOp(), old_whcc.getExpression());
 			break;
 		case VC_OTM:
 			switch (vc.get_agg()) {
 			case VC_ID:
-				result = new WHC_Constraint(targetTable.getTableName(),
+				result = new WHCC(targetTable.getTableName(),
 						vc.getCorrespondingKey(pu, old_whcc.getFieldName()), old_whcc.getOp(),
 						old_whcc.getExpression());
 				break;
 			case VC_SUM:
-				result = new WHC_Constraint(targetTable.getTableName(),
+				result = new WHCC(targetTable.getTableName(),
 						vc.getCorrespondingKey(pu, old_whcc.getFieldName()), old_whcc.getOp(),
 						old_whcc.getExpression());
 				break;
