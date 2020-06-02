@@ -33,10 +33,11 @@ public class SmallBankProgramGenerator_DSL implements ProgramGenerator {
 				.where("id", "=", pu.arg("input_id")).done();
 		pu.addInElse("inc", 0).update("balance").set("bal", pu.minus(pu.at("bal", "x", 1), pu.cons(69)))
 				.where("id", "=", pu.arg("input_id")).done();
-
 		pu.addStmt("inc").update("balance").set("bal", pu.cons(1))
 				.where("id", "=", pu.minus(pu.at("bal", "x", 1), pu.cons(10))).done();
-
+		pu.addLoopStmt("inc", pu.cons(10));
+		pu.addInLoop("inc", 1).update("balance").set("bal", pu.minus(pu.at("bal", "x", 1), pu.arg("input_amount")))
+				.where("id", "=", pu.arg("input_id")).done();
 		//
 		//
 		//

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import kiarahmani.atropos.DML.expression.Expression;
+import kiarahmani.atropos.DML.expression.constants.E_Const_Bool;
 import kiarahmani.atropos.DML.query.Query;
 import kiarahmani.atropos.program.Statement;
 import kiarahmani.atropos.program.Transaction;
@@ -13,6 +14,8 @@ public class If_Statement extends Statement {
 	private ArrayList<Statement> if_statements;
 	private ArrayList<Statement> else_statements;
 	private int id;
+	private boolean isLoop;
+	private Expression iter_cnt;
 
 	public If_Statement(int id, Expression c, ArrayList<Statement> if_s, ArrayList<Statement> else_s) {
 		assert (c != null);
@@ -23,6 +26,7 @@ public class If_Statement extends Statement {
 		this.condition = c;
 		this.if_statements = if_s;
 		this.else_statements = else_s;
+		this.isLoop = false;
 	}
 
 	public If_Statement(int id, Expression c) {
@@ -34,6 +38,18 @@ public class If_Statement extends Statement {
 		// this.if_statements = if_s;
 		this.if_statements = new ArrayList<>();
 		this.else_statements = new ArrayList<>();
+		this.isLoop = false;
+	}
+
+	// will be called when loop is constructed
+	public If_Statement(int id, Expression iter_cnt, boolean isLoop) {
+		assert (iter_cnt != null);
+		this.id = id;
+		this.condition = new E_Const_Bool(true);
+		this.if_statements = new ArrayList<>();
+		this.else_statements = new ArrayList<>();
+		this.isLoop = isLoop;
+		this.iter_cnt = iter_cnt;
 	}
 
 	public void addStatementInIf(Statement stmt) {
@@ -46,13 +62,20 @@ public class If_Statement extends Statement {
 
 	@Override
 	public void printStatemenet(String indent) {
-		System.out.println(indent + "    IF" + this.id + " (" + this.condition.toString() + "){");
-		for (Statement stmt : if_statements)
-			stmt.printStatemenet(indent + "       ");
-		System.out.println(indent + "    }");
-		if (else_statements.size() > 0) {
-			System.out.println(indent + "    ELSE {");
-			for (Statement stmt : else_statements)
+		if (!isLoop) {
+			System.out.println(indent + "    IF" + this.id + " (" + this.condition.toString() + "){");
+			for (Statement stmt : if_statements)
+				stmt.printStatemenet(indent + "       ");
+			System.out.println(indent + "    }");
+			if (else_statements.size() > 0) {
+				System.out.println(indent + "    ELSE {");
+				for (Statement stmt : else_statements)
+					stmt.printStatemenet(indent + "       ");
+				System.out.println(indent + "    }");
+			}
+		} else {
+			System.out.println(indent + "    ITERATE" + this.id + " (" + this.iter_cnt.toString() + "){");
+			for (Statement stmt : if_statements)
 				stmt.printStatemenet(indent + "       ");
 			System.out.println(indent + "    }");
 		}
@@ -60,13 +83,20 @@ public class If_Statement extends Statement {
 
 	@Override
 	public void printStatemenet() {
-		System.out.println("    IF" + this.id + " (" + this.condition.toString() + "){");
-		for (Statement stmt : if_statements)
-			stmt.printStatemenet("       ");
-		System.out.println("    }");
-		if (else_statements.size() > 0) {
-			System.out.println("    ELSE {");
-			for (Statement stmt : else_statements)
+		if (!isLoop) {
+			System.out.println("    IF" + this.id + " (" + this.condition.toString() + "){");
+			for (Statement stmt : if_statements)
+				stmt.printStatemenet("       ");
+			System.out.println("    }");
+			if (else_statements.size() > 0) {
+				System.out.println("    ELSE {");
+				for (Statement stmt : else_statements)
+					stmt.printStatemenet("       ");
+				System.out.println("    }");
+			}
+		} else {
+			System.out.println("    ITERATE" + this.id + " (" + this.iter_cnt.toString() + "){");
+			for (Statement stmt : if_statements)
 				stmt.printStatemenet("       ");
 			System.out.println("    }");
 		}

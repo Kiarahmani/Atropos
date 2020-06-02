@@ -75,6 +75,10 @@ public class Program_Utils {
 	public statementBuilder addInIf(String txnName, int ifId) {
 		return new statementBuilder(this, txnName, ifId, true);
 	}
+	
+	public statementBuilder addInLoop(String txnName, int loopId) {
+		return new statementBuilder(this, txnName, loopId, true);
+	}
 
 	public statementBuilder addInElse(String txnName, int ifId) {
 		return new statementBuilder(this, txnName, ifId, false);
@@ -309,6 +313,17 @@ public class Program_Utils {
 		int if_stmt_counts = (transactionToIfCount.containsKey(txn)) ? transactionToIfCount.get(txn) : 0;
 		transactionToIfCount.put(txn, if_stmt_counts + 1);
 		If_Statement result = new If_Statement(if_stmt_counts, c);
+		result.setPathCondition(new E_Const_Bool(true));
+		ifStatementMap.put(txn + "-if-" + if_stmt_counts, result);
+		getTrasnsactionMap().get(txn).addStatement(result);// the enclosed statements will be added later
+		return result;
+	}
+
+	public If_Statement addLoopStmt(String txn, Expression iter_cnt) {
+		assert (!lock) : "cannot call this function after locking";
+		int if_stmt_counts = (transactionToIfCount.containsKey(txn)) ? transactionToIfCount.get(txn) : 0;
+		transactionToIfCount.put(txn, if_stmt_counts + 1);
+		If_Statement result = new If_Statement(if_stmt_counts, iter_cnt, true);
 		result.setPathCondition(new E_Const_Bool(true));
 		ifStatementMap.put(txn + "-if-" + if_stmt_counts, result);
 		getTrasnsactionMap().get(txn).addStatement(result);// the enclosed statements will be added later
