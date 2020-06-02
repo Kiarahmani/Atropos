@@ -362,7 +362,7 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 			// if the balance is greater than amount
 			Expression SendPayment_IF1_C = new E_BinOp(BinOp.GT, pu.mkProjExpr("SendPayment", 2, "c_bal", 1),
 					pu.getArg("sp_amount"));
-			pu.addIfStatement("SendPayment", SendPayment_IF1_C);
+			pu.addIfStmt("SendPayment", SendPayment_IF1_C);
 
 			// update sender's checking
 			WHC SendPayment_U1_WHC = new WHC(pu.getIsAliveFieldName("checking"), new WHCC(
@@ -413,7 +413,7 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 			// if the balance is larger than amount
 			Expression TransactSavings_IF1_C = new E_BinOp(BinOp.GT, pu.mkProjExpr("TransactSavings", 1, "s_bal", 1),
 					pu.getArg("ts_amount"));
-			pu.addIfStatement("TransactSavings", TransactSavings_IF1_C);
+			pu.addIfStmt("TransactSavings", TransactSavings_IF1_C);
 
 			// write customer's new saving's balance
 			WHC TransactSavings_U1_WHC = new WHC(pu.getIsAliveFieldName("savings"),
@@ -457,7 +457,7 @@ public class SmallBankProgramGenerator implements ProgramGenerator {
 			E_BinOp total = new E_BinOp(BinOp.PLUS, pu.mkProjExpr("WriteCheck", 1, "c_bal", 1),
 					pu.mkProjExpr("WriteCheck", 2, "s_bal", 1));
 			Expression WriteCheck_IF1_C = new E_BinOp(BinOp.GT, total, pu.getArg("wc_amount"));
-			pu.addIfStatement("WriteCheck", WriteCheck_IF1_C);
+			pu.addIfStmt("WriteCheck", WriteCheck_IF1_C);
 			// update their checking
 			WHC WriteCheck_U1_dest_WHC = new WHC(pu.getIsAliveFieldName("checking"),
 					new WHCC(pu.getTableName("checking"), pu.getFieldName("c_custid"), BinOp.EQ,

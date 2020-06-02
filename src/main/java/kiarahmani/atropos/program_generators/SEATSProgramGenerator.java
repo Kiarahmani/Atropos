@@ -349,7 +349,7 @@ public class SEATSProgramGenerator implements ProgramGenerator {
 
 			// if seats left > 0
 			Expression if1 = new E_BinOp(BinOp.GT, pu.mkProjExpr(txn_name, 0, "f_seats_left", 1), new E_Const_Num(0));
-			pu.addIfStatement(txn_name, if1);
+			pu.addIfStmt(txn_name, if1);
 
 			// retrieve reservations on this flight
 			table_name = "reservation";

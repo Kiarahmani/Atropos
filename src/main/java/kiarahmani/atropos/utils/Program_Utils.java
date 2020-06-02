@@ -72,6 +72,14 @@ public class Program_Utils {
 		return new statementBuilder(this, txnName);
 	}
 
+	public statementBuilder addInIf(String txnName, int ifId) {
+		return new statementBuilder(this, txnName, ifId, true);
+	}
+
+	public statementBuilder addInElse(String txnName, int ifId) {
+		return new statementBuilder(this, txnName, ifId, false);
+	}
+
 	/*****************************************************************************************************************/
 	// meta-data and bookkeeping data structures
 	/*****************************************************************************************************************/
@@ -296,7 +304,7 @@ public class Program_Utils {
 		return result;
 	}
 
-	public If_Statement addIfStatement(String txn, Expression c) {
+	public If_Statement addIfStmt(String txn, Expression c) {
 		assert (!lock) : "cannot call this function after locking";
 		int if_stmt_counts = (transactionToIfCount.containsKey(txn)) ? transactionToIfCount.get(txn) : 0;
 		transactionToIfCount.put(txn, if_stmt_counts + 1);
@@ -500,7 +508,7 @@ public class Program_Utils {
 		return this.argsMap.get(arg);
 	}
 
-	public E_Proj proj(String fn, String varName, int order) {
+	public E_Proj at(String fn, String varName, int order) {
 		Variable v = variableMap.get(varName);
 		assert (v != null);
 		assert (getFieldName(fn) != null);
@@ -509,6 +517,18 @@ public class Program_Utils {
 
 	public Expression plus(Expression e1, Expression e2) {
 		return new E_BinOp(BinOp.PLUS, e1, e2);
+	}
+
+	public Expression gt(Expression e1, Expression e2) {
+		return new E_BinOp(BinOp.GT, e1, e2);
+	}
+
+	public Expression lt(Expression e1, Expression e2) {
+		return new E_BinOp(BinOp.LT, e1, e2);
+	}
+
+	public Expression eq(Expression e1, Expression e2) {
+		return new E_BinOp(BinOp.EQ, e1, e2);
 	}
 
 	public Expression mult(Expression e1, Expression e2) {
@@ -523,15 +543,15 @@ public class Program_Utils {
 		return new E_BinOp(BinOp.DIV, e1, e2);
 	}
 
-	public E_Const_Num con(int i) {
+	public E_Const_Num cons(int i) {
 		return new E_Const_Num(i);
 	}
 
-	public E_Const_Bool con(boolean b) {
+	public E_Const_Bool cons(boolean b) {
 		return new E_Const_Bool(b);
 	}
 
-	public E_Const_Text con(String s) {
+	public E_Const_Text cons(String s) {
 		return new E_Const_Text(s);
 	}
 

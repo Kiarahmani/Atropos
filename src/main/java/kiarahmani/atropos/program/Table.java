@@ -128,8 +128,10 @@ public class Table {
 		String show_size = (print_table_size) ? "(" + this.fieldNames.size() + ")" : "";
 		result += String.format("%-15s", this.name) + show_size + "";
 		for (FieldName fn : fieldNames) {
-			result += delim + fn.toStringWithType();
-			delim = ",";
+			if (!fn.isAliveField()) {
+				result += delim + fn.toStringWithType();
+				delim = ",";
+			}
 		}
 		result += "";
 		return result;

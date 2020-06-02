@@ -25,6 +25,8 @@ import kiarahmani.atropos.utils.Tuple;
 
 public class statementBuilder {
 	Program_Utils pu;
+	int ifId;
+	boolean isIf;
 	String txnName;
 	String tName;
 	WHC whc;
@@ -36,8 +38,17 @@ public class statementBuilder {
 
 	public statementBuilder(Program_Utils pu, String txnName) {
 		this.pu = pu;
+		this.ifId = -1;
 		this.txnName = txnName;
 		this.whccs = new ArrayList<>();
+	}
+
+	public statementBuilder(Program_Utils pu, String txnName, int ifId, boolean isIf) {
+		this.pu = pu;
+		this.ifId = ifId;
+		this.txnName = txnName;
+		this.whccs = new ArrayList<>();
+		this.isIf = isIf;
 	}
 
 	public statementBuilder select(String... flds) {
@@ -82,12 +93,24 @@ public class statementBuilder {
 		this.whc = new WHC(pu.getIsAliveFieldName(tName), whccs);
 		switch (kind) {
 		case SELECT:
-			return pu.addQueryStatement(txnName, pu.addSelectQuery(txnName, tName, varName, whc, flds));
+			if (this.ifId == -1)
+				return pu.addQueryStatement(txnName, pu.addSelectQuery(txnName, tName, varName, whc, flds));
+			else
+				return (isIf)
+						? pu.addQueryStatementInIf(txnName, ifId, pu.addSelectQuery(txnName, tName, varName, whc, flds))
+						: pu.addQueryStatementInElse(txnName, ifId,
+								pu.addSelectQuery(txnName, tName, varName, whc, flds))
+
+				;
 		case UPDATE:
 			Update_Query uq = pu.addUpdateQuery(txnName, tName, whc);
 			for (Tuple<FieldName, Expression> t : this.upd_expressions)
 				uq.addUpdateExp(t.x, t.y);
-			return pu.addQueryStatement(txnName, uq);
+			if (this.ifId == -1)
+				return pu.addQueryStatement(txnName, uq);
+			else
+				return (isIf) ? pu.addQueryStatementInIf(txnName, ifId, uq)
+						: pu.addQueryStatementInElse(txnName, ifId, uq);
 		default:
 			assert (false) : "not implemented yet";
 			return null;

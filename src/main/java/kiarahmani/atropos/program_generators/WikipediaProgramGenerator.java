@@ -271,7 +271,7 @@ public class WikipediaProgramGenerator implements ProgramGenerator {
 
 			// if userId>0
 			Expression if1 = new E_BinOp(BinOp.GT, pu.getArg("awl_userId"), new E_Const_Num(0));
-			pu.addIfStatement(txn_name, if1);
+			pu.addIfStmt(txn_name, if1);
 
 			// insert into watchlist
 			table_name = "watchlist";
@@ -469,7 +469,7 @@ public class WikipediaProgramGenerator implements ProgramGenerator {
 
 			// if userId>0
 			Expression if1 = new E_BinOp(BinOp.GT, pu.getArg("rwl_userId"), new E_Const_Num(0));
-			pu.addIfStatement(txn_name, if1);
+			pu.addIfStmt(txn_name, if1);
 
 			// delete from watchlist
 			table_name = "watchlist";

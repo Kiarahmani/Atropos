@@ -4,6 +4,7 @@ import java.util.HashSet;
 
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DML.Variable;
+import kiarahmani.atropos.DML.expression.constants.E_Const_Num;
 
 public class E_Proj extends Expression {
 
@@ -28,7 +29,11 @@ public class E_Proj extends Expression {
 
 	@Override
 	public String toString() {
-		return "proj(" + f + "," + v + "," + e + ")";
+		return (isOne()) ? "" + v + "." + f + "" : "at^" + e + "(" + v + "." + f + ")";
+	}
+
+	private boolean isOne() {
+		return e.isEqual(new E_Const_Num(1));
 	}
 
 	@Override
