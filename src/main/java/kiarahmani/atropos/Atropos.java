@@ -22,7 +22,7 @@ import kiarahmani.atropos.program_generators.TPCCProgramGenerator;
 import kiarahmani.atropos.program_generators.TWITTERProgramGenerator;
 import kiarahmani.atropos.program_generators.WikipediaProgramGenerator;
 import kiarahmani.atropos.program_generators.SmallBank.SmallBankProgramGenerator;
-import kiarahmani.atropos.program_generators.SmallBank.SmallBankProgramGenerator_DSL;
+import kiarahmani.atropos.program_generators.SmallBank.OnlineCourse;
 import kiarahmani.atropos.refactoring_engine.Refactoring_Engine;
 import kiarahmani.atropos.refactoring_engine.deltas.Delta;
 import kiarahmani.atropos.refactoring_engine.deltas.INTRO_VC;
@@ -42,57 +42,35 @@ public class Atropos {
 
 	public static void main(String[] args) {
 
-		////////////// TEST
-		Program_Utils pu1 = new Program_Utils("TPC-C");
-		Program program1 = (new SmallBankProgramGenerator_DSL(pu1)).generate("Amalgamate", "Balance1",
-				"DepositChecking1", "SendPayment1", "TransactSavings1", "WriteCheck1");
-
-		program1.printProgram();
-		assert (false);
-
-		////////////////////
-		//
-		//
-		//
-		//
-		//
-		//
-		//
-		//
-		//
-		//
-		//
-		//
-		//
-		//
-		//
-		//
-		//
-
-		Program_Utils pu = new Program_Utils("TPC-C");
-//		Program program = (new SEATSProgramGenerator(pu)).generate("deleteReservation", "findFlights", "findOpenSeats",
-//				"newReservation", "updateCustomer", "updateReservation");
-//		HashMap<String, HashMap<String, HashSet<VC>>> history = new HashMap<>();
-//		for (Table t : pu.getTables().values()) {
-//			HashMap<String, HashSet<VC>> newMap = new HashMap<>();
-//			for (Table tt : pu.getTables().values())
-//				newMap.put(tt.getTableName().getName(), new HashSet<>());
-//			history.put(t.getTableName().getName(), newMap);
-//		}
-
+		Refactoring_Engine re = new Refactoring_Engine();
+		Program_Utils pu = new Program_Utils("Course");
+		Program program = (new OnlineCourse(pu)).generate();
+		HashMap<String, HashMap<String, HashSet<VC>>> history = initHist(pu);
 		try {
 			new Constants();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		long time_begin = System.currentTimeMillis();
+		program.printProgram();
+		//re.atomicize(pu);
+		//program = pu.generateProgram();
+		//program.printProgram();
+		
+		assert(false);
+		
+		
+		
 		int iter = 0;
+		
+		
+		
 		out: while (iter < 1) {
-			Refactoring_Engine re = new Refactoring_Engine();
+			//Refactoring_Engine re = new Refactoring_Engine();
 			pu = new Program_Utils("SmallBank");
 
-			Program program = (new SmallBankProgramGenerator_DSL(pu)).generate("Amalgamate", "Balance1",
-					"DepositChecking1", "SendPayment1", "TransactSavings1", "WriteCheck1");
+			program = (new OnlineCourse(pu)).generate("Amalgamate", "Balance1", "DepositChecking1",
+					"SendPayment1", "TransactSavings1", "WriteCheck1");
 
 			program.printProgram();
 			// re.atomicize(pu);
@@ -132,15 +110,6 @@ public class Atropos {
 					re.refactor_schema(pu, ref);
 				} while (se.hasNext());
 			}
-
-//			for (VC vc : local_hist) {
-//				if (history.get(vc.T_1) == null)
-//					history.put(vc.T_1, new HashMap<>());
-//				if (history.get(vc.T_1).get(vc.T_2) == null)
-//					history.get(vc.T_1).put(vc.T_2, new HashSet<>());
-//				history.get(vc.T_1).get(vc.T_2).add(vc);
-//			}
-
 			iter++;
 			pu.generateProgram().printProgram();
 			re.atomicize(pu);
@@ -152,6 +121,17 @@ public class Atropos {
 			printStats(System.currentTimeMillis() - time_begin, anml_cnt);
 		}
 
+	}
+
+	private static HashMap<String, HashMap<String, HashSet<VC>>> initHist(Program_Utils pu) {
+		HashMap<String, HashMap<String, HashSet<VC>>> history = new HashMap<>();
+		for (Table t : pu.getTables().values()) {
+			HashMap<String, HashSet<VC>> newMap = new HashMap<>();
+			for (Table tt : pu.getTables().values())
+				newMap.put(tt.getTableName().getName(), new HashSet<>());
+			history.put(t.getTableName().getName(), newMap);
+		}
+		return history;
 	}
 
 	private static int analyze(Program_Utils pu) {

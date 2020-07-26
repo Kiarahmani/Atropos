@@ -27,6 +27,7 @@ public class statementBuilder {
 	Program_Utils pu;
 	int ifId;
 	boolean isIf;
+	boolean isStar;
 	String txnName;
 	String tName;
 	WHC whc;
@@ -52,7 +53,12 @@ public class statementBuilder {
 	}
 
 	public statementBuilder select(String... flds) {
-		this.flds = flds;
+		if (flds.length == 1 && flds[0].equals("*"))
+			this.isStar = true;
+		else {
+			this.isStar = false;
+			this.flds = flds;
+		}
 		this.kind = Kind.SELECT;
 		return this;
 	}
@@ -65,6 +71,7 @@ public class statementBuilder {
 	}
 
 	public statementBuilder as(String v) {
+		assert (this.kind == Kind.SELECT);
 		this.varName = v;
 		return this;
 	}
@@ -76,6 +83,15 @@ public class statementBuilder {
 
 	public statementBuilder from(String tname) {
 		this.tName = tname;
+		if (this.isStar) {
+			ArrayList<FieldName> flds_arr = pu.getTable(tname).getFieldNames();
+			this.flds = new String[flds_arr.size() - 1];
+			int i = 0;
+			for (FieldName fn : flds_arr) {
+				if (!fn.isAliveField())
+					this.flds[i++] = fn.getName();
+			}
+		}
 		return this;
 	}
 

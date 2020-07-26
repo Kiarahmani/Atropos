@@ -74,7 +74,7 @@ public class If_Statement extends Statement {
 				System.out.println(indent + "    }");
 			}
 		} else {
-			System.out.println(indent + "    ITERATE" + this.id + " (" + this.iter_cnt.toString() + "){");
+			System.out.println(indent + "    ITERATE" + this.id + " (0<iter≤" + this.iter_cnt.toString() + "){");
 			for (Statement stmt : if_statements)
 				stmt.printStatemenet(indent + "       ");
 			System.out.println(indent + "    }");
@@ -95,7 +95,7 @@ public class If_Statement extends Statement {
 				System.out.println("    }");
 			}
 		} else {
-			System.out.println("    ITERATE" + this.id + " (" + this.iter_cnt.toString() + "){");
+			System.out.println("    ITERATE" + this.id + " (0<iter≤" + this.iter_cnt.toString() + "){");
 			for (Statement stmt : if_statements)
 				stmt.printStatemenet("       ");
 			System.out.println("    }");
@@ -191,12 +191,19 @@ public class If_Statement extends Statement {
 	 */
 	@Override
 	public Statement mkSnapshot() {
-		If_Statement result = new If_Statement(this.id, this.condition.mkSnapshot());
-		for (Statement stmt : this.if_statements)
-			result.addStatementInIf(stmt.mkSnapshot());
-		for (Statement stmt : this.else_statements)
-			result.addStatementInElse(stmt.mkSnapshot());
-		return result;
+		if (!isLoop) {
+			If_Statement result = new If_Statement(this.id, this.condition.mkSnapshot());
+			for (Statement stmt : this.if_statements)
+				result.addStatementInIf(stmt.mkSnapshot());
+			for (Statement stmt : this.else_statements)
+				result.addStatementInElse(stmt.mkSnapshot());
+			return result;
+		} else {
+			If_Statement result = new If_Statement(this.id, this.iter_cnt.mkSnapshot(), true);
+			for (Statement stmt : this.if_statements)
+				result.addStatementInIf(stmt.mkSnapshot());
+			return result;
+		}
 	}
 
 }

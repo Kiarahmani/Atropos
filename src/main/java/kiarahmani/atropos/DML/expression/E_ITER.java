@@ -1,34 +1,20 @@
-package kiarahmani.atropos.DML.expression.constants;
+package kiarahmani.atropos.DML.expression;
 
 import java.util.HashSet;
 
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DML.Variable;
-import kiarahmani.atropos.DML.expression.E_Const;
-import kiarahmani.atropos.DML.expression.E_Proj;
-import kiarahmani.atropos.DML.expression.Expression;
 
-public class E_Const_Num extends E_Const {
-	public int val;
-	private boolean isIter;
+public class E_ITER extends Expression {
 
-	public E_Const_Num(int i) {
-		this.val = i;
-	}
-
-	public E_Const_Num(boolean isIter) {
-		this.val = 1;
-		this.isIter = true;
+	@Override
+	public String toString() {
+		return "iter";
 	}
 
 	@Override
 	public Expression mkSnapshot() {
-		return (isIter) ? new E_Const_Num(true) : new E_Const_Num(this.val);
-	}
-
-	@Override
-	public String toString() {
-		return (isIter) ? "iter" : "" + this.val;
+		return this;
 	}
 
 	@Override
@@ -54,17 +40,16 @@ public class E_Const_Num extends E_Const {
 		return new HashSet<>();
 	}
 
-	public boolean equals(E_Const_Num other) {
-		return (this.val == other.val);
-	}
-
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * kiarahmani.atropos.DML.expression.Expression#isEqual(kiarahmani.atropos.DML.
+	 * expression.Expression)
+	 */
 	@Override
 	public boolean isEqual(Expression other) {
-		if (other instanceof E_Const_Num) {
-			E_Const_Num other_e_arg = (E_Const_Num) other;
-			return this.val == other_e_arg.val;
-		} else
-			return false; // exp is of a different sub class
+		return this.equals(other);
 	}
 
 	@Override

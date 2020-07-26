@@ -75,7 +75,7 @@ public class Program_Utils {
 	public statementBuilder addInIf(String txnName, int ifId) {
 		return new statementBuilder(this, txnName, ifId, true);
 	}
-	
+
 	public statementBuilder addInLoop(String txnName, int loopId) {
 		return new statementBuilder(this, txnName, loopId, true);
 	}
@@ -560,6 +560,10 @@ public class Program_Utils {
 
 	public E_Const_Num cons(int i) {
 		return new E_Const_Num(i);
+	}
+
+	public E_Const_Num iter() {
+		return new E_Const_Num(true);
 	}
 
 	public E_Const_Bool cons(boolean b) {
