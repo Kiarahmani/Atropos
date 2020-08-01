@@ -84,6 +84,22 @@ public class Program_Utils {
 		return new statementBuilder(this, txnName, ifId, false);
 	}
 
+	public Query getByUniqueId(String s) {
+		for (Transaction t : this.trasnsactionMap.values())
+			for (Query q : t.getAllQueries())
+				if ((t.getName() + q.getId()).equals(s))
+					return q;
+
+		return null;
+	}
+
+	public Transaction getByUniqueIdTxn(String s) {
+		for (Transaction t : this.trasnsactionMap.values())
+			if (s.contains(t.getName()))
+				return t;
+		return null;
+	}
+
 	/*****************************************************************************************************************/
 	// meta-data and bookkeeping data structures
 	/*****************************************************************************************************************/
@@ -923,14 +939,10 @@ public class Program_Utils {
 	 * 
 	 * 
 	 */
-	
-	
-	public void print () {
+
+	public void print() {
 		this.generateProgram().printProgram();
 	}
-	
-	
-	
 
 	public Program_Utils mkSnapShot() {
 		Program_Utils snapshot = new Program_Utils(program_name);

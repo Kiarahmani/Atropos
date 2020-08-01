@@ -9,6 +9,7 @@ import kiarahmani.atropos.DML.Variable;
 import kiarahmani.atropos.DML.expression.E_Proj;
 import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.where_clause.WHC;
+import kiarahmani.atropos.dependency.DAI;
 
 public abstract class Query {
 	public enum Kind {
@@ -23,22 +24,37 @@ public abstract class Query {
 	protected int id;
 	protected int po;
 	protected boolean is_included;
-	protected HashSet<Anml> anomalies;
+	protected ArrayList<Anml> anomalies;
 
-	
-	public void addAnml(ArrayList<FieldName> fns) {
+	public ArrayList<FieldName> toBeExcluded;
+
+	public void addAnml(ArrayList<FieldName> fns, DAI originalDAI) {
 		if (this.anomalies == null)
-			this.anomalies = new HashSet<>();
-		this.anomalies.add(new Anml(fns));
+			this.anomalies = new ArrayList<>();
+		this.anomalies.add(new Anml(fns, originalDAI));
 	}
-	
+
+	public ArrayList<Anml> getAnmls() {
+		if (this.anomalies == null)
+			return new ArrayList<>();
+		return this.anomalies;
+	}
+
 	public class Anml {
+		public DAI originalDAI;
 		private ArrayList<FieldName> fns;
-		public Anml(ArrayList<FieldName> fns) {
+
+		public Anml(ArrayList<FieldName> fns, DAI originalDAI) {
 			this.fns = fns;
+			this.originalDAI = originalDAI;
 		}
+
 		public ArrayList<FieldName> getFns() {
 			return this.fns;
+		}
+
+		public String toString() {
+			return "ANML" + this.fns.toString();
 		}
 	}
 

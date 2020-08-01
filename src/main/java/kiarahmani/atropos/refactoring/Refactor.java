@@ -16,6 +16,8 @@ import org.apache.logging.log4j.Logger;
 import kiarahmani.atropos.Atropos;
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DML.query.Query;
+import kiarahmani.atropos.DML.query.Query.Anml;
+import kiarahmani.atropos.DML.query.Query.Kind;
 import kiarahmani.atropos.dependency.DAI;
 import kiarahmani.atropos.program.Block;
 import kiarahmani.atropos.program.Statement;
@@ -27,6 +29,7 @@ import kiarahmani.atropos.refactoring_engine.Modifiers.Query_Modifier;
 import kiarahmani.atropos.refactoring_engine.Modifiers.OTO.One_to_One_Query_Modifier;
 import kiarahmani.atropos.refactoring_engine.Modifiers.OTT.One_to_Two_Query_Modifier;
 import kiarahmani.atropos.refactoring_engine.Modifiers.OTT.SELECT_Splitter;
+import kiarahmani.atropos.refactoring_engine.Modifiers.OTT.UPDATE_Splitter;
 import kiarahmani.atropos.refactoring_engine.Modifiers.TTO.Two_to_One_Query_Modifier;
 import kiarahmani.atropos.utils.Program_Utils;
 import kiarahmani.atropos.utils.Tuple;
@@ -40,13 +43,67 @@ public class Refactor {
 
 	public ArrayList<DAI> pre_process(Program_Utils pu, ArrayList<DAI> dais) {
 		ArrayList<DAI> result = new ArrayList<>();
+		// initialize anomalies of each query
+		for (DAI anml : dais) {
+			pu.getByUniqueId(anml.getQueryUniqueId(1)).addAnml(anml.getFieldNames(1), anml);
+			pu.getByUniqueId(anml.getQueryUniqueId(2)).addAnml(anml.getFieldNames(2), anml);
+		}
+
+		HashSet<String> seenQs = new HashSet<>();
+		for (DAI anml : dais) {
+			String u1 = anml.getQueryUniqueId(1);
+			String u2 = anml.getQueryUniqueId(2);
+			if (seenQs.contains(u1) || seenQs.contains(u2))
+				continue;
+			seenQs.add(u1);
+			seenQs.add(u2);
+			Query q1 = pu.getByUniqueId(u1);
+			Query q2 = pu.getByUniqueId(u2);
+
+			if (q1.getAnmls().size() == 1 && q2.getAnmls().size() == 1) {
+				result.add(anml);
+				continue;
+			}
+			if (q1.getAnmls().size() == 1 && q2.getAnmls().size() == 2) {
+				// DAI dai1 = q2.getAnmls().get(0).originalDAI;
+				// DAI dai2 = q2.getAnmls().get(1).originalDAI;
+				q2.toBeExcluded = getBreakingPoint(q2.getAnmls().get(0), q2.getAnmls().get(1));
+				continue;
+			}
+			if (q1.getAnmls().size() == 2 && q2.getAnmls().size() == 1) {
+				q1.toBeExcluded = getBreakingPoint(q1.getAnmls().get(0), q1.getAnmls().get(1));
+				continue;
+			}
+		}
+
+		for (Transaction t : pu.getTrasnsactionMap().values())
+			for (Query q : t.getAllQueries()) {
+				if (q.toBeExcluded == null)
+					continue;
+				DAI dai1 = q.getAnmls().get(0).originalDAI;
+				DAI dai2 = q.getAnmls().get(1).originalDAI;
+				String uid = t.getName() + q.getId();
+				split_query(pu, uid, q.toBeExcluded);
+			}
+		return result;
+	}
+
+	private ArrayList<FieldName> getBreakingPoint(Anml a1, Anml a2) {
+		for (FieldName fn : a1.getFns())
+			if (a2.getFns().contains(fn))
+				return null;
+		return a2.getFns();
+	}
+
+	public ArrayList<DAI> pre_process_old(Program_Utils pu, ArrayList<DAI> dais) {
+		ArrayList<DAI> result = new ArrayList<>();
 		HashMap<String, ArrayList<FieldName>> uids = new HashMap<>();
 		for (DAI anml : dais) {
 			String uid1 = anml.getQueryUniqueId(1);
 			String uid2 = anml.getQueryUniqueId(2);
 			String txnName = anml.getTransaction().getName();
 			if (uids.keySet().contains(uid1)) {
-				ArrayList<FieldName> excluded_fns = find_breaking_point();
+				ArrayList<FieldName> excluded_fns = null;
 				if (excluded_fns.size() == 0)
 					continue;
 				split_select(pu, txnName, excluded_fns, 1, false);
@@ -70,12 +127,36 @@ public class Refactor {
 		return result;
 	}
 
-	/**
-	 * @return
-	 */
-	private ArrayList<FieldName> find_breaking_point() {
-		// TODO Auto-generated method stub
-		return null;
+	private void split_query(Program_Utils input_pu, String queryUniqueId, ArrayList<FieldName> excluded_fns) {
+		Query q = input_pu.getByUniqueId(queryUniqueId);
+		String txn_name = input_pu.getByUniqueIdTxn(queryUniqueId).getName();
+		if (q.getKind() == Kind.SELECT)
+			split_select(input_pu, txn_name, excluded_fns, q.getPo(), false);
+		else
+			split_update(input_pu, txn_name, excluded_fns, q.getPo(), false);
+	}
+
+	public UPDATE_Splitter split_update(Program_Utils input_pu, String txn_name, ArrayList<FieldName> excluded_fns_upd,
+			int qry_po, boolean isRevert) {
+		UPDATE_Splitter upd_splt = new UPDATE_Splitter();
+		upd_splt.set(input_pu, txn_name, excluded_fns_upd);
+		if (upd_splt.isValid(input_pu.getQueryByPo(txn_name, qry_po))) {
+			applyAndPropagate(input_pu, upd_splt, qry_po, txn_name);
+			String begin;
+			if (isRevert) {
+				input_pu.decVersion();
+				begin = "              ";
+			} else {
+				input_pu.incVersion();
+				begin = input_pu.getProgramName() + "(" + input_pu.getVersion() + "):	";
+			}
+			input_pu.addComment("\n" + begin + upd_splt.getDesc());
+			upd_splt.setOriginal_applied_po(qry_po);
+
+			return upd_splt;
+		} else
+			return null;
+
 	}
 
 	public SELECT_Splitter split_select(Program_Utils input_pu, String txn_name, ArrayList<FieldName> excluded_fns,

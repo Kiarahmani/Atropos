@@ -16,6 +16,7 @@ import kiarahmani.atropos.dependency.DAI;
 import kiarahmani.atropos.dependency.DAI_Graph;
 import kiarahmani.atropos.encoding_engine.Encoding_Engine;
 import kiarahmani.atropos.program.Table;
+import kiarahmani.atropos.refactoring.Refactor;
 import kiarahmani.atropos.refactoring.RefactorEngine;
 import kiarahmani.atropos.program_generators.SmallBank.OnlineCourse;
 import kiarahmani.atropos.refactoring_engine.deltas.Delta;
@@ -44,22 +45,22 @@ public class Atropos {
 		// find anomlous access pairs in the base version
 		ArrayList<DAI> anmls = analyze(pu).getDAIs();
 		// initialize a refactoring engine
-		RefactorEngine re = new RefactorEngine();
+		Refactor re = new Refactor();
 		// preform the pre-processing step (updates the pu and also the anmls list)
 		// each query will be involved in at most one anomaly
-		anmls = re.pre_process(pu, anmls);
+		re.pre_process(pu, anmls);
+		anmls = analyze(pu).getDAIs();
+		System.out.println("\n\n AFTER PRE PROCESS");
 		pu.print();
+		for (DAI anml : anmls)
+			System.out.println(anml);
 		assert (false);
 
-		
-		
-		
-		
 		// prform pre-analysis step (try to split ops so more anomalies can be
 		// considered. return only anomalies such that each operation is involved in at
 		// most one anomaly)
-		//anmls = re.pre_process(pu, anmls);
-		//pu.generateProgram().printProgram();
+		// anmls = re.pre_process(pu, anmls);
+		// pu.generateProgram().printProgram();
 
 		assert (false);
 
