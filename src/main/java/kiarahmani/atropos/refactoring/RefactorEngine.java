@@ -24,13 +24,17 @@ public class RefactorEngine {
 
 	public ArrayList<DAI> pre_process(Program_Utils pu, ArrayList<DAI> dais) {
 		for (DAI anml : dais) {
-			String uid1 = anml.getQueryUniqueId(1);
-			String uid2 = anml.getQueryUniqueId(2);
-			String txnName = anml.getTransaction().getName();
-			System.out.println(uid1);
-			System.out.println(uid2);
-			System.out.println(txnName);
+			anml.getQuery(1).addAnml(anml.getFieldNames(1));
+			anml.getQuery(2).addAnml(anml.getFieldNames(2));
 		}
+		
+		
+		
+		
+		
+		
+		
+
 		
 		
 		return dais;

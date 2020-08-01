@@ -23,6 +23,24 @@ public abstract class Query {
 	protected int id;
 	protected int po;
 	protected boolean is_included;
+	protected HashSet<Anml> anomalies;
+
+	
+	public void addAnml(ArrayList<FieldName> fns) {
+		if (this.anomalies == null)
+			this.anomalies = new HashSet<>();
+		this.anomalies.add(new Anml(fns));
+	}
+	
+	public class Anml {
+		private ArrayList<FieldName> fns;
+		public Anml(ArrayList<FieldName> fns) {
+			this.fns = fns;
+		}
+		public ArrayList<FieldName> getFns() {
+			return this.fns;
+		}
+	}
 
 	public boolean equals_ids(Query other) {
 		return this.getId().equalsIgnoreCase(other.getId());
@@ -104,7 +122,5 @@ public abstract class Query {
 	public abstract void substituteExps(Expression oldExp, Expression newExp);
 
 	public abstract Query mkSnapshot();
-
-
 
 }

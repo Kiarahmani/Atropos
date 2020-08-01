@@ -108,8 +108,41 @@ public class Encoding_Engine {
 							+ c1.getTransaction(2).getName() + "-" + c2.getTransaction(2).getName());
 
 					snapshot = pu.mkSnapShot();
-					DAI original_dai = new DAI(pot_dai.getTransaction(), pot_dai.getQuery(1), pot_dai.getFieldNames(1),
-							pot_dai.getQuery(2), pot_dai.getFieldNames(2));
+					
+					
+					ArrayList<FieldName> fns1 = new ArrayList<>();
+					ArrayList<FieldName> fns2 = new ArrayList<>();
+					L: for (FieldName fn1 : pot_dai.getFieldNames(1)) {
+						for (FieldName fnc1 : c1.getFieldNames())
+							if (fn1.equals(fnc1)) {
+								fns1.add(fn1);
+								continue L;
+							}
+						for (FieldName fnc2 : c2.getFieldNames())
+							if (fn1.equals(fnc2)) {
+								fns1.add(fnc2);
+								continue L;
+							}
+					}
+					
+					L: for (FieldName fn1 : pot_dai.getFieldNames(2)) {
+						for (FieldName fnc1 : c1.getFieldNames())
+							if (fn1.equals(fnc1)) {
+								fns2.add(fn1);
+								continue L;
+							}
+						for (FieldName fnc2 : c2.getFieldNames())
+							if (fn1.equals(fnc2)) {
+								fns2.add(fnc2);
+								continue L;
+							}
+					}
+
+					
+
+
+					DAI original_dai = new DAI(pot_dai.getTransaction(), pot_dai.getQuery(1), fns1,
+							pot_dai.getQuery(2), fns2);
 
 					for (Transaction txn : snapshot.getTrasnsactionMap().values())
 						if (txn.is_equal(pot_dai.getTransaction()) || txn.is_equal(c1.getTransaction(2))
@@ -208,7 +241,6 @@ public class Encoding_Engine {
 		}
 		System.out.println("\nAnomalies found: " + dai_graph.getDAIs().size() + "\n");
 		return dai_graph;
-
 	}
 
 	private void printResults(Status status, long time) {

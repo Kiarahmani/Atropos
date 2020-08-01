@@ -13,6 +13,7 @@ public class DAI {
 
 	public DAI(Transaction txn, Query q1, ArrayList<FieldName> field_names1, Query q2,
 			ArrayList<FieldName> field_names2) {
+		
 		assert (q1 != null && q2 != null && field_names1.size() != 0 && field_names2.size() != 0);
 		this.q1 = q1;
 		this.q2 = q2;
@@ -28,6 +29,15 @@ public class DAI {
 		if (i == 2)
 			return this.field_names2;
 		return null;
+	}
+	
+	
+	public void updateFns1(ArrayList<FieldName> fns) {
+		this.field_names1 = fns;
+	}
+	
+	public void updateFns2(ArrayList<FieldName> fns) {
+		this.field_names2 = fns;
 	}
 
 	@Override
