@@ -51,6 +51,7 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 	private Redirection_Type type;
 	private int original_duplicated_po;
 
+	
 	public int getOrgDupPo() {
 		return this.original_duplicated_po;
 	}

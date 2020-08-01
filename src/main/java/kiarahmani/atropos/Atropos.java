@@ -11,7 +11,10 @@ import java.util.HashSet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import kiarahmani.atropos.DDL.F_Type;
 import kiarahmani.atropos.DDL.vc.VC;
+import kiarahmani.atropos.DDL.vc.VC.VC_Agg;
+import kiarahmani.atropos.DDL.vc.VC.VC_Type;
 import kiarahmani.atropos.dependency.DAI;
 import kiarahmani.atropos.dependency.DAI_Graph;
 import kiarahmani.atropos.encoding_engine.Encoding_Engine;
@@ -19,7 +22,10 @@ import kiarahmani.atropos.program.Table;
 import kiarahmani.atropos.refactoring.Refactor;
 import kiarahmani.atropos.refactoring.RefactorEngine;
 import kiarahmani.atropos.program_generators.SmallBank.OnlineCourse;
+import kiarahmani.atropos.refactoring_engine.deltas.ADDPK;
 import kiarahmani.atropos.refactoring_engine.deltas.Delta;
+import kiarahmani.atropos.refactoring_engine.deltas.INTRO_F;
+import kiarahmani.atropos.refactoring_engine.deltas.INTRO_R;
 import kiarahmani.atropos.refactoring_engine.deltas.INTRO_VC;
 import kiarahmani.atropos.search_engine.Optimal_search_engine_wikipedia;
 import kiarahmani.atropos.utils.Constants;
@@ -54,13 +60,31 @@ public class Atropos {
 		pu.print();
 		for (DAI anml : anmls)
 			System.out.println(anml);
-		assert (false);
 
-		// prform pre-analysis step (try to split ops so more anomalies can be
-		// considered. return only anomalies such that each operation is involved in at
-		// most one anomaly)
-		// anmls = re.pre_process(pu, anmls);
-		// pu.generateProgram().printProgram();
+		// MAIN LOOP
+		// for (DAI anml : anmls) {
+
+		// }
+
+		{
+			Delta reff = new INTRO_F("student", "st_co_avail", F_Type.NUM);
+			INTRO_VC refff = new INTRO_VC(pu, "course", "student", VC_Agg.VC_ID, VC_Type.VC_OTM);
+			refff.addKeyCorrespondenceToVC("co_id", "st_co_id");
+			refff.addFieldTupleToVC("co_avail", "st_co_avail");
+
+			Delta x1 = new INTRO_R("log", true);
+			Delta x2 = new INTRO_F("log", "id", F_Type.NUM);
+			Delta x3 = new INTRO_F("log", "counter", F_Type.NUM, true, false);
+			Delta x4 = new INTRO_F("log", "val", F_Type.NUM, false, true);
+			
+			Delta x5 = new ADDPK(pu, "log", "id");
+			Delta x6 = new ADDPK(pu, "log", "counter");
+			INTRO_VC x7 = new INTRO_VC(pu, "course", "log", VC_Agg.VC_SUM, VC_Type.VC_OTM);
+			x7.addKeyCorrespondenceToVC("co_id", "id");
+			x7.addFieldTupleToVC("co_st_cnt", "val");
+			re.refactor_schema_seq(pu, x1, x2, x3, x4, x5, x6, x7, reff, refff);
+		}
+		pu.print();
 
 		assert (false);
 

@@ -6,6 +6,7 @@
 package kiarahmani.atropos.refactoring;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.stream.Collectors;
@@ -15,22 +16,41 @@ import org.apache.logging.log4j.Logger;
 
 import kiarahmani.atropos.Atropos;
 import kiarahmani.atropos.DDL.FieldName;
+import kiarahmani.atropos.DDL.TableName;
+import kiarahmani.atropos.DDL.vc.VC.VC_Agg;
+import kiarahmani.atropos.DML.Variable;
+import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.query.Query;
+import kiarahmani.atropos.DML.query.Select_Query;
+import kiarahmani.atropos.DML.query.Update_Query;
 import kiarahmani.atropos.DML.query.Query.Anml;
 import kiarahmani.atropos.DML.query.Query.Kind;
 import kiarahmani.atropos.dependency.DAI;
 import kiarahmani.atropos.program.Block;
 import kiarahmani.atropos.program.Statement;
+import kiarahmani.atropos.program.Table;
 import kiarahmani.atropos.program.Transaction;
 import kiarahmani.atropos.program.Block.BlockType;
 import kiarahmani.atropos.program.statements.If_Statement;
 import kiarahmani.atropos.program.statements.Query_Statement;
 import kiarahmani.atropos.refactoring_engine.Modifiers.Query_Modifier;
 import kiarahmani.atropos.refactoring_engine.Modifiers.OTO.One_to_One_Query_Modifier;
+import kiarahmani.atropos.refactoring_engine.Modifiers.OTO.Query_ReAtomicizer;
+import kiarahmani.atropos.refactoring_engine.Modifiers.OTO.SELECT_Redirector;
+import kiarahmani.atropos.refactoring_engine.Modifiers.OTO.Var_Replacer;
 import kiarahmani.atropos.refactoring_engine.Modifiers.OTT.One_to_Two_Query_Modifier;
 import kiarahmani.atropos.refactoring_engine.Modifiers.OTT.SELECT_Splitter;
+import kiarahmani.atropos.refactoring_engine.Modifiers.OTT.UPDATE_Duplicator;
 import kiarahmani.atropos.refactoring_engine.Modifiers.OTT.UPDATE_Splitter;
+import kiarahmani.atropos.refactoring_engine.Modifiers.TTO.SELECT_Merger;
 import kiarahmani.atropos.refactoring_engine.Modifiers.TTO.Two_to_One_Query_Modifier;
+import kiarahmani.atropos.refactoring_engine.Modifiers.TTO.UPDATE_Merger;
+import kiarahmani.atropos.refactoring_engine.deltas.ADDPK;
+import kiarahmani.atropos.refactoring_engine.deltas.CHSK;
+import kiarahmani.atropos.refactoring_engine.deltas.Delta;
+import kiarahmani.atropos.refactoring_engine.deltas.INTRO_F;
+import kiarahmani.atropos.refactoring_engine.deltas.INTRO_R;
+import kiarahmani.atropos.refactoring_engine.deltas.INTRO_VC;
 import kiarahmani.atropos.utils.Program_Utils;
 import kiarahmani.atropos.utils.Tuple;
 
@@ -136,12 +156,367 @@ public class Refactor {
 			split_update(input_pu, txn_name, excluded_fns, q.getPo(), false);
 	}
 
-	public UPDATE_Splitter split_update(Program_Utils input_pu, String txn_name, ArrayList<FieldName> excluded_fns_upd,
-			int qry_po, boolean isRevert) {
-		UPDATE_Splitter upd_splt = new UPDATE_Splitter();
-		upd_splt.set(input_pu, txn_name, excluded_fns_upd);
-		if (upd_splt.isValid(input_pu.getQueryByPo(txn_name, qry_po))) {
-			applyAndPropagate(input_pu, upd_splt, qry_po, txn_name);
+	public ArrayList<Delta> refactor_schema_seq(Program_Utils input_pu, Delta... deltas) {
+		ArrayList<Delta> result = new ArrayList<>();
+		for (Delta d : deltas) {
+			input_pu = refactor_schema(input_pu, d);
+			result.add(d);
+		}
+		return result;
+	}
+
+	public Program_Utils refactor_schema_seq(Program_Utils input_pu, ArrayList<Delta> deltas) {
+		for (Delta d : deltas)
+			input_pu = refactor_schema(input_pu, d);
+		return input_pu;
+	}
+
+	public Program_Utils refactor_schema(Program_Utils input_pu, Delta delta) {
+		if (delta == null) {
+			logger.debug("null refactoring is requested. Aborting.");
+			return input_pu;
+		}
+
+		input_pu.incVersion();
+		input_pu.addComment(
+				"\n" + input_pu.getProgramName() + "(" + input_pu.getVersion() + "):	" + delta.getDesc());
+		String delta_class = delta.getClass().getSimpleName().toString();
+		switch (delta_class) {
+		case "INTRO_R":
+			return apply_intro_r(input_pu, (INTRO_R) delta);
+		case "ADDPK":
+			return apply_addpk(input_pu, (ADDPK) delta);
+		case "CHSK":
+			return apply_chsk(input_pu, (CHSK) delta);
+		case "INTRO_F":
+			return apply_intro_f(input_pu, (INTRO_F) delta);
+		case "INTRO_VC":
+			return apply_intro_vc(input_pu, (INTRO_VC) delta);
+		default:
+			assert false : "Case not catched: " + delta_class;
+			break;
+		}
+		return input_pu;
+	}
+
+	/*
+	 * case: Schema Delta was INTRO_R
+	 */
+	private Program_Utils apply_intro_r(Program_Utils input_pu, INTRO_R intro_r) {
+		logger.debug("applying INTRO_R refactoring");
+		String table_name = intro_r.getNewTableName();
+		if (!intro_r.isCRDT()) {
+			Table t = input_pu.mkTable(table_name);
+			t.setCanBeRemoved(false);
+			t.isNew = true;
+		} else {
+			Table t = input_pu.mkCRDTTable(table_name);
+			t.setCanBeRemoved(false);
+			t.isNew = true;
+		}
+
+		return input_pu;
+	}
+
+	/*
+	 * case: Schema Delta was INTRO_VC
+	 */
+	private Program_Utils apply_intro_vc(Program_Utils input_pu, INTRO_VC intro_vc) {
+		logger.debug("applying INTRO_VC refactoring");
+		TableName t1 = intro_vc.getVC().getTableName(input_pu, 1);
+		TableName t2 = intro_vc.getVC().getTableName(input_pu, 2);
+		// vc is already generated and added to pu; must now deal with the program
+		for (Transaction txn : input_pu.getTrasnsactionMap().values())
+			for (Query q : txn.getAllQueries())
+				if (q.isWrite())
+					if (q.getTableName().equalsWith(t1)) {
+						logger.debug("query " + q.getId() + "(" + q.getPo() + ") is a write on T1 (" + t1.getName()
+								+ ") and must be duplicated (-> redirected) on T2 (" + t2.getName() + ")");
+						// first make sure it is splitted into appropriate field updates
+						if (intro_vc.getVC().get_agg() == VC_Agg.VC_SUM) {
+							if (q instanceof Update_Query) {
+								Update_Query upt = (Update_Query) q;
+								if (upt.getUpdateExps().size() > 1) {
+									ArrayList<FieldName> excluded_fn = new ArrayList<>();
+									for (Tuple<FieldName, Expression> fe : upt.getUpdateExps())
+										if (intro_vc.getVC().getCorrespondingFN(input_pu, fe.x) == null)
+											excluded_fn.add(fe.x);
+									if (excluded_fn.size() < upt.getUpdateExps().size()) {
+										UPDATE_Splitter us = split_update(input_pu, txn.getName(), excluded_fn,
+												upt.getPo(), false);
+										logger.debug("attempted to split the update first: " + us);
+									} else {
+										logger.debug("the attempted query does not update the CRDTed field ");
+										continue;
+									}
+								}
+							}
+						}
+						UPDATE_Duplicator ud = duplicate_update(input_pu, txn.getName(), t1.getName(), t2.getName(),
+								q.getPo());
+						if (ud != null)
+							intro_vc.addAppliedUpDup(ud);
+
+					} else if (q.getTableName().equalsWith(intro_vc.getVC().getTableName(input_pu, 2))) {
+						logger.debug("query " + q.getId() + " is a write on T2 (" + t1.getName()
+								+ ") and must be duplicated (-> redirected) on T1 (" + t2.getName() + ")");
+						UPDATE_Duplicator ud = duplicate_update(input_pu, txn.getName(), t2.getName(), t1.getName(),
+								q.getPo());
+						if (ud != null)
+							intro_vc.addAppliedUpDup(ud);
+					}
+		// input_pu.mkVC(intro_vc.getVC());
+		return input_pu;
+	}
+
+	/*
+	 * case: Schema Delta was INTRO_F
+	 */
+	private Program_Utils apply_intro_f(Program_Utils input_pu, INTRO_F intro_f) {
+		logger.debug("applying INTRO_F refactoring");
+		input_pu.addFieldNameToTable(intro_f.getTableName(), intro_f.getNewName());
+		return input_pu;
+	}
+
+	/*
+	 * case: Schema Delta was ADDPK
+	 */
+	private Program_Utils apply_addpk(Program_Utils input_pu, ADDPK addpk) {
+		logger.debug("applying ADDPK refactoring");
+		FieldName fn = input_pu.getFieldName(addpk.getNewPK());
+		fn.setPK(true);
+		logger.debug("schema updated. No need to update the program");
+		return input_pu;
+	}
+
+	/*
+	 * case: Schema Delta was CHSK
+	 */
+	private Program_Utils apply_chsk(Program_Utils input_pu, CHSK chsk) {
+		logger.debug("applying CHSK refactoring");
+		if (chsk.getOldSK() != null)
+			chsk.getOldSK().setSK(false);
+		chsk.getNewSK(input_pu).setSK(true);
+		logger.debug("schema updated");
+		for (Transaction txn : input_pu.getTrasnsactionMap().values())
+			for (Query q : txn.getAllQueries())
+				if (q.getTableName().equalsWith(chsk.getTable(input_pu).getTableName()))
+					reAtomicize_qry(input_pu, txn.getName(), q.getPo(), false);
+		logger.debug("program updated");
+		return input_pu;
+	}
+
+	/*****************************************************************************************************************/
+	// Functions for handling schema refactoring reverts (i.e. reverting
+	// Delta instances)
+	/*****************************************************************************************************************/
+	/*
+	 * Main functions called to revert updates on the *schema*
+	 */
+
+	public Program_Utils revert_refactor_schema_seq(Program_Utils input_pu, Delta... deltas) {
+		for (Delta d : deltas)
+			input_pu = revert_refactor_schema(input_pu, d);
+		return input_pu;
+	}
+
+	public Program_Utils revert_refactor_schema(Program_Utils input_pu, Delta delta) {
+		input_pu.decVersion();
+		input_pu.addComment("\n !!REVERTED!! " + delta.getDesc());
+		String delta_class = delta.getClass().getSimpleName().toString();
+		switch (delta_class) {
+		case "INTRO_R":
+			return revert_apply_intro_r(input_pu, (INTRO_R) delta);
+		case "ADDPK":
+			return revert_apply_addpk(input_pu, (ADDPK) delta);
+		case "CHSK":
+			return revert_apply_chsk(input_pu, (CHSK) delta);
+		case "INTRO_F":
+			return revert_apply_intro_f(input_pu, (INTRO_F) delta);
+		case "INTRO_VC":
+			return revert_apply_intro_vc(input_pu, (INTRO_VC) delta);
+		default:
+			assert false : "Case not catched: " + delta_class;
+			break;
+		}
+		return input_pu;
+	}
+
+	/*
+	 * case: Schema Delta was INTRO_R
+	 */
+	private Program_Utils revert_apply_intro_r(Program_Utils input_pu, INTRO_R intro_r) {
+		logger.debug("reverting INTRO_R refactoring");
+		String table_name = intro_r.getNewTableName();
+		input_pu.rmTable(table_name);
+		return input_pu;
+	}
+
+	/*
+	 * case: Schema Delta was INTRO_VC
+	 */
+	private Program_Utils revert_apply_intro_vc(Program_Utils input_pu, INTRO_VC intro_vc) {
+		logger.debug("reverting INTRO_VC refactoring");
+		input_pu.rmVC(intro_vc.getVC());
+		for (int i = intro_vc.getAppliedUpDup().size() - 1; i >= 0; i--) // must be traversed reversely to make sure POs
+																			// are not messed up
+			revert_duplicate_update(input_pu, intro_vc.getAppliedUpDup().get(i));
+
+		return input_pu;
+	}
+
+	/*
+	 * case: Schema Delta was INTRO_F
+	 */
+	private Program_Utils revert_apply_intro_f(Program_Utils input_pu, INTRO_F intro_f) {
+		logger.debug("reverting INTRO_F refactoring");
+		input_pu.removeFieldNameFromTable(intro_f.getTableName(), intro_f.getNewName());
+		return input_pu;
+	}
+
+	/*
+	 * case: Schema Delta was ADDPK
+	 */
+	private Program_Utils revert_apply_addpk(Program_Utils input_pu, ADDPK addpk) {
+		logger.debug("reverting ADDPK refactoring");
+		FieldName fn = input_pu.getFieldName(addpk.getNewPK());
+		fn.setPK(false);
+		logger.debug("schema updated. No need to update the program");
+		return input_pu;
+	}
+
+	/*
+	 * case: Schema Delta was CHSK
+	 */
+	private Program_Utils revert_apply_chsk(Program_Utils input_pu, CHSK chsk) {
+		logger.debug("reverting CHSK refactoring");
+		chsk.getOldSK().setSK(true);
+		chsk.getNewSK(input_pu).setSK(false);
+		logger.debug("schema updated");
+		for (Transaction txn : input_pu.getTrasnsactionMap().values())
+			for (Query q : txn.getAllQueries())
+				if (q.getTableName().equalsWith(chsk.getTable(input_pu).getTableName()))
+					reAtomicize_qry(input_pu, txn.getName(), q.getPo(), true);
+		logger.debug("program updated");
+		return input_pu;
+	}
+
+	/*****************************************************************************************************************/
+	// Functions for handling program refactoring reverts (i.e. taking
+	// Query_Modifier instances and processing them)
+	/*****************************************************************************************************************/
+
+	/*
+	 * Dispatching function for the below functions
+	 */
+
+	public void revert_refactor_program_seq(Program_Utils input_pu, Query_Modifier... qms) {
+		for (int i = qms.length - 1; i >= 0; i--)
+			revert_refactor_program(input_pu, qms[i]);
+	}
+
+	public void revert_refactor_program(Program_Utils input_pu, Query_Modifier qm) {
+		if (qm instanceof UPDATE_Duplicator) {
+			UPDATE_Duplicator x = (UPDATE_Duplicator) qm;
+			revert_duplicate_update(input_pu, x);
+		}
+		if (qm instanceof SELECT_Redirector) {
+			SELECT_Redirector x = (SELECT_Redirector) qm;
+			revert_redirect_select(input_pu, x);
+		}
+		if (qm instanceof SELECT_Merger) {
+			SELECT_Merger x = (SELECT_Merger) qm;
+			revert_merge_select(input_pu, x);
+		}
+		if (qm instanceof SELECT_Splitter) {
+			SELECT_Splitter x = (SELECT_Splitter) qm;
+			revert_split_select(input_pu, x);
+		}
+		if (qm instanceof UPDATE_Merger) {
+			UPDATE_Merger x = (UPDATE_Merger) qm;
+			revert_merge_update(input_pu, x);
+		}
+		if (qm instanceof UPDATE_Splitter) {
+			UPDATE_Splitter x = (UPDATE_Splitter) qm;
+			revert_split_update(input_pu, x);
+		}
+	}
+
+	public void revert_duplicate_update(Program_Utils input_pu, UPDATE_Duplicator ud) {
+		input_pu.decVersion();
+		input_pu.addComment("\n !!REVERTED!! " + ud.getDesc());
+		deleteQuery(input_pu, ud.getOrgDupPo() + 1, ud.getTxnName());
+	}
+
+	public void revert_redirect_select(Program_Utils input_pu, SELECT_Redirector select_red) {
+		input_pu.decVersion();
+		input_pu.addComment("\n !!REVERTED!! " + select_red.getDesc());
+		String original_txn_name = select_red.getTxnName();
+		String original_src_table = select_red.getSourceTable().getTableName().getName();
+		String original_target_table = select_red.getTargetTable().getTableName().getName();
+		redirect_select(input_pu, original_txn_name, original_target_table, original_src_table,
+				select_red.getApplied_po(), true);
+	}
+
+	public void revert_merge_select(Program_Utils input_pu, SELECT_Merger select_merger) {
+		input_pu.decVersion();
+		input_pu.addComment("\n !!REVERTED!! " + select_merger.getDesc());
+
+		String txnName = select_merger.getTxnName();
+		int originalPO = select_merger.getOriginal_applied_po();
+		Select_Query original_q1 = select_merger.getOld_select1();
+		Select_Query original_q2 = select_merger.getOld_select2();
+		Block originalBlock = select_merger.getOriginal_block();
+
+		deleteQuery(input_pu, originalPO, txnName);
+		InsertQueriesAtPO(originalBlock, input_pu, txnName, originalPO, new Query_Statement(originalPO, original_q1),
+				new Query_Statement(originalPO + 1, original_q2));
+
+		Var_Replacer vr = new Var_Replacer();
+		// replace old var1
+		vr.set(input_pu, txnName, original_q1.getSelectedFieldNames(), select_merger.getNewVar(),
+				original_q1.getVariable());
+		applyAndPropagate(input_pu, vr, originalPO + 1, txnName);
+		// replace old var2
+		vr.set(input_pu, txnName, original_q2.getSelectedFieldNames(), select_merger.getNewVar(),
+				original_q2.getVariable());
+		applyAndPropagate(input_pu, vr, originalPO + 1, txnName);
+
+	}
+
+	public void revert_split_select(Program_Utils input_pu, SELECT_Splitter select_splt) {
+		input_pu.decVersion();
+		input_pu.addComment("\n !!REVERTED!! " + select_splt.getDesc());
+		merge_select(input_pu, select_splt.getTxnName(), select_splt.getOriginal_applied_po(), true);
+	}
+
+	public void revert_merge_update(Program_Utils input_pu, UPDATE_Merger upd_merger) {
+		input_pu.decVersion();
+		input_pu.addComment("\n !!REVERTING!! " + upd_merger.getDesc());
+		split_update(input_pu, upd_merger.getTxnName(), upd_merger.getOld_update2().getWrittenFieldNames(),
+				upd_merger.getOriginal_applied_po(), true);
+	}
+
+	public void revert_split_update(Program_Utils input_pu, UPDATE_Splitter upd_splt) {
+		input_pu.decVersion();
+		input_pu.addComment("\n !!REVERTED!! " + upd_splt.getDesc());
+		merge_update(input_pu, upd_splt.getTxnName(), upd_splt.getOriginal_applied_po(), true);
+	}
+
+	/*****************************************************************************************************************/
+	// Functions for handling program refactoring requests (i.e. generating
+	// Query_Modifier instances and processing them)
+	/*****************************************************************************************************************/
+
+	public SELECT_Redirector redirect_select(Program_Utils input_pu, String txn_name, String src_table,
+			String dest_table, int qry_po, boolean isRevert) {
+
+		SELECT_Redirector select_red = new SELECT_Redirector();
+		select_red.set(input_pu, txn_name, src_table, dest_table);
+		if (select_red.isValid(input_pu.getQueryByPo(txn_name, qry_po))) {
+			logger.debug("redirect is valid");
+			applyAndPropagate(input_pu, select_red, qry_po, txn_name);
+
 			String begin;
 			if (isRevert) {
 				input_pu.decVersion();
@@ -150,13 +525,56 @@ public class Refactor {
 				input_pu.incVersion();
 				begin = input_pu.getProgramName() + "(" + input_pu.getVersion() + "):	";
 			}
-			input_pu.addComment("\n" + begin + upd_splt.getDesc());
-			upd_splt.setOriginal_applied_po(qry_po);
+			input_pu.addComment("\n" + begin + select_red.getDesc());
 
-			return upd_splt;
+			select_red.setApplied_po(qry_po);
+
+			return select_red;
+		} else {
+			logger.debug("redirect is invalid");
+			return null;
+		}
+	}
+
+	public Query_ReAtomicizer reAtomicize_qry(Program_Utils input_pu, String txn_name, int qry_po, boolean isRevert) {
+		Query_ReAtomicizer qry_atom = new Query_ReAtomicizer();
+		qry_atom.set(input_pu, txn_name);
+		if (qry_atom.isValid(input_pu.getQueryByPo(txn_name, qry_po))) {
+			applyAndPropagate(input_pu, qry_atom, qry_po, txn_name);
+			String begin;
+			if (isRevert) {
+				input_pu.decVersion();
+				begin = "              ";
+			} else {
+				input_pu.incVersion();
+				begin = input_pu.getProgramName() + "(" + input_pu.getVersion() + "):	";
+			}
+			input_pu.addComment("\n" + begin + qry_atom.getDesc());
+			return qry_atom;
 		} else
 			return null;
+	}
 
+	public SELECT_Merger merge_select(Program_Utils input_pu, String txn_name, int qry_po, boolean isRevert) {
+		SELECT_Merger select_merger = new SELECT_Merger();
+		select_merger.set(input_pu, txn_name);
+		if (select_merger.isValid(input_pu.getQueryByPo(txn_name, qry_po),
+				input_pu.getQueryByPo(txn_name, qry_po + 1))) {
+			applyAndPropagate(input_pu, select_merger, qry_po, txn_name);
+			String begin;
+			if (isRevert) {
+				input_pu.decVersion();
+				begin = "              ";
+			} else {
+				input_pu.incVersion();
+				begin = input_pu.getProgramName() + "(" + input_pu.getVersion() + "):	";
+			}
+			input_pu.addComment("\n" + begin + select_merger.getDesc());
+			select_merger.setOriginal_applied_po(qry_po);
+			select_merger.setOriginal_block(input_pu.getBlockByPo(txn_name, qry_po));
+			return select_merger;
+		} else
+			return null;
 	}
 
 	public SELECT_Splitter split_select(Program_Utils input_pu, String txn_name, ArrayList<FieldName> excluded_fns,
@@ -180,6 +598,226 @@ public class Refactor {
 			return null;
 
 	}
+
+	public UPDATE_Merger merge_update(Program_Utils input_pu, String txn_name, int qry_po, boolean isRevert) {
+		UPDATE_Merger upd_merger = new UPDATE_Merger();
+		upd_merger.set(input_pu, txn_name);
+		if (upd_merger.isValid(input_pu.getQueryByPo(txn_name, qry_po), input_pu.getQueryByPo(txn_name, qry_po + 1))) {
+			applyAndPropagate(input_pu, upd_merger, qry_po, txn_name);
+			String begin;
+			if (isRevert) {
+				input_pu.decVersion();
+				begin = "              ";
+			} else {
+				input_pu.incVersion();
+				begin = input_pu.getProgramName() + "(" + input_pu.getVersion() + "):	";
+			}
+			input_pu.addComment("\n" + begin + upd_merger.getDesc());
+			upd_merger.setOriginal_applied_po(qry_po);
+			return upd_merger;
+		} else
+			return null;
+
+	}
+
+	public UPDATE_Splitter split_update(Program_Utils input_pu, String txn_name, ArrayList<FieldName> excluded_fns_upd,
+			int qry_po, boolean isRevert) {
+		UPDATE_Splitter upd_splt = new UPDATE_Splitter();
+		upd_splt.set(input_pu, txn_name, excluded_fns_upd);
+		if (upd_splt.isValid(input_pu.getQueryByPo(txn_name, qry_po))) {
+			applyAndPropagate(input_pu, upd_splt, qry_po, txn_name);
+			String begin;
+			if (isRevert) {
+				input_pu.decVersion();
+				begin = "              ";
+			} else {
+				input_pu.incVersion();
+				begin = input_pu.getProgramName() + "(" + input_pu.getVersion() + "):	";
+			}
+			input_pu.addComment("\n" + begin + upd_splt.getDesc());
+			upd_splt.setOriginal_applied_po(qry_po);
+
+			return upd_splt;
+		} else
+			return null;
+
+	}
+
+	public UPDATE_Duplicator duplicate_update(Program_Utils input_pu, String txn_name, String source_table,
+			String target_table, int qry_po) {
+		UPDATE_Duplicator upd_dup = new UPDATE_Duplicator();
+		upd_dup.set(input_pu, txn_name, source_table, target_table);
+		upd_dup.isRedirect = true;
+		if (upd_dup.isValid(input_pu.getQueryByPo(txn_name, qry_po))) {
+			applyAndPropagate(input_pu, upd_dup, qry_po, txn_name);
+			input_pu.incVersion();
+			input_pu.addComment(
+					"\n" + input_pu.getProgramName() + "(" + input_pu.getVersion() + "):	" + upd_dup.getDesc());
+			upd_dup.setOrgDupPo(qry_po);
+			return upd_dup;
+		} else {
+			logger.debug("attempted duplication of " + txn_name + " (po#" + qry_po + ") from " + source_table + " to "
+					+ target_table + " but failed");
+			return null;
+		}
+	}
+
+	public UPDATE_Duplicator redirect_update(Program_Utils input_pu, String txn_name, String source_table,
+			String target_table, int qry_po) {
+		UPDATE_Duplicator upd_dup = new UPDATE_Duplicator();
+		upd_dup.set(input_pu, txn_name, source_table, target_table);
+		upd_dup.isRedirect = true;
+		if (upd_dup.isValid(input_pu.getQueryByPo(txn_name, qry_po))) {
+			applyAndPropagate(input_pu, upd_dup, qry_po, txn_name);
+			input_pu.incVersion();
+			input_pu.addComment(
+					"\n" + input_pu.getProgramName() + "(" + input_pu.getVersion() + "):	" + upd_dup.getDesc());
+			upd_dup.setOrgDupPo(qry_po);
+			return upd_dup;
+		} else {
+			logger.debug("attempted duplication of " + txn_name + " (po#" + qry_po + ") from " + source_table + " to "
+					+ target_table + " but failed");
+			return null;
+		}
+	}
+
+	public boolean swap_queries(Program_Utils input_pu, String txnName, int q1_po, int q2_po, boolean isRevert) {
+		Transaction txn = (Transaction) input_pu.getTrasnsactionMap().get(txnName);
+		assert (txn != null) : "swap request is made on a transaction that does not exist";
+		// guard the swaps from invalid requests
+		if (q1_po > q2_po || !swapChecks(input_pu, txn, q1_po, q2_po))
+			return false;
+		swapQueries_rec(txn.getStatements(), q1_po, q2_po);
+		return true;
+	}
+
+	/*****************************************************************************************************************/
+	// Helping functions for SWAP
+	/*****************************************************************************************************************/
+
+	/*
+	 * Helping function used in swap_queries. It recusrsively checks continous
+	 * blocks of statements
+	 */
+	private void swapQueries_rec(ArrayList<Statement> inputList, int q1_po, int q2_po) {
+		int iter = 0;
+		int index_po1 = -1, index_po2 = -1;
+		loop_label: for (Statement stmt : inputList) {
+			switch (stmt.getClass().getSimpleName()) {
+			case "Query_Statement":
+				Query_Statement qry_stmt = (Query_Statement) stmt;
+				Query qry = qry_stmt.getQuery();
+				if (qry.getPo() == q1_po) {
+					qry.updatePO(q2_po);
+					index_po1 = iter;
+					break;
+				}
+				if (qry.getPo() == q2_po) {
+					assert (index_po1 != -1) : "unexpected state: q2 is found in the current block but"
+							+ " q1 belongs to another (possibly outer) block";
+					qry.updatePO(q1_po);
+					index_po2 = iter;
+					break loop_label;
+				}
+				break;
+			case "If_Statement":
+				If_Statement if_stmt = (If_Statement) stmt;
+				swapQueries_rec(if_stmt.getIfStatements(), q1_po, q2_po);
+				swapQueries_rec(if_stmt.getElseStatements(), q1_po, q2_po);
+				break;
+			default:
+				break;
+			}
+			iter++;
+		}
+		if (index_po1 != -1 && index_po2 != -1)
+			Collections.swap(inputList, index_po1, index_po2);
+	}
+
+	/*
+	 * Check if the requested swap is valid or not
+	 */
+	private boolean swapChecks(Program_Utils pu, Transaction txn, int q1_po, int q2_po) {
+		if (q1_po >= q2_po)
+			return false;
+		if (!pu.getBlockByPo(txn.getName(), q1_po).isEqual(pu.getBlockByPo(txn.getName(), q2_po)))
+			return false;
+		Boolean result = swapChecks_rec(txn.getStatements(), q1_po, q2_po);
+		assert (result != null) : "the requested swap is invalid and cannot be checked";
+		return result;
+	}
+
+	/*
+	 * Helping function used in swapChecks. Recursively analyzes the contineous
+	 * blocks of statements
+	 */
+	private Boolean swapChecks_rec(ArrayList<Statement> inputList, int q1_po, int q2_po) {
+		ArrayList<Query> pot_dep_qries = new ArrayList<>();
+		Query qry1 = null;
+		Query qry2 = null;
+		boolean q1_seen_flag = false;
+		loop_label: for (Statement stmt : inputList) {
+			switch (stmt.getClass().getSimpleName()) {
+			case "Query_Statement":
+				Query_Statement qry_stmt = (Query_Statement) stmt;
+				Query qry = qry_stmt.getQuery();
+				if (qry.getPo() == q1_po) {
+					q1_seen_flag = true;
+					qry1 = qry;
+					pot_dep_qries.add(qry);
+					break;
+				}
+				if (qry.getPo() == q2_po) {
+					assert (q1_seen_flag) : "unexpected state: q2 is found in the current block but"
+							+ " q1 belongs to another (possibly outer) block";
+					qry2 = qry;
+					break loop_label;
+				}
+				if (q1_seen_flag && qryAreDep(qry1, qry))
+					pot_dep_qries.add(qry);
+				break;
+			case "If_Statement":
+				If_Statement if_stmt = (If_Statement) stmt;
+				Boolean if_result = swapChecks_rec(if_stmt.getIfStatements(), q1_po, q2_po);
+				if (if_result != null)
+					return if_result;
+				Boolean else_result = swapChecks_rec(if_stmt.getElseStatements(), q1_po, q2_po);
+				if (else_result != null)
+					return else_result;
+				break;
+			default:
+				break;
+			}
+		}
+		if (q1_seen_flag) {
+			assert (qry2 != null) : "unexpected state: qry2 is not set although qry1 has been found in the current block po1= "
+					+ q1_po + "   po2= " + q2_po;
+			for (Query q : pot_dep_qries)
+				if (qryAreDep(q, qry2))
+					return false;
+			return true;
+		} else
+			return null;
+	}
+
+	/*
+	 * check if two queries are dependent on each other or not
+	 */
+	private boolean qryAreDep(Query qry1, Query qry2) {
+		assert (qry1.getPo() < qry2
+				.getPo()) : "unexpected state: algorithm assumes this function is only called for po1<po2 -> po1:"
+						+ qry1.getPo() + " po2:" + qry2.getPo();
+		if (qry1.getKind() == Kind.SELECT) {
+			Select_Query slct_qry = (Select_Query) qry1;
+			Variable var1 = slct_qry.getVariable();
+			return qry2.getAllRefferencedVars().contains(var1);
+			// the only case where true (identifying a dependency) is returned is when the
+			// first query is a select and
+			// the second query has a reference to the variable created by the first one
+		}
+		return false;
+	}
+	/*****************************************************************************************************************/
 
 	/*****************************************************************************************************************/
 	// Helping functions to update Queries in the statement lists (called by the
@@ -315,8 +953,13 @@ public class Refactor {
 		deleteQuery(input_pu, apply_at_po, txnName);
 		logger.debug("new Calling InsertQueriesAtPO to add the new query to the transaction");
 
-		InsertQueriesAtPO(orig_block, input_pu, txnName, apply_at_po, new Query_Statement(apply_at_po, new_qry_tuple.x),
-				new Query_Statement(apply_at_po, new_qry_tuple.y));
+		if (modifier.isRedirect)
+			InsertQueriesAtPO(orig_block, input_pu, txnName, apply_at_po,
+					new Query_Statement(apply_at_po, new_qry_tuple.y));
+		else
+			InsertQueriesAtPO(orig_block, input_pu, txnName, apply_at_po,
+					new Query_Statement(apply_at_po, new_qry_tuple.x),
+					new Query_Statement(apply_at_po, new_qry_tuple.y));
 
 		return input_pu;
 	}

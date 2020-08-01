@@ -20,6 +20,7 @@ public class CHSK extends Delta {
 	private String new_table_name, new_sk_name;
 
 	public CHSK(Program_Utils pu, String tn, String new_skn) {
+		assert (false) : "don't call this";
 		this.table = pu.getTable(tn);
 		if (table != null) {
 			this.old_sk = table.getShardKey();

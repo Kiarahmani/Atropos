@@ -22,7 +22,10 @@ public abstract class One_to_Two_Query_Modifier extends Query_Modifier {
 
 	public void set() {
 		super.set();
+		isRedirect = false;
 	}
+	
+	public boolean isRedirect;
 
 	public One_to_Two_Query_Modifier() {
 		super.type = QM_Type.OTT;
