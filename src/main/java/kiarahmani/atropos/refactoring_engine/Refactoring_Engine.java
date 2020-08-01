@@ -250,7 +250,7 @@ public class Refactoring_Engine {
 			}
 		}
 		// XXX
-		
+
 		return result;
 	}
 

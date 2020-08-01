@@ -1,6 +1,5 @@
 package kiarahmani.atropos;
 
-import java.beans.Statement;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -12,32 +11,15 @@ import java.util.HashSet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import kiarahmani.atropos.DB.statementBuilder;
 import kiarahmani.atropos.DDL.vc.VC;
-import kiarahmani.atropos.DML.query.Query;
-import kiarahmani.atropos.dependency.Conflict_Graph;
 import kiarahmani.atropos.dependency.DAI;
 import kiarahmani.atropos.dependency.DAI_Graph;
 import kiarahmani.atropos.encoding_engine.Encoding_Engine;
-import kiarahmani.atropos.program.Program;
 import kiarahmani.atropos.program.Table;
-import kiarahmani.atropos.program_generators.SEATSProgramGenerator;
-import kiarahmani.atropos.program_generators.SIBenchProgramGenerator;
-import kiarahmani.atropos.program_generators.TPCCProgramGenerator;
-import kiarahmani.atropos.program_generators.TWITTERProgramGenerator;
-import kiarahmani.atropos.program_generators.WikipediaProgramGenerator;
-import kiarahmani.atropos.program_generators.SmallBank.SmallBankProgramGenerator;
-import kiarahmani.atropos.refactoring.Refactor;
+import kiarahmani.atropos.refactoring.RefactorEngine;
 import kiarahmani.atropos.program_generators.SmallBank.OnlineCourse;
-import kiarahmani.atropos.refactoring_engine.Refactoring_Engine;
 import kiarahmani.atropos.refactoring_engine.deltas.Delta;
 import kiarahmani.atropos.refactoring_engine.deltas.INTRO_VC;
-import kiarahmani.atropos.search_engine.Naive_search_engine;
-import kiarahmani.atropos.search_engine.Optimal_search_engine;
-import kiarahmani.atropos.search_engine.Optimal_search_engine_seats;
-import kiarahmani.atropos.search_engine.Optimal_search_engine_sibench;
-import kiarahmani.atropos.search_engine.Optimal_search_engine_tpcc;
-import kiarahmani.atropos.search_engine.Optimal_search_engine_twitter;
 import kiarahmani.atropos.search_engine.Optimal_search_engine_wikipedia;
 import kiarahmani.atropos.utils.Constants;
 import kiarahmani.atropos.utils.Program_Utils;
@@ -56,22 +38,28 @@ public class Atropos {
 
 		// initialize
 		Program_Utils pu = new Program_Utils("Course");
-		Refactor re = new Refactor();
 		// get the first instance of the program
 		new OnlineCourse(pu).generate();
-		pu.generateProgram().printProgram();
-		// find anomlous access pairs
+		pu.print();
+		// find anomlous access pairs in the base version
 		ArrayList<DAI> anmls = analyze(pu).getDAIs();
-		// prform pre-analysis step
-		re.pre_process(pu, anmls);
-		System.out.println("\n\nbefore filtering:");
-		for (DAI anml : anmls)
-			System.out.println(anml);
-		anmls = filter_duplicate_anmls(anmls);
-		System.out.println("\n\nafter filtering:");
-		for (DAI anml : anmls)
-			System.out.println(anml);
-		pu.generateProgram().printProgram();
+		// initialize a refactoring engine
+		RefactorEngine re = new RefactorEngine();
+		// preform the pre-processing step (updates the pu and also the anmls list)
+		// each query will be involved in at most one anomaly
+		anmls = re.pre_process(pu, anmls);
+		pu.print();
+		assert (false);
+
+		
+		
+		
+		
+		// prform pre-analysis step (try to split ops so more anomalies can be
+		// considered. return only anomalies such that each operation is involved in at
+		// most one anomaly)
+		//anmls = re.pre_process(pu, anmls);
+		//pu.generateProgram().printProgram();
 
 		assert (false);
 
@@ -165,20 +153,6 @@ public class Atropos {
 	 * @returns a filtered set of anomalies which ensures that each query is at most
 	 *          involved in a single DAI
 	 */
-	private static ArrayList<DAI> filter_duplicate_anmls(ArrayList<DAI> anmls) {
-		HashSet<String> stmts = new HashSet<>();
-		ArrayList<DAI> result = new ArrayList<>();
-		for (DAI anml : anmls) {
-			String txnName = anml.getTransaction().getName();
-			if (stmts.contains(txnName + anml.getQuery(1).getId())
-					|| stmts.contains(txnName + anml.getQuery(2).getId()))
-				continue;
-			stmts.add(txnName + anml.getQuery(1).getId());
-			stmts.add(txnName + anml.getQuery(2).getId());
-			result.add(anml);
-		}
-		return result;
-	}
 
 	private static HashMap<String, HashMap<String, HashSet<VC>>> initHist(Program_Utils pu) {
 		HashMap<String, HashMap<String, HashSet<VC>>> history = new HashMap<>();

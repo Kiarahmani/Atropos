@@ -40,6 +40,14 @@ public class DAI {
 		return this.txn;
 	}
 
+	public String getQueryUniqueId(int id) {
+		assert (id == 1 || id == 2) : "input must be either 1 or 2";
+		if (id == 1)
+			return this.getTransaction().getName() + this.q1.getId();
+		else
+			return this.getTransaction().getName() + this.q2.getId();
+	}
+
 	public Query getQuery(int id) {
 		if (id == 1)
 			return q1;

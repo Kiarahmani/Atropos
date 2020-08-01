@@ -923,6 +923,14 @@ public class Program_Utils {
 	 * 
 	 * 
 	 */
+	
+	
+	public void print () {
+		this.generateProgram().printProgram();
+	}
+	
+	
+	
 
 	public Program_Utils mkSnapShot() {
 		Program_Utils snapshot = new Program_Utils(program_name);
