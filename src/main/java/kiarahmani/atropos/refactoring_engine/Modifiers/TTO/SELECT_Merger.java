@@ -135,6 +135,7 @@ public class SELECT_Merger extends Two_to_One_Query_Modifier {
 		new_implicit_fns.addAll(old_select2.getImplicitlyUsed());
 		for (FieldName fn : new_implicit_fns)
 			new_select.setImplicitlyUsed(fn);
+		new_select.isImp = old_select1.isImp || old_select2.isImp;
 		return new_select;
 	}
 

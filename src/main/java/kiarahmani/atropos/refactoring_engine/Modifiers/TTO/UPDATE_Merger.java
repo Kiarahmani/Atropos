@@ -17,6 +17,7 @@ import kiarahmani.atropos.DML.expression.Expression;
 import kiarahmani.atropos.DML.query.Query;
 import kiarahmani.atropos.DML.query.Update_Query;
 import kiarahmani.atropos.DML.where_clause.WHC;
+import kiarahmani.atropos.DML.where_clause.WHCC;
 import kiarahmani.atropos.program.Table;
 import kiarahmani.atropos.program.statements.Query_Statement;
 import kiarahmani.atropos.refactoring_engine.Modifiers.QM_Type;
@@ -101,6 +102,13 @@ public class UPDATE_Merger extends Two_to_One_Query_Modifier {
 	}
 
 	WHC mergeWHCs(WHC whc1, WHC whc2) {
+		ArrayList<FieldName> fns = whc1.getAccessedFieldNames();
+		ArrayList<FieldName> fnss = whc2.getAccessedFieldNames();
+		if (fns.size() == 1 && fns.get(0).isAliveField())
+			return whc1;
+		if (fnss.size() == 1 && fnss.get(0).isAliveField())
+			return whc2;
+
 		logger.debug("Does whc1 contain whc2?");
 		boolean contains1 = whc1.containsWHC(whc2);
 		boolean contains2 = whc2.containsWHC(whc1);
@@ -165,7 +173,22 @@ public class UPDATE_Merger extends Two_to_One_Query_Modifier {
 
 		boolean valid4 = (mergeWHCs(input_update_1.getWHC(), input_update_2.getWHC()) != null);
 
-		return valid1 && valid2 && valid3 && valid4;
+		boolean valid5 = IsomorphicUpds(input_update_1, input_update_2);
+		boolean valid6 = IsomorphicUpds(input_update_2, input_update_1);
+		return valid1 && valid2 && valid3 && (valid4 || valid5 || valid6);
+	}
+
+	private boolean IsomorphicUpds(Update_Query u1, Update_Query u2) {
+		boolean result = true;
+		for (WHCC whcc : u1.getWHC().getConstraints()) {
+			FieldName whc_fn = whcc.getFieldName();
+			if (whc_fn.isAliveField())
+				continue;
+			Expression whc_exp = whcc.getExpression();
+			Expression upd_exp = u2.getUpdateExpressionByFieldName(whc_fn);
+			result &= (upd_exp != null) & whc_exp.isEqual(upd_exp);
+		}
+		return result;
 	}
 
 }

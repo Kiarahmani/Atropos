@@ -108,6 +108,8 @@ public class SELECT_Splitter extends One_to_Two_Query_Modifier {
 		new_implicit_fns_2.stream().filter(fn -> excluded_fns.contains(fn)).collect(Collectors.toSet());
 		new_select_1.setImplicitlyUsed(new_implicit_fns_1);
 		new_select_2.setImplicitlyUsed(new_implicit_fns_2);
+		new_select_1.isImp = old_select.isImp;
+		new_select_2.isImp = old_select.isImp;
 		// return
 		return new Tuple<Query, Query>(new_select_1, new_select_2);
 	}

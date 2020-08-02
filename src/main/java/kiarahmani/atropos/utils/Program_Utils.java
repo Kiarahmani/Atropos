@@ -247,6 +247,23 @@ public class Program_Utils {
 		return result;
 	}
 
+	public Select_Query addSelectQuery(String txn, String tableName, String varName, WHC whc, boolean isImp,
+			String... fieldNames) {
+		assert (!lock) : "cannot call this function after locking";
+		boolean isAtomic = whc.isAtomic(getTable(tableName).getShardKey());
+		int po = transactionToPoCount.containsKey(txn) ? transactionToPoCount.get(txn) : 0;
+		transactionToPoCount.put(txn, po + 1);
+		Variable fresh_variable = mkVariable(tableName, txn, varName);
+		int select_counts = (transactionToSelectCount.containsKey(txn)) ? transactionToSelectCount.get(txn) : 0;
+		transactionToSelectCount.put(txn, select_counts + 1);
+		ArrayList<FieldName> fresh_field_names = new ArrayList<>();
+		for (String fn : fieldNames)
+			fresh_field_names.add(fieldNameMap.get(fn));
+		Select_Query result = new Select_Query(po, select_counts, isAtomic, isImp, tableNameMap.get(tableName),
+				fresh_field_names, fresh_variable, whc);
+		return result;
+	}
+
 	public Update_Query addUpdateQuery(String txn, String tableName, WHC whc) {
 		assert (!lock) : "cannot call this function after locking";
 		boolean isAtomic = whc.isAtomic(getTable(tableName).getShardKey());

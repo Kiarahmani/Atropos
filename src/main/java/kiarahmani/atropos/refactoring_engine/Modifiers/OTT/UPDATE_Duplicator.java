@@ -51,7 +51,6 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 	private Redirection_Type type;
 	private int original_duplicated_po;
 
-	
 	public int getOrgDupPo() {
 		return this.original_duplicated_po;
 	}
@@ -136,12 +135,13 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 		logger.debug("pk_fields: " + pk_fields);
 
 		for (FieldName pk_fn : pk_fields) {
-			if (old_update.getWHC().getConstraintByFieldName(pk_fn) == null) {
+			WHCC ass = old_update.getWHC().getConstraintByFieldName(pk_fn) ;
+			if (ass == null) {
 				logger.debug("pk " + pk_fn + " does not have a valid constraint in the original whc");
 				return null;
 			}
-			result[index] = new WHCC(targetTable.getTableName(), targetTable.getPKFields().get(index),
-					BinOp.EQ, old_update.getWHC().getConstraintByFieldName(pk_fn).getExpression());
+			result[index] = new WHCC(targetTable.getTableName(), targetTable.getPKFields().get(index), BinOp.EQ,
+					old_update.getWHC().getConstraintByFieldName(pk_fn).getExpression());
 			index++;
 		}
 		logger.debug("Insert Exps after adding PKs: " + Arrays.toString(result));
@@ -153,8 +153,8 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 		Expression delta_exp = extractDeltaExp(old_update);
 		if (delta_exp == null)
 			return null;
-		result[pk_fields_size + 1] = new WHCC(targetTable.getTableName(), targetTable.getDeltaField(),
-				BinOp.EQ, delta_exp);
+		result[pk_fields_size + 1] = new WHCC(targetTable.getTableName(), targetTable.getDeltaField(), BinOp.EQ,
+				delta_exp);
 		logger.debug("Final insert Exps: " + Arrays.toString(result));
 		return result;
 	}
@@ -210,9 +210,8 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 		case VC_OTM:
 			switch (vc.get_agg()) {
 			case VC_ID:
-				result = new WHCC(targetTable.getTableName(),
-						vc.getCorrespondingKey(pu, old_whcc.getFieldName()), old_whcc.getOp(),
-						old_whcc.getExpression());
+				result = new WHCC(targetTable.getTableName(), vc.getCorrespondingKey(pu, old_whcc.getFieldName()),
+						old_whcc.getOp(), old_whcc.getExpression());
 				break;
 			case VC_SUM:
 				assert (false) : "unexpected state";
@@ -254,8 +253,10 @@ public class UPDATE_Duplicator extends One_to_Two_Query_Modifier {
 		} else
 			return false;
 
-		boolean assumption0 = !(vc.getType() == VC_Type.VC_OTM && vc.get_agg() == VC_Agg.VC_SUM)
-				|| (mkInsert(input_update) != null);
+		boolean ass00 = !(vc.getType() == VC_Type.VC_OTM && vc.get_agg() == VC_Agg.VC_SUM);
+		boolean ass01 = (mkInsert(input_update) != null);
+
+		boolean assumption0 = ass00 || ass01;
 
 		// all keys used as the WHC of duplicating UPDATE must be constrained by vc
 		boolean assumption1 = vc.containsWHC(pu, input_update.getWHC());

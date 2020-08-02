@@ -61,11 +61,6 @@ public class Atropos {
 		for (DAI anml : anmls)
 			System.out.println(anml);
 
-		// MAIN LOOP
-		// for (DAI anml : anmls) {
-
-		// }
-
 		{
 			Delta reff = new INTRO_F("student", "st_co_avail", F_Type.NUM);
 			INTRO_VC refff = new INTRO_VC(pu, "course", "student", VC_Agg.VC_ID, VC_Type.VC_OTM);
@@ -76,14 +71,24 @@ public class Atropos {
 			Delta x2 = new INTRO_F("log", "id", F_Type.NUM);
 			Delta x3 = new INTRO_F("log", "counter", F_Type.NUM, true, false);
 			Delta x4 = new INTRO_F("log", "val", F_Type.NUM, false, true);
-			
+
 			Delta x5 = new ADDPK(pu, "log", "id");
 			Delta x6 = new ADDPK(pu, "log", "counter");
 			INTRO_VC x7 = new INTRO_VC(pu, "course", "log", VC_Agg.VC_SUM, VC_Type.VC_OTM);
 			x7.addKeyCorrespondenceToVC("co_id", "id");
 			x7.addFieldTupleToVC("co_st_cnt", "val");
-			re.refactor_schema_seq(pu, x1, x2, x3, x4, x5, x6, x7, reff, refff);
+
+			Delta x8 = new INTRO_F("student", "st_em_addr", F_Type.TEXT);
+			INTRO_VC x9 = new INTRO_VC(pu, "email", "student", VC_Agg.VC_ID, VC_Type.VC_OTM);
+			x9.addKeyCorrespondenceToVC("em_id", "st_em_id");
+			x9.addFieldTupleToVC("em_addr", "st_em_addr");
+
+			re.refactor_schema_seq(pu, x1, x2, x3, x4, x5, x6, x7, x8, x9, reff, refff);
 		}
+		pu.print();
+
+		//System.out.println("\n\n\nPost Process \n\n\n");
+		re.post_process(pu);
 		pu.print();
 
 		assert (false);

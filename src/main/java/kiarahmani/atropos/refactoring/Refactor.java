@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -17,9 +18,14 @@ import org.apache.logging.log4j.Logger;
 import kiarahmani.atropos.Atropos;
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DDL.TableName;
+import kiarahmani.atropos.DDL.vc.VC;
 import kiarahmani.atropos.DDL.vc.VC.VC_Agg;
 import kiarahmani.atropos.DML.Variable;
+import kiarahmani.atropos.DML.expression.BinOp;
+import kiarahmani.atropos.DML.expression.E_BinOp;
+import kiarahmani.atropos.DML.expression.E_Proj;
 import kiarahmani.atropos.DML.expression.Expression;
+import kiarahmani.atropos.DML.expression.constants.E_Const_Num;
 import kiarahmani.atropos.DML.query.Query;
 import kiarahmani.atropos.DML.query.Select_Query;
 import kiarahmani.atropos.DML.query.Update_Query;
@@ -228,7 +234,7 @@ public class Refactor {
 		// vc is already generated and added to pu; must now deal with the program
 		for (Transaction txn : input_pu.getTrasnsactionMap().values())
 			for (Query q : txn.getAllQueries())
-				if (q.isWrite())
+				if (q.isWrite()) {
 					if (q.getTableName().equalsWith(t1)) {
 						logger.debug("query " + q.getId() + "(" + q.getPo() + ") is a write on T1 (" + t1.getName()
 								+ ") and must be duplicated (-> redirected) on T2 (" + t2.getName() + ")");
@@ -265,6 +271,16 @@ public class Refactor {
 						if (ud != null)
 							intro_vc.addAppliedUpDup(ud);
 					}
+				}
+		for (Transaction txn : input_pu.getTrasnsactionMap().values())
+			for (Query q : txn.getAllQueries())
+				if (!q.isWrite()) {
+					if (q.getTableName().equalsWith(t1)) {
+						logger.debug("query " + q.getId() + "(" + q.getPo() + ") is a SELECT on T1 (" + t1.getName()
+								+ ") and must be redirected on T2 (" + t2.getName() + ")");
+						redirect_select(input_pu, txn.getName(), t1.getName(), t2.getName(), q.getPo(), false);
+					}
+				}
 		// input_pu.mkVC(intro_vc.getVC());
 		return input_pu;
 	}
@@ -305,6 +321,531 @@ public class Refactor {
 		logger.debug("program updated");
 		return input_pu;
 	}
+
+	/*****************************************************************************************************************/
+	// Functions for shrinking the program
+	/*****************************************************************************************************************/
+
+	public void post_process(Program_Utils pu) {
+		decompose(pu); // split and redirect all selects to tables with lower wights
+		delete_redundant(pu);
+		shrink(pu);
+		delete_redundant(pu);
+
+	}
+
+
+
+	public void pre_analysis(Program_Utils input_pu) {
+		for (Transaction txn : input_pu.getTrasnsactionMap().values())
+			for (Query q : txn.getAllQueries()) {
+				if (q instanceof Update_Query) {
+					Update_Query uq = (Update_Query) q;
+					if (is_non_crdt_able(uq)) {
+						logger.debug(q.getId() + " is not crdt-able!");
+						String txn_name = txn.getName();
+						int u_po = uq.getPo();
+						Block u_block = input_pu.getBlockByPo(txn_name, u_po);
+						Select_Query new_select = mk_crdt_able_select(input_pu, uq, txn_name);
+						Update_Query new_update = mk_crdt_able_update(input_pu, uq, new_select.getVariable(), txn_name);
+						deleteQuery(input_pu, u_po, txn_name);
+						InsertQueriesAtPO(u_block, input_pu, txn_name, u_po, new Query_Statement(u_po, new_select));
+						InsertQueriesAtPO(u_block, input_pu, txn_name, u_po + 1,
+								new Query_Statement(u_po + 1, new_update));
+					} else
+						logger.debug(q.getId() + " is crdt-able!");
+				}
+			}
+	}
+
+	private boolean is_non_crdt_able(Update_Query uq) {
+		ArrayList<Tuple<FieldName, Expression>> old_exps = uq.getUpdateExps();
+		if (old_exps.size() == 1) {
+			Expression exp = old_exps.get(0).y;
+			if (exp instanceof E_Const_Num) {
+				E_Const_Num nexp = (E_Const_Num) exp;
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private Select_Query mk_crdt_able_select(Program_Utils input_pu, Update_Query uq, String txn_name) {
+		ArrayList<Tuple<FieldName, Expression>> old_exps = uq.getUpdateExps();
+		assert (old_exps.size() == 1) : "unexpected state";
+		Tuple<FieldName, Expression> old_exp = old_exps.get(0);
+		String table_name = uq.getTableName().getName();
+		Variable new_var = input_pu.mkVariable(table_name, txn_name);
+		ArrayList<FieldName> new_fns = new ArrayList<>();
+		new_fns.add(old_exp.x);
+		Select_Query result = new Select_Query(-1, input_pu.getNewSelectId(txn_name), uq.isAtomic(), uq.getTableName(),
+				new_fns, new_var, uq.getWHC());
+		result.setPathCondition(uq.getPathCondition());
+		return result;
+	}
+
+	private Update_Query mk_crdt_able_update(Program_Utils input_pu, Update_Query uq, Variable new_var,
+			String txn_name) {
+		Update_Query new_qry = new Update_Query(-1, input_pu.getNewUpdateId(txn_name), uq.isAtomic(), uq.getTableName(),
+				uq.getWHC());
+		Tuple<FieldName, Expression> new_exp = get_crdt_able_exps(input_pu, uq, new_var);
+		new_qry.addUpdateExp(new_exp.x, new_exp.y);
+		new_qry.setPathCondition(uq.getPathCondition());
+		return new_qry;
+	}
+
+	private Tuple<FieldName, Expression> get_crdt_able_exps(Program_Utils input_pu, Update_Query uq, Variable new_var) {
+		ArrayList<Tuple<FieldName, Expression>> old_exps = uq.getUpdateExps();
+		assert (old_exps.size() == 1) : "unexpected state";
+		Tuple<FieldName, Expression> old_exp = old_exps.get(0);
+		E_Const_Num nexp = (E_Const_Num) old_exp.y;
+		int const_val = nexp.val;
+		Expression proj_exp = new E_Proj(new_var, old_exp.x, new E_Const_Num(1));
+		Expression new_exp = new E_BinOp(BinOp.PLUS, proj_exp,
+				new E_BinOp(BinOp.MINUS, new E_Const_Num(const_val), proj_exp));
+
+		Tuple<FieldName, Expression> result = new Tuple<FieldName, Expression>(old_exp.x, new_exp);
+		return result;
+	}
+
+	/*
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 */
+
+	public void delete_unincluded(Program_Utils pu) {
+		logger.debug("deleting unincluded transactions and queries");
+		delete_unincluded_transactions(pu);
+		logger.debug("now calling normal delete_redundant");
+		while (delete_redundant_iter(pu, true))
+			;
+		delete_unincluded_tables(pu);
+	}
+
+	public void delete_redundant(Program_Utils pu) {
+		while (delete_redundant_iter(pu, false))
+			;
+	}
+
+	private void delete_unincluded_tables(Program_Utils pu) {
+		Set<TableName> unused_tables = pu.getTables().values().stream().map(t -> t.getTableName())
+				.collect(Collectors.toSet());
+
+		for (Transaction txn : pu.getTrasnsactionMap().values())
+			for (Query q : txn.getAllQueries())
+				unused_tables.remove(q.getTableName());
+
+		for (TableName tn : unused_tables)
+			pu.rmTable(tn.getName());
+
+	}
+
+	private void delete_unincluded_transactions(Program_Utils pu) {
+		// remove redundant transactions
+		HashSet<String> to_be_removed = new HashSet<>();
+		for (Transaction txn : pu.getTrasnsactionMap().values())
+			if (!txn.is_included)
+				to_be_removed.add(txn.getName());
+
+		for (String s : to_be_removed) {
+			logger.debug("removing transaction " + s);
+			pu.rmTransaction(s);
+		}
+
+		// remove redundant queries
+		for (Transaction txn : pu.getTrasnsactionMap().values()) {
+			if (txn.is_included) {
+				logger.debug("analyzing queries of txn " + txn.getName() + " to remove unincluded ones");
+				for (Query q : txn.getAllQueries())
+					if (!q.getIsIncluded() && q.isWrite()) {
+						logger.debug("removing query " + q.getId() + " from " + txn.getName());
+						deleteQuery(pu, q.getPo(), txn.getName());
+					} else
+						logger.debug("cannot remove  " + q.getId() + " from " + txn.getName());
+			}
+		}
+
+	}
+
+	private boolean delete_redundant_iter(Program_Utils pu, boolean analysis_call) {
+		boolean result = false;
+		HashMap<Table, HashSet<FieldName>> accessed_fn_map = mkTableMap(pu);
+		result |= delete_redundant_tables(pu, accessed_fn_map, analysis_call);
+		result |= delete_redundant_writes(pu, accessed_fn_map);
+		result |= delete_redundant_reads(pu, analysis_call);
+		return result;
+	}
+
+	private boolean delete_redundant_tables(Program_Utils pu, HashMap<Table, HashSet<FieldName>> accessed_fn_map,
+			boolean analysis_call) {
+		boolean result = false;
+		ArrayList<Table> tables_to_be_removed = new ArrayList<>();
+		for (Table t : pu.getTables().values())
+			if (t.canBeRemoved() && accessed_fn_map.get(t).size() == (t.getPKFields().size() + 1) && !t.isAllPK()) {
+				if (!tables_to_be_removed.contains(t)
+						&& (!table_is_touched_by_included_queries(pu, t, analysis_call))) {
+					tables_to_be_removed.add(t);
+					result = true;
+				}
+			}
+		for (Table t : tables_to_be_removed) {
+			logger.debug("removing table " + t.getTableName());
+			pu.rmTable(t.getTableName().getName());
+		}
+		// remove redundant fieldNames
+		// a different map must be used which also considers accesses by updates (unlike
+		// given accessed_fn_map which only considers SELECTs)
+		HashMap<Table, HashSet<FieldName>> accessed_fn_map_all_q = mkTableMap_allQ(pu);
+		for (Table t : pu.getTables().values()) {
+			if (t.canBeRemoved()) {
+				ArrayList<FieldName> fns_to_be_removed = new ArrayList<>();
+				for (FieldName fn : t.getFieldNames())
+					if (!accessed_fn_map_all_q.get(t).contains(fn))
+						fns_to_be_removed.add(fn);
+				for (FieldName fn : fns_to_be_removed)
+					pu.removeFieldNameFromTable(t.getTableName().getName(), fn);
+			}
+		}
+		// XXX
+
+		return result;
+	}
+
+	private boolean delete_redundant_writes(Program_Utils pu, HashMap<Table, HashSet<FieldName>> accessed_fn_map) {
+
+		boolean result = false;
+		for (Transaction txn : pu.getTrasnsactionMap().values())
+			for (Query q : txn.getAllQueries())
+				if (q.canBeRemoved() && q instanceof Update_Query) {
+					logger.debug("--------------");
+					logger.debug("analyzing if " + txn.getName() + "." + q.getId() + " can be removed");
+					if (q.getIsIncluded()) {
+						logger.debug("it cannot, because it is included in the anomaly");
+						continue;
+					}
+					Table curr_t = pu.getTable(q.getTableName().getName());
+					if (curr_t == null) { // table has already been removed
+						logger.debug("removing " + txn.getName() + "." + q.getId() + " because table " + curr_t
+								+ " has already been removed");
+						deleteQuery(pu, q.getPo(), txn.getName());
+						result = true;
+					} else {
+						HashSet<FieldName> currr_accessed = accessed_fn_map.get(curr_t);
+						ArrayList<FieldName> curr_written = q.getWrittenFieldNames();
+						ArrayList<FieldName> excluded_fns = new ArrayList<>();
+						logger.debug("currr_accessed: " + currr_accessed);
+						logger.debug("curr_written: " + curr_written);
+						// figure out which fns are not used elsewhere
+						for (FieldName fn : curr_written)
+							if (!currr_accessed.contains(fn))
+								excluded_fns.add(fn);
+						logger.debug("excluded_fns: " + excluded_fns);
+						if (excluded_fns.size() == curr_written.size()) { // if NONE of the updated fields is used
+							deleteQuery(pu, q.getPo(), txn.getName());
+							result = true;
+						} else if (excluded_fns.size() > 0) { // if only part of sthe written fns are used
+							int po = q.getPo();
+							split_update(pu, txn.getName(), excluded_fns, po, false);
+							deleteQuery(pu, po + 1, txn.getName());
+						}
+					}
+				}
+		return result;
+	}
+
+	public boolean delete_redundant_reads(Program_Utils pu, boolean analysis_call) {
+		boolean result = false;
+		for (Transaction txn : pu.getTrasnsactionMap().values()) {
+			logger.debug("analyzing " + txn.getName() + " to delete redundant reads");
+			q_loop: for (Query q : txn.getAllQueries()) {
+				if (/*q.canBeRemoved() &&*/ !q.isWrite()) {
+					logger.debug("---- checking if " + txn.getName() + "." + q.getId() + " can be deleted");
+					Select_Query sq = (Select_Query) q;
+					if (sq.isImp)
+						continue q_loop;
+					// check if sq is implicitly used
+					for (FieldName fn : sq.getImplicitlyUsed())
+						if (sq.getReadFieldNames().contains(fn)) {
+							logger.debug(q.getId() + " cannot be deleted because it is implicitly used: "
+									+ sq.getImplicitlyUsed() + " -union- " + sq.getReadFieldNames());
+							if (!analysis_call)
+								continue q_loop;
+						}
+
+					// check if sq is explicitly used
+					Variable v = sq.getVariable();
+					if (var_is_used_in_txn(pu, txn.getName(), v)) {
+						logger.debug(v + " is used in " + txn.getName());
+						logger.debug(q.getId() + " cannot be deleted because it is explicitly used");
+						continue q_loop;
+					}
+					logger.debug(v + " is NOT used in " + txn.getName());
+					logger.debug(q + " can be deleted");
+					// at this point we know q is not either explicitly or implicitly used
+					deleteQuery(pu, q.getPo(), txn.getName());
+
+					result = true;
+				}
+			}
+		}
+		return result;
+	}
+
+	private boolean var_is_used_in_txn(Program_Utils pu, String txnName, Variable v) {
+		Transaction txn = pu.getTrasnsactionMap().get(txnName);
+		for (Query q : txn.getAllQueries()) {
+			if (q.getAllRefferencedVars().contains(v))
+				return true;
+		}
+		for (Statement stmt : txn.getStatements())
+			if (stmt instanceof If_Statement) {
+				If_Statement ifstmt = (If_Statement) stmt;
+				if (ifstmt.getCondition().getAllRefferencedVars().contains(v))
+					return true;
+			}
+		return false;
+	}
+
+	public void decompose(Program_Utils pu) {
+		int iter = 0;
+		while (decompose_iter(pu) && iter++ < 10)
+			; // decompose untill fixed-point is reached
+
+	}
+
+	// single iteration of decomposition
+	private boolean decompose_iter(Program_Utils pu) {
+
+		boolean result = false;
+		// iterate over all selects, if any part of it should be redirected to a newer
+		// table, do it
+		for (Transaction txn : pu.getTrasnsactionMap().values()) {
+			String txn_name = txn.getName();
+			ArrayList<Query> all_queries = txn.getAllQueries();
+			for (Query q : all_queries) {
+				int po = q.getPo();
+				if (!q.isWrite()) {
+					logger.debug("analyzing " + q.getId());
+					Select_Query sq = (Select_Query) q;
+					Table t_src = pu.getTable(q.getTableName().getName());
+					for (Table t_dest : pu.getTables().values()) {
+						ArrayList<FieldName> must_be_redirected = must_redirect(pu, sq, t_src, t_dest);
+						if (must_be_redirected != null) { //
+							logger.debug("some subset of fn accesses must be redirected in " + q.getId() + "---->  "
+									+ must_be_redirected);
+							int red_size = must_be_redirected.size();
+							int total_size = sq.getSelectedFieldNames().size();
+							if (red_size < total_size) {
+								if (red_size > 0) {
+									logger.debug("the subset of fns which must be redirected is proper subset");
+									split_select(pu, txn_name, must_be_redirected, po, false);
+									redirect_select(pu, txn_name, t_src.getTableName().getName(),
+											t_dest.getTableName().getName(), po + 1, false);
+									result = true;
+								}
+							} else {
+								logger.debug("all fns must be redirected");
+								SELECT_Redirector ss = redirect_select(pu, txn_name, t_src.getTableName().getName(),
+										t_dest.getTableName().getName(), po, false);
+
+								result = true;
+							}
+						}
+					}
+				}
+			}
+		}
+		return result;
+	}
+
+	/*
+	 * Based on some notion of weight, decide if a query must be redirection to
+	 * another table or not Currently the only notion of weight used is the
+	 * direction in the newly introduced VCs (newly introduced vc must be redirected
+	 * to)
+	 */
+	private ArrayList<FieldName> must_redirect(Program_Utils pu, Select_Query q, Table src, Table dest) {
+		ArrayList<FieldName> result = new ArrayList<>();
+		VC vc = pu.getVCByOrderedTables(src.getTableName(), dest.getTableName());
+		logger.debug("vc between " + src.getTableName() + " and " + dest.getTableName() + ": " + vc);
+		if (vc != null) {
+			for (FieldName fn : q.getSelectedFieldNames())
+				if (vc.getCorrespondingFN(pu, fn) != null)
+					result.add(fn);
+		} else
+			return null;
+		return result;
+	}
+
+	/*
+	 * try swapping queries and attempt merging them (undo the swap if merge is
+	 * unsuccessful) -- called only once
+	 */
+	public void shrink(Program_Utils pu) {
+		for (Transaction txn : pu.getTrasnsactionMap().values()) {
+			ArrayList<Query> all_queries = txn.getAllQueries();
+			String txn_name = txn.getName();
+			int i = 0;
+			while (i < txn.getAllQueries().size()) {
+				int j = i + 1;
+				while (j < txn.getAllQueries().size()) {
+					Query q1 = txn.getAllQueries().get(i);
+					Query q2 = txn.getAllQueries().get(j);
+					int po1 = q1.getPo();
+					int po2 = q2.getPo();
+					logger.debug("checking if " + q1.getId() + "(@" + po1 + ") and " + q2.getId() + "(@" + po2
+							+ ") can be merged");
+					Block b1 = pu.getBlockByPo(txn_name, po1);
+					Block b2 = pu.getBlockByPo(txn_name, po2);
+					if (b1 == null || b2 == null) {
+						j++;
+						continue;
+					}
+					if (!b1.isEqual(b2)) {
+						j++;
+						continue;
+					}
+					if (swapChecks(pu, txn, po1 + 1, po2)) {
+						logger.debug("query at " + (po1 + 1) + " can be swapped with query at " + po2);
+						deleteQuery(pu, po2, txn_name);
+						// logger.debug("query at " + (po2) + " deleted");
+						InsertQueriesAtPO(b1, pu, txn_name, po1 + 1, new Query_Statement(po1 + 1, q2));
+						// logger.debug("same query inserted at " + (po1));
+						logger.debug("ready to attempt merge again between query at " + po1 + " and the next query");
+						if (attempt_merge_query(pu, txn.getName(), po1, false)) {
+							logger.debug("merge was successful");
+							j++;
+							continue;
+						}
+						logger.debug("merge was unsuccessful: ready to revert");
+						deleteQuery(pu, po1 + 1, txn_name);
+						// logger.debug("query at " + (po1 + 1) + " deleted");
+						InsertQueriesAtPO(b1, pu, txn_name, po2, new Query_Statement(po2, q2));
+						// logger.debug("same query inserted at " + (po2));
+					} else {
+						logger.debug("query at " + (po1 + 1) + " cannot be swapped with query at " + po2);
+						attempt_merge_query(pu, txn.getName(), po1, false);
+					}
+					j++;
+				}
+				i++;
+			}
+		}
+	}
+
+	/*
+	 * attempt to merge two queries at qry_po and qry_po+1
+	 */
+	private boolean attempt_merge_query(Program_Utils input_pu, String txn_name, int qry_po, boolean isRevert) {
+		HashMap<Table, HashSet<FieldName>> accessed_fn_map = mkTableMap(input_pu);
+		Query q1 = input_pu.getQueryByPo(txn_name, qry_po);
+		Query q2 = input_pu.getQueryByPo(txn_name, qry_po + 1);
+		if (q1 == null || q2 == null)
+			return false;
+		if (!input_pu.getBlockByPo(txn_name, qry_po).isEqual(input_pu.getBlockByPo(txn_name, qry_po + 1)))
+			return false;
+		logger.debug("attempting to merge queries q1(" + q1.getId() + ") and q2(" + q2.getId() + ")");
+		logger.debug("q1: " + q1);
+		logger.debug("q2: " + q2);
+
+		if (q1.getKind() == Kind.UPDATE && q2.getKind() == Kind.UPDATE) {
+			UPDATE_Merger success = merge_update(input_pu, txn_name, qry_po, isRevert);
+			logger.debug("updates merging attempted. result: " + (success != null));
+			return (success != null);
+
+		} else if (q1.getKind() == Kind.SELECT && q2.getKind() == Kind.SELECT) {
+			SELECT_Merger success = merge_select(input_pu, txn_name, qry_po, isRevert);
+			logger.debug("selects merging attempted on " + q1.getId() + " and " + q2.getId() + " result: "
+					+ (success != null));
+			if (success != null) {
+				return true;
+			}
+			// if there is vc between q1 and q2
+			TableName t1 = q1.getTableName();
+			TableName t2 = q2.getTableName();
+			VC vc = input_pu.getVCByTables(t1, t2);
+		}
+		return false;
+	}
+
+	private boolean table_is_touched_by_included_queries(Program_Utils pu, Table t, boolean analysis_call) {
+		logger.debug("checking if table " + t.getTableName() + " is touched by a query or not. analysis_call:"
+				+ analysis_call);
+		for (Transaction txn : pu.getTrasnsactionMap().values())
+			if (txn.is_included || (!analysis_call))
+				for (Query q : txn.getAllQueries())
+					if (q.getIsIncluded() || (!analysis_call)) {
+						Table curr_t = pu.getTable(q.getTableName().getName());
+						if (curr_t.is_equal(t)) {
+							logger.debug("it is");
+							return true;
+						}
+					}
+		logger.debug("it is not");
+		return false;
+	}
+
+	/*
+	 * return a map form each table to the set of fields that are currently touched
+	 */
+	private HashMap<Table, HashSet<FieldName>> mkTableMap(Program_Utils pu) {
+		HashMap<Table, HashSet<FieldName>> touched_field_names = new HashMap<>();
+		for (Table tt : pu.getTables().values()) {
+			HashSet<FieldName> new_set = new HashSet<>();
+			new_set.addAll(tt.getPKFields());
+			new_set.add(tt.getIsAliveFN());
+			touched_field_names.put(tt, new_set);
+		}
+		for (Transaction txn : pu.getTrasnsactionMap().values())
+			for (Query q : txn.getAllQueries())
+				if (!q.isWrite()) {
+					Table curr_t = pu.getTable(q.getTableName().getName());
+					HashSet<FieldName> old_set = touched_field_names.get(curr_t);
+					old_set.addAll(q.getReadFieldNames());
+					old_set.addAll(((Select_Query) q).getImplicitlyUsed());
+					touched_field_names.put(curr_t, old_set);
+				}
+		return touched_field_names;
+	}
+
+	/*
+	 * return a map form each table to the set of fields that are currently tougched
+	 */
+	private HashMap<Table, HashSet<FieldName>> mkTableMap_allQ(Program_Utils pu) {
+		HashMap<Table, HashSet<FieldName>> touched_field_names = new HashMap<>();
+		for (Table tt : pu.getTables().values()) {
+			HashSet<FieldName> new_set = new HashSet<>();
+			new_set.addAll(tt.getPKFields());
+			new_set.add(tt.getIsAliveFN());
+			touched_field_names.put(tt, new_set);
+		}
+		for (Transaction txn : pu.getTrasnsactionMap().values())
+			for (Query q : txn.getAllQueries()) {
+				Table curr_t = pu.getTable(q.getTableName().getName());
+				if (!touched_field_names.keySet().contains(curr_t))
+					continue;
+				HashSet<FieldName> old_set = touched_field_names.get(curr_t);
+				old_set.addAll(q.getAccessedFieldNames());
+				if (!q.isWrite())
+					old_set.addAll(((Select_Query) q).getImplicitlyUsed());
+				touched_field_names.put(curr_t, old_set);
+			}
+		return touched_field_names;
+	}
+
+	/*****************************************************************************************************************/
 
 	/*****************************************************************************************************************/
 	// Functions for handling schema refactoring reverts (i.e. reverting
@@ -528,7 +1069,7 @@ public class Refactor {
 			input_pu.addComment("\n" + begin + select_red.getDesc());
 
 			select_red.setApplied_po(qry_po);
-
+			
 			return select_red;
 		} else {
 			logger.debug("redirect is invalid");

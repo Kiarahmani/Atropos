@@ -138,6 +138,10 @@ public class SELECT_Redirector extends One_to_One_Query_Modifier {
 			new_select.setImplicitlyUsed(vc.getCorrespondingFN(pu, fn));
 		logger.debug("final select query to return: " + new_select);
 		// return
+		//new_select.setImplicitlyUsed(old_selected_fieldNames);
+		//new_select.setIsIncluded(old_select.getImplicitlyUsed().size() > 0);
+		//old_select.setIsIncluded(false);
+		new_select.isImp = old_select.isImp;
 		return new_select;
 	}
 

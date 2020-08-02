@@ -27,10 +27,10 @@ public class OnlineCourse implements ProgramGenerator {
 		 */
 		// GETST
 		pu.Transaction("getSt").arg("input_id:int").done();
-		pu.addStmt("getSt").select("*").from("student").as("x").where("st_id", "=", pu.arg("input_id")).done();
-		pu.addStmt("getSt").select("em_addr").from("email").as("y").where("em_id", "=", pu.at("st_em_id", "x", 1))
+		pu.addStmt("getSt").selectImp("*").from("student").as("x").where("st_id", "=", pu.arg("input_id")).done();
+		pu.addStmt("getSt").selectImp("em_addr").from("email").as("y").where("em_id", "=", pu.at("st_em_id", "x", 1))
 				.done();
-		pu.addStmt("getSt").select("co_avail").from("course").as("z").where("co_id", "=", pu.at("st_co_id", "x", 1))
+		pu.addStmt("getSt").selectImp("co_avail").from("course").as("z").where("co_id", "=", pu.at("st_co_id", "x", 1))
 				.done();
 
 		// SETST

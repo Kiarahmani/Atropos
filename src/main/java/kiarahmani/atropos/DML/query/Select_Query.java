@@ -13,6 +13,7 @@ import kiarahmani.atropos.DML.where_clause.WHC;
 public class Select_Query extends Query {
 	private TableName tableName;
 	private Variable variable;
+	public boolean isImp;
 	private ArrayList<FieldName> fieldNames;
 	private HashSet<FieldName> implicitlyUsed;
 
@@ -21,6 +22,11 @@ public class Select_Query extends Query {
 	}
 
 	public void setImplicitlyUsed(FieldName... implicitlyUsed) {
+		for (FieldName fn : implicitlyUsed)
+			this.implicitlyUsed.add(fn);
+	}
+
+	public void setImplicitlyUsed(ArrayList<FieldName> implicitlyUsed) {
 		for (FieldName fn : implicitlyUsed)
 			this.implicitlyUsed.add(fn);
 	}
@@ -44,6 +50,24 @@ public class Select_Query extends Query {
 		this.where_clause = whc;
 		this.po = po;
 		this.implicitlyUsed = new HashSet<>();
+		this.isImp = false;
+	}
+	
+	public Select_Query(int po, int id, boolean isAtomic, boolean isImp, TableName tableName, ArrayList<FieldName> fieldNames,
+			Variable variable, WHC whc) {
+		super();
+		assert (!(tableName == null));
+		assert (!(fieldNames == null));
+		this.id = id;
+		this.kind = Kind.SELECT;
+		this.tableName = tableName;
+		this.fieldNames = fieldNames;
+		this.variable = variable;
+		this.isAtomic = isAtomic;
+		this.where_clause = whc;
+		this.po = po;
+		this.implicitlyUsed = new HashSet<>();
+		this.isImp = isImp;
 	}
 
 	@Override
@@ -55,6 +79,7 @@ public class Select_Query extends Query {
 		result.canBeRemoved = this.canBeRemoved;
 		result.implicitlyUsed = this.implicitlyUsed;
 		result.is_included = this.is_included;
+		result.isImp = this.isImp;
 		return result;
 	}
 
@@ -77,8 +102,8 @@ public class Select_Query extends Query {
 		fieldNamesString += ")";
 		String isAtomicString = isAtomic ? "(" + po + ") ATOMIC " : "(" + po + ") ";
 		return isAtomicString + "SELECT" + this.id + " (" + String.format("%-10s", fieldNamesString) + " FROM "
-				+ String.format("%-10s", this.tableName) + " AS " + this.variable + " WHERE " + this.where_clause;
-		// + " (" + this.is_included + ")";
+				+ String.format("%-10s", this.tableName) + " AS " + this.variable + " WHERE " + this.where_clause 
+		+ " (" + this.isImp + ")";
 		// + String.format(" PC=" + this.path_condition);
 
 	}

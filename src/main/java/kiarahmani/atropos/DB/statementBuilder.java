@@ -36,6 +36,7 @@ public class statementBuilder {
 	ArrayList<WHCC> whccs;
 	String varName;
 	ArrayList<Tuple<FieldName, Expression>> upd_expressions;
+	boolean isImp;
 
 	public statementBuilder(Program_Utils pu, String txnName) {
 		this.pu = pu;
@@ -52,7 +53,20 @@ public class statementBuilder {
 		this.isIf = isIf;
 	}
 
+	public statementBuilder selectImp(String... flds) {
+		this.isImp = true;
+		if (flds.length == 1 && flds[0].equals("*"))
+			this.isStar = true;
+		else {
+			this.isStar = false;
+			this.flds = flds;
+		}
+		this.kind = Kind.SELECT;
+		return this;
+	}
+
 	public statementBuilder select(String... flds) {
+		this.isImp = false;
 		if (flds.length == 1 && flds[0].equals("*"))
 			this.isStar = true;
 		else {
@@ -110,12 +124,13 @@ public class statementBuilder {
 		switch (kind) {
 		case SELECT:
 			if (this.ifId == -1)
-				return pu.addQueryStatement(txnName, pu.addSelectQuery(txnName, tName, varName, whc, flds));
+				return pu.addQueryStatement(txnName, pu.addSelectQuery(txnName, tName, varName, whc, isImp, flds));
 			else
 				return (isIf)
-						? pu.addQueryStatementInIf(txnName, ifId, pu.addSelectQuery(txnName, tName, varName, whc, flds))
+						? pu.addQueryStatementInIf(txnName, ifId,
+								pu.addSelectQuery(txnName, tName, varName, whc, isImp, flds))
 						: pu.addQueryStatementInElse(txnName, ifId,
-								pu.addSelectQuery(txnName, tName, varName, whc, flds))
+								pu.addSelectQuery(txnName, tName, varName, whc, isImp, flds))
 
 				;
 		case UPDATE:
