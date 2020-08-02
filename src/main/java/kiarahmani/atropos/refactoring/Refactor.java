@@ -29,6 +29,8 @@ import kiarahmani.atropos.DML.expression.constants.E_Const_Num;
 import kiarahmani.atropos.DML.query.Query;
 import kiarahmani.atropos.DML.query.Select_Query;
 import kiarahmani.atropos.DML.query.Update_Query;
+import kiarahmani.atropos.DML.where_clause.WHC;
+import kiarahmani.atropos.DML.where_clause.WHCC;
 import kiarahmani.atropos.DML.query.Query.Anml;
 import kiarahmani.atropos.DML.query.Query.Kind;
 import kiarahmani.atropos.dependency.DAI;
@@ -327,15 +329,50 @@ public class Refactor {
 	/*****************************************************************************************************************/
 
 	public void post_process(Program_Utils pu) {
+		update_where_clauses(pu);
 		decompose(pu); // split and redirect all selects to tables with lower wights
 		delete_redundant(pu);
 		shrink(pu);
-		delete_redundant(pu);
-
 	}
 
+	/**
+	 * @param pu
+	 */
+	private void update_where_clauses(Program_Utils pu) {
+		for (Transaction txn : pu.getTrasnsactionMap().values()) {
+			if (txn.is_included) {
+				for (Query q : txn.getAllQueries()) {
+					Variable v = update_where_clauses_help(q.getWHC());
+					if (v != null)
+						q.updateWHC(pu.getSelectByVar(v).getWHC());
+				}
+			}
+		}
+	}
 
+	private Variable update_where_clauses_help(WHC whc) {
+		Variable res = null;
+		for (WHCC whcc : whc.getConstraints()) {
+			if (whcc.isAliveConstraint())
+				continue;
+			FieldName whcc_fn = whcc.getFieldName();
+			Expression whcc_exp = whcc.getExpression();
+			E_Proj proj;
+			try {
+				proj = (E_Proj) whcc_exp;
+			} catch (Exception e) {
+				return null;
+			}
+			if (whcc_fn.equals(proj.f))
+				res = proj.v;
+			else
+				res = null;
+		}
+		return res;
+	}
 
+	
+	
 	public void pre_analysis(Program_Utils input_pu) {
 		for (Transaction txn : input_pu.getTrasnsactionMap().values())
 			for (Query q : txn.getAllQueries()) {
@@ -570,7 +607,7 @@ public class Refactor {
 		for (Transaction txn : pu.getTrasnsactionMap().values()) {
 			logger.debug("analyzing " + txn.getName() + " to delete redundant reads");
 			q_loop: for (Query q : txn.getAllQueries()) {
-				if (/*q.canBeRemoved() &&*/ !q.isWrite()) {
+				if (/* q.canBeRemoved() && */ !q.isWrite()) {
 					logger.debug("---- checking if " + txn.getName() + "." + q.getId() + " can be deleted");
 					Select_Query sq = (Select_Query) q;
 					if (sq.isImp)
@@ -716,7 +753,7 @@ public class Refactor {
 					if (!b1.isEqual(b2)) {
 						j++;
 						continue;
-					}
+					} 
 					if (swapChecks(pu, txn, po1 + 1, po2)) {
 						logger.debug("query at " + (po1 + 1) + " can be swapped with query at " + po2);
 						deleteQuery(pu, po2, txn_name);
@@ -747,7 +784,7 @@ public class Refactor {
 
 	/*
 	 * attempt to merge two queries at qry_po and qry_po+1
-	 */
+	 */ 
 	private boolean attempt_merge_query(Program_Utils input_pu, String txn_name, int qry_po, boolean isRevert) {
 		HashMap<Table, HashSet<FieldName>> accessed_fn_map = mkTableMap(input_pu);
 		Query q1 = input_pu.getQueryByPo(txn_name, qry_po);
@@ -1069,7 +1106,7 @@ public class Refactor {
 			input_pu.addComment("\n" + begin + select_red.getDesc());
 
 			select_red.setApplied_po(qry_po);
-			
+
 			return select_red;
 		} else {
 			logger.debug("redirect is invalid");

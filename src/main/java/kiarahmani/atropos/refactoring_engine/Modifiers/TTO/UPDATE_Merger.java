@@ -86,7 +86,7 @@ public class UPDATE_Merger extends Two_to_One_Query_Modifier {
 		logger.debug("whc1: " + old_update1.getWHC());
 		logger.debug("whc2: " + old_update2.getWHC());
 		Table old_table = pu.getTable(old_update1.getTableName().getName());
-		WHC new_whc = mergeWHCs(old_update1.getWHC(), old_update2.getWHC());
+		WHC new_whc = mergeWHCs(old_update1, old_update2);
 		assert (new_whc != null && isValid(input_query_1, input_query_2)) : "requested modification cannot be done on: "
 				+ input_query_1.getId() + " and " + input_query_2.getId();
 		Update_Query new_update = new Update_Query(-1, pu.getNewUpdateId(txnName),
@@ -101,14 +101,25 @@ public class UPDATE_Merger extends Two_to_One_Query_Modifier {
 		return new_update;
 	}
 
-	WHC mergeWHCs(WHC whc1, WHC whc2) {
-		ArrayList<FieldName> fns = whc1.getAccessedFieldNames();
-		ArrayList<FieldName> fnss = whc2.getAccessedFieldNames();
-		if (fns.size() == 1 && fns.get(0).isAliveField())
-			return whc1;
-		if (fnss.size() == 1 && fnss.get(0).isAliveField())
-			return whc2;
-
+	WHC mergeWHCs(Update_Query u1, Update_Query u2) {
+		WHC whc1 = u1.getWHC();
+		WHC whc2 = u2.getWHC();
+		if (IsomorphicUpds(u1, u2)) {
+			ArrayList<FieldName> fns = whc1.getAccessedFieldNames();
+			ArrayList<FieldName> fnss = whc2.getAccessedFieldNames();
+			if (fns.size() == 1 && fns.get(0).isAliveField())
+				return whc1;
+			if (fnss.size() == 1 && fnss.get(0).isAliveField())
+				return whc2;
+		}
+		if (IsomorphicUpds(u2, u1)) {
+			ArrayList<FieldName> fns = whc1.getAccessedFieldNames();
+			ArrayList<FieldName> fnss = whc2.getAccessedFieldNames();
+			if (fns.size() == 1 && fns.get(0).isAliveField())
+				return whc1;
+			if (fnss.size() == 1 && fnss.get(0).isAliveField())
+				return whc2;
+		}
 		logger.debug("Does whc1 contain whc2?");
 		boolean contains1 = whc1.containsWHC(whc2);
 		boolean contains2 = whc2.containsWHC(whc1);
@@ -171,11 +182,8 @@ public class UPDATE_Merger extends Two_to_One_Query_Modifier {
 		boolean valid3 = input_update_1.getPo() == input_update_2.getPo() - 1;
 		logger.debug("valid3: " + valid3);
 
-		boolean valid4 = (mergeWHCs(input_update_1.getWHC(), input_update_2.getWHC()) != null);
-
-		boolean valid5 = IsomorphicUpds(input_update_1, input_update_2);
-		boolean valid6 = IsomorphicUpds(input_update_2, input_update_1);
-		return valid1 && valid2 && valid3 && (valid4 || valid5 || valid6);
+		boolean valid4 = (mergeWHCs(input_update_1, input_update_2) != null);
+		return valid1 && valid2 && valid3 && (valid4);
 	}
 
 	private boolean IsomorphicUpds(Update_Query u1, Update_Query u2) {

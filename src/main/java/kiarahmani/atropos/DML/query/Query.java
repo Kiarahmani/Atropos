@@ -66,6 +66,10 @@ public abstract class Query {
 		return is_included;
 	}
 
+	public void updateWHC(WHC new_whc) {
+		this.where_clause = new_whc;
+	}
+
 	public void setIsIncluded(boolean is_included) {
 		this.is_included = is_included;
 		this.canBeRemoved = !is_included;

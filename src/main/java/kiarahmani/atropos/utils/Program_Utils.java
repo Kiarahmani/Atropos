@@ -505,6 +505,17 @@ public class Program_Utils {
 		return this.fieldNameMap.get(fn);
 	}
 
+	public Select_Query getSelectByVar(Variable v) {
+		for (Transaction txn : this.trasnsactionMap.values())
+			for (Query q : txn.getAllQueries())
+				if (!q.isWrite()) {
+					Select_Query sq = (Select_Query) q;
+					if (sq.getVariable().equals(v))
+						return sq;
+				}
+		return null;
+	}
+
 	public FieldName getIsAliveFieldName(String table_name) {
 		assert (this.fieldNameMap.get(
 				table_name + "_is_alive") != null) : "something went wrong! the table does not contain is_alive field";

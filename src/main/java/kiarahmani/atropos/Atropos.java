@@ -87,8 +87,9 @@ public class Atropos {
 		}
 		pu.print();
 
-		//System.out.println("\n\n\nPost Process \n\n\n");
-		re.post_process(pu);
+		// System.out.println("\n\n\nPost Process \n\n\n");
+		for (int i = 0; i < 10; i++)
+			re.post_process(pu);
 		pu.print();
 
 		assert (false);
