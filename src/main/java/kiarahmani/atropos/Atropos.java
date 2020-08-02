@@ -49,133 +49,48 @@ public class Atropos {
 		new OnlineCourse(pu).generate();
 		pu.print();
 		// find anomlous access pairs in the base version
-		ArrayList<DAI> anmls = analyze(pu).getDAIs();
+		ArrayList<DAI> anmls = analyze(pu, true).getDAIs();
 		// initialize a refactoring engine
 		Refactor re = new Refactor();
 		// preform the pre-processing step (updates the pu and also the anmls list)
 		// each query will be involved in at most one anomaly
 		re.pre_process(pu, anmls);
-		anmls = analyze(pu).getDAIs();
-		System.out.println("\n\n AFTER PRE PROCESS");
-		pu.print();
-		for (DAI anml : anmls)
-			System.out.println(anml);
-
-		{
-			Delta reff = new INTRO_F("student", "st_co_avail", F_Type.NUM);
-			INTRO_VC refff = new INTRO_VC(pu, "course", "student", VC_Agg.VC_ID, VC_Type.VC_OTM);
-			refff.addKeyCorrespondenceToVC("co_id", "st_co_id");
-			refff.addFieldTupleToVC("co_avail", "st_co_avail");
-
-			Delta x1 = new INTRO_R("log", true);
-			Delta x2 = new INTRO_F("log", "id", F_Type.NUM);
-			Delta x3 = new INTRO_F("log", "counter", F_Type.NUM, true, false);
-			Delta x4 = new INTRO_F("log", "val", F_Type.NUM, false, true);
-
-			Delta x5 = new ADDPK(pu, "log", "id");
-			Delta x6 = new ADDPK(pu, "log", "counter");
-			INTRO_VC x7 = new INTRO_VC(pu, "course", "log", VC_Agg.VC_SUM, VC_Type.VC_OTM);
-			x7.addKeyCorrespondenceToVC("co_id", "id");
-			x7.addFieldTupleToVC("co_st_cnt", "val");
-
-			Delta x8 = new INTRO_F("student", "st_em_addr", F_Type.TEXT);
-			INTRO_VC x9 = new INTRO_VC(pu, "email", "student", VC_Agg.VC_ID, VC_Type.VC_OTM);
-			x9.addKeyCorrespondenceToVC("em_id", "st_em_id");
-			x9.addFieldTupleToVC("em_addr", "st_em_addr");
-
-			re.refactor_schema_seq(pu, x1, x2, x3, x4, x5, x6, x7, x8, x9, reff, refff);
-		}
-		pu.print();
-
+		anmls = analyze(pu, false).getDAIs();
+		re.refactor_schema_seq(pu, repair(pu));
 		// System.out.println("\n\n\nPost Process \n\n\n");
 		for (int i = 0; i < 10; i++)
 			re.post_process(pu);
 		pu.print();
+		printStats(System.currentTimeMillis() - time_begin, analyze(pu, true).getDAICnt());
+	}
 
-		assert (false);
+	private static ArrayList<Delta> repair(Program_Utils pu) {
+		ArrayList<Delta> result = new ArrayList<>();
+		result.add(new INTRO_F("student", "st_co_avail", F_Type.NUM));
+		INTRO_VC refff = new INTRO_VC(pu, "course", "student", VC_Agg.VC_ID, VC_Type.VC_OTM);
+		refff.addKeyCorrespondenceToVC("co_id", "st_co_id");
+		refff.addFieldTupleToVC("co_avail", "st_co_avail");
+		result.add(refff);
 
-		//
-		//
-		//
-		//
-		//
-		//
-		//
-		//
-		//
-		//
-		//
-		//
-		//
-		//
-		//
-		//
-		//
-		//
-		//
-		//
-		//
-		//
-		//
-		int iter = 0;
+		result.add(new INTRO_R("log", true));
+		result.add(new INTRO_F("log", "id", F_Type.NUM));
+		result.add(new INTRO_F("log", "counter", F_Type.NUM, true, false));
+		result.add(new INTRO_F("log", "val", F_Type.NUM, false, true));
 
-		out: while (iter < 1) {
-			// Refactoring_Engine re = new Refactoring_Engine();
-			pu = new Program_Utils("SmallBank");
+		result.add(new ADDPK(pu, "log", "id"));
+		result.add(new ADDPK(pu, "log", "counter"));
+		INTRO_VC x7 = new INTRO_VC(pu, "course", "log", VC_Agg.VC_SUM, VC_Type.VC_OTM);
+		x7.addKeyCorrespondenceToVC("co_id", "id");
+		x7.addFieldTupleToVC("co_st_cnt", "val");
+		result.add(x7);
 
-			// program = (new OnlineCourse(pu)).generate("Amalgamate", "Balance1",
-			// "DepositChecking1", "SendPayment1",
-			// "TransactSavings1", "WriteCheck1");
-
-			// program.printProgram();
-
-			// re.atomicize(pu);
-			// program.printProgram();
-			// analyze(pu);
-			assert (false);
-
-			/*
-			 * 
-			 * 
-			 */
-
-			pu.lock();
-			// re.pre_analysis(pu);
-			// search the refactoring space
-			Optimal_search_engine_wikipedia se = new Optimal_search_engine_wikipedia();
-			// Naive_search_engine se = new Naive_search_engine(history);
-			int _refactoring_depth = 1;
-			HashSet<VC> local_hist = new HashSet<>();
-
-			for (int j = 0; j < _refactoring_depth; j++) {
-				if (!se.reset(pu)) {
-					logger.debug("reset failed: continue the main loop");
-					iter++;
-					continue out;
-				}
-				do {
-					Delta ref = se.nextRefactoring(pu);
-					if (ref == null) {
-						iter++;
-						continue out;
-					}
-					if (ref instanceof INTRO_VC) {
-						INTRO_VC new_name = (INTRO_VC) ref;
-						local_hist.add(new_name.getVC());
-					}
-					// re.refactor_schema(pu, ref);
-				} while (se.hasNext());
-			}
-			iter++;
-			pu.generateProgram().printProgram();
-			// re.atomicize(pu);
-			pu.generateProgram().printProgram();
-			System.out.println("refactoring time: " + (System.currentTimeMillis() - time_begin));
-			int anml_cnt = analyze(pu).getDAICnt();
-			System.gc();
-			// print stats and exit
-			printStats(System.currentTimeMillis() - time_begin, anml_cnt);
-		}
+		Delta x8 = new INTRO_F("student", "st_em_addr", F_Type.TEXT);
+		INTRO_VC x9 = new INTRO_VC(pu, "email", "student", VC_Agg.VC_ID, VC_Type.VC_OTM);
+		x9.addKeyCorrespondenceToVC("em_id", "st_em_id");
+		x9.addFieldTupleToVC("em_addr", "st_em_addr");
+		result.add(x8);
+		result.add(x9);
+		return result;
 
 	}
 
@@ -196,10 +111,11 @@ public class Atropos {
 		return history;
 	}
 
-	private static DAI_Graph analyze(Program_Utils pu) {
+	private static DAI_Graph analyze(Program_Utils pu, boolean shouldPrint) {
 		Encoding_Engine ee = new Encoding_Engine(pu.getProgramName());
 		DAI_Graph dai_graph = ee.constructInitialDAIGraph(pu);
-		dai_graph.printDAIGraph();
+		if (shouldPrint)
+			dai_graph.printDAIGraph();
 		return dai_graph;
 	}
 

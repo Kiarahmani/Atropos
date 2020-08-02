@@ -72,12 +72,13 @@ public class Encoding_Engine {
 				}
 		}
 
-		System.out.println("Number of potential DAIs: " + potential_dais.size());
+		System.out.print("\n\nNumber of potential DAIs: " + potential_dais.size() + " ");
 		logger.debug("entering the dais_loop to iterate over all potential dais");
 		int iter = 0;
 		int dais_loop_iter = 0;
 		dais_loop: for (DAI pot_dai : potential_dais) {
-			System.out.println("\nDAI #" + (dais_loop_iter++));
+			if (Constants._VERBOSE_ANALYSIS)
+				System.out.println("\nDAI #" + (dais_loop_iter++));
 			// pre-analysis on the potential dai
 			z3logger.reset();
 			System.gc();
@@ -108,8 +109,7 @@ public class Encoding_Engine {
 							+ c1.getTransaction(2).getName() + "-" + c2.getTransaction(2).getName());
 
 					snapshot = pu.mkSnapShot();
-					
-					
+
 					ArrayList<FieldName> fns1 = new ArrayList<>();
 					ArrayList<FieldName> fns2 = new ArrayList<>();
 					L: for (FieldName fn1 : pot_dai.getFieldNames(1)) {
@@ -124,7 +124,7 @@ public class Encoding_Engine {
 								continue L;
 							}
 					}
-					
+
 					L: for (FieldName fn1 : pot_dai.getFieldNames(2)) {
 						for (FieldName fnc1 : c1.getFieldNames())
 							if (fn1.equals(fnc1)) {
@@ -138,11 +138,8 @@ public class Encoding_Engine {
 							}
 					}
 
-					
-
-
-					DAI original_dai = new DAI(pot_dai.getTransaction(), pot_dai.getQuery(1), fns1,
-							pot_dai.getQuery(2), fns2);
+					DAI original_dai = new DAI(pot_dai.getTransaction(), pot_dai.getQuery(1), fns1, pot_dai.getQuery(2),
+							fns2);
 
 					for (Transaction txn : snapshot.getTrasnsactionMap().values())
 						if (txn.is_equal(pot_dai.getTransaction()) || txn.is_equal(c1.getTransaction(2))
@@ -219,7 +216,8 @@ public class Encoding_Engine {
 						printBaseAnomaly(iter, pot_dai, c1, c2);
 					} else {
 						String init = (iter % 10 != 0) ? "" : "\n";
-						System.out.print(init + "(rd" + (iter++) + ":");
+						//System.out.print(init + "(rd" + (iter++) + ":");
+						System.out.print(".");
 					}
 					long begin = System.currentTimeMillis();
 					logger.debug("before running the SAT query");
@@ -239,7 +237,7 @@ public class Encoding_Engine {
 			}
 			logger.debug("end of analysis for DAI: " + pot_dai);
 		}
-		System.out.println("\nAnomalies found: " + dai_graph.getDAIs().size() + "\n");
+		System.out.println("\nNumber of Anomalies: " + dai_graph.getDAIs().size() + "");
 		return dai_graph;
 	}
 
@@ -250,7 +248,7 @@ public class Encoding_Engine {
 		if (Constants._VERBOSE_ANALYSIS) {
 			System.out.println("" + status_string + " (" + (time) + "ms)\n\n\n\n\n");
 		} else
-			System.out.print("" + status_string + ") ");
+			;//System.out.print("" + status_string + ") ");
 		this.printer.append(String.valueOf(time));
 		this.printer.flush();
 	}
