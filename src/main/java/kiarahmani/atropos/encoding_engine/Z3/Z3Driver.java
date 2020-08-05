@@ -99,6 +99,7 @@ public class Z3Driver {
 		addArFunc(program);
 		constrainArFunc(program);
 		addAssertion("both_queries_are_executed", em.mk_cycle_exists_constrained_1(dai));
+		addConsistencyLevel();
 		logger.debug("all functions and assertions added: ready to check satisfiability");
 		// check satisfiability
 		Status status = slv.check();
@@ -156,12 +157,13 @@ public class Z3Driver {
 		addDepFunc(program);
 		constrainDepFunc(program);
 		addDepSTFunc(program);
-		//constrainUUIDFunc();
+		// constrainUUIDFunc();
 		constrainDepSTFunc(program);
 		logger.debug("All functions added");
 		//
 		// final query
 		addAssertion("cycle", em.mk_cycle_exists_constrained(dependency_length, dai, c1, c2));
+		addConsistencyLevel();
 		logger.debug("final assertion (cycle) added: ready to check satisfiability");
 		//
 		//
@@ -185,6 +187,73 @@ public class Z3Driver {
 		}
 		return status;
 
+	}
+
+	private void addConsistencyLevel() {
+		Z3Logger.LogZ3(";; Consistency Guarantees (" + Constants.Consistency + ")");
+		BoolExpr cv1 = ctx.mkAnd((BoolExpr) ctx.mkApp(objs.getfuncs("arbit"), txn1, po1, txn2, po2), ctx.mkEq(
+				ctx.mkApp(objs.getfuncs("qry_part"), txn1, po1), ctx.mkApp(objs.getfuncs("qry_part"), txn2, po2)));
+		BoolExpr cv2 = ctx.mkAnd((BoolExpr) ctx.mkApp(objs.getfuncs("arbit"), txn2, po2, txn3, po3), ctx.mkEq(
+				ctx.mkApp(objs.getfuncs("qry_part"), txn2, po2), ctx.mkApp(objs.getfuncs("qry_part"), txn3, po3)));
+		BoolExpr cv3 = ctx.mkAnd((BoolExpr) ctx.mkApp(objs.getfuncs("arbit"), txn1, po1, txn3, po3), ctx.mkEq(
+				ctx.mkApp(objs.getfuncs("qry_part"), txn1, po1), ctx.mkApp(objs.getfuncs("qry_part"), txn3, po3)));
+		Expr cv = ctx.mkImplies(ctx.mkAnd(cv1, cv2), cv3);
+		Quantifier cv_quant = ctx.mkForall(new Expr[] { txn1, txn2, txn3, po1, po2, po3 }, cv, 1, null, null, null,
+				null);
+
+		BoolExpr cv4 = ctx.mkAnd((BoolExpr) ctx.mkApp(objs.getfuncs("arbit"), txn2, po2, txn1, po1), ctx.mkEq(
+				ctx.mkApp(objs.getfuncs("qry_part"), txn2, po2), ctx.mkApp(objs.getfuncs("qry_part"), txn1, po1)));
+		BoolExpr partsAreSame = ctx.mkEq(ctx.mkApp(objs.getfuncs("qry_part"), txn2, po2),
+				ctx.mkApp(objs.getfuncs("qry_part"), txn1, po1));
+		BoolExpr st = ctx.mkEq(txn1, txn2);
+		Expr cc = ctx.mkImplies(st, partsAreSame);
+		Quantifier cc_quant = ctx.mkForall(new Expr[] { txn1, txn2, po1, po2 }, cc, 1, null, null, null, null);
+
+		Expr rc = ctx.mkImplies(ctx.mkAnd(ctx.mkEq(txn1, txn2), cv3), cv2);
+		Quantifier rc_quant = ctx.mkForall(new Expr[] { txn1, txn2, txn3, po1, po2, po3 }, rc, 1, null, null, null,
+				null);
+
+		BoolExpr cv5 = ctx.mkAnd((BoolExpr) ctx.mkApp(objs.getfuncs("arbit"), txn3, po3, txn1, po1), ctx.mkEq(
+				ctx.mkApp(objs.getfuncs("qry_part"), txn3, po3), ctx.mkApp(objs.getfuncs("qry_part"), txn1, po1)));
+		BoolExpr cv6 = ctx.mkAnd((BoolExpr) ctx.mkApp(objs.getfuncs("arbit"), txn3, po3, txn2, po2), ctx.mkEq(
+				ctx.mkApp(objs.getfuncs("qry_part"), txn3, po3), ctx.mkApp(objs.getfuncs("qry_part"), txn2, po2)));
+		Expr rr = ctx.mkImplies(ctx.mkAnd(ctx.mkEq(txn1, txn2), cv5), cv6);
+		Quantifier rr_quant = ctx.mkForall(new Expr[] { txn1, txn2, txn3, po1, po2, po3 }, rr, 1, null, null, null,
+				null);
+
+		Expr lin = ctx.mkImplies((BoolExpr) ctx.mkApp(objs.getfuncs("arbit"), txn1, po1, txn2, po2), cv1);
+		Quantifier lin_quant = ctx.mkForall(new Expr[] { txn1, txn2, po1, po2 }, lin, 1, null, null, null, null);
+		BoolExpr sc = ctx.mkAnd(rc_quant, rr_quant, lin_quant);
+		switch (Constants.Consistency) {
+		case EC:
+			break;
+		case CV:
+			addAssertion("CV", cv_quant);
+			break;
+		case CC:
+			addAssertion("CV", cv_quant);
+			addAssertion("CC", cc_quant);
+			break;
+		case RC:
+			addAssertion("RC", rc_quant);
+			break;
+		case RR:
+			addAssertion("RR", rr_quant);
+			break;
+		case RRRC:
+			addAssertion("RR", rr_quant);
+			addAssertion("RC", rc_quant);
+		case SI:
+			break;
+		case LIN:
+			addAssertion("LIN", lin_quant);
+			break;
+		case SC:
+			addAssertion("SC", sc);
+			break;
+		default:
+			break;
+		}
 	}
 
 	private void print_result_header(Status status, long begin, long end) {
@@ -250,7 +319,7 @@ public class Z3Driver {
 		BoolExpr exists_dep_st = (BoolExpr) ctx.mkApp(objs.getfuncs("dep_st"), txn1, po1, txn2, po2);
 		BoolExpr exists_dep = (BoolExpr) ctx.mkApp(objs.getfuncs("dep"), txn1, po1, txn2, po2);
 		Quantifier dep_st_conditions = ctx.mkForall(new Expr[] { txn1, txn2, po1, po2 },
-				ctx.mkImplies(exists_dep_st, ctx.mkOr(ctx.mkEq(txn1, txn2),exists_dep)), 1, null, null, null, null);
+				ctx.mkImplies(exists_dep_st, ctx.mkOr(ctx.mkEq(txn1, txn2), exists_dep)), 1, null, null, null, null);
 		addAssertion("relating dep_st to dep and same transaction relation", dep_st_conditions);
 	}
 

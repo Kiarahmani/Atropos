@@ -231,6 +231,7 @@ public class Encoding_Engine {
 						continue dais_loop;
 					}
 					// free up solver's memory for the next iteration
+					//assert(false);
 					local_z3_driver = null;
 					System.gc();
 				}

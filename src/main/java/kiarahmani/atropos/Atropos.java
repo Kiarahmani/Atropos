@@ -11,9 +11,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import javax.naming.spi.DirStateFactory.Result;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import kiarahmani.atropos.DDL.F_Type;
 import kiarahmani.atropos.DDL.FieldName;
 import kiarahmani.atropos.DDL.TableName;
 import kiarahmani.atropos.DDL.vc.VC;
@@ -28,10 +31,17 @@ import kiarahmani.atropos.dependency.DAI_Graph;
 import kiarahmani.atropos.encoding_engine.Encoding_Engine;
 import kiarahmani.atropos.program.Table;
 import kiarahmani.atropos.refactoring.Refactor;
+import kiarahmani.atropos.program_generators.SEATSProgramGenerator;
+import kiarahmani.atropos.program_generators.SIBenchProgramGenerator;
+import kiarahmani.atropos.program_generators.TPCCProgramGenerator;
 import kiarahmani.atropos.program_generators.SmallBank.OnlineCourse;
+import kiarahmani.atropos.refactoring_engine.deltas.ADDPK;
+import kiarahmani.atropos.refactoring_engine.deltas.CHSK;
 import kiarahmani.atropos.refactoring_engine.deltas.Delta;
 import kiarahmani.atropos.refactoring_engine.deltas.INTRO_F;
+import kiarahmani.atropos.refactoring_engine.deltas.INTRO_R;
 import kiarahmani.atropos.refactoring_engine.deltas.INTRO_VC;
+import kiarahmani.atropos.search_engine.NameGenerator;
 import kiarahmani.atropos.utils.Constants;
 import kiarahmani.atropos.utils.Program_Utils;
 
@@ -51,12 +61,15 @@ public class Atropos {
 		Program_Utils pu = new Program_Utils("Course");
 		// get the first instance of the program
 		new OnlineCourse(pu).generate();
-		// new TPCCProgramGenerator(pu).generate("newOrder", "payment", "stockLevel",
-		// "orderStatus", "delivery");
+		 //new TPCCProgramGenerator(pu).generate("newOrder", "payment", "stockLevel",
+		 //"orderStatus", "delivery");
+		//new SEATSProgramGenerator(pu).generate("deleteReservation", "findFlights" , "findOpenSeats" , "newReservation" , "updateCustomer" ,"updateReservation" );
+		//new SIBenchProgramGenerator(pu).generate("minRecord", "updateRecord");
 		pu.print();
 		// find anomlous access pairs in the base version
-		ArrayList<DAI> anmls = analyze(pu, false).getDAIs();
+		ArrayList<DAI> anmls = analyze(pu, true).getDAIs();
 		// initialize a refactoring engine
+		assert(false);
 		Refactor re = new Refactor();
 		// preform the pre-processing step (updates the pu and also the anmls list)
 		// each query will be involved in at most one anomaly
@@ -157,9 +170,49 @@ public class Atropos {
 		}
 
 		if (q1.getKind() == Kind.SELECT && q2.getKind() == Kind.UPDATE) {
-
+			for (Delta d : SUM_OTM_refactoring(pu, pu.getTable(tn2), q2.getAccessedFieldNames().get(0))) {
+				if (d != null)
+					result.add(d);
+			}
 		}
 
+		return result;
+	}
+
+	private static Delta[] SUM_OTM_refactoring(Program_Utils pu, Table source_table, FieldName source_fn) {
+		NameGenerator ng = new NameGenerator();
+		Delta[] result = new Delta[2 * source_table.getPKFields().size() + 15];
+		int pk_cnt = source_table.getPKFields().size();
+		int index = 0;
+		String source_table_name = source_table.getTableName().getName();
+		// intro_r
+		String new_table_name = "log_" + source_fn.getName();
+		INTRO_R intro_r = new INTRO_R(new_table_name, true);
+		result[index++] = intro_r;
+		// intro_f (pks)
+		ArrayList<INTRO_F> newly_added_introf = new ArrayList<>();
+		for (int i = 0; i < pk_cnt; i++)
+			newly_added_introf.add(new INTRO_F(new_table_name, "log_" + source_table.getPKFields().get(i).getName(),
+					source_table.getPKFields().get(i).getType(), false, false));
+		// intro_f (uuid)
+		newly_added_introf.add(new INTRO_F(new_table_name, "uuid_" + source_fn.getName(), F_Type.NUM, true, false));
+		// intro_f (delta)
+		String newly_added_fn_name = "delta_" + source_fn.getName();
+		newly_added_introf.add(new INTRO_F(new_table_name, newly_added_fn_name, F_Type.NUM, false, true));
+		// add all above to the result
+		for (INTRO_F introf : newly_added_introf)
+			result[index++] = introf;
+		// add pks
+		for (int i = 0; i < pk_cnt; i++)
+			result[index++] = new ADDPK(pu, new_table_name, newly_added_introf.get(i).getNewName().getName());
+		result[index++] = new ADDPK(pu, new_table_name, newly_added_introf.get(pk_cnt).getNewName().getName());
+		// add intro_vc
+		INTRO_VC intro_vc = new INTRO_VC(pu, source_table_name, new_table_name, VC_Agg.VC_SUM, VC_Type.VC_OTM);
+		for (int i = 0; i < pk_cnt; i++)
+			intro_vc.addKeyCorrespondenceToVC(source_table.getPKFields().get(i).getName(),
+					newly_added_introf.get(i).getNewName().getName());
+		intro_vc.addFieldTupleToVC(source_fn.getName(), newly_added_fn_name);
+		result[index++] = intro_vc;
 		return result;
 	}
 
